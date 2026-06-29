@@ -1,0 +1,568 @@
+import { Dialog, Component, Elem, Button, Notify, styled } from '@vanilla-bean/components';
+
+import {
+	parseTabularFile,
+	applyTabularImport,
+	getImportTemplates,
+	saveImportTemplate,
+	deleteImportTemplate,
+} from '../api/tabularImport';
+
+const DropZone = styled(
+	Component,
+	({ colors }) => `
+		border: 2px dashed ${colors.gray};
+		border-radius: 8px;
+		padding: 28px 16px;
+		text-align: center;
+		cursor: pointer;
+		color: ${colors.gray};
+		transition: border-color 0.15s, color 0.15s;
+
+		&.drag-over {
+			border-color: ${colors.light(colors.green)};
+			color: ${colors.light(colors.green)};
+		}
+	`,
+);
+
+const MapRow = styled(
+	Component,
+	({ colors }) => `
+		display: grid;
+		grid-template-columns: 1fr 28px 1fr;
+		align-items: center;
+		gap: 6px;
+		padding: 5px 0;
+		border-bottom: 1px solid ${colors.dark(colors.gray)};
+		font-size: 13px;
+
+		& .col-source {
+			font-weight: 500;
+			color: ${colors.white};
+			overflow: hidden;
+			text-overflow: ellipsis;
+			white-space: nowrap;
+		}
+
+		& .col-arrow {
+			text-align: center;
+			color: ${colors.gray};
+			font-size: 11px;
+		}
+
+		& select {
+			width: 100%;
+			background: rgba(255,255,255,0.07);
+			border: 1px solid rgba(255,255,255,0.12);
+			border-radius: 4px;
+			color: #fff;
+			font-size: 12px;
+			padding: 4px 6px;
+			cursor: pointer;
+			font-family: inherit;
+		}
+
+		& select option { background: #1a1a1a; }
+	`,
+);
+
+const SEL_STYLE =
+	'display:block;width:100%;box-sizing:border-box;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);border-radius:4px;color:#fff;font-size:13px;padding:6px 8px;cursor:pointer;font-family:inherit;margin-bottom:10px;';
+
+const COLLECTIONS = {
+	events: {
+		label: '📅 Events / Timeline',
+		fields: [
+			{ value: 'date', label: 'Date', patterns: /^date$|^sample.?date$|^dated?$/i },
+			{ value: 'season', label: 'Season (year)', patterns: /^year$|^season$/i },
+			{ value: 'category', label: 'Category', patterns: /^category$|^event.?type$/i },
+			{ value: 'name', label: 'Name / Description', patterns: /^name$|^description$|^event.?name$/i },
+			{ value: 'notes', label: 'Notes', patterns: /^notes?$|^comments?$/i },
+		],
+	},
+	supplies: {
+		label: '📦 Supplies / Inventory',
+		fields: [
+			{ value: 'name', label: 'Item Name', patterns: /^name$|^item$|^product$/i },
+			{ value: 'category', label: 'Category', patterns: /^category$|^type$/i },
+			{ value: 'unit', label: 'Unit', patterns: /^units?$/i },
+			{ value: 'costPerUnit', label: 'Cost per Unit', patterns: /^cost|^price.?per.?unit$/i },
+			{ value: 'currentStock', label: 'Current Stock', patterns: /^qty$|^quantity$|^stock$|^on.?hand$/i },
+			{ value: 'notes', label: 'Notes', patterns: /^notes?$|^comments?$/i },
+		],
+	},
+	revenue: {
+		label: '💵 Revenue',
+		fields: [
+			{ value: 'date', label: 'Date', patterns: /^date$/i },
+			{ value: 'amount', label: 'Amount ($)', patterns: /^amount$|^total$|^revenue$/i },
+			{ value: 'type', label: 'Type', patterns: /^type$|^category$/i },
+			{ value: 'description', label: 'Description', patterns: /^description$|^detail$/i },
+			{ value: 'notes', label: 'Notes', patterns: /^notes?$|^comments?$/i },
+		],
+	},
+	maintenance: {
+		label: '🔧 Maintenance Records',
+		fields: [
+			{ value: 'date', label: 'Date', patterns: /^date$|^service.?date$/i },
+			{ value: 'type', label: 'Work Type', patterns: /^type$|^work.?type$|^service.?type$/i },
+			{ value: 'cost', label: 'Cost ($)', patterns: /^cost$|^amount$/i },
+			{ value: 'parts', label: 'Parts Used', patterns: /^parts?$/i },
+			{ value: 'procedure', label: 'Procedure', patterns: /^procedure$|^notes?$|^description$/i },
+		],
+	},
+};
+
+const autoDetect = (colName, collectionKey) => {
+	const fields = COLLECTIONS[collectionKey]?.fields ?? [];
+
+	for (const f of fields) {
+		if (f.patterns?.test(colName)) return f.value;
+	}
+
+	return '_properties';
+};
+
+export default class TabularImportDialog extends Dialog {
+	constructor(options = {}) {
+		super({
+			size: 'large',
+			header: 'Import CSV / JSON',
+			buttons: ['Cancel'],
+			onButtonPress: () => this.close(),
+			...options,
+		});
+
+		this._rows = [];
+		this._columns = [];
+		this._mapping = {};
+		this._collection = options.initialCollection ?? 'events';
+
+		this._renderUpload();
+	}
+
+	_renderUpload() {
+		this.body.empty();
+
+		new Elem({
+			tag: 'p',
+			appendTo: this.body,
+			style: { fontSize: '13px', color: 'rgba(255,255,255,0.5)', margin: '0 0 10px' },
+			textContent:
+				"Import a CSV or JSON file into any collection. Columns you don't map go into free-form Properties — nothing is discarded.",
+		});
+
+		const dropZone = new DropZone({ appendTo: this.body });
+
+		const fileInput = new Elem({
+			tag: 'input',
+			appendTo: dropZone,
+			attributes: { type: 'file', accept: '.csv,.json,.tsv', style: 'display:none' },
+		});
+
+		new Elem({ tag: 'div', appendTo: dropZone, style: { fontSize: '32px', marginBottom: '6px' }, textContent: '📂' });
+		new Elem({
+			tag: 'div',
+			appendTo: dropZone,
+			style: { fontSize: '14px', marginBottom: '4px' },
+			textContent: 'Drop CSV or JSON file here, or tap to browse',
+		});
+		new Elem({ tag: 'div', appendTo: dropZone, style: { fontSize: '12px' }, textContent: '.csv • .json' });
+
+		dropZone.onPointerPress(() => fileInput.elem.click());
+		dropZone.elem.addEventListener('dragover', e => {
+			e.preventDefault();
+			dropZone.addClass('drag-over');
+		});
+		dropZone.elem.addEventListener('dragleave', () => dropZone.removeClass('drag-over'));
+		dropZone.elem.addEventListener('drop', e => {
+			e.preventDefault();
+			dropZone.removeClass('drag-over');
+			const file = e.dataTransfer?.files?.[0];
+
+			if (file) this._loadFile(file);
+		});
+		fileInput.elem.addEventListener('change', () => {
+			const file = fileInput.elem.files?.[0];
+
+			if (file) this._loadFile(file);
+		});
+	}
+
+	async _loadFile(file) {
+		this.body.empty();
+
+		new Elem({
+			tag: 'div',
+			appendTo: this.body,
+			style: { fontSize: '13px', color: 'rgba(255,255,255,0.5)', padding: '24px 0', textAlign: 'center' },
+			textContent: `Parsing ${file.name}…`,
+		});
+
+		try {
+			const result = await parseTabularFile(file);
+
+			this._columns = result.columns;
+			this._rows = result.rows;
+			this._buildMapping();
+			this._renderMapper();
+		} catch (error) {
+			new Notify({ type: 'error', textContent: error.message || 'Could not parse file', timeout: 5000 });
+			this._renderUpload();
+		}
+	}
+
+	_buildMapping() {
+		this._mapping = {};
+
+		for (const col of this._columns) {
+			this._mapping[col] = autoDetect(col, this._collection);
+		}
+	}
+
+	async _renderMapper() {
+		this.body.empty();
+
+		// Load saved templates async — renders after
+		const templates = await getImportTemplates().catch(() => []);
+
+		if (!this.body.elem.isConnected) return;
+
+		// File summary
+		new Elem({
+			tag: 'div',
+			appendTo: this.body,
+			style: { fontSize: '13px', color: 'rgba(255,255,255,0.5)', marginBottom: '12px' },
+			textContent: `${this._rows.length} row${this._rows.length !== 1 ? 's' : ''} · ${this._columns.length} column${this._columns.length !== 1 ? 's' : ''}`,
+		});
+
+		// Template picker (only if any templates saved)
+		if (templates.length) {
+			new Elem({
+				tag: 'div',
+				appendTo: this.body,
+				style: {
+					fontSize: '11px',
+					textTransform: 'uppercase',
+					letterSpacing: '.08em',
+					color: 'rgba(255,255,255,0.45)',
+					marginBottom: '4px',
+				},
+				textContent: 'Load saved template',
+			});
+
+			const tplRow = new Component({
+				appendTo: this.body,
+				style: { display: 'flex', gap: '6px', marginBottom: '10px' },
+			});
+
+			const templateSelect = new Elem({ tag: 'select', appendTo: tplRow });
+
+			templateSelect.elem.style.cssText = SEL_STYLE + 'margin-bottom:0;flex:1;';
+
+			const blankOpt = document.createElement('option');
+
+			blankOpt.value = '';
+			blankOpt.textContent = '— select template —';
+			templateSelect.elem.append(blankOpt);
+
+			for (const t of templates) {
+				const opt = document.createElement('option');
+
+				opt.value = t.name;
+				opt.textContent = t.name;
+				templateSelect.elem.append(opt);
+			}
+
+			new Button({
+				appendTo: tplRow,
+				textContent: 'Load',
+				style: { flexShrink: '0', fontSize: '12px', padding: '5px 12px' },
+				onPointerPress: () => {
+					const tpl = templates.find(t => t.name === templateSelect.elem.value);
+
+					if (!tpl) return;
+
+					this._collection = tpl.collection;
+					this._mapping = { ...tpl.mapping };
+					this._renderMapper();
+				},
+			});
+
+			new Button({
+				appendTo: tplRow,
+				textContent: '✕',
+				title: 'Delete selected template',
+				style: { flexShrink: '0', fontSize: '12px', padding: '5px 8px', color: '#e05252' },
+				onPointerPress: async () => {
+					if (!templateSelect.elem.value) return;
+
+					await deleteImportTemplate(templateSelect.elem.value).catch(() => {});
+					this._renderMapper();
+				},
+			});
+		}
+
+		// Collection picker
+		new Elem({
+			tag: 'div',
+			appendTo: this.body,
+			style: {
+				fontSize: '11px',
+				textTransform: 'uppercase',
+				letterSpacing: '.08em',
+				color: 'rgba(255,255,255,0.45)',
+				marginBottom: '4px',
+			},
+			textContent: 'Import into',
+		});
+
+		const collectionSelect = new Elem({ tag: 'select', appendTo: this.body });
+
+		collectionSelect.elem.style.cssText = SEL_STYLE;
+
+		for (const [key, { label }] of Object.entries(COLLECTIONS)) {
+			const opt = document.createElement('option');
+
+			opt.value = key;
+			opt.textContent = label;
+			collectionSelect.elem.append(opt);
+		}
+
+		collectionSelect.elem.value = this._collection;
+
+		// Column mapper header
+		const mapHeader = new Component({
+			appendTo: this.body,
+			style: {
+				display: 'grid',
+				gridTemplateColumns: '1fr 28px 1fr',
+				gap: '6px',
+				padding: '4px 0',
+				marginBottom: '2px',
+			},
+		});
+
+		new Elem({
+			tag: 'div',
+			appendTo: mapHeader,
+			style: { fontSize: '10px', textTransform: 'uppercase', letterSpacing: '.06em', color: 'rgba(255,255,255,0.35)' },
+			textContent: 'Source Column',
+		});
+		new Elem({ tag: 'div', appendTo: mapHeader });
+		new Elem({
+			tag: 'div',
+			appendTo: mapHeader,
+			style: { fontSize: '10px', textTransform: 'uppercase', letterSpacing: '.06em', color: 'rgba(255,255,255,0.35)' },
+			textContent: 'Maps To',
+		});
+
+		// Scrollable mapper list
+		const mapList = new Component({
+			appendTo: this.body,
+			style: { maxHeight: '280px', overflowY: 'auto', marginBottom: '12px' },
+		});
+
+		this._selectRefs = {};
+		this._renderMapRows(mapList);
+
+		// Collection change rebuilds the dropdowns
+		collectionSelect.elem.addEventListener('change', () => {
+			this._collection = collectionSelect.elem.value;
+			this._buildMapping();
+			mapList.empty();
+			this._renderMapRows(mapList);
+			this._updateImportBtn();
+		});
+
+		// Import button
+		this._importBtn = new Button({
+			appendTo: this.body,
+			style: { width: '100%' },
+			onPointerPress: () => this._doImport(),
+		});
+
+		this._updateImportBtn();
+	}
+
+	_renderMapRows(container) {
+		const fields = COLLECTIONS[this._collection]?.fields ?? [];
+
+		for (const col of this._columns) {
+			const row = new MapRow({ appendTo: container });
+
+			new Elem({ tag: 'div', appendTo: row, addClass: 'col-source', textContent: col, title: col });
+			new Elem({ tag: 'div', appendTo: row, addClass: 'col-arrow', textContent: '→' });
+
+			const selectEl = new Elem({ tag: 'select', appendTo: row });
+
+			// Known fields for this collection
+			const knownGroup = document.createElement('optgroup');
+
+			knownGroup.label = 'Known fields';
+
+			for (const f of fields) {
+				const opt = document.createElement('option');
+
+				opt.value = f.value;
+				opt.textContent = f.label;
+				knownGroup.append(opt);
+			}
+
+			selectEl.elem.append(knownGroup);
+
+			// Properties / skip options
+			const otherGroup = document.createElement('optgroup');
+
+			otherGroup.label = 'Other';
+			[
+				{ value: '_properties', label: 'Properties (free-form)' },
+				{ value: '_skip', label: 'Skip' },
+			].forEach(({ value, label }) => {
+				const opt = document.createElement('option');
+
+				opt.value = value;
+				opt.textContent = label;
+				otherGroup.append(opt);
+			});
+
+			selectEl.elem.append(otherGroup);
+
+			selectEl.elem.value = this._mapping[col] ?? '_properties';
+			selectEl.elem.addEventListener('change', () => {
+				this._mapping[col] = selectEl.elem.value;
+				this._updateImportBtn();
+			});
+
+			this._selectRefs[col] = selectEl.elem;
+		}
+	}
+
+	_updateImportBtn() {
+		if (!this._importBtn) return;
+
+		const count = this._rows.length;
+		const mapped = Object.values(this._mapping).filter(v => v !== '_skip').length;
+
+		this._importBtn.elem.textContent =
+			count > 0
+				? `Import ${count} Record${count !== 1 ? 's' : ''} (${mapped} column${mapped !== 1 ? 's' : ''} mapped)`
+				: 'No rows to import';
+		this._importBtn.elem.disabled = count === 0;
+	}
+
+	_finishAndRefresh() {
+		this.close();
+		window.location.reload();
+	}
+
+	async _doImport() {
+		if (!this._rows.length) return;
+
+		this._importBtn.elem.disabled = true;
+		this._importBtn.elem.textContent = 'Importing…';
+
+		try {
+			const result = await applyTabularImport({
+				collection: this._collection,
+				rows: this._rows,
+				mapping: this._mapping,
+			});
+
+			const { created = 0, errors = 0 } = result;
+
+			if (errors > 0) {
+				new Notify({
+					type: 'warning',
+					textContent: `Imported ${created} record${created !== 1 ? 's' : ''} — ${errors} row${errors !== 1 ? 's' : ''} failed`,
+					timeout: 6000,
+				});
+			} else {
+				new Notify({
+					type: 'success',
+					textContent: `Imported ${created} record${created !== 1 ? 's' : ''}`,
+					timeout: 4000,
+				});
+			}
+
+			this.options.onImport?.({ collection: this._collection, created, errors });
+
+			// Offer to save the mapping as a reusable template
+			this._renderSaveTemplate();
+		} catch (error) {
+			new Notify({ type: 'error', textContent: error.message || 'Import failed', timeout: 5000 });
+			this._importBtn.elem.disabled = false;
+			this._updateImportBtn();
+		}
+	}
+
+	_renderSaveTemplate() {
+		this.body.empty();
+
+		new Elem({
+			tag: 'div',
+			appendTo: this.body,
+			style: { fontSize: '14px', fontWeight: '600', marginBottom: '8px', color: '#fff' },
+			textContent: 'Import complete',
+		});
+
+		new Elem({
+			tag: 'p',
+			appendTo: this.body,
+			style: { fontSize: '13px', color: 'rgba(255,255,255,0.55)', margin: '0 0 16px' },
+			textContent: 'Save this column mapping as a template to reuse it next time you import from the same source.',
+		});
+
+		const nameInput = new Elem({
+			tag: 'input',
+			appendTo: this.body,
+			attributes: { type: 'text', placeholder: 'e.g. Waypoint Analytical Soil Test' },
+			style: {
+				display: 'block',
+				width: '100%',
+				boxSizing: 'border-box',
+				background: 'rgba(255,255,255,0.07)',
+				border: '1px solid rgba(255,255,255,0.12)',
+				borderRadius: '4px',
+				color: '#fff',
+				fontSize: '13px',
+				padding: '8px 10px',
+				fontFamily: 'inherit',
+				marginBottom: '12px',
+			},
+		});
+
+		const buttons = new Component({ appendTo: this.body, style: { display: 'flex', gap: '8px' } });
+
+		new Button({
+			appendTo: buttons,
+			textContent: 'Save Template',
+			style: { flex: '1' },
+			onPointerPress: async () => {
+				const name = nameInput.elem.value.trim();
+
+				if (!name) {
+					nameInput.elem.focus();
+					return;
+				}
+
+				try {
+					await saveImportTemplate({ name, collection: this._collection, mapping: this._mapping });
+					new Notify({ type: 'success', textContent: `Template "${name}" saved`, timeout: 3000 });
+				} catch {
+					new Notify({ type: 'error', textContent: 'Could not save template', timeout: 3000 });
+				}
+
+				this._finishAndRefresh();
+			},
+		});
+
+		new Button({
+			appendTo: buttons,
+			textContent: 'Skip',
+			style: { flex: '1' },
+			onPointerPress: () => this._finishAndRefresh(),
+		});
+	}
+}

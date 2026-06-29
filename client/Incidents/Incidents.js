@@ -1,0 +1,148 @@
+import { Elem } from '@vanilla-bean/components';
+
+import AsyncView from '../AsyncView';
+
+import { getIncidents, updateIncident, deleteIncident } from '../api';
+import context from '../context';
+import { PageView, PageToolbar, PageTitle, Card, AppEmptyState, SectionHeader } from '../Layout';
+import IncidentDialog, { incidentEmoji, severityMeta } from './IncidentDialog';
+
+const formatDate = d => {
+	if (!d) return '';
+	const date = new Date(d);
+
+	return isNaN(date) ? d : date.toLocaleDateString();
+};
+
+const entityIcon = type => ({ field: '📋', building: '🏚️', equipment: '🚜' })[type] || '📋';
+
+export default class Incidents extends AsyncView {
+	_buildView() {
+		this.toolbar = new PageToolbar({ appendTo: this });
+		new PageTitle({ appendTo: this.toolbar, textContent: 'Incidents' });
+
+		this.content = new PageView({ appendTo: this });
+	}
+
+	_datasources() {
+		return { incidents: getIncidents };
+	}
+
+	_onData() {
+		this._renderList();
+	}
+
+	_renderList() {
+		this.content.empty();
+
+		const all = Object.values(this.incidents?.body || {}).sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0));
+
+		context.hasIncidents = all.length > 0;
+
+		if (!all.length) {
+			new AppEmptyState({
+				appendTo: this.content,
+				icon: '⚠️',
+				title: 'No incidents recorded',
+				subtitle: 'Incidents are logged from the field, building, or equipment panel on the map',
+			});
+			return;
+		}
+
+		const open = all.filter(i => !i.resolved);
+		const resolved = all.filter(i => i.resolved);
+
+		if (open.length) {
+			new SectionHeader({ appendTo: this.content, textContent: '🔴 Open' });
+			for (const incident of open) this._renderCard(incident);
+		}
+
+		if (resolved.length) {
+			new SectionHeader({ appendTo: this.content, textContent: '✅ Resolved' });
+			for (const incident of resolved) this._renderCard(incident);
+		}
+	}
+
+	_renderCard(incident) {
+		const severity = severityMeta(incident.severity);
+
+		const card = new Card({
+			appendTo: this.content,
+			onPointerPress: () =>
+				new IncidentDialog({
+					incident,
+					onSave: async data => {
+						const result = await updateIncident(incident.id, { body: { ...data, _v: incident._v } });
+
+						if (result?.body && this.incidents?.body) {
+							this.incidents.body[incident.id] = result.body;
+							this._renderList();
+						}
+					},
+					onDelete: async () => {
+						await deleteIncident(incident.id);
+						if (this.incidents?.body) delete this.incidents.body[incident.id];
+						context.hasIncidents = Object.keys(this.incidents?.body || {}).length > 0;
+						this._renderList();
+					},
+				}),
+		});
+
+		const titleRow = new Elem({
+			tag: 'div',
+			appendTo: card,
+			style: { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '4px' },
+		});
+
+		new Elem({
+			tag: 'div',
+			appendTo: titleRow,
+			addClass: 'card-title',
+			textContent: `${incidentEmoji(incident.type)} ${incident.type || 'Incident'}`,
+		});
+
+		new Elem({
+			tag: 'span',
+			appendTo: titleRow,
+			style: { fontSize: '11px', color: severity.color, fontWeight: '600', flexShrink: '0', marginLeft: '8px' },
+			textContent: severity.label,
+		});
+
+		const meta = new Elem({ tag: 'div', appendTo: card, addClass: 'card-meta' });
+
+		if (incident.entityName) {
+			new Elem({
+				tag: 'span',
+				appendTo: meta,
+				textContent: `${entityIcon(incident.entityType)} ${incident.entityName}`,
+			});
+		}
+
+		if (incident.date) new Elem({ tag: 'span', appendTo: meta, textContent: formatDate(incident.date) });
+
+		if (incident.description) {
+			new Elem({
+				tag: 'div',
+				appendTo: card,
+				style: {
+					fontSize: '12px',
+					color: 'rgba(255,255,255,0.45)',
+					marginTop: '4px',
+					overflow: 'hidden',
+					textOverflow: 'ellipsis',
+					whiteSpace: 'nowrap',
+				},
+				textContent: incident.description,
+			});
+		}
+
+		if (incident.estimatedLoss) {
+			new Elem({
+				tag: 'div',
+				appendTo: card,
+				style: { fontSize: '12px', color: '#e8932a', marginTop: '2px' },
+				textContent: `Est. loss: $${Number(incident.estimatedLoss).toLocaleString()}`,
+			});
+		}
+	}
+}

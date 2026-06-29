@@ -1,0 +1,254 @@
+import { Component, Elem, Button } from '@vanilla-bean/components';
+import { getPrecisionLayers, getPrecisionLayerPoints, deletePrecisionLayer } from '../api/precisionLayers';
+import PrecisionLayerImport from './PrecisionLayerImport';
+import PrecisionAnalysisDialog from './PrecisionAnalysisDialog';
+
+const TYPE_LABELS = { yield: 'Yield map', 'as-applied': 'As-applied', 'soil-ec': 'Soil EC', other: 'Data layer' };
+const TYPE_ICONS = { yield: '🌾', 'as-applied': '🌱', 'soil-ec': '⚡', other: '📡' };
+
+const formatNum = (n, d = 1) => (n != null ? Number(n).toFixed(d) : '—');
+
+// ── Color scale ────────────────────────────────────────────────────────────────
+// Maps a normalized [0,1] value to a green→yellow→red color.
+// High values (yield) are green; low values are red.
+
+export function valueToColor(value, min, max) {
+	const t = max > min ? (value - min) / (max - min) : 0.5;
+	const hue = t * 120; // 0 = red, 120 = green
+	return `hsl(${hue.toFixed(0)},85%,50%)`;
+}
+
+// ── Renderer ───────────────────────────────────────────────────────────────────
+// Called by Map.js to draw/clear the active layer on the Leaflet canvas.
+
+export function renderPrecisionLayer(layer, L, layerGroup) {
+	layerGroup.clearLayers();
+
+	if (!layer?.points?.length) return;
+
+	const { min, max } = layer.stats;
+
+	for (const pt of layer.points) {
+		L.circleMarker([pt.lat, pt.lng], {
+			radius: 4,
+			color: 'transparent',
+			fillColor: valueToColor(pt.value, min, max),
+			fillOpacity: 0.85,
+			renderer: L.canvas(), // canvas for performance with thousands of points
+		})
+			.bindTooltip(`${pt.value.toFixed(2)} ${layer.valueUnit}`, { sticky: true })
+			.addTo(layerGroup);
+	}
+}
+
+// ── Panel section ──────────────────────────────────────────────────────────────
+
+export async function renderPrecisionLayersSection(field, container, callbacks = {}) {
+	const data = await getPrecisionLayers().catch(() => ({ body: {} }));
+	const all = Object.values(data?.body || {});
+	const layers = field ? all.filter(l => l.fieldId === field.id) : all;
+
+	// Section header
+	const header = new Component({
+		appendTo: container,
+		style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '14px' },
+	});
+	new Elem({
+		tag: 'div',
+		appendTo: header,
+		style: { fontSize: '12px', textTransform: 'uppercase', letterSpacing: '.07em', color: 'rgba(255,255,255,0.35)' },
+		textContent: 'Data Layers',
+	});
+
+	new Button({
+		appendTo: header,
+		textContent: '+ Import',
+		style: { fontSize: '11px', padding: '2px 8px' },
+		onPointerPress: () =>
+			new PrecisionLayerImport({
+				presetFieldId: field?.id,
+				onImport: () => {
+					callbacks.onRefresh?.();
+				},
+			}),
+	});
+
+	if (!layers.length) {
+		new Elem({
+			tag: 'div',
+			appendTo: container,
+			style: { fontSize: '12px', color: 'rgba(255,255,255,0.25)', padding: '5px 0 8px' },
+			textContent: 'No layers — import a yield map or as-applied file',
+		});
+		return;
+	}
+
+	for (const layer of layers.sort((a, b) => (b.season || 0) - (a.season || 0))) {
+		const row = new Component({
+			appendTo: container,
+			style: {
+				display: 'flex',
+				alignItems: 'flex-start',
+				gap: '8px',
+				padding: '7px 0',
+				borderBottom: '1px solid rgba(255,255,255,0.06)',
+			},
+		});
+
+		new Elem({
+			tag: 'span',
+			appendTo: row,
+			style: { fontSize: '15px', flexShrink: '0', marginTop: '1px' },
+			textContent: TYPE_ICONS[layer.type] ?? '📡',
+		});
+
+		const info = new Component({ appendTo: row, style: { flex: '1', minWidth: '0' } });
+
+		new Elem({
+			tag: 'div',
+			appendTo: info,
+			style: {
+				fontSize: '13px',
+				fontWeight: '500',
+				color: '#fff',
+				overflow: 'hidden',
+				textOverflow: 'ellipsis',
+				whiteSpace: 'nowrap',
+			},
+			textContent: layer.label || `${TYPE_LABELS[layer.type] ?? 'Layer'} ${layer.season ?? ''}`,
+		});
+
+		// Stats strip
+		const s = layer.stats;
+		if (s) {
+			const statParts = [
+				s.mean != null ? `avg ${formatNum(s.mean)} ${layer.valueUnit ?? ''}`.trim() : null,
+				s.cv != null ? `CV ${formatNum(s.cv)}%` : null,
+				s.count ? `${s.count.toLocaleString()} pts` : null,
+			].filter(Boolean);
+
+			new Elem({
+				tag: 'div',
+				appendTo: info,
+				style: { fontSize: '11px', color: 'rgba(255,255,255,0.4)', marginTop: '2px' },
+				textContent: statParts.join('  ·  '),
+			});
+
+			// Min / max color legend strip
+			if (s.min != null && s.max != null) {
+				const legend = new Elem({
+					tag: 'div',
+					appendTo: info,
+					style: { display: 'flex', alignItems: 'center', gap: '5px', marginTop: '3px' },
+				});
+
+				new Elem({
+					tag: 'span',
+					appendTo: legend,
+					style: { fontSize: '10px', color: 'rgba(255,255,255,0.3)', whiteSpace: 'nowrap' },
+					textContent: formatNum(s.min),
+				});
+
+				new Elem({
+					tag: 'div',
+					appendTo: legend,
+					style: {
+						flex: '1',
+						height: '4px',
+						borderRadius: '2px',
+						background: 'linear-gradient(to right, hsl(0,85%,50%), hsl(60,85%,50%), hsl(120,85%,50%))',
+					},
+				});
+
+				new Elem({
+					tag: 'span',
+					appendTo: legend,
+					style: { fontSize: '10px', color: 'rgba(255,255,255,0.3)', whiteSpace: 'nowrap' },
+					textContent: formatNum(s.max),
+				});
+			}
+		}
+
+		// Show / remove buttons
+		const buttons = new Component({
+			appendTo: row,
+			style: { display: 'flex', flexDirection: 'column', gap: '4px', flexShrink: '0' },
+		});
+
+		new Button({
+			appendTo: buttons,
+			textContent: 'Show',
+			title: 'Display on map',
+			style: { fontSize: '11px', padding: '2px 8px' },
+			onPointerPress: async () => {
+				// Points live in a separate file — load only when the user taps Show
+				const points = layer.points ?? (await getPrecisionLayerPoints(layer.id));
+				if (points) callbacks.onShowLayer?.({ ...layer, points });
+			},
+		});
+
+		new Button({
+			appendTo: buttons,
+			textContent: '✕',
+			title: 'Delete layer',
+			style: { fontSize: '11px', padding: '2px 6px', color: '#e05252' },
+			onPointerPress: async () => {
+				await deletePrecisionLayer(layer.id);
+				callbacks.onRefresh?.();
+			},
+		});
+	}
+
+	// ── Cross-layer analysis ───────────────────────────────────────────────────
+	// Show Analyze button for each season that has both a yield and as-applied layer.
+	const bySeasonYield = {};
+	const bySeasonApplied = {};
+
+	for (const l of layers) {
+		if (l.type === 'yield') bySeasonYield[l.season ?? 0] = l;
+		if (l.type === 'as-applied') bySeasonApplied[l.season ?? 0] = l;
+	}
+
+	const analyzeSeasons = Object.keys(bySeasonYield).filter(s => bySeasonApplied[s]);
+
+	if (analyzeSeasons.length) {
+		new Elem({
+			tag: 'div',
+			appendTo: container,
+			style: {
+				fontSize: '11px',
+				textTransform: 'uppercase',
+				letterSpacing: '.07em',
+				color: 'rgba(255,255,255,0.35)',
+				marginTop: '10px',
+				marginBottom: '4px',
+			},
+			textContent: 'Analysis',
+		});
+
+		for (const season of analyzeSeasons) {
+			const yieldL = bySeasonYield[season];
+			const appliedL = bySeasonApplied[season];
+
+			new Button({
+				appendTo: container,
+				textContent: `${season} — Rate vs Yield correlation`,
+				style: {
+					width: '100%',
+					fontSize: '12px',
+					padding: '6px 10px',
+					marginBottom: '4px',
+					textAlign: 'left',
+					background: 'rgba(74,144,217,0.1)',
+					border: '1px solid rgba(74,144,217,0.3)',
+					color: '#4a90d9',
+				},
+				onPointerPress: () =>
+					new PrecisionAnalysisDialog({
+						appliedLayer: appliedL,
+						yieldLayer: yieldL,
+					}),
+			});
+		}
+	}
+}

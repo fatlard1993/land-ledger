@@ -1,0 +1,230 @@
+import { Dialog, Elem, Component, Form, Select, conditionalList } from '@vanilla-bean/components';
+import { makePropertiesEditor } from '../utils/PropertiesEditor';
+import { toNum } from '../utils/format.js';
+import { watchFormConflicts } from '../utils/watchFormConflicts.js';
+
+export const FREQUENCIES = [
+	{ value: 'daily', label: 'Daily', multiplier: 365 },
+	{ value: 'weekly', label: 'Weekly', multiplier: 52 },
+	{ value: 'biweekly', label: 'Every 2 weeks', multiplier: 26 },
+	{ value: 'monthly', label: 'Monthly', multiplier: 12 },
+	{ value: 'bimonthly', label: 'Every 2 months', multiplier: 6 },
+	{ value: 'quarterly', label: 'Quarterly', multiplier: 4 },
+	{ value: 'semiannual', label: 'Semi-annual', multiplier: 2 },
+	{ value: 'annual', label: 'Annual', multiplier: 1 },
+];
+
+export const INCOME_CATEGORIES = [
+	'Barn rental',
+	'Storage rental',
+	'Airbnb / short-term rental',
+	'Event hosting',
+	'Agri-tourism',
+	'Equipment hire',
+	'Crop share income',
+	'Custom work income',
+	'Other income',
+];
+
+export const EXPENSE_CATEGORIES = [
+	'Electricity',
+	'Water / irrigation',
+	'Natural gas / propane',
+	'Internet / phone',
+	'Property taxes',
+	'Property insurance',
+	'Equipment insurance',
+	'Liability insurance',
+	'Loan / mortgage payment',
+	'Equipment lease payment',
+	'Seed subscription',
+	'Software / services',
+	'Employee / labor',
+	'Contractor',
+	'Other expense',
+];
+
+export const annualAmount = item => {
+	const freq = FREQUENCIES.find(f => f.value === item.frequency) || FREQUENCIES[1];
+
+	return (Number(item.amount) || 0) * freq.multiplier;
+};
+
+export default class BudgetItemDialog extends Dialog {
+	constructor(options = {}) {
+		const isEdit = !!options.item?.id;
+		const item = options.item || {};
+
+		super({
+			size: 'large',
+			header: isEdit ? 'Edit Budget Item' : 'Add Budget Item',
+			buttons: conditionalList([{ alwaysItem: 'Save' }, { if: isEdit, thenItem: 'Delete' }, { alwaysItem: 'Cancel' }]),
+			onButtonPress: ({ button }) => {
+				if (button === 'Save') {
+					const d = this._form.options.data;
+					options.onSave?.({
+						name: d.name,
+						type: typeSelect.value,
+						category: d.category,
+						amount: toNum(d.amount),
+						frequency: d.frequency,
+						entityType: options.entityType || item.entityType || '',
+						entityId: options.entity?.id || item.entityId || '',
+						entityName: options.entity?.name || item.entityName || '',
+						startDate: d.startDate || null,
+						endDate: d.endDate || null,
+						properties: collectProps(),
+					});
+				} else if (button === 'Delete') {
+					options.onDelete?.();
+				}
+
+				this.close();
+			},
+			...options,
+		});
+
+		// Type toggle
+		const typeRow = new Component({ appendTo: this.body, style: { display: 'flex', gap: '6px', marginBottom: '4px' } });
+		const makeType = (label, value) => {
+			const active = (item.type || 'expense') === value;
+			const btn = new Component({
+				tag: 'button',
+				textContent: label,
+				style: {
+					flex: '1',
+					padding: '7px',
+					borderRadius: '4px',
+					cursor: 'pointer',
+					fontSize: '13px',
+					fontFamily: 'inherit',
+					border: `1px solid ${active ? '#4a90d9' : 'rgba(255,255,255,0.1)'}`,
+					background: active ? 'rgba(74,144,217,0.2)' : 'rgba(255,255,255,0.05)',
+					color: active ? '#8db4e8' : 'rgba(255,255,255,0.5)',
+				},
+				appendTo: typeRow,
+				onPointerPress: () => {
+					typeSelect.value = value;
+					updateTypeStyle();
+				},
+			});
+
+			btn.elem.type = 'button';
+			btn.elem.dataset.val = value;
+
+			return btn;
+		};
+
+		const incBtn = makeType('📥 Income', 'income');
+		const expBtn = makeType('📤 Expense', 'expense');
+		const typeSelect = { value: item.type || 'expense' };
+
+		// Datalist for category suggestions — swaps based on type
+		const catDatalistId = `budget-cat-${Math.random().toString(36).slice(2)}`;
+		const catDatalist = new Elem({ tag: 'datalist', appendTo: this.body });
+
+		catDatalist.elem.id = catDatalistId;
+
+		const updateTypeStyle = () => {
+			for (const btn of [incBtn, expBtn]) {
+				const active = btn.elem.dataset.val === typeSelect.value;
+
+				btn.elem.style.borderColor = active ? '#4a90d9' : 'rgba(255,255,255,0.1)';
+				btn.elem.style.background = active ? 'rgba(74,144,217,0.2)' : 'rgba(255,255,255,0.05)';
+				btn.elem.style.color = active ? '#8db4e8' : 'rgba(255,255,255,0.5)';
+			}
+
+			// Refresh datalist suggestions for the current type
+			catDatalist.elem.innerHTML = '';
+			const cats = typeSelect.value === 'income' ? INCOME_CATEGORIES : EXPENSE_CATEGORIES;
+
+			cats.forEach(c => {
+				const o = document.createElement('option');
+				o.value = c;
+				catDatalist.elem.append(o);
+			});
+		};
+
+		const preview = new Elem({
+			tag: 'div',
+			style: { fontSize: '11px', color: 'rgba(255,255,255,0.3)', marginTop: '6px' },
+		});
+
+		const updatePreview = () => {
+			if (!this._form) return;
+			const amt = Number(this._form.options.data.amount);
+			const freq = FREQUENCIES.find(f => f.value === this._form.options.data.frequency);
+
+			preview.elem.textContent = amt && freq ? `= $${(amt * freq.multiplier).toFixed(0)}/year` : '';
+		};
+
+		this._form = new Form({
+			appendTo: this.body,
+			data: {
+				name: item.name || '',
+				category: item.category || '',
+				amount: item.amount != null ? item.amount : '',
+				frequency: item.frequency || 'monthly',
+				startDate: item.startDate || '',
+				endDate: item.endDate || '',
+			},
+			inputs: [
+				{ key: 'name', label: 'Name', placeholder: 'e.g. Barn electricity, Monthly rental income' },
+				{
+					key: 'category',
+					label: 'Category',
+					placeholder: 'e.g. Utilities, Rental income, Insurance',
+					attributes: { list: catDatalistId },
+				},
+				{
+					type: 'group',
+					style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' },
+					inputs: [
+						{
+							key: 'amount',
+							label: 'Amount ($)',
+							type: 'number',
+							attributes: { step: '0.01' },
+							placeholder: '0.00',
+							onChange: () => updatePreview(),
+						},
+						{
+							key: 'frequency',
+							label: 'Frequency',
+							InputComponent: Select,
+							options: FREQUENCIES.map(({ value, label }) => ({ value, label })),
+							onChange: () => updatePreview(),
+						},
+					],
+				},
+				{
+					type: 'group',
+					style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' },
+					inputs: [
+						{ key: 'startDate', label: 'Start Date (optional)', type: 'date' },
+						{ key: 'endDate', label: 'End Date (optional)', type: 'date' },
+					],
+				},
+			],
+		});
+
+		this.body.append(preview);
+
+		if (isEdit) this._form.addCleanup('conflictWatch', watchFormConflicts(this._form, 'budget-items', item.id));
+
+		// Initialize suggestions and preview
+		updateTypeStyle();
+		updatePreview();
+
+		const { collect: collectProps } = makePropertiesEditor(this.body, item.properties || {});
+
+		if (options.entity) {
+			new Elem({
+				tag: 'div',
+				style: { fontSize: '11px', color: 'rgba(255,255,255,0.25)', marginTop: '10px' },
+				textContent: `Linked to: ${options.entity.name || options.entityType}`,
+				appendTo: this.body,
+			});
+		}
+	}
+}
