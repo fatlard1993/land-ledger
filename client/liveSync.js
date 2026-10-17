@@ -1,6 +1,8 @@
 import { Component, Elem, styled } from '@vanilla-bean/components';
+import { nanoid } from 'nanoid';
 
-const SESSION_ID = crypto.randomUUID();
+// crypto.randomUUID needs a secure context, which a plain-http LAN page isn't
+const SESSION_ID = nanoid();
 
 // ── Toast ──────────────────────────────────────────────────────────────────────
 
