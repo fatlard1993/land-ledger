@@ -134,15 +134,21 @@ export class EmptyState extends Component {
 		this._subtitle = new Component({ tag: 'div', appendTo: this, style: { fontSize: '13px', marginTop: '4px' } });
 	}
 
-	static handlers = {
-		icon(v) {
-			if (this._icon) this._icon.options.textContent = v;
+	static schema = {
+		icon: {
+			set(v) {
+				this._icon.options.textContent = v;
+			},
 		},
-		title(v) {
-			if (this._title) this._title.options.textContent = v;
+		title: {
+			set(v) {
+				this._title.options.textContent = v;
+			},
 		},
-		subtitle(v) {
-			if (this._subtitle) this._subtitle.options.textContent = v;
+		subtitle: {
+			set(v) {
+				this._subtitle.options.textContent = v;
+			},
 		},
 	};
 }
@@ -367,20 +373,18 @@ export const TenureBadge = (tenure, appendTo) =>
 	});
 
 export class ActionHeader extends Component {
-	defaultOptions = {
-		...super.defaultOptions,
-		style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center' },
+	static schema = {
+		style: { default: { display: 'flex', justifyContent: 'space-between', alignItems: 'center' } },
+		title: {
+			set(v) {
+				this._title.options.textContent = v;
+			},
+		},
 	};
 
 	build() {
 		this._title = new SectionHeader({ appendTo: this });
 	}
-
-	static handlers = {
-		title(v) {
-			this._title.options.textContent = v;
-		},
-	};
 }
 
 export const StatusBadge = styled(

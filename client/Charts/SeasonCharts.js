@@ -505,18 +505,14 @@ export default class SeasonCharts extends Component {
 		this._charts = [];
 	}
 
-	static handlers = {
-		events() {
-			if (this.rendered) this._renderCharts();
-		},
-		fieldFilter() {
-			if (this.rendered) this._renderCharts();
-		},
-		allEvents() {
-			if (this.rendered) this._renderCharts();
-		},
-		allFields() {
-			if (this.rendered) this._renderCharts();
-		},
-	};
+	static schema = Object.fromEntries(
+		['events', 'fieldFilter', 'allEvents', 'allFields'].map(key => [
+			key,
+			{
+				set() {
+					if (this.rendered) this._renderCharts();
+				},
+			},
+		]),
+	);
 }
