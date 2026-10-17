@@ -1,4 +1,4 @@
-import { Dialog, Form, Elem, Select, conditionalList } from '@vanilla-bean/components';
+import { FormDialog, Elem, Select } from '@vanilla-bean/components';
 import { makePropertiesEditor } from '../utils/PropertiesEditor';
 
 const COMMON_TYPES = [
@@ -55,100 +55,19 @@ export const equipmentEmoji = (type, storedEmoji) => {
 	return '⚙️';
 };
 
-export default class EquipmentDialog extends Dialog {
+const withoutCallbacks = ({ onSave: _onSave, onDelete: _onDelete, ...options }) => options;
+
+export default class EquipmentDialog extends FormDialog {
 	constructor(options = {}) {
 		const isEdit = !!options.item?.id;
+
+		const item = options.item || {};
+
+		const datalistId = `eq-datalist-${Math.random().toString(36).slice(2)}`;
 
 		super({
 			size: 'large',
 			header: isEdit ? `Edit — ${options.item.name || 'Equipment'}` : 'Place Equipment',
-			buttons: conditionalList([{ alwaysItem: 'Save' }, { if: isEdit, thenItem: 'Delete' }, { alwaysItem: 'Cancel' }]),
-			onButtonPress: ({ button }) => {
-				if (button === 'Save') {
-					if (this.form.validate()) return;
-
-					const data = {
-						...this.form.options.data,
-						emoji: this._getEmoji?.() || '',
-						showLabel: this._showLabelEl?.elem.checked !== false,
-						properties: this._collectProps?.() ?? {},
-					};
-
-					if (options.lat != null) data.lat = options.lat;
-					if (options.lng != null) data.lng = options.lng;
-					if (isEdit) {
-						data.lat = options.item.lat;
-						data.lng = options.item.lng;
-					}
-
-					options.onSave?.(data);
-				} else if (button === 'Delete') {
-					options.onDelete?.();
-				}
-
-				this.close();
-			},
-			...options,
-		});
-
-		const item = options.item || {};
-
-		// Datalist inside dialog body
-		const datalistId = `eq-datalist-${Math.random().toString(36).slice(2)}`;
-		const datalist = new Elem({ tag: 'datalist' });
-
-		datalist.elem.id = datalistId;
-		COMMON_TYPES.forEach(t => {
-			const o = document.createElement('option');
-			o.value = t;
-			datalist.elem.append(o);
-		});
-		this.body.elem.prepend(datalist.elem);
-
-		// Emoji row — above form, same pattern as EventDialog
-		const emojiRow = new Elem({
-			tag: 'div',
-			appendTo: this.body,
-			style: { display: 'flex', alignItems: 'center', gap: '8px', margin: '8px 0' },
-		});
-
-		const emojiInput = new Elem({
-			tag: 'input',
-			attributes: { type: 'text', maxlength: '4', title: 'Tap to change emoji — auto-detected from type' },
-			style: {
-				background: 'rgba(255,255,255,0.07)',
-				border: '1px solid rgba(255,255,255,0.12)',
-				borderRadius: '4px',
-				color: '#fff',
-				fontSize: '22px',
-				padding: '4px',
-				width: '52px',
-				textAlign: 'center',
-				flexShrink: '0',
-				fontFamily: 'inherit',
-				boxSizing: 'border-box',
-			},
-			appendTo: emojiRow,
-		});
-
-		emojiInput.elem.value = item.emoji || equipmentEmoji(item.type || '');
-
-		const emojiHint = new Elem({
-			tag: 'span',
-			textContent: 'Auto-detected · tap to change',
-			style: { fontSize: '11px', color: 'rgba(255,255,255,0.3)' },
-			appendTo: emojiRow,
-		});
-
-		emojiInput.elem.addEventListener('input', () => {
-			emojiInput.elem.dataset.manual = emojiInput.elem.value ? '1' : '';
-			emojiHint.elem.textContent = emojiInput.elem.value
-				? 'Custom · clear to auto-detect'
-				: 'Auto-detected · tap to change';
-		});
-
-		this.form = new Form({
-			appendTo: this.body,
 			data: {
 				name: item.name || '',
 				type: item.type || '',
@@ -226,6 +145,81 @@ export default class EquipmentDialog extends Dialog {
 					placeholder: 'Market value — used in net worth',
 				},
 			],
+			onSave: async d => {
+				const data = {
+					...d,
+					emoji: this._getEmoji?.() || '',
+					showLabel: this._showLabelEl?.elem.checked !== false,
+					properties: this._collectProps?.() ?? {},
+				};
+
+				if (options.lat != null) data.lat = options.lat;
+				if (options.lng != null) data.lng = options.lng;
+				if (isEdit) {
+					data.lat = options.item.lat;
+					data.lng = options.item.lng;
+				}
+
+				await options.onSave?.(data);
+			},
+			...(isEdit && { onDelete: async () => options.onDelete?.() }),
+			...withoutCallbacks(options),
+		});
+
+		// Datalist inside dialog body
+		const datalist = new Elem({ tag: 'datalist' });
+
+		datalist.elem.id = datalistId;
+		COMMON_TYPES.forEach(t => {
+			const o = document.createElement('option');
+			o.value = t;
+			datalist.elem.append(o);
+		});
+		this.body.elem.prepend(datalist.elem);
+
+		// Emoji row — above form, same pattern as EventDialog
+		const emojiRow = new Elem({
+			tag: 'div',
+			appendTo: this.body,
+			style: { display: 'flex', alignItems: 'center', gap: '8px', margin: '8px 0' },
+		});
+
+		// Above the form, where it was before the form moved into FormDialog
+		this.form.elem.before(emojiRow.elem);
+
+		const emojiInput = new Elem({
+			tag: 'input',
+			attributes: { type: 'text', maxlength: '4', title: 'Tap to change emoji — auto-detected from type' },
+			style: {
+				background: 'rgba(255,255,255,0.07)',
+				border: '1px solid rgba(255,255,255,0.12)',
+				borderRadius: '4px',
+				color: '#fff',
+				fontSize: '22px',
+				padding: '4px',
+				width: '52px',
+				textAlign: 'center',
+				flexShrink: '0',
+				fontFamily: 'inherit',
+				boxSizing: 'border-box',
+			},
+			appendTo: emojiRow,
+		});
+
+		emojiInput.elem.value = item.emoji || equipmentEmoji(item.type || '');
+
+		const emojiHint = new Elem({
+			tag: 'span',
+			textContent: 'Auto-detected · tap to change',
+			style: { fontSize: '11px', color: 'rgba(255,255,255,0.3)' },
+			appendTo: emojiRow,
+		});
+
+		emojiInput.elem.addEventListener('input', () => {
+			emojiInput.elem.dataset.manual = emojiInput.elem.value ? '1' : '';
+			emojiHint.elem.textContent = emojiInput.elem.value
+				? 'Custom · clear to auto-detect'
+				: 'Auto-detected · tap to change';
 		});
 
 		this._getEmoji = () => {

@@ -1,4 +1,4 @@
-import { Dialog, Form, Elem, Select, conditionalList } from '@vanilla-bean/components';
+import { FormDialog, Elem, Select } from '@vanilla-bean/components';
 import { makePropertiesEditor } from '../utils/PropertiesEditor';
 import { watchFormConflicts } from '../utils/watchFormConflicts.js';
 
@@ -58,42 +58,72 @@ export const buildingEmoji = (type, stored) => {
 	return '📍';
 };
 
-export default class BuildingDialog extends Dialog {
+const withoutCallbacks = ({ onSave: _onSave, onDelete: _onDelete, ...options }) => options;
+
+export default class BuildingDialog extends FormDialog {
 	constructor(options = {}) {
 		const isEdit = !!options.building?.id;
+
+		const building = options.building || {};
+
+		const datalistId = `building-datalist-${Math.random().toString(36).slice(2)}`;
 
 		super({
 			size: 'large',
 			header: isEdit ? `Edit — ${options.building.name || 'Building'}` : 'Mark Building',
-			buttons: conditionalList([{ alwaysItem: 'Save' }, { if: isEdit, thenItem: 'Delete' }, { alwaysItem: 'Cancel' }]),
-			onButtonPress: ({ button }) => {
-				if (button === 'Save') {
-					if (this.form.validate()) return;
-
-					const data = {
-						...this.form.options.data,
-						emoji: this._getEmoji?.() || '',
-						showLabel: this._showLabelEl?.elem.checked !== false,
-						properties: this._collectProps?.() ?? {},
-					};
-
-					if (options.geometry && !isEdit) data.geometry = options.geometry;
-					if (isEdit) data.geometry = options.building.geometry;
-
-					options.onSave?.(data);
-				} else if (button === 'Delete') {
-					options.onDelete?.();
-				}
-
-				this.close();
+			data: {
+				name: building.name || '',
+				type: building.type || '',
+				status: building.status || '',
 			},
-			...options,
+			inputs: [
+				{
+					key: 'name',
+					label: 'Name',
+					placeholder: 'e.g. North Barn, Main Shop',
+					required: true,
+					validate: v => (v ? null : 'Name is required'),
+				},
+				{
+					key: 'type',
+					label: 'Type',
+					placeholder: 'e.g. Barn, Machine shed, Grain bin',
+					attributes: { list: datalistId },
+					onChange: ({ value }) => {
+						if (!emojiInput.elem.dataset.manual) emojiInput.elem.value = buildingEmoji(value);
+					},
+				},
+				{
+					key: 'status',
+					label: 'Status',
+					InputComponent: Select,
+					options: [
+						{ label: '✓ Active', value: '' },
+						{ label: '🔩 Needs maintenance', value: 'needs_maintenance' },
+						{ label: '🔧 Needs service', value: 'needs_service' },
+						{ label: '⚠️ Out of service', value: 'out_of_service' },
+						{ label: '☠️ Destroyed', value: 'destroyed' },
+					],
+				},
+			],
+			onSave: async d => {
+				const data = {
+					...d,
+					emoji: this._getEmoji?.() || '',
+					showLabel: this._showLabelEl?.elem.checked !== false,
+					properties: this._collectProps?.() ?? {},
+				};
+
+				if (options.geometry && !isEdit) data.geometry = options.geometry;
+				if (isEdit) data.geometry = options.building.geometry;
+
+				await options.onSave?.(data);
+			},
+			...(isEdit && { onDelete: async () => options.onDelete?.() }),
+			...withoutCallbacks(options),
 		});
 
-		const building = options.building || {};
-
 		// Datalist inside dialog body
-		const datalistId = `building-datalist-${Math.random().toString(36).slice(2)}`;
 		const datalist = document.createElement('datalist');
 
 		datalist.id = datalistId;
@@ -110,6 +140,9 @@ export default class BuildingDialog extends Dialog {
 			appendTo: this.body,
 			style: { display: 'flex', alignItems: 'center', gap: '8px', margin: '8px 0' },
 		});
+
+		// Above the form, where it was before the form moved into FormDialog
+		this.form.elem.before(emojiRow.elem);
 
 		const emojiInput = new Elem({
 			tag: 'input',
@@ -146,45 +179,6 @@ export default class BuildingDialog extends Dialog {
 			emojiHint.elem.textContent = emojiInput.elem.value
 				? 'Custom · clear to auto-detect'
 				: 'Auto-detected · tap to change';
-		});
-
-		this.form = new Form({
-			appendTo: this.body,
-			data: {
-				name: building.name || '',
-				type: building.type || '',
-				status: building.status || '',
-			},
-			inputs: [
-				{
-					key: 'name',
-					label: 'Name',
-					placeholder: 'e.g. North Barn, Main Shop',
-					required: true,
-					validate: v => (v ? null : 'Name is required'),
-				},
-				{
-					key: 'type',
-					label: 'Type',
-					placeholder: 'e.g. Barn, Machine shed, Grain bin',
-					attributes: { list: datalistId },
-					onChange: ({ value }) => {
-						if (!emojiInput.elem.dataset.manual) emojiInput.elem.value = buildingEmoji(value);
-					},
-				},
-				{
-					key: 'status',
-					label: 'Status',
-					InputComponent: Select,
-					options: [
-						{ label: '✓ Active', value: '' },
-						{ label: '🔩 Needs maintenance', value: 'needs_maintenance' },
-						{ label: '🔧 Needs service', value: 'needs_service' },
-						{ label: '⚠️ Out of service', value: 'out_of_service' },
-						{ label: '☠️ Destroyed', value: 'destroyed' },
-					],
-				},
-			],
 		});
 
 		const { collect: collectProps } = makePropertiesEditor(this.body, building.properties || {});
