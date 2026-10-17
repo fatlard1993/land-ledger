@@ -468,16 +468,9 @@ export default class FieldPanel extends Component {
 		this._editBtn.options.onPointerPress = () => this._renderPathEdit();
 		this._editBoundaryBtn.options.onPointerPress = callbacks.onEditPath;
 
-		this._deleteBtn.options.onPointerPress = () => {
-			const confirmDialog = new Dialog({
-				header: `Delete "${p.name || 'this path'}"?`,
-				size: 'small',
-				buttons: ['Delete', 'Cancel'],
-				onButtonPress: ({ button }) => {
-					if (button === 'Delete') callbacks.onDelete?.();
-					confirmDialog.close();
-				},
-			});
+		this._deleteBtn.options.onPointerPress = async () => {
+			if (await Dialog.confirm({ header: `Delete "${p.name || 'this path'}"?`, confirmLabel: 'Delete' }))
+				callbacks.onDelete?.();
 		};
 
 		this._metaElem.empty();
@@ -715,16 +708,9 @@ export default class FieldPanel extends Component {
 				() => this.hide(),
 			);
 
-		this._deleteBtn.options.onPointerPress = () => {
-			const confirmDialog = new Dialog({
-				header: `Delete this property line?`,
-				size: 'small',
-				buttons: ['Delete', 'Cancel'],
-				onButtonPress: ({ button }) => {
-					if (button === 'Delete') callbacks.onDelete?.();
-					confirmDialog.close();
-				},
-			});
+		this._deleteBtn.options.onPointerPress = async () => {
+			if (await Dialog.confirm({ header: `Delete this property line?`, confirmLabel: 'Delete' }))
+				callbacks.onDelete?.();
 		};
 
 		this._metaElem.empty();
@@ -969,16 +955,9 @@ export default class FieldPanel extends Component {
 		this._editBtn.options.onPointerPress = () => this._renderBuildingEdit();
 		this._editBoundaryBtn.options.onPointerPress = callbacks.onEditBoundary;
 
-		this._deleteBtn.options.onPointerPress = () => {
-			const confirmDialog = new Dialog({
-				header: `Delete "${b.name || 'this building'}"?`,
-				size: 'small',
-				buttons: ['Delete', 'Cancel'],
-				onButtonPress: ({ button }) => {
-					if (button === 'Delete') callbacks.onDelete?.();
-					confirmDialog.close();
-				},
-			});
+		this._deleteBtn.options.onPointerPress = async () => {
+			if (await Dialog.confirm({ header: `Delete "${b.name || 'this building'}"?`, confirmLabel: 'Delete' }))
+				callbacks.onDelete?.();
 		};
 
 		this._metaElem.empty();
@@ -1269,16 +1248,9 @@ export default class FieldPanel extends Component {
 				() => this.hide(),
 			);
 
-		this._deleteBtn.options.onPointerPress = () => {
-			const confirmDialog = new Dialog({
-				header: `Delete "${item.name || 'this equipment'}"?`,
-				size: 'small',
-				buttons: ['Delete', 'Cancel'],
-				onButtonPress: ({ button }) => {
-					if (button === 'Delete') callbacks.onDelete?.();
-					confirmDialog.close();
-				},
-			});
+		this._deleteBtn.options.onPointerPress = async () => {
+			if (await Dialog.confirm({ header: `Delete "${item.name || 'this equipment'}"?`, confirmLabel: 'Delete' }))
+				callbacks.onDelete?.();
 		};
 
 		this._metaElem.empty();
@@ -1542,16 +1514,9 @@ export default class FieldPanel extends Component {
 
 		this._editBoundaryBtn.options.onPointerPress = callbacks.onEditBoundary;
 
-		this._deleteBtn.options.onPointerPress = () => {
-			const confirmDialog = new Dialog({
-				header: `Delete "${field.name || 'this field'}"?`,
-				size: 'small',
-				buttons: ['Delete', 'Cancel'],
-				onButtonPress: ({ button }) => {
-					if (button === 'Delete') callbacks.onDelete?.();
-					confirmDialog.close();
-				},
-			});
+		this._deleteBtn.options.onPointerPress = async () => {
+			if (await Dialog.confirm({ header: `Delete "${field.name || 'this field'}"?`, confirmLabel: 'Delete' }))
+				callbacks.onDelete?.();
 		};
 
 		this._metaElem.empty();
