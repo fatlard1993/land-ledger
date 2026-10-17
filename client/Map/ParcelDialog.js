@@ -31,7 +31,7 @@ export default class ParcelDialog extends Dialog {
 			buttons: conditionalList([{ alwaysItem: 'Save' }, { if: isEdit, thenItem: 'Delete' }, { alwaysItem: 'Cancel' }]),
 			onButtonPress: ({ button }) => {
 				if (button === 'Save') {
-					if (this.form.validate()) return;
+					if (this.form.hasErrors()) return;
 
 					const data = {
 						...this.form.options.data,
