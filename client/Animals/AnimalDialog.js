@@ -1,11 +1,13 @@
-import { Dialog, Form, Select, Notify } from '@vanilla-bean/components';
+import { FormDialog, Select, Notify } from '@vanilla-bean/components';
 
 import { getFields } from '../api';
 import { createAnimal, updateAnimal, deleteAnimal } from '../api/animals';
 import { watchFormConflicts } from '../utils/watchFormConflicts.js';
 import { SPECIES } from './constants';
 
-export default class AnimalDialog extends Dialog {
+const withoutCallbacks = ({ onSave: _onSave, onDelete: _onDelete, ...options }) => options;
+
+export default class AnimalDialog extends FormDialog {
 	constructor(options = {}) {
 		const isNew = !options.animal;
 		const rec = options.animal || {};
@@ -13,28 +15,6 @@ export default class AnimalDialog extends Dialog {
 		super({
 			size: 'large',
 			header: isNew ? 'Add Animal' : `Edit — ${rec.name || rec.tagId || 'Animal'}`,
-			buttons: isNew ? ['Save', 'Cancel'] : ['Save', 'Delete', 'Cancel'],
-			onButtonPress: async ({ button }) => {
-				if (button === 'Cancel') {
-					this.close();
-					return;
-				}
-				if (button === 'Delete') {
-					try {
-						await deleteAnimal(rec.id);
-						options.onDelete?.();
-						this.close();
-					} catch (err) {
-						new Notify({ type: 'error', textContent: err.message || 'Delete failed', timeout: 4000 });
-					}
-					return;
-				}
-				await this._save(rec.id, isNew, options);
-			},
-			...options,
-		});
-
-		this._form = new Form({
 			data: {
 				tagId: rec.tagId || '',
 				name: rec.name || '',
@@ -120,17 +100,31 @@ export default class AnimalDialog extends Dialog {
 				// Full width — notes
 				{ key: 'notes', label: 'Notes', placeholder: 'Any notes' },
 			],
-			appendTo: this.body,
+			// Required fields are checked in _save, which keeps the dialog open (false) when one is missing
+			onSave: () => this._save(rec.id, isNew, options),
+			...(!isNew && {
+				onDelete: async () => {
+					try {
+						await deleteAnimal(rec.id);
+						options.onDelete?.();
+					} catch (err) {
+						new Notify({ type: 'error', textContent: err.message || 'Delete failed', timeout: 4000 });
+
+						return false;
+					}
+				},
+			}),
+			...withoutCallbacks(options),
 		});
 
 		if (!isNew) {
-			this._form.addCleanup('conflictWatch', watchFormConflicts(this._form, 'animals', rec.id));
+			this.form.addCleanup('conflictWatch', watchFormConflicts(this.form, 'animals', rec.id));
 		}
 
 		// Async-populate the field Select after Form is rendered
 		getFields()
 			.then(d => {
-				const fieldSelect = this._form.inputElements.fieldId;
+				const fieldSelect = this.form.inputElements.fieldId;
 				const opts = [
 					{ label: '— none —', value: '' },
 					...Object.values(d?.body || {})
@@ -145,21 +139,22 @@ export default class AnimalDialog extends Dialog {
 
 	async _save(id, isNew, options) {
 		const data = Object.fromEntries(
-			Object.keys(this._form.inputElements).map(k => [k, this._form.inputElements[k].options.value]),
+			Object.keys(this.form.inputElements).map(k => [k, this.form.inputElements[k].options.value]),
 		);
 
 		if (!data.tagId) {
 			new Notify({ type: 'warning', textContent: 'Tag / ID is required', timeout: 3000 });
-			return;
+			return false;
 		}
 
 		try {
 			const fn = isNew ? createAnimal : body => updateAnimal(id, body);
 			const result = await fn({ body: data });
 			options.onSave?.(result?.body);
-			this.close();
 		} catch (err) {
 			new Notify({ type: 'error', textContent: err.message || 'Save failed', timeout: 4000 });
+
+			return false;
 		}
 	}
 }

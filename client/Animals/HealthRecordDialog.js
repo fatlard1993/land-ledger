@@ -1,10 +1,12 @@
-import { Dialog, Form, Select, Elem, Notify } from '@vanilla-bean/components';
+import { FormDialog, Select, Elem, Notify } from '@vanilla-bean/components';
 
 import { createHealthRecord, updateHealthRecord, deleteHealthRecord } from '../api/animals';
 import { watchFormConflicts } from '../utils/watchFormConflicts.js';
 import { animalLabel } from './constants';
 
-export default class HealthRecordDialog extends Dialog {
+const withoutCallbacks = ({ onSave: _onSave, onDelete: _onDelete, ...options }) => options;
+
+export default class HealthRecordDialog extends FormDialog {
 	constructor(options = {}) {
 		const isNew = !options.record;
 		const rec = options.record || {};
@@ -13,28 +15,6 @@ export default class HealthRecordDialog extends Dialog {
 		super({
 			size: 'large',
 			header: isNew ? `Add Health Record — ${animalLabel(animal)}` : 'Edit Health Record',
-			buttons: isNew ? ['Save', 'Cancel'] : ['Save', 'Delete', 'Cancel'],
-			onButtonPress: async ({ button }) => {
-				if (button === 'Cancel') {
-					this.close();
-					return;
-				}
-				if (button === 'Delete') {
-					try {
-						await deleteHealthRecord(rec.id);
-						options.onDelete?.();
-						this.close();
-					} catch (err) {
-						new Notify({ type: 'error', textContent: err.message || 'Delete failed', timeout: 4000 });
-					}
-					return;
-				}
-				await this._save(rec.id, isNew, options);
-			},
-			...options,
-		});
-
-		this._form = new Form({
 			data: {
 				date: rec.date || new Date().toISOString().slice(0, 10),
 				type: rec.type || 'treatment',
@@ -95,7 +75,21 @@ export default class HealthRecordDialog extends Dialog {
 				// Full width — notes
 				{ key: 'notes', label: 'Notes', placeholder: 'Observations, lot number, etc.' },
 			],
-			appendTo: this.body,
+			// Required fields are checked in _save, which keeps the dialog open (false) when one is missing
+			onSave: () => this._save(rec.id, isNew, options),
+			...(!isNew && {
+				onDelete: async () => {
+					try {
+						await deleteHealthRecord(rec.id);
+						options.onDelete?.();
+					} catch (err) {
+						new Notify({ type: 'error', textContent: err.message || 'Delete failed', timeout: 4000 });
+
+						return false;
+					}
+				},
+			}),
+			...withoutCallbacks(options),
 		});
 
 		// Computed withdrawal date display — reactive to date + withdrawalDays changes
@@ -106,8 +100,8 @@ export default class HealthRecordDialog extends Dialog {
 		});
 
 		const updateWithdrawal = () => {
-			const dateVal = this._form.options.data.date;
-			const days = parseInt(this._form.options.data.withdrawalDays, 10);
+			const dateVal = this.form.options.data.date;
+			const days = parseInt(this.form.options.data.withdrawalDays, 10);
 			if (dateVal && days > 0) {
 				const d = new Date(`${dateVal}T12:00:00`);
 				d.setDate(d.getDate() + days);
@@ -118,36 +112,37 @@ export default class HealthRecordDialog extends Dialog {
 			}
 		};
 
-		this._form.options.data.addEventListener('set', updateWithdrawal);
+		this.form.options.data.addEventListener('set', updateWithdrawal);
 		updateWithdrawal();
 
 		if (!isNew) {
-			this._form.addCleanup('conflictWatch', watchFormConflicts(this._form, 'health-records', rec.id));
+			this.form.addCleanup('conflictWatch', watchFormConflicts(this.form, 'health-records', rec.id));
 		}
 	}
 
 	async _save(id, isNew, options) {
 		const data = Object.fromEntries(
-			Object.keys(this._form.inputElements).map(k => [k, this._form.inputElements[k].options.value]),
+			Object.keys(this.form.inputElements).map(k => [k, this.form.inputElements[k].options.value]),
 		);
 		data.animalId = options.animal?.id || options.animalId;
 
 		if (!data.date) {
 			new Notify({ type: 'warning', textContent: 'Date is required', timeout: 3000 });
-			return;
+			return false;
 		}
 		if (!data.drug) {
 			new Notify({ type: 'warning', textContent: 'Drug / vaccine name is required', timeout: 3000 });
-			return;
+			return false;
 		}
 
 		try {
 			const fn = isNew ? createHealthRecord : body => updateHealthRecord(id, body);
 			const result = await fn({ body: data });
 			options.onSave?.(result?.body);
-			this.close();
 		} catch (err) {
 			new Notify({ type: 'error', textContent: err.message || 'Save failed', timeout: 4000 });
+
+			return false;
 		}
 	}
 }

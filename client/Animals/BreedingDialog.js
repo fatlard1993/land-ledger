@@ -1,42 +1,21 @@
-import { Dialog, Form, Select, Elem, Notify } from '@vanilla-bean/components';
+import { FormDialog, Select, Elem, Notify } from '@vanilla-bean/components';
 
 import { createBreedingRecord, updateBreedingRecord, deleteBreedingRecord } from '../api/animals';
 import { watchFormConflicts } from '../utils/watchFormConflicts.js';
 import { animalLabel, speciesMeta } from './constants';
 
-export default class BreedingDialog extends Dialog {
+const withoutCallbacks = ({ onSave: _onSave, onDelete: _onDelete, ...options }) => options;
+
+export default class BreedingDialog extends FormDialog {
 	constructor(options = {}) {
 		const isNew = !options.record;
 		const rec = options.record || {};
 		const dam = options.dam; // animal object for the dam
+		const gestation = speciesMeta(dam?.species)?.gestation;
 
 		super({
 			size: 'large',
 			header: isNew ? `Add Breeding Record — ${animalLabel(dam)}` : 'Edit Breeding Record',
-			buttons: isNew ? ['Save', 'Cancel'] : ['Save', 'Delete', 'Cancel'],
-			onButtonPress: async ({ button }) => {
-				if (button === 'Cancel') {
-					this.close();
-					return;
-				}
-				if (button === 'Delete') {
-					try {
-						await deleteBreedingRecord(rec.id);
-						options.onDelete?.();
-						this.close();
-					} catch (err) {
-						new Notify({ type: 'error', textContent: err.message || 'Delete failed', timeout: 4000 });
-					}
-					return;
-				}
-				await this._save(rec.id, isNew, options);
-			},
-			...options,
-		});
-
-		const gestation = speciesMeta(dam?.species)?.gestation;
-
-		this._form = new Form({
 			data: {
 				breedingDate: rec.breedingDate || new Date().toISOString().slice(0, 10),
 				expectedDueDate: rec.expectedDueDate || '',
@@ -108,11 +87,25 @@ export default class BreedingDialog extends Dialog {
 				// Full width — notes
 				{ key: 'notes', label: 'Notes', placeholder: 'Birth weight, complications, etc.' },
 			],
-			appendTo: this.body,
+			// Required fields are checked in _save, which keeps the dialog open (false) when one is missing
+			onSave: () => this._save(rec.id, isNew, options),
+			...(!isNew && {
+				onDelete: async () => {
+					try {
+						await deleteBreedingRecord(rec.id);
+						options.onDelete?.();
+					} catch (err) {
+						new Notify({ type: 'error', textContent: err.message || 'Delete failed', timeout: 4000 });
+
+						return false;
+					}
+				},
+			}),
+			...withoutCallbacks(options),
 		});
 
 		if (!isNew) {
-			this._form.addCleanup('conflictWatch', watchFormConflicts(this._form, 'breeding-records', rec.id));
+			this.form.addCleanup('conflictWatch', watchFormConflicts(this.form, 'breeding-records', rec.id));
 		}
 
 		// Auto-computed due date display — reactive to breedingDate + expectedDueDate changes
@@ -124,8 +117,8 @@ export default class BreedingDialog extends Dialog {
 
 		if (gestation) {
 			const updateDue = () => {
-				const dateVal = this._form.options.data.breedingDate;
-				const override = this._form.options.data.expectedDueDate;
+				const dateVal = this.form.options.data.breedingDate;
+				const override = this.form.options.data.expectedDueDate;
 				if (override) {
 					dueDisplay.options.textContent = '';
 					return;
@@ -139,29 +132,30 @@ export default class BreedingDialog extends Dialog {
 					dueDisplay.options.textContent = '';
 				}
 			};
-			this._form.options.data.addEventListener('set', updateDue);
+			this.form.options.data.addEventListener('set', updateDue);
 			updateDue();
 		}
 	}
 
 	async _save(id, isNew, options) {
 		const data = Object.fromEntries(
-			Object.keys(this._form.inputElements).map(k => [k, this._form.inputElements[k].options.value]),
+			Object.keys(this.form.inputElements).map(k => [k, this.form.inputElements[k].options.value]),
 		);
 		data.damId = options.dam?.id || options.damId;
 
 		if (!data.breedingDate) {
 			new Notify({ type: 'warning', textContent: 'Breeding date is required', timeout: 3000 });
-			return;
+			return false;
 		}
 
 		try {
 			const fn = isNew ? createBreedingRecord : body => updateBreedingRecord(id, body);
 			const result = await fn({ body: data });
 			options.onSave?.(result?.body);
-			this.close();
 		} catch (err) {
 			new Notify({ type: 'error', textContent: err.message || 'Save failed', timeout: 4000 });
+
+			return false;
 		}
 	}
 }
