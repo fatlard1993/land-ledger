@@ -1,4 +1,4 @@
-import { Dialog, Elem, Component, Form, conditionalList } from '@vanilla-bean/components';
+import { FormDialog, Component, Elem } from '@vanilla-bean/components';
 import { makePropertiesEditor } from '../utils/PropertiesEditor';
 import { toNum } from '../utils/format.js';
 import { watchFormConflicts } from '../utils/watchFormConflicts.js';
@@ -56,44 +56,85 @@ const TYPE_SUGGESTIONS = {
 /** @deprecated Use TYPE_SUGGESTIONS.maintenance directly — this alias predates the unified work-log dialog */
 export const MAINTENANCE_TYPES = TYPE_SUGGESTIONS.maintenance;
 
-export default class MaintenanceDialog extends Dialog {
+const withoutCallbacks = ({ onSave: _onSave, onDelete: _onDelete, ...options }) => options;
+
+export default class MaintenanceDialog extends FormDialog {
 	constructor(options = {}) {
 		const isEdit = !!options.record?.id;
 		const record = options.record || {};
 		const equipment = options.equipment || {};
 		const defaultWorkType = options.workType || record.workType || 'maintenance';
 
+		const unit = equipment.usageUnit || '';
+		const usageAtServiceLabel = `Usage at Service${equipment.usage ? ` (current: ${equipment.usage}${unit ? ' ' + unit : ''})` : ''}`;
+
 		super({
 			size: 'large',
 			header: isEdit ? 'Edit Service Record' : `Log Work — ${equipment.name || 'Equipment'}`,
-			buttons: conditionalList([{ alwaysItem: 'Save' }, { if: isEdit, thenItem: 'Delete' }, { alwaysItem: 'Cancel' }]),
-			onButtonPress: ({ button }) => {
-				if (button === 'Save') {
-					const d = this._form.options.data;
-					options.onSave?.({
-						equipmentId: equipment.id,
-						workType: this._workType,
-						type: d.type,
-						date: d.date,
-						usageAtService: toNum(d.usageAtService),
-						cost: toNum(d.cost),
-						parts: d.parts,
-						procedure: d.procedure,
-						properties: collectProps(),
-					});
-				} else if (button === 'Delete') {
-					options.onDelete?.();
-				}
-
-				this.close();
+			data: {
+				type: record.type || '',
+				date: record.date || new Date().toISOString().slice(0, 10),
+				usageAtService: record.usageAtService != null ? record.usageAtService : '',
+				cost: record.cost != null ? record.cost : '',
+				parts: record.parts || '',
+				procedure: record.procedure || '',
 			},
-			...options,
+			inputs: [
+				{ key: 'type', label: 'Description', placeholder: 'What was done / what needs doing' },
+				{
+					type: 'group',
+					style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' },
+					inputs: [
+						{ key: 'date', label: 'Date', type: 'date' },
+						{
+							key: 'usageAtService',
+							label: usageAtServiceLabel,
+							type: 'number',
+							attributes: { step: '0.1' },
+							placeholder: unit || 'hrs · mi · uses',
+						},
+					],
+				},
+				{
+					type: 'group',
+					style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' },
+					inputs: [
+						{ key: 'cost', label: 'Cost ($)', type: 'number', attributes: { step: '0.01' }, placeholder: 'Optional' },
+						{ key: 'parts', label: 'Parts / Supplies', placeholder: 'e.g. Napa 1234' },
+					],
+				},
+				{
+					key: 'procedure',
+					label: 'Work Done / Notes',
+					tag: 'textarea',
+					rows: 3,
+					placeholder: 'Description, findings, any follow-up needed…',
+				},
+			],
+			onSave: async d => {
+				await options.onSave?.({
+					equipmentId: equipment.id,
+					workType: this._workType,
+					type: d.type,
+					date: d.date,
+					usageAtService: toNum(d.usageAtService),
+					cost: toNum(d.cost),
+					parts: d.parts,
+					procedure: d.procedure,
+					properties: collectProps(),
+				});
+			},
+			...(isEdit && { onDelete: async () => options.onDelete?.() }),
+			...withoutCallbacks(options),
 		});
 
 		this._workType = defaultWorkType;
 
 		// Work type selector
 		const typeRow = new Component({ appendTo: this.body, style: { display: 'flex', gap: '6px', marginBottom: '4px' } });
+
+		// Above the form, where it was before the form moved into FormDialog
+		this.form.elem.before(typeRow.elem);
 		const typeButtons = [];
 
 		const refreshTypeBtn = () => {
@@ -137,8 +178,8 @@ export default class MaintenanceDialog extends Dialog {
 					this._workType = value;
 					refreshTypeBtn();
 					refreshSuggestions();
-					this._form.inputElements.type.options.value = '';
-					this._form.options.data.type = '';
+					this.form.inputElements.type.options.value = '';
+					this.form.options.data.type = '';
 				},
 			});
 
@@ -151,57 +192,10 @@ export default class MaintenanceDialog extends Dialog {
 		// Append datalist to body before the Form so it's in the DOM
 		this.body.elem.append(typeDatalist.elem);
 
-		const unit = equipment.usageUnit || '';
-		const usageAtServiceLabel = `Usage at Service${equipment.usage ? ` (current: ${equipment.usage}${unit ? ' ' + unit : ''})` : ''}`;
-
-		this._form = new Form({
-			appendTo: this.body,
-			data: {
-				type: record.type || '',
-				date: record.date || new Date().toISOString().slice(0, 10),
-				usageAtService: record.usageAtService != null ? record.usageAtService : '',
-				cost: record.cost != null ? record.cost : '',
-				parts: record.parts || '',
-				procedure: record.procedure || '',
-			},
-			inputs: [
-				{ key: 'type', label: 'Description', placeholder: 'What was done / what needs doing' },
-				{
-					type: 'group',
-					style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' },
-					inputs: [
-						{ key: 'date', label: 'Date', type: 'date' },
-						{
-							key: 'usageAtService',
-							label: usageAtServiceLabel,
-							type: 'number',
-							attributes: { step: '0.1' },
-							placeholder: unit || 'hrs · mi · uses',
-						},
-					],
-				},
-				{
-					type: 'group',
-					style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' },
-					inputs: [
-						{ key: 'cost', label: 'Cost ($)', type: 'number', attributes: { step: '0.01' }, placeholder: 'Optional' },
-						{ key: 'parts', label: 'Parts / Supplies', placeholder: 'e.g. Napa 1234' },
-					],
-				},
-				{
-					key: 'procedure',
-					label: 'Work Done / Notes',
-					tag: 'textarea',
-					rows: 3,
-					placeholder: 'Description, findings, any follow-up needed…',
-				},
-			],
-		});
-
-		if (isEdit) this._form.addCleanup('conflictWatch', watchFormConflicts(this._form, 'maintenance', record.id));
+		if (isEdit) this.form.addCleanup('conflictWatch', watchFormConflicts(this.form, 'maintenance', record.id));
 
 		// Wire datalist to the type input after Form construction
-		this._form.inputElements.type.elem.setAttribute('list', typeDatalistId);
+		this.form.inputElements.type.elem.setAttribute('list', typeDatalistId);
 		refreshSuggestions();
 
 		const { collect: collectProps } = makePropertiesEditor(this.body, record.properties || {});
@@ -228,9 +222,7 @@ export default class MaintenanceDialog extends Dialog {
 			lbl.elem.htmlFor = cbId;
 
 			this._shouldUpdateHours = () =>
-				cb.elem.checked && this._form.options.data.usageAtService
-					? Number(this._form.options.data.usageAtService)
-					: null;
+				cb.elem.checked && this.form.options.data.usageAtService ? Number(this.form.options.data.usageAtService) : null;
 		}
 	}
 }

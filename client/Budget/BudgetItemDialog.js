@@ -1,4 +1,4 @@
-import { Dialog, Elem, Component, Form, Select, conditionalList } from '@vanilla-bean/components';
+import { FormDialog, Component, Elem, Select } from '@vanilla-bean/components';
 import { makePropertiesEditor } from '../utils/PropertiesEditor';
 import { toNum } from '../utils/format.js';
 import { watchFormConflicts } from '../utils/watchFormConflicts.js';
@@ -50,116 +50,18 @@ export const annualAmount = item => {
 	return (Number(item.amount) || 0) * freq.multiplier;
 };
 
-export default class BudgetItemDialog extends Dialog {
+const withoutCallbacks = ({ onSave: _onSave, onDelete: _onDelete, ...options }) => options;
+
+export default class BudgetItemDialog extends FormDialog {
 	constructor(options = {}) {
 		const isEdit = !!options.item?.id;
 		const item = options.item || {};
 
+		const catDatalistId = `budget-cat-${Math.random().toString(36).slice(2)}`;
+
 		super({
 			size: 'large',
 			header: isEdit ? 'Edit Budget Item' : 'Add Budget Item',
-			buttons: conditionalList([{ alwaysItem: 'Save' }, { if: isEdit, thenItem: 'Delete' }, { alwaysItem: 'Cancel' }]),
-			onButtonPress: ({ button }) => {
-				if (button === 'Save') {
-					const d = this._form.options.data;
-					options.onSave?.({
-						name: d.name,
-						type: typeSelect.value,
-						category: d.category,
-						amount: toNum(d.amount),
-						frequency: d.frequency,
-						entityType: options.entityType || item.entityType || '',
-						entityId: options.entity?.id || item.entityId || '',
-						entityName: options.entity?.name || item.entityName || '',
-						startDate: d.startDate || null,
-						endDate: d.endDate || null,
-						properties: collectProps(),
-					});
-				} else if (button === 'Delete') {
-					options.onDelete?.();
-				}
-
-				this.close();
-			},
-			...options,
-		});
-
-		// Type toggle
-		const typeRow = new Component({ appendTo: this.body, style: { display: 'flex', gap: '6px', marginBottom: '4px' } });
-		const makeType = (label, value) => {
-			const active = (item.type || 'expense') === value;
-			const btn = new Component({
-				tag: 'button',
-				textContent: label,
-				style: {
-					flex: '1',
-					padding: '7px',
-					borderRadius: '4px',
-					cursor: 'pointer',
-					fontSize: '13px',
-					fontFamily: 'inherit',
-					border: `1px solid ${active ? '#4a90d9' : 'rgba(255,255,255,0.1)'}`,
-					background: active ? 'rgba(74,144,217,0.2)' : 'rgba(255,255,255,0.05)',
-					color: active ? '#8db4e8' : 'rgba(255,255,255,0.5)',
-				},
-				appendTo: typeRow,
-				onPointerPress: () => {
-					typeSelect.value = value;
-					updateTypeStyle();
-				},
-			});
-
-			btn.elem.type = 'button';
-			btn.elem.dataset.val = value;
-
-			return btn;
-		};
-
-		const incBtn = makeType('📥 Income', 'income');
-		const expBtn = makeType('📤 Expense', 'expense');
-		const typeSelect = { value: item.type || 'expense' };
-
-		// Datalist for category suggestions — swaps based on type
-		const catDatalistId = `budget-cat-${Math.random().toString(36).slice(2)}`;
-		const catDatalist = new Elem({ tag: 'datalist', appendTo: this.body });
-
-		catDatalist.elem.id = catDatalistId;
-
-		const updateTypeStyle = () => {
-			for (const btn of [incBtn, expBtn]) {
-				const active = btn.elem.dataset.val === typeSelect.value;
-
-				btn.elem.style.borderColor = active ? '#4a90d9' : 'rgba(255,255,255,0.1)';
-				btn.elem.style.background = active ? 'rgba(74,144,217,0.2)' : 'rgba(255,255,255,0.05)';
-				btn.elem.style.color = active ? '#8db4e8' : 'rgba(255,255,255,0.5)';
-			}
-
-			// Refresh datalist suggestions for the current type
-			catDatalist.elem.innerHTML = '';
-			const cats = typeSelect.value === 'income' ? INCOME_CATEGORIES : EXPENSE_CATEGORIES;
-
-			cats.forEach(c => {
-				const o = document.createElement('option');
-				o.value = c;
-				catDatalist.elem.append(o);
-			});
-		};
-
-		const preview = new Elem({
-			tag: 'div',
-			style: { fontSize: '11px', color: 'rgba(255,255,255,0.3)', marginTop: '6px' },
-		});
-
-		const updatePreview = () => {
-			if (!this._form) return;
-			const amt = Number(this._form.options.data.amount);
-			const freq = FREQUENCIES.find(f => f.value === this._form.options.data.frequency);
-
-			preview.elem.textContent = amt && freq ? `= $${(amt * freq.multiplier).toFixed(0)}/year` : '';
-		};
-
-		this._form = new Form({
-			appendTo: this.body,
 			data: {
 				name: item.name || '',
 				category: item.category || '',
@@ -206,11 +108,103 @@ export default class BudgetItemDialog extends Dialog {
 					],
 				},
 			],
+			onSave: async d => {
+				await options.onSave?.({
+					name: d.name,
+					type: typeSelect.value,
+					category: d.category,
+					amount: toNum(d.amount),
+					frequency: d.frequency,
+					entityType: options.entityType || item.entityType || '',
+					entityId: options.entity?.id || item.entityId || '',
+					entityName: options.entity?.name || item.entityName || '',
+					startDate: d.startDate || null,
+					endDate: d.endDate || null,
+					properties: collectProps(),
+				});
+			},
+			...(isEdit && { onDelete: async () => options.onDelete?.() }),
+			...withoutCallbacks(options),
 		});
+
+		// Type toggle
+		const typeRow = new Component({ appendTo: this.body, style: { display: 'flex', gap: '6px', marginBottom: '4px' } });
+
+		// Above the form, where it was before the form moved into FormDialog
+		this.form.elem.before(typeRow.elem);
+		const makeType = (label, value) => {
+			const active = (item.type || 'expense') === value;
+			const btn = new Component({
+				tag: 'button',
+				textContent: label,
+				style: {
+					flex: '1',
+					padding: '7px',
+					borderRadius: '4px',
+					cursor: 'pointer',
+					fontSize: '13px',
+					fontFamily: 'inherit',
+					border: `1px solid ${active ? '#4a90d9' : 'rgba(255,255,255,0.1)'}`,
+					background: active ? 'rgba(74,144,217,0.2)' : 'rgba(255,255,255,0.05)',
+					color: active ? '#8db4e8' : 'rgba(255,255,255,0.5)',
+				},
+				appendTo: typeRow,
+				onPointerPress: () => {
+					typeSelect.value = value;
+					updateTypeStyle();
+				},
+			});
+
+			btn.elem.type = 'button';
+			btn.elem.dataset.val = value;
+
+			return btn;
+		};
+
+		const incBtn = makeType('📥 Income', 'income');
+		const expBtn = makeType('📤 Expense', 'expense');
+		const typeSelect = { value: item.type || 'expense' };
+
+		// Datalist for category suggestions — swaps based on type
+		const catDatalist = new Elem({ tag: 'datalist', appendTo: this.body });
+
+		catDatalist.elem.id = catDatalistId;
+
+		const updateTypeStyle = () => {
+			for (const btn of [incBtn, expBtn]) {
+				const active = btn.elem.dataset.val === typeSelect.value;
+
+				btn.elem.style.borderColor = active ? '#4a90d9' : 'rgba(255,255,255,0.1)';
+				btn.elem.style.background = active ? 'rgba(74,144,217,0.2)' : 'rgba(255,255,255,0.05)';
+				btn.elem.style.color = active ? '#8db4e8' : 'rgba(255,255,255,0.5)';
+			}
+
+			// Refresh datalist suggestions for the current type
+			catDatalist.elem.innerHTML = '';
+			const cats = typeSelect.value === 'income' ? INCOME_CATEGORIES : EXPENSE_CATEGORIES;
+
+			cats.forEach(c => {
+				const o = document.createElement('option');
+				o.value = c;
+				catDatalist.elem.append(o);
+			});
+		};
+
+		const preview = new Elem({
+			tag: 'div',
+			style: { fontSize: '11px', color: 'rgba(255,255,255,0.3)', marginTop: '6px' },
+		});
+
+		const updatePreview = () => {
+			const amt = Number(this.form.options.data.amount);
+			const freq = FREQUENCIES.find(f => f.value === this.form.options.data.frequency);
+
+			preview.elem.textContent = amt && freq ? `= $${(amt * freq.multiplier).toFixed(0)}/year` : '';
+		};
 
 		this.body.append(preview);
 
-		if (isEdit) this._form.addCleanup('conflictWatch', watchFormConflicts(this._form, 'budget-items', item.id));
+		if (isEdit) this.form.addCleanup('conflictWatch', watchFormConflicts(this.form, 'budget-items', item.id));
 
 		// Initialize suggestions and preview
 		updateTypeStyle();

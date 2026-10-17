@@ -1,4 +1,4 @@
-import { Dialog, Elem, Form, Select, conditionalList } from '@vanilla-bean/components';
+import { FormDialog, Elem, Select } from '@vanilla-bean/components';
 import { makePropertiesEditor } from '../utils/PropertiesEditor';
 import { toNum } from '../utils/format.js';
 import { watchFormConflicts } from '../utils/watchFormConflicts.js';
@@ -57,63 +57,20 @@ export const AMOUNT_UNITS = [
 export const frequencyLabel = f => FREQUENCIES.find(x => x.value === f)?.label || f;
 export const frequencyInterval = f => FREQUENCIES.find(x => x.value === f)?.daysInterval ?? null;
 
-export default class FeedingScheduleDialog extends Dialog {
-	_form = null;
+const withoutCallbacks = ({ onSave: _onSave, onDelete: _onDelete, ...options }) => options;
 
+export default class FeedingScheduleDialog extends FormDialog {
 	constructor(options = {}) {
 		const isEdit = !!options.schedule?.id;
 		const schedule = options.schedule || {};
 
+		const feedTypeDatalistId = `fs-feed-${Math.random().toString(36).slice(2)}`;
+
+		const unitDatalistId = `fs-unit-${Math.random().toString(36).slice(2)}`;
+
 		super({
 			size: 'large',
 			header: isEdit ? `Edit Feeding — ${schedule.feedType || 'Feed'}` : 'Add Feeding Schedule',
-			buttons: conditionalList([{ alwaysItem: 'Save' }, { if: isEdit, thenItem: 'Delete' }, { alwaysItem: 'Cancel' }]),
-			onButtonPress: ({ button }) => {
-				if (button === 'Save') {
-					const d = this._form.options.data;
-					options.onSave?.({
-						fieldId: options.fieldId || schedule.fieldId || '',
-						eventId: options.eventId || schedule.eventId || '',
-						feedType: d.feedType,
-						amountPerHead: toNum(d.amountPerHead),
-						amountUnit: d.amountUnit,
-						frequency: d.frequency,
-						supplyId: d.supplyId || null,
-						properties: collectProps(),
-					});
-				} else if (button === 'Delete') {
-					options.onDelete?.();
-				}
-
-				this.close();
-			},
-			...options,
-		});
-
-		// Feed type datalist
-		const feedTypeDatalistId = `fs-feed-${Math.random().toString(36).slice(2)}`;
-		const feedTypeDatalist = new Elem({ tag: 'datalist', appendTo: this.body });
-
-		feedTypeDatalist.elem.id = feedTypeDatalistId;
-		FEED_TYPES.forEach(t => {
-			const o = document.createElement('option');
-			o.value = t;
-			feedTypeDatalist.elem.append(o);
-		});
-
-		// Unit datalist
-		const unitDatalistId = `fs-unit-${Math.random().toString(36).slice(2)}`;
-		const unitDatalist = new Elem({ tag: 'datalist', appendTo: this.body });
-
-		unitDatalist.elem.id = unitDatalistId;
-		AMOUNT_UNITS.forEach(u => {
-			const o = document.createElement('option');
-			o.value = u;
-			unitDatalist.elem.append(o);
-		});
-
-		this._form = new Form({
-			appendTo: this.body,
 			data: {
 				feedType: schedule.feedType || '',
 				amountPerHead: schedule.amountPerHead || '',
@@ -162,10 +119,43 @@ export default class FeedingScheduleDialog extends Dialog {
 					options: [{ label: '— not tracked in inventory —', value: '' }],
 				},
 			],
+			onSave: async d => {
+				await options.onSave?.({
+					fieldId: options.fieldId || schedule.fieldId || '',
+					eventId: options.eventId || schedule.eventId || '',
+					feedType: d.feedType,
+					amountPerHead: toNum(d.amountPerHead),
+					amountUnit: d.amountUnit,
+					frequency: d.frequency,
+					supplyId: d.supplyId || null,
+					properties: collectProps(),
+				});
+			},
+			...(isEdit && { onDelete: async () => options.onDelete?.() }),
+			...withoutCallbacks(options),
 		});
 
-		if (isEdit)
-			this._form.addCleanup('conflictWatch', watchFormConflicts(this._form, 'feeding-schedules', schedule.id));
+		// Feed type datalist
+		const feedTypeDatalist = new Elem({ tag: 'datalist', appendTo: this.body });
+
+		feedTypeDatalist.elem.id = feedTypeDatalistId;
+		FEED_TYPES.forEach(t => {
+			const o = document.createElement('option');
+			o.value = t;
+			feedTypeDatalist.elem.append(o);
+		});
+
+		// Unit datalist
+		const unitDatalist = new Elem({ tag: 'datalist', appendTo: this.body });
+
+		unitDatalist.elem.id = unitDatalistId;
+		AMOUNT_UNITS.forEach(u => {
+			const o = document.createElement('option');
+			o.value = u;
+			unitDatalist.elem.append(o);
+		});
+
+		if (isEdit) this.form.addCleanup('conflictWatch', watchFormConflicts(this.form, 'feeding-schedules', schedule.id));
 
 		// Async-load feed supplies
 		getSupplies()
@@ -183,8 +173,8 @@ export default class FeedingScheduleDialog extends Dialog {
 					})),
 				];
 
-				this._form.inputElements.supplyId.options.options = opts;
-				if (schedule.supplyId) this._form.inputElements.supplyId.options.value = schedule.supplyId;
+				this.form.inputElements.supplyId.options.options = opts;
+				if (schedule.supplyId) this.form.inputElements.supplyId.options.value = schedule.supplyId;
 			})
 			.catch(() => {});
 
