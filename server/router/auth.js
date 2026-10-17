@@ -1,6 +1,7 @@
 import { nanoid } from 'nanoid';
 
-import requestMatch from '../utils/requestMatch';
+import { requestMatch } from '@vanilla-bean/components/app';
+
 import settingsDb from '../database/settings';
 import { createSession, getSession, destroySession, sessionCookie, requireRole } from '../auth';
 

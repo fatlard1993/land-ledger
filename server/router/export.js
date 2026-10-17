@@ -1,4 +1,5 @@
-import requestMatch from '../utils/requestMatch';
+import { requestMatch } from '@vanilla-bean/components/app';
+
 import { collectionDBs } from '../database/database';
 import archiveDb from '../database/archive';
 import settingsDb from '../database/settings';

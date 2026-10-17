@@ -1,4 +1,5 @@
-import requestMatch from '../utils/requestMatch';
+import { requestMatch } from '@vanilla-bean/components/app';
+
 import benchmarksDb from '../database/benchmarks';
 
 // ── US state name → NASS two-letter code ──────────────────────────────────────

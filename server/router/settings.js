@@ -1,5 +1,6 @@
+import { requestMatch } from '@vanilla-bean/components/app';
 import settingsDb from '../database/settings';
-import requestMatch from '../utils/requestMatch';
+
 import { requireRole } from '../auth';
 import { setParcelServiceUrl } from './parcelBoundaries';
 import { setAgAnalyticsKey } from './router';

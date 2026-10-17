@@ -1,7 +1,7 @@
+import { requestMatch } from '@vanilla-bean/components/app';
 import { leases } from '../database';
 
 import { entityResponse } from '../utils/entityResponse.js';
-import requestMatch from '../utils/requestMatch';
 
 const leasesRouter = async request => {
 	let match;

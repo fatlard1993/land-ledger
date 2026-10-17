@@ -1,6 +1,7 @@
 import { timingSafeEqual } from 'crypto';
 
-import requestMatch from '../utils/requestMatch';
+import { requestMatch } from '@vanilla-bean/components/app';
+
 import settingsDb from '../database/settings';
 import { collectionDBs } from '../database/database';
 import archiveDb from '../database/archive';

@@ -4,6 +4,7 @@ import os from 'os';
 import path from 'path';
 import { existsSync } from 'fs';
 
+import { hotReload } from '@vanilla-bean/components/app';
 import Argi from 'argi';
 
 import database from './database';
@@ -12,7 +13,7 @@ import { runMigrations } from './database/migrate.js';
 import settingsDb from './database/settings';
 import weatherDb from './database/weather';
 import benchmarksDb from './database/benchmarks';
-import server, { spawnBuild } from './server';
+import server from './server';
 import { setAgAnalyticsKey, setParcelServiceUrl } from './router';
 import { setNassApiKey } from './router/benchmarks';
 import { setTlsActive } from './auth';
@@ -130,7 +131,7 @@ if (process.env.NODE_ENV === 'development') {
 			if (['stop', 'close', 'exit'].includes(line)) process.kill(process.pid, 'SIGTERM');
 			else if (line === 'b') {
 				console.log('>> Building...');
-				spawnBuild();
+				hotReload.rebuild();
 			}
 		}
 	} catch (error) {

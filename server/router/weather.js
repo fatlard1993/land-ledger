@@ -1,5 +1,5 @@
+import { requestMatch } from '@vanilla-bean/components/app';
 import weatherDb from '../database/weather';
-import requestMatch from '../utils/requestMatch';
 
 // Dates older than this many days are served from the archive API (ERA5 reanalysis) and cached.
 // More recent dates are always fetched fresh from the forecast API.

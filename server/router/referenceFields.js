@@ -1,4 +1,4 @@
-import requestMatch from '../utils/requestMatch';
+import { requestMatch } from '@vanilla-bean/components/app';
 
 const OVERPASS_MIRRORS = [
 	'https://overpass-api.de/api/interpreter',

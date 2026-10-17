@@ -1,4 +1,5 @@
-import requestMatch from '../utils/requestMatch';
+import { requestMatch } from '@vanilla-bean/components/app';
+
 import { clearClientPresence } from './presence';
 
 const clients = new Map(); // clientId → ReadableStreamDefaultController

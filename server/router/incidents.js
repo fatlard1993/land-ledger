@@ -1,6 +1,6 @@
+import { requestMatch } from '@vanilla-bean/components/app';
 import { incidents } from '../database';
 import { entityResponse } from '../utils/entityResponse.js';
-import requestMatch from '../utils/requestMatch';
 
 const incidentsRouter = async request => {
 	let match;

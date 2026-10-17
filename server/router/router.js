@@ -1,6 +1,4 @@
-import { nanoid } from 'nanoid';
-
-import requestMatch from '../utils/requestMatch';
+import { requestMatch, serveStatic } from '@vanilla-bean/components/app';
 
 import { requireAuth, requireRole } from '../auth';
 import { enforceJsonBodyLimit, MAX_JSON_BYTES } from '../utils/limitBody.js';
@@ -40,7 +38,6 @@ import presenceRoutes from './presence';
 import authRoutes from './auth';
 import sharedRoutes from './shared';
 import apiDocsRoutes from './apiDocs';
-import staticRoutes from './static';
 
 let _agAnalyticsKey = null;
 
@@ -61,20 +58,13 @@ const dispatch = async (request, handlers) => {
 
 const FINANCIAL_PREFIXES = ['/revenue', '/budget-items', '/loans'];
 
-const router = async (request, server) => {
+const router = async request => {
 	try {
 		// ── App shell ────────────────────────────────────────────────────────────
 		if (requestMatch('GET', '/', request)) return new Response(Bun.file('client/build/index.html'));
 
-		if (process.env.NODE_ENV === 'development') {
-			if (requestMatch('GET', '/ws', request)) {
-				const success = server.upgrade(request, { data: { clientId: nanoid() } });
-				return success ? undefined : new Response('WebSocket upgrade error', { status: 400 });
-			}
-		}
-
 		// ── Public routes (no auth required) ────────────────────────────────────
-		const pub = await dispatch(request, [apiDocsRoutes, authRoutes, sharedRoutes, staticRoutes]);
+		const pub = await dispatch(request, [apiDocsRoutes, authRoutes, sharedRoutes, serveStatic]);
 		if (pub) return pub;
 
 		// ── Body size guard ──────────────────────────────────────────────────────

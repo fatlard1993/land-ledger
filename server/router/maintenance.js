@@ -1,6 +1,6 @@
+import { requestMatch } from '@vanilla-bean/components/app';
 import { maintenance } from '../database';
 import { entityResponse } from '../utils/entityResponse.js';
-import requestMatch from '../utils/requestMatch';
 
 const maintenanceRouter = async request => {
 	let match;

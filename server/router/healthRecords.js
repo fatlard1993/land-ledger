@@ -1,6 +1,6 @@
+import { requestMatch } from '@vanilla-bean/components/app';
 import { healthRecords } from '../database';
 import { entityResponse } from '../utils/entityResponse.js';
-import requestMatch from '../utils/requestMatch';
 
 // Compute withdrawalDate from date + withdrawalDays before writing
 function withWithdrawalDate(body) {

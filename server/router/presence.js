@@ -1,4 +1,4 @@
-import requestMatch from '../utils/requestMatch';
+import { requestMatch } from '@vanilla-bean/components/app';
 
 // clientId → { collection, id, lastSeen }
 const watching = new Map();

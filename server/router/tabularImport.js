@@ -1,4 +1,5 @@
-import requestMatch from '../utils/requestMatch';
+import { requestMatch } from '@vanilla-bean/components/app';
+
 import parseCSV from '../utils/parseCSV';
 import { MAX_FILE_BYTES, MAX_IMPORT_ROWS } from '../utils/limitBody.js';
 import settingsDb from '../database/settings';

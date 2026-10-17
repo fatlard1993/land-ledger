@@ -14,7 +14,7 @@ import { getMe } from './api/auth';
 import context from './context';
 import { wrapFetch, initLiveSync } from './liveSync';
 
-import './hotReload';
+import '@vanilla-bean/components/app/reloadOnBuild';
 
 const onQueueState = mountOfflineIndicator();
 

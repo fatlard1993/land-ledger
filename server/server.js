@@ -1,54 +1,19 @@
+import { hotReload } from '@vanilla-bean/components/app';
+
+import { buildOptions } from '../client/build';
 import router from './router';
 
-const clients = {};
-
-export const reloadClients = () => {
-	Object.entries(clients).forEach(([clientId, socket]) => {
-		console.log(`Reloading ${clientId}`);
-
-		socket.send('hotReload');
-	});
-};
-
-let _buildProcess = null;
-
-process.on('exit', () => {
-	_buildProcess?.kill();
-});
-
-export const spawnBuild = async () => {
-	_buildProcess = Bun.spawn(['bun', 'run', 'build:watch']);
-
-	for await (const chunk of _buildProcess.stdout) {
-		const line = new TextDecoder().decode(chunk);
-
-		console.log(line);
-
-		if (line.includes('build.success')) reloadClients();
-	}
-};
-
 export default {
-	clients,
 	async init({ port, tls }) {
 		let server;
 
 		try {
 			server = Bun.serve({
 				port,
-				fetch: router,
+				fetch: (request, server) => (hotReload.upgrade(request, server) ? undefined : router(request)),
 				idleTimeout: 30, // external API calls (Overpass, Ag-Analytics) can be slow
 				...(tls && { tls }),
-				...(process.env.NODE_ENV === 'development' && {
-					websocket: {
-						open(socket) {
-							clients[socket.data.clientId] = socket;
-						},
-						close(socket) {
-							delete clients[socket.data.clientId];
-						},
-					},
-				}),
+				websocket: hotReload.websocket,
 			});
 		} catch (error) {
 			if (error.code === 'EADDRINUSE') {
@@ -64,7 +29,7 @@ export default {
 		console.log(`Listening on ${protocol}://${server.hostname}:${server.port}`);
 
 		if (process.env.NODE_ENV === 'development') {
-			await spawnBuild();
+			await hotReload.watch(buildOptions);
 		}
 	},
 };

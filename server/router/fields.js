@@ -1,7 +1,7 @@
+import { requestMatch } from '@vanilla-bean/components/app';
 import { fields } from '../database';
 
 import { entityResponse } from '../utils/entityResponse.js';
-import requestMatch from '../utils/requestMatch';
 
 const fieldsRouter = async request => {
 	let match;

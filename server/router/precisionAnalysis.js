@@ -1,6 +1,7 @@
 import { readFile } from 'fs/promises';
+import { requestMatch } from '@vanilla-bean/components/app';
 import { precisionLayers } from '../database';
-import requestMatch from '../utils/requestMatch';
+
 import { layerPointsPath } from './precisionLayers';
 
 // ── Spatial join helpers ───────────────────────────────────────────────────────

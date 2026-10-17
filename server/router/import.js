@@ -1,4 +1,5 @@
-import requestMatch from '../utils/requestMatch';
+import { requestMatch } from '@vanilla-bean/components/app';
+
 import { MAX_FILE_BYTES } from '../utils/limitBody.js';
 
 const importRouter = async request => {
