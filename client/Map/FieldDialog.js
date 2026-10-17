@@ -1,4 +1,4 @@
-import { Dialog, Form, Elem, Select, Button, conditionalList } from '@vanilla-bean/components';
+import { FormDialog, Button, Elem, Select } from '@vanilla-bean/components';
 
 import { geodesicAreaSqm, convertArea, AREA_UNITS } from '../geo';
 import { makePropertiesEditor } from '../utils/PropertiesEditor';
@@ -16,44 +16,60 @@ const ACREAGE_INPUT_STYLE = {
 	fontFamily: 'inherit',
 };
 
-export default class FieldDialog extends Dialog {
+const withoutCallbacks = ({ onSave: _onSave, onDelete: _onDelete, ...options }) => options;
+
+export default class FieldDialog extends FormDialog {
 	constructor(options = {}) {
 		const isEdit = !!options.field?.id;
 		const geometry = options.geometry || options.field?.geometry;
 
+		const field = options.field || {};
+
 		super({
 			size: 'large',
 			header: isEdit ? `Edit Field — ${options.field.name}` : 'New Field',
-			buttons: conditionalList([{ alwaysItem: 'Save' }, { if: isEdit, thenItem: 'Delete' }, { alwaysItem: 'Cancel' }]),
-			onButtonPress: ({ button }) => {
-				if (button === 'Save') {
-					if (this.form.hasErrors()) return;
-
-					const data = {
-						...this.form.options.data,
-						acreage: this._acreageInput?.elem.value || '',
-						acreageUnit: this._unitSelect?.elem.value || 'ac',
-						showLabel: this._showLabelEl?.elem.checked !== false,
-						status: this._statusSelect?.elem.value || '',
-						trialGroup: this._trialGroupEl?.elem.value.trim() || '',
-						trialRole: this._trialRoleSelect?.elem.value || '',
-						properties: this._collectProps?.() ?? {},
-					};
-
-					if (options.geometry && !isEdit) data.geometry = options.geometry;
-					if (isEdit) data.geometry = options.field.geometry;
-
-					options.onSave?.(data);
-				} else if (button === 'Delete') {
-					options.onDelete?.();
-				}
-
-				this.close();
+			data: {
+				name: field.name || options.prefillName || '',
+				tenure: field.tenure || 'own',
 			},
-			...options,
-		});
+			inputs: [
+				{
+					key: 'name',
+					label: 'Field Name',
+					placeholder: 'e.g. Home Farm North',
+					required: true,
+					validate: v => (v ? null : 'Name is required'),
+				},
+				{
+					key: 'tenure',
+					label: 'Tenure',
+					InputComponent: Select,
+					options: [
+						{ label: 'Owned', value: 'own' },
+						{ label: 'Rented', value: 'rent' },
+					],
+				},
+			],
+			onSave: async d => {
+				const data = {
+					...d,
+					acreage: this._acreageInput?.elem.value || '',
+					acreageUnit: this._unitSelect?.elem.value || 'ac',
+					showLabel: this._showLabelEl?.elem.checked !== false,
+					status: this._statusSelect?.elem.value || '',
+					trialGroup: this._trialGroupEl?.elem.value.trim() || '',
+					trialRole: this._trialRoleSelect?.elem.value || '',
+					properties: this._collectProps?.() ?? {},
+				};
 
-		const field = options.field || {};
+				if (options.geometry && !isEdit) data.geometry = options.geometry;
+				if (isEdit) data.geometry = options.field.geometry;
+
+				await options.onSave?.(data);
+			},
+			...(isEdit && { onDelete: async () => options.onDelete?.() }),
+			...withoutCallbacks(options),
+		});
 
 		this._addLabelToggle = (parent, defaultOn = true) => {
 			const row = new Elem({
@@ -85,32 +101,6 @@ export default class FieldDialog extends Dialog {
 		const sqm = geometry ? geodesicAreaSqm(geometry) : null;
 		const calculatedAcreage = sqm ? convertArea(sqm, defaultUnit) : null;
 		const estimatedAcreage = options.acreage || field.acreage || calculatedAcreage || '';
-
-		this.form = new Form({
-			appendTo: this.body,
-			data: {
-				name: field.name || options.prefillName || '',
-				tenure: field.tenure || 'own',
-			},
-			inputs: [
-				{
-					key: 'name',
-					label: 'Field Name',
-					placeholder: 'e.g. Home Farm North',
-					required: true,
-					validate: v => (v ? null : 'Name is required'),
-				},
-				{
-					key: 'tenure',
-					label: 'Tenure',
-					InputComponent: Select,
-					options: [
-						{ label: 'Owned', value: 'own' },
-						{ label: 'Rented', value: 'rent' },
-					],
-				},
-			],
-		});
 
 		if (isEdit) {
 			this.form.addCleanup('conflictWatch', watchFormConflicts(this.form, 'fields', field.id));

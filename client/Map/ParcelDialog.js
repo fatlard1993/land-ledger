@@ -1,4 +1,4 @@
-import { Dialog, Form, Elem, Component, conditionalList } from '@vanilla-bean/components';
+import { FormDialog, Component, Elem } from '@vanilla-bean/components';
 import { makePropertiesEditor } from '../utils/PropertiesEditor';
 import { watchFormConflicts } from '../utils/watchFormConflicts.js';
 
@@ -16,7 +16,9 @@ const ACREAGE_STYLE = {
 	fontFamily: 'inherit',
 };
 
-export default class ParcelDialog extends Dialog {
+const withoutCallbacks = ({ onSave: _onSave, onDelete: _onDelete, ...options }) => options;
+
+export default class ParcelDialog extends FormDialog {
 	constructor(options = {}) {
 		const isEdit = !!options.parcel?.id;
 		const geometry = options.geometry || options.parcel?.geometry;
@@ -25,37 +27,39 @@ export default class ParcelDialog extends Dialog {
 		const calcAcreage = sqm ? convertArea(sqm, defaultUnit) : null;
 		const estimatedAcreage = options.acreage || options.parcel?.acreage || calcAcreage || '';
 
+		const parcel = options.parcel || {};
+
 		super({
 			size: 'large',
 			header: isEdit ? `Edit Property Line — ${options.parcel.name || ''}` : 'Mark Property Line',
-			buttons: conditionalList([{ alwaysItem: 'Save' }, { if: isEdit, thenItem: 'Delete' }, { alwaysItem: 'Cancel' }]),
-			onButtonPress: ({ button }) => {
-				if (button === 'Save') {
-					if (this.form.hasErrors()) return;
-
-					const data = {
-						...this.form.options.data,
-						acreage: this._acreageInput?.elem.value || '',
-						acreageUnit: this._unitSelect?.elem.value || 'ac',
-						status: this._statusSelect?.elem.value || '',
-						showLabel: this._showLabelEl?.elem.checked !== false,
-						properties: this._collectProps?.() ?? {},
-					};
-
-					if (geometry && !isEdit) data.geometry = geometry;
-					if (isEdit) data.geometry = options.parcel.geometry;
-
-					options.onSave?.(data);
-				} else if (button === 'Delete') {
-					options.onDelete?.();
-				}
-
-				this.close();
+			data: {
+				name: parcel.name || '',
+				parcelId: parcel.parcelId || '',
+				owner: parcel.owner || '',
 			},
-			...options,
-		});
+			inputs: [
+				{ key: 'name', label: 'Description', placeholder: 'e.g. North Parcel, Home Quarter' },
+				{ key: 'parcelId', label: 'Parcel / APN #', placeholder: 'Tax parcel ID from county assessor' },
+				{ key: 'owner', label: 'Owner', placeholder: 'Optional — for tracking leased parcels' },
+			],
+			onSave: async d => {
+				const data = {
+					...d,
+					acreage: this._acreageInput?.elem.value || '',
+					acreageUnit: this._unitSelect?.elem.value || 'ac',
+					status: this._statusSelect?.elem.value || '',
+					showLabel: this._showLabelEl?.elem.checked !== false,
+					properties: this._collectProps?.() ?? {},
+				};
 
-		const parcel = options.parcel || {};
+				if (geometry && !isEdit) data.geometry = geometry;
+				if (isEdit) data.geometry = options.parcel.geometry;
+
+				await options.onSave?.(data);
+			},
+			...(isEdit && { onDelete: async () => options.onDelete?.() }),
+			...withoutCallbacks(options),
+		});
 
 		const addLabelToggle = (parent, defaultOn = true) => {
 			const _checkboxId = `label-${Math.random().toString(36).slice(2)}`;
@@ -82,20 +86,6 @@ export default class ParcelDialog extends Dialog {
 				style: { fontSize: '13px', color: 'rgba(255,255,255,0.6)', cursor: 'pointer', userSelect: 'none' },
 			});
 		};
-
-		this.form = new Form({
-			appendTo: this.body,
-			data: {
-				name: parcel.name || '',
-				parcelId: parcel.parcelId || '',
-				owner: parcel.owner || '',
-			},
-			inputs: [
-				{ key: 'name', label: 'Description', placeholder: 'e.g. North Parcel, Home Quarter' },
-				{ key: 'parcelId', label: 'Parcel / APN #', placeholder: 'Tax parcel ID from county assessor' },
-				{ key: 'owner', label: 'Owner', placeholder: 'Optional — for tracking leased parcels' },
-			],
-		});
 
 		if (isEdit) {
 			this.form.addCleanup('conflictWatch', watchFormConflicts(this.form, 'parcels', parcel.id));

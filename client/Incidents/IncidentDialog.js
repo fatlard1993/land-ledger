@@ -1,4 +1,4 @@
-import { Dialog, Elem, conditionalList, Form, Select } from '@vanilla-bean/components';
+import { FormDialog, Elem, conditionalList, Select } from '@vanilla-bean/components';
 import { makePropertiesEditor } from '../utils/PropertiesEditor';
 import { toNum } from '../utils/format.js';
 import { watchFormConflicts } from '../utils/watchFormConflicts.js';
@@ -56,11 +56,51 @@ export const incidentEmoji = type => {
 	return '⚠️';
 };
 
-export default class IncidentDialog extends Dialog {
+const withoutCallbacks = ({ onSave: _onSave, onDelete: _onDelete, ...options }) => options;
+
+export default class IncidentDialog extends FormDialog {
 	constructor(options = {}) {
 		const isEdit = !!options.incident?.id;
 		const incident = options.incident || {};
 		const entityLabel = options.entityName || options.entity?.name || '';
+
+		const typeDatalistId = `inc-type-${Math.random().toString(36).slice(2)}`;
+
+		// Save and Mark Resolved send the same record; Mark Resolved marks it resolved and may restore the entity
+		const payloadFor = (d, button) => {
+			const resolved = button === 'Mark Resolved' ? true : !!d.resolved;
+
+			return {
+				date: d.date,
+				type: d.type,
+				severity: d.severity,
+				entityType: options.entityType || incident.entityType || '',
+				entityId: options.entity?.id || incident.entityId || '',
+				entityName: options.entityName || options.entity?.name || incident.entityName || '',
+				description: d.description,
+				estimatedLoss: toNum(d.estimatedLoss),
+				insuranceClaim: d.insuranceClaim,
+				livestockLosses: lossRows.length
+					? JSON.stringify(
+							lossRows
+								.filter(r => r.lostEl.elem.value || r.injuredEl.elem.value)
+								.map(r => ({
+									eventId: r.eventId,
+									species: r.species,
+									lost: r.lostEl.elem.value ? Number(r.lostEl.elem.value) : 0,
+									injured: r.injuredEl.elem.value ? Number(r.injuredEl.elem.value) : 0,
+								})),
+						)
+					: null,
+				resolved,
+				properties: collectProps(),
+				// entity status changes — only for equipment/buildings
+				entityStatusUpdate: (() => {
+					if (button === 'Mark Resolved') return restoreEl?.elem.checked ? 'active' : null;
+					return statusImpactSelect?.elem.value || null;
+				})(),
+			};
+		};
 
 		super({
 			size: 'large',
@@ -71,65 +111,6 @@ export default class IncidentDialog extends Dialog {
 				{ if: isEdit, thenItem: 'Delete' },
 				{ alwaysItem: 'Cancel' },
 			]),
-			onButtonPress: ({ button }) => {
-				if (button === 'Save' || button === 'Mark Resolved') {
-					const d = this._form.options.data;
-					const resolved = button === 'Mark Resolved' ? true : !!d.resolved;
-
-					options.onSave?.({
-						date: d.date,
-						type: d.type,
-						severity: d.severity,
-						entityType: options.entityType || incident.entityType || '',
-						entityId: options.entity?.id || incident.entityId || '',
-						entityName: options.entityName || options.entity?.name || incident.entityName || '',
-						description: d.description,
-						estimatedLoss: toNum(d.estimatedLoss),
-						insuranceClaim: d.insuranceClaim,
-						livestockLosses: lossRows.length
-							? JSON.stringify(
-									lossRows
-										.filter(r => r.lostEl.elem.value || r.injuredEl.elem.value)
-										.map(r => ({
-											eventId: r.eventId,
-											species: r.species,
-											lost: r.lostEl.elem.value ? Number(r.lostEl.elem.value) : 0,
-											injured: r.injuredEl.elem.value ? Number(r.injuredEl.elem.value) : 0,
-										})),
-								)
-							: null,
-						resolved,
-						properties: collectProps(),
-						// entity status changes — only for equipment/buildings
-						entityStatusUpdate: (() => {
-							if (button === 'Mark Resolved') return restoreEl?.elem.checked ? 'active' : null;
-							return statusImpactSelect?.elem.value || null;
-						})(),
-					});
-				} else if (button === 'Delete') {
-					options.onDelete?.();
-				}
-
-				this.close();
-			},
-			...options,
-		});
-
-		// Type datalist — must exist in DOM before Form so the `list` attribute resolves
-		const typeDatalistId = `inc-type-${Math.random().toString(36).slice(2)}`;
-		const typeDatalist = document.createElement('datalist');
-
-		typeDatalist.id = typeDatalistId;
-		INCIDENT_TYPES.forEach(t => {
-			const o = document.createElement('option');
-			o.value = t;
-			typeDatalist.append(o);
-		});
-		this.body.elem.prepend(typeDatalist);
-
-		// Main form fields
-		this._form = new Form({
-			appendTo: this.body,
 			data: {
 				date: incident.date || new Date().toISOString().slice(0, 10),
 				severity: incident.severity || 'minor',
@@ -182,9 +163,34 @@ export default class IncidentDialog extends Dialog {
 				},
 				{ key: 'resolved', label: 'Incident resolved / closed', type: 'checkbox' },
 			],
+			onSave: async d => {
+				await options.onSave?.(payloadFor(d, 'Save'));
+			},
+			...(isEdit && { onDelete: async () => options.onDelete?.() }),
+			// Mark Resolved is a button of this dialog's own; FormDialog passes it through
+			onButtonPress: async ({ button, closeDialog }) => {
+				if (button !== 'Mark Resolved') return;
+
+				await options.onSave?.(payloadFor({ ...this.form.options.data }, 'Mark Resolved'));
+				closeDialog();
+			},
+			...withoutCallbacks(options),
 		});
 
-		if (isEdit) this._form.addCleanup('conflictWatch', watchFormConflicts(this._form, 'incidents', incident.id));
+		// Type datalist — must exist in DOM before Form so the `list` attribute resolves
+		const typeDatalist = document.createElement('datalist');
+
+		typeDatalist.id = typeDatalistId;
+		INCIDENT_TYPES.forEach(t => {
+			const o = document.createElement('option');
+			o.value = t;
+			typeDatalist.append(o);
+		});
+		this.body.elem.prepend(typeDatalist);
+
+		// Main form fields
+
+		if (isEdit) this.form.addCleanup('conflictWatch', watchFormConflicts(this.form, 'incidents', incident.id));
 
 		// Livestock loss — only shown when the field has active livestock
 		const liveEvents = options.livestockEvents || [];

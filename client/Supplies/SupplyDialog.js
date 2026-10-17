@@ -1,4 +1,4 @@
-import { Dialog, Form, Elem, Component, conditionalList } from '@vanilla-bean/components';
+import { FormDialog, Component, Elem } from '@vanilla-bean/components';
 import { makePropertiesEditor } from '../utils/PropertiesEditor';
 
 import { getBuildings } from '../api';
@@ -66,40 +66,82 @@ export const detectSupplyEmoji = (category, stored) => {
 
 export const supplyLabel = supply => `${detectSupplyEmoji(supply.category, supply.emoji)} ${supply.name}`;
 
-export default class SupplyDialog extends Dialog {
+const withoutCallbacks = ({ onSave: _onSave, onDelete: _onDelete, ...options }) => options;
+
+export default class SupplyDialog extends FormDialog {
 	constructor(options = {}) {
 		const isEdit = !!options.supply?.id;
 		const supply = options.supply || {};
 		const preBuildingId = options.buildingId || supply.buildingId || '';
 
+		const catDatalistId = `supply-cat-${Math.random().toString(36).slice(2)}`;
+
+		const unitDatalistId = `supply-unit-${Math.random().toString(36).slice(2)}`;
+
 		super({
 			size: 'large',
 			header: isEdit ? `Edit Supply — ${supply.name}` : 'Add Supply Item',
-			buttons: conditionalList([{ alwaysItem: 'Save' }, { if: isEdit, thenItem: 'Delete' }, { alwaysItem: 'Cancel' }]),
-			onButtonPress: ({ button }) => {
-				if (button === 'Save') {
-					if (this.form.validate()) return;
-
-					options.onSave?.({
-						...this.form.options.data,
-						emoji: this._getEmoji?.() || '',
-						buildingId: this._buildingId ?? preBuildingId,
-						priceMode: this._priceMode ?? 'markup',
-						markupPercent: this._markupPct ?? '50',
-						pricePerUnit: this._fixedPrice ?? '',
-						properties: this._collectProps?.() ?? {},
-					});
-				} else if (button === 'Delete') {
-					options.onDelete?.();
-				}
-
-				this.close();
+			data: {
+				name: supply.name || '',
+				category: supply.category || '',
+				unit: supply.unit || '',
+				costPerUnit: supply.costPerUnit || '',
+				currentStock: supply.currentStock || '',
 			},
-			...options,
+			inputs: [
+				{
+					key: 'name',
+					label: 'Name',
+					placeholder: 'e.g. Pioneer P1197AM, Ag Lime, Roundup',
+					required: true,
+					validate: v => (v ? null : 'Name is required'),
+				},
+				{
+					key: 'category',
+					label: 'Category',
+					placeholder: 'e.g. Seed, Herbicide, Lime',
+					attributes: { list: catDatalistId },
+					onChange: ({ value }) => {
+						if (!emojiInput.elem.dataset.manual) emojiInput.elem.value = detectSupplyEmoji(value);
+					},
+				},
+				{
+					key: 'unit',
+					label: 'Unit',
+					placeholder: 'e.g. lbs, gallons, bags',
+					attributes: { list: unitDatalistId },
+				},
+				{
+					key: 'costPerUnit',
+					label: 'Cost per Unit ($)',
+					type: 'number',
+					step: '0.01',
+					placeholder: 'e.g. 4.25 per lb',
+				},
+				{
+					key: 'currentStock',
+					label: 'Current Stock (optional)',
+					type: 'number',
+					step: '0.01',
+					placeholder: 'How much on hand',
+				},
+			],
+			onSave: async d => {
+				await options.onSave?.({
+					...d,
+					emoji: this._getEmoji?.() || '',
+					buildingId: this._buildingId ?? preBuildingId,
+					priceMode: this._priceMode ?? 'markup',
+					markupPercent: this._markupPct ?? '50',
+					pricePerUnit: this._fixedPrice ?? '',
+					properties: this._collectProps?.() ?? {},
+				});
+			},
+			...(isEdit && { onDelete: async () => options.onDelete?.() }),
+			...withoutCallbacks(options),
 		});
 
 		// Category datalist
-		const catDatalistId = `supply-cat-${Math.random().toString(36).slice(2)}`;
 		const catDatalist = new Elem({ tag: 'datalist' });
 
 		catDatalist.elem.id = catDatalistId;
@@ -111,7 +153,6 @@ export default class SupplyDialog extends Dialog {
 		this.body.elem.prepend(catDatalist.elem);
 
 		// Unit datalist
-		const unitDatalistId = `supply-unit-${Math.random().toString(36).slice(2)}`;
 		const unitDatalist = new Elem({ tag: 'datalist' });
 
 		unitDatalist.elem.id = unitDatalistId;
@@ -125,7 +166,7 @@ export default class SupplyDialog extends Dialog {
 		// Emoji row
 		const emojiRow = new Elem({
 			tag: 'div',
-			appendTo: this.body,
+			appendTo: this.intro,
 			style: { display: 'flex', alignItems: 'center', gap: '8px', margin: '8px 0' },
 		});
 
@@ -172,7 +213,7 @@ export default class SupplyDialog extends Dialog {
 
 		// If no pre-set building, show a building selector
 		if (!options.buildingId) {
-			const bldgRow = new Elem({ tag: 'div', appendTo: this.body, style: { marginBottom: '4px' } });
+			const bldgRow = new Elem({ tag: 'div', appendTo: this.intro, style: { marginBottom: '4px' } });
 
 			new Elem({
 				tag: 'label',
@@ -219,55 +260,6 @@ export default class SupplyDialog extends Dialog {
 				this._buildingId = buildingSelect.elem.value;
 			});
 		}
-
-		this.form = new Form({
-			appendTo: this.body,
-			data: {
-				name: supply.name || '',
-				category: supply.category || '',
-				unit: supply.unit || '',
-				costPerUnit: supply.costPerUnit || '',
-				currentStock: supply.currentStock || '',
-			},
-			inputs: [
-				{
-					key: 'name',
-					label: 'Name',
-					placeholder: 'e.g. Pioneer P1197AM, Ag Lime, Roundup',
-					required: true,
-					validate: v => (v ? null : 'Name is required'),
-				},
-				{
-					key: 'category',
-					label: 'Category',
-					placeholder: 'e.g. Seed, Herbicide, Lime',
-					attributes: { list: catDatalistId },
-					onChange: ({ value }) => {
-						if (!emojiInput.elem.dataset.manual) emojiInput.elem.value = detectSupplyEmoji(value);
-					},
-				},
-				{
-					key: 'unit',
-					label: 'Unit',
-					placeholder: 'e.g. lbs, gallons, bags',
-					attributes: { list: unitDatalistId },
-				},
-				{
-					key: 'costPerUnit',
-					label: 'Cost per Unit ($)',
-					type: 'number',
-					step: '0.01',
-					placeholder: 'e.g. 4.25 per lb',
-				},
-				{
-					key: 'currentStock',
-					label: 'Current Stock (optional)',
-					type: 'number',
-					step: '0.01',
-					placeholder: 'How much on hand',
-				},
-			],
-		});
 
 		if (isEdit) {
 			this.form.addCleanup('conflictWatch', watchFormConflicts(this.form, 'supplies', supply.id));
