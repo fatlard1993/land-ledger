@@ -180,12 +180,9 @@ export default class EquipmentDialog extends FormDialog {
 		// Emoji row — above form, same pattern as EventDialog
 		const emojiRow = new Elem({
 			tag: 'div',
-			appendTo: this.body,
+			appendTo: this.intro,
 			style: { display: 'flex', alignItems: 'center', gap: '8px', margin: '8px 0' },
 		});
-
-		// Above the form, where it was before the form moved into FormDialog
-		this.form.elem.before(emojiRow.elem);
 
 		const emojiInput = new Elem({
 			tag: 'input',

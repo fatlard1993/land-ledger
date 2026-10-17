@@ -129,12 +129,10 @@ export default class MaintenanceScheduleDialog extends FormDialog {
 		// Template picker
 		let tplSelect;
 
-		let tplLabel;
-
 		if (!isEdit) {
-			tplLabel = new Elem({
+			new Elem({
 				tag: 'label',
-				appendTo: this.body,
+				appendTo: this.intro,
 				textContent: 'Start from template (optional)',
 				style: {
 					display: 'block',
@@ -148,7 +146,7 @@ export default class MaintenanceScheduleDialog extends FormDialog {
 			});
 			tplSelect = new Elem({
 				tag: 'select',
-				appendTo: this.body,
+				appendTo: this.intro,
 				style: {
 					display: 'block',
 					width: '100%',
@@ -179,15 +177,12 @@ export default class MaintenanceScheduleDialog extends FormDialog {
 			}
 		}
 
-		const hint = new Elem({
+		new Elem({
 			tag: 'div',
-			appendTo: this.body,
+			appendTo: this.intro,
 			style: { fontSize: '11px', color: 'rgba(255,255,255,0.3)', marginTop: '10px', marginBottom: '2px' },
 			textContent: 'Set one or both interval types — whichever comes first triggers the reminder',
 		});
-
-		// The template picker and the hint sit above the form, where they were before it moved into FormDialog
-		for (const above of [tplLabel, tplSelect, hint]) if (above) this.form.elem.before(above.elem);
 
 		if (isEdit)
 			this.form.addCleanup('conflictWatch', watchFormConflicts(this.form, 'maintenance-schedules', schedule.id));

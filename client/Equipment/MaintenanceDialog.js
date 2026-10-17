@@ -131,10 +131,10 @@ export default class MaintenanceDialog extends FormDialog {
 		this._workType = defaultWorkType;
 
 		// Work type selector
-		const typeRow = new Component({ appendTo: this.body, style: { display: 'flex', gap: '6px', marginBottom: '4px' } });
-
-		// Above the form, where it was before the form moved into FormDialog
-		this.form.elem.before(typeRow.elem);
+		const typeRow = new Component({
+			appendTo: this.intro,
+			style: { display: 'flex', gap: '6px', marginBottom: '4px' },
+		});
 		const typeButtons = [];
 
 		const refreshTypeBtn = () => {
