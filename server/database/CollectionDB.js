@@ -1,5 +1,5 @@
 import { readFile } from 'fs/promises';
-import { atomicWrite } from './AtomicJSONFile.js';
+import { writeJSON } from './jsonFile.js';
 import { createDebouncedWriter } from './createDebouncedWriter.js';
 
 // Per-collection file-backed store.
@@ -26,7 +26,7 @@ export class CollectionDB {
 			this.data = {};
 		}
 
-		const debouncedWriter = createDebouncedWriter(() => atomicWrite(this.path, this.data));
+		const debouncedWriter = createDebouncedWriter(() => writeJSON(this.path, this.data));
 		this.write = debouncedWriter.write;
 		this.flush = debouncedWriter.flush;
 	}

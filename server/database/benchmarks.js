@@ -1,12 +1,12 @@
 import { Low } from 'lowdb';
-import { AtomicJSONFile } from './AtomicJSONFile.js';
+import { jsonFile } from './jsonFile.js';
 
 const benchmarksDb = {
 	db: null,
 	default: { countyYields: {} },
 	_writeQueue: Promise.resolve(),
 	async init({ path }) {
-		benchmarksDb.db = new Low(new AtomicJSONFile(path), benchmarksDb.default);
+		benchmarksDb.db = new Low(jsonFile(path), benchmarksDb.default);
 		await benchmarksDb.db.read();
 		benchmarksDb.db.data = { ...benchmarksDb.default, ...(benchmarksDb.db.data || {}) };
 		await benchmarksDb.db.write();

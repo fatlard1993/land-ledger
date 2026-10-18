@@ -1,7 +1,7 @@
 import { readFile, unlink } from 'fs/promises';
 import { requestMatch } from '@vanilla-bean/components/app';
 import { precisionLayers } from '../database';
-import { atomicWrite } from '../database/AtomicJSONFile.js';
+import { writeJSON } from '../database/jsonFile.js';
 
 import parseCSV from '../utils/parseCSV';
 import { MAX_FILE_BYTES } from '../utils/limitBody.js';
@@ -198,7 +198,7 @@ const handleImport = async request => {
 			valueUnit,
 			stats,
 		});
-		await atomicWrite(layerPointsPath(record.id), { points: sampled });
+		await writeJSON(layerPointsPath(record.id), { points: sampled });
 	} catch (error) {
 		if (record) await precisionLayers.delete({ id: record.id }).catch(() => {});
 		throw error;

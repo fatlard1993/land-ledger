@@ -1,12 +1,12 @@
 import { Low } from 'lowdb';
-import { AtomicJSONFile } from './AtomicJSONFile.js';
+import { jsonFile } from './jsonFile.js';
 
 const weatherDb = {
 	db: null,
 	default: { cache: {} },
 	_writeQueue: Promise.resolve(),
 	async init({ path }) {
-		weatherDb.db = new Low(new AtomicJSONFile(path), weatherDb.default);
+		weatherDb.db = new Low(jsonFile(path), weatherDb.default);
 
 		await weatherDb.db.read();
 

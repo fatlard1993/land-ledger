@@ -1,5 +1,5 @@
 import { Low } from 'lowdb';
-import { AtomicJSONFile } from './AtomicJSONFile.js';
+import { jsonFile } from './jsonFile.js';
 
 const settingsDb = {
 	db: null,
@@ -13,7 +13,7 @@ const settingsDb = {
 		adminPasskeyIsDefault: false,
 	},
 	async init({ path: dbPath }) {
-		settingsDb.db = new Low(new AtomicJSONFile(dbPath), settingsDb.default);
+		settingsDb.db = new Low(jsonFile(dbPath), settingsDb.default);
 
 		await settingsDb.db.read();
 

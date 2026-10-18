@@ -1,6 +1,6 @@
 import { readFile, readdir } from 'fs/promises';
 import { dirname, basename, join } from 'path';
-import { atomicWrite } from './AtomicJSONFile.js';
+import { writeJSON } from './jsonFile.js';
 
 // ── Collections stored in the archive ─────────────────────────────────────────
 
@@ -121,6 +121,6 @@ export class YearArchiveAdapter {
 		const toWrite = [...this._dirtyYears];
 		this._dirtyYears.clear();
 
-		await Promise.all(toWrite.map(year => atomicWrite(this.yearPath(year), byYear[year] ?? emptyYearData())));
+		await Promise.all(toWrite.map(year => writeJSON(this.yearPath(year), byYear[year] ?? emptyYearData())));
 	}
 }
