@@ -1,4 +1,4 @@
-import { Dialog, Form, Select, Notify } from '@vanilla-bean/components';
+import { FormDialog, Select, Notify } from '@vanilla-bean/components';
 
 import { getFields } from '../api';
 import { createApplicationLog, updateApplicationLog, deleteApplicationLog } from '../api/applicationLogs';
@@ -34,43 +34,18 @@ export const METHODS = [
 
 const PESTICIDE_CATEGORIES = new Set(['herbicide', 'insecticide', 'fungicide']);
 
-export default class ApplicationLogDialog extends Dialog {
+const withoutCallbacks = ({ onSave: _onSave, onDelete: _onDelete, ...options }) => options;
+
+export default class ApplicationLogDialog extends FormDialog {
 	constructor(options = {}) {
 		const isNew = !options.record;
 		const rec = options.record || {};
-
-		const buttons = isNew ? ['Save', 'Cancel'] : ['Save', 'Delete', 'Cancel'];
+		// The inputs' handlers reach the dialog, which exists once super() returns
+		const self = {};
 
 		super({
 			size: 'large',
 			header: isNew ? 'Log Application' : 'Edit Application Record',
-			buttons,
-			onButtonPress: async ({ button }) => {
-				if (button === 'Cancel') {
-					this.close();
-					return;
-				}
-
-				if (button === 'Delete') {
-					try {
-						await deleteApplicationLog(rec.id);
-						options.onDelete?.();
-						this.close();
-					} catch (err) {
-						new Notify({ type: 'error', textContent: err.message || 'Delete failed', timeout: 4000 });
-					}
-					return;
-				}
-
-				await this._save(rec.id, rec._v, isNew, options);
-			},
-			...options,
-		});
-
-		this._manualTotal = false;
-
-		this._form = new Form({
-			appendTo: this.body,
 			data: {
 				date: rec.date || new Date().toISOString().slice(0, 10),
 				fieldId: rec.fieldId || '',
@@ -106,7 +81,7 @@ export default class ApplicationLogDialog extends Dialog {
 							label: 'Acres treated',
 							type: 'number',
 							placeholder: '0.0',
-							onChange: () => this._recalculateTotal(),
+							onChange: () => self.dialog._recalculateTotal(),
 						},
 					],
 				},
@@ -148,7 +123,7 @@ export default class ApplicationLogDialog extends Dialog {
 							label: 'Rate *',
 							type: 'number',
 							placeholder: '22',
-							onChange: () => this._recalculateTotal(),
+							onChange: () => self.dialog._recalculateTotal(),
 						},
 						{
 							key: 'rateUnit',
@@ -162,7 +137,7 @@ export default class ApplicationLogDialog extends Dialog {
 							type: 'number',
 							placeholder: 'auto',
 							onChange: e => {
-								this._manualTotal = !!e.value;
+								self.dialog._manualTotal = !!e.value;
 							},
 						},
 						{
@@ -230,16 +205,35 @@ export default class ApplicationLogDialog extends Dialog {
 					placeholder: 'Any additional notes for the compliance record…',
 				},
 			],
+			onSave: d => self.dialog._save(d, rec.id, rec._v, isNew, options),
+			...(!isNew && {
+				onDelete: async () => {
+					try {
+						await deleteApplicationLog(rec.id);
+						options.onDelete?.();
+
+						return true;
+					} catch (err) {
+						new Notify({ type: 'error', textContent: err.message || 'Delete failed', timeout: 4000 });
+
+						return false;
+					}
+				},
+			}),
+			...withoutCallbacks(options),
 		});
 
+		self.dialog = this;
+		this._manualTotal = false;
+
 		if (!isNew) {
-			this._form.addCleanup('conflictWatch', watchFormConflicts(this._form, 'application-logs', rec.id));
+			this.form.addCleanup('conflictWatch', watchFormConflicts(this.form, 'application-logs', rec.id));
 		}
 
 		// Async-populate the field Select after Form is rendered
 		getFields()
 			.then(d => {
-				const fieldSelect = this._form.inputElements.fieldId;
+				const fieldSelect = this.form.inputElements.fieldId;
 				const opts = [
 					{ label: '— select —', value: '' },
 					...Object.values(d?.body || {})
@@ -254,27 +248,26 @@ export default class ApplicationLogDialog extends Dialog {
 
 	_recalculateTotal() {
 		if (this._manualTotal) return;
-		const d = this._form.options.data;
+		const d = this.form.options.data;
 		const r = parseFloat(d.rate);
 		const a = parseFloat(d.acresTreated);
 		if (r > 0 && a > 0) {
 			const total = (r * a).toFixed(2);
-			this._form.inputElements.totalApplied.options.value = total;
-			this._form.options.data.totalApplied = total;
+			this.form.inputElements.totalApplied.options.value = total;
+			this.form.options.data.totalApplied = total;
 		}
 	}
 
-	async _save(id, _v, isNew, options) {
-		const d = this._form.options.data;
-
+	// FormDialog's save: false keeps the dialog open with what was typed
+	async _save(d, id, _v, isNew, options) {
 		if (!d.date) {
 			new Notify({ type: 'warning', textContent: 'Date is required', timeout: 3000 });
-			return;
+			return false;
 		}
 
 		if (!d.product?.trim()) {
 			new Notify({ type: 'warning', textContent: 'Product name is required', timeout: 3000 });
-			return;
+			return false;
 		}
 
 		const body = {
@@ -309,9 +302,11 @@ export default class ApplicationLogDialog extends Dialog {
 				options.onSave?.(result?.body);
 			}
 
-			this.close();
+			return true;
 		} catch (err) {
 			new Notify({ type: 'error', textContent: err.message || 'Save failed', timeout: 4000 });
+
+			return false;
 		}
 	}
 }
