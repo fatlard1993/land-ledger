@@ -32,7 +32,12 @@ export default class BreedingDialog extends FormDialog {
 					type: 'group',
 					style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' },
 					inputs: [
-						{ key: 'breedingDate', label: 'Breeding date *', type: 'date' },
+						{
+							key: 'breedingDate',
+							label: 'Breeding date *',
+							type: 'date',
+							validate: v => (String(v ?? '').trim() ? null : 'Breeding date is required'),
+						},
 						{
 							key: 'expectedDueDate',
 							label: 'Override due date (leave blank to auto-compute)',
@@ -87,7 +92,6 @@ export default class BreedingDialog extends FormDialog {
 				// Full width — notes
 				{ key: 'notes', label: 'Notes', placeholder: 'Birth weight, complications, etc.' },
 			],
-			// Required fields are checked in _save, which keeps the dialog open (false) when one is missing
 			onSave: () => this._save(rec.id, isNew, options),
 			...(!isNew && {
 				confirmDelete: { header: `Delete this breeding record for ${animalLabel(dam)}?` },
@@ -143,11 +147,6 @@ export default class BreedingDialog extends FormDialog {
 			Object.keys(this.form.inputElements).map(k => [k, this.form.inputElements[k].options.value]),
 		);
 		data.damId = options.dam?.id || options.damId;
-
-		if (!data.breedingDate) {
-			new Notify({ type: 'warning', textContent: 'Breeding date is required', timeout: 3000 });
-			return false;
-		}
 
 		try {
 			const fn = isNew ? createBreedingRecord : body => updateBreedingRecord(id, body);

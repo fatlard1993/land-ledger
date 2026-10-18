@@ -34,7 +34,12 @@ export default class AnimalDialog extends FormDialog {
 					type: 'group',
 					style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' },
 					inputs: [
-						{ key: 'tagId', label: 'Tag / ID *', placeholder: 'Ear tag, tattoo, or RFID' },
+						{
+							key: 'tagId',
+							label: 'Tag / ID *',
+							placeholder: 'Ear tag, tattoo, or RFID',
+							validate: v => (String(v ?? '').trim() ? null : 'Tag / ID is required'),
+						},
 						{ key: 'name', label: 'Name (optional)', placeholder: 'e.g. Bessie' },
 					],
 				},
@@ -100,7 +105,6 @@ export default class AnimalDialog extends FormDialog {
 				// Full width — notes
 				{ key: 'notes', label: 'Notes', placeholder: 'Any notes' },
 			],
-			// Required fields are checked in _save, which keeps the dialog open (false) when one is missing
 			onSave: () => this._save(rec.id, isNew, options),
 			...(!isNew && {
 				confirmDelete: { header: `Delete "${rec.name || rec.tagId || 'this animal'}"?` },
@@ -142,11 +146,6 @@ export default class AnimalDialog extends FormDialog {
 		const data = Object.fromEntries(
 			Object.keys(this.form.inputElements).map(k => [k, this.form.inputElements[k].options.value]),
 		);
-
-		if (!data.tagId) {
-			new Notify({ type: 'warning', textContent: 'Tag / ID is required', timeout: 3000 });
-			return false;
-		}
 
 		try {
 			const fn = isNew ? createAnimal : body => updateAnimal(id, body);

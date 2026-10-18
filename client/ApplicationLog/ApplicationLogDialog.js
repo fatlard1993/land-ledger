@@ -74,7 +74,12 @@ export default class ApplicationLogDialog extends FormDialog {
 					type: 'group',
 					style: { display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px' },
 					inputs: [
-						{ key: 'date', label: 'Date *', type: 'date' },
+						{
+							key: 'date',
+							label: 'Date *',
+							type: 'date',
+							validate: v => (String(v ?? '').trim() ? null : 'Date is required'),
+						},
 						{ key: 'fieldId', label: 'Field', InputComponent: Select, options: [{ label: '— select —', value: '' }] },
 						{
 							key: 'acresTreated',
@@ -261,16 +266,6 @@ export default class ApplicationLogDialog extends FormDialog {
 
 	// FormDialog's save: false keeps the dialog open with what was typed
 	async _save(d, id, _v, isNew, options) {
-		if (!d.date) {
-			new Notify({ type: 'warning', textContent: 'Date is required', timeout: 3000 });
-			return false;
-		}
-
-		if (!d.product?.trim()) {
-			new Notify({ type: 'warning', textContent: 'Product name is required', timeout: 3000 });
-			return false;
-		}
-
 		const body = {
 			date: d.date,
 			fieldId: d.fieldId || null,

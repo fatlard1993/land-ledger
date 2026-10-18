@@ -31,7 +31,12 @@ export default class HealthRecordDialog extends FormDialog {
 					type: 'group',
 					style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' },
 					inputs: [
-						{ key: 'date', label: 'Date *', type: 'date' },
+						{
+							key: 'date',
+							label: 'Date *',
+							type: 'date',
+							validate: v => (String(v ?? '').trim() ? null : 'Date is required'),
+						},
 						{
 							key: 'type',
 							label: 'Type',
@@ -46,7 +51,12 @@ export default class HealthRecordDialog extends FormDialog {
 					],
 				},
 				// Full width — drug
-				{ key: 'drug', label: 'Drug / vaccine name *', placeholder: 'e.g. Ivermectin, BoviShield' },
+				{
+					key: 'drug',
+					label: 'Drug / vaccine name *',
+					placeholder: 'e.g. Ivermectin, BoviShield',
+					validate: v => (String(v ?? '').trim() ? null : 'Drug / vaccine name is required'),
+				},
 				// Row 2 — dose + route
 				{
 					type: 'group',
@@ -75,7 +85,6 @@ export default class HealthRecordDialog extends FormDialog {
 				// Full width — notes
 				{ key: 'notes', label: 'Notes', placeholder: 'Observations, lot number, etc.' },
 			],
-			// Required fields are checked in _save, which keeps the dialog open (false) when one is missing
 			onSave: () => this._save(rec.id, isNew, options),
 			...(!isNew && {
 				confirmDelete: { header: `Delete this ${rec.type || 'health'} record for ${animalLabel(animal)}?` },
@@ -126,15 +135,6 @@ export default class HealthRecordDialog extends FormDialog {
 			Object.keys(this.form.inputElements).map(k => [k, this.form.inputElements[k].options.value]),
 		);
 		data.animalId = options.animal?.id || options.animalId;
-
-		if (!data.date) {
-			new Notify({ type: 'warning', textContent: 'Date is required', timeout: 3000 });
-			return false;
-		}
-		if (!data.drug) {
-			new Notify({ type: 'warning', textContent: 'Drug / vaccine name is required', timeout: 3000 });
-			return false;
-		}
 
 		try {
 			const fn = isNew ? createHealthRecord : body => updateHealthRecord(id, body);
