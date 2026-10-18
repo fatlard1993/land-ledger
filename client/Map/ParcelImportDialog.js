@@ -1,4 +1,4 @@
-import { Dialog, Component, Elem, Button } from '@vanilla-bean/components';
+import { Button, Component, Dialog, Elem, Input } from '@vanilla-bean/components';
 import { styled } from '@vanilla-bean/components';
 
 const DropZone = styled(
@@ -70,11 +70,6 @@ export default class ParcelImportDialog extends Dialog {
 		});
 
 		const dropZone = new DropZone({ appendTo: this.body });
-		const fileInput = new Elem({
-			tag: 'input',
-			appendTo: dropZone,
-			attributes: { type: 'file', accept: '.geojson,.json', style: 'display:none' },
-		});
 
 		new Elem({ tag: 'div', appendTo: dropZone, style: { fontSize: '28px', marginBottom: '6px' }, textContent: '📐' });
 		new Elem({
@@ -84,21 +79,13 @@ export default class ParcelImportDialog extends Dialog {
 			textContent: 'Drop county parcel GeoJSON here or tap to browse',
 		});
 
-		dropZone.onPointerPress(() => fileInput.elem.click());
-		dropZone.elem.addEventListener('dragover', e => {
-			e.preventDefault();
-			dropZone.addClass('drag-over');
-		});
-		dropZone.elem.addEventListener('dragleave', () => dropZone.removeClass('drag-over'));
-		dropZone.elem.addEventListener('drop', e => {
-			e.preventDefault();
-			dropZone.removeClass('drag-over');
-			const f = e.dataTransfer?.files?.[0];
-			if (f) this._process(f);
-		});
-		fileInput.elem.addEventListener('change', () => {
-			const f = fileInput.elem.files?.[0];
-			if (f) this._process(f);
+		new Input({
+			type: 'file',
+			accept: '.geojson,.json',
+			style: { display: 'none' },
+			dropZone,
+			onFiles: ([file]) => this._process(file),
+			appendTo: dropZone,
 		});
 
 		this._preview = new Component({ appendTo: this.body });

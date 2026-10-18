@@ -1,4 +1,4 @@
-import { Dialog, Component, Elem, Button, Notify, styled } from '@vanilla-bean/components';
+import { Button, Component, Dialog, Elem, Input, Notify, styled } from '@vanilla-bean/components';
 
 import {
 	parseTabularFile,
@@ -155,12 +155,6 @@ export default class TabularImportDialog extends Dialog {
 
 		const dropZone = new DropZone({ appendTo: this.body });
 
-		const fileInput = new Elem({
-			tag: 'input',
-			appendTo: dropZone,
-			attributes: { type: 'file', accept: '.csv,.json,.tsv', style: 'display:none' },
-		});
-
 		new Elem({ tag: 'div', appendTo: dropZone, style: { fontSize: '32px', marginBottom: '6px' }, textContent: '📂' });
 		new Elem({
 			tag: 'div',
@@ -170,23 +164,13 @@ export default class TabularImportDialog extends Dialog {
 		});
 		new Elem({ tag: 'div', appendTo: dropZone, style: { fontSize: '12px' }, textContent: '.csv • .json' });
 
-		dropZone.onPointerPress(() => fileInput.elem.click());
-		dropZone.elem.addEventListener('dragover', e => {
-			e.preventDefault();
-			dropZone.addClass('drag-over');
-		});
-		dropZone.elem.addEventListener('dragleave', () => dropZone.removeClass('drag-over'));
-		dropZone.elem.addEventListener('drop', e => {
-			e.preventDefault();
-			dropZone.removeClass('drag-over');
-			const file = e.dataTransfer?.files?.[0];
-
-			if (file) this._loadFile(file);
-		});
-		fileInput.elem.addEventListener('change', () => {
-			const file = fileInput.elem.files?.[0];
-
-			if (file) this._loadFile(file);
+		new Input({
+			type: 'file',
+			accept: '.csv,.json,.tsv',
+			style: { display: 'none' },
+			dropZone,
+			onFiles: ([file]) => this._loadFile(file),
+			appendTo: dropZone,
 		});
 	}
 

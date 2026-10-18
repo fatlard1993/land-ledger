@@ -1,7 +1,24 @@
-import { Dialog, Component, Elem, Button, Notify } from '@vanilla-bean/components';
+import { Button, Component, Dialog, Elem, Input, Notify, styled } from '@vanilla-bean/components';
 import { getFields } from '../api';
 import { previewPrecisionFile, importPrecisionLayer } from '../api/precisionLayers';
 import { FormLabel, FormInput, FormSelect } from '../Layout';
+
+const DropZone = styled(
+	Component,
+	() => `
+		border: 2px dashed rgba(255,255,255,0.2);
+		border-radius: 8px;
+		padding: 28px 16px;
+		text-align: center;
+		cursor: pointer;
+		color: rgba(255,255,255,0.4);
+		transition: border-color 0.15s;
+
+		&.drag-over {
+			border-color: rgba(74,144,217,0.6);
+		}
+	`,
+);
 
 export default class PrecisionLayerImport extends Dialog {
 	constructor(options = {}) {
@@ -26,48 +43,17 @@ export default class PrecisionLayerImport extends Dialog {
 				'Import yield maps and as-applied maps from combine or planter monitors. Accepts CSV (with Lat/Lon columns) or GeoJSON with Point features.',
 		});
 
-		const dropZone = new Elem({
-			tag: 'div',
-			appendTo: this.body,
-			style: {
-				border: '2px dashed rgba(255,255,255,0.2)',
-				borderRadius: '8px',
-				padding: '28px 16px',
-				textAlign: 'center',
-				cursor: 'pointer',
-				color: 'rgba(255,255,255,0.4)',
-				transition: 'border-color 0.15s',
-			},
-		});
+		const dropZone = new DropZone({ appendTo: this.body });
 		dropZone.elem.innerHTML =
 			'<div style="font-size:28px;margin-bottom:6px">📡</div><div style="font-size:14px">Drop CSV or GeoJSON file here, or tap to browse</div><div style="font-size:11px;margin-top:4px">.csv &nbsp;·&nbsp; .json &nbsp;·&nbsp; .geojson</div>';
 
-		const fileInput = new Elem({ tag: 'input', appendTo: this.body });
-		fileInput.elem.type = 'file';
-		fileInput.elem.accept = '.csv,.json,.geojson';
-		fileInput.elem.style.display = 'none';
-
-		const over = () => {
-			dropZone.elem.style.borderColor = 'rgba(74,144,217,0.6)';
-		};
-		const out = () => {
-			dropZone.elem.style.borderColor = 'rgba(255,255,255,0.2)';
-		};
-		dropZone.elem.addEventListener('click', () => fileInput.elem.click());
-		dropZone.elem.addEventListener('dragover', e => {
-			e.preventDefault();
-			over();
-		});
-		dropZone.elem.addEventListener('dragleave', out);
-		dropZone.elem.addEventListener('drop', e => {
-			e.preventDefault();
-			out();
-			const f = e.dataTransfer?.files?.[0];
-			if (f) this._loadFile(f);
-		});
-		fileInput.elem.addEventListener('change', () => {
-			const f = fileInput.elem.files?.[0];
-			if (f) this._loadFile(f);
+		new Input({
+			type: 'file',
+			accept: '.csv,.json,.geojson',
+			style: { display: 'none' },
+			dropZone,
+			onFiles: ([file]) => this._loadFile(file),
+			appendTo: this.body,
 		});
 	}
 
