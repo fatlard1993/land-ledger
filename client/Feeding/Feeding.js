@@ -1,4 +1,4 @@
-import { Elem, Component, Button } from '@vanilla-bean/components';
+import { Button, Component, Elem, formatDate } from '@vanilla-bean/components';
 
 import AsyncView from '../AsyncView';
 
@@ -14,7 +14,6 @@ import {
 import context from '../context';
 import { PageView, PageToolbar, PageTitle, AppEmptyState, SectionHeader, Card } from '../Layout';
 import FeedingScheduleDialog, { frequencyLabel } from '../Livestock/FeedingScheduleDialog';
-import { formatDate } from '../utils/dates';
 
 const feedIcon = ft => {
 	if (/hay|straw|forage/i.test(ft)) return '🌾';

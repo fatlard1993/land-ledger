@@ -1,4 +1,4 @@
-import { Elem, Component, Button } from '@vanilla-bean/components';
+import { Button, Component, Elem, formatDate } from '@vanilla-bean/components';
 
 import AsyncView from '../AsyncView';
 
@@ -22,7 +22,6 @@ import { frequencyInterval, frequencyLabel } from '../Livestock/FeedingScheduleD
 import { incidentEmoji, severityMeta } from '../Incidents/IncidentDialog';
 import { categoryMeta, eventEmoji } from '../Timeline/EventDialog';
 import context from '../context';
-import { formatDate } from '../utils/dates';
 
 const TODAY = () => new Date();
 const daysBetween = (a, b) => (b - a) / 86_400_000;

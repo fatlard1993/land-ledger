@@ -1,4 +1,4 @@
-import { Elem, Button, Icon, Component, styled } from '@vanilla-bean/components';
+import { Button, Component, Elem, Icon, formatDate, styled } from '@vanilla-bean/components';
 
 import AsyncView from '../AsyncView';
 
@@ -10,7 +10,6 @@ import SeasonCharts from '../Charts/SeasonCharts';
 
 import TabularImportDialog from '../Import/TabularImportDialog';
 import ExportDialog from '../Export/ExportDialog';
-import { formatDate } from '../utils/dates';
 import EventDialog, { categoryMeta, eventEmoji } from './EventDialog';
 
 const CURRENT_YEAR = new Date().getFullYear();
@@ -481,7 +480,11 @@ export default class Timeline extends AsyncView {
 
 		if (field) new Elem({ tag: 'span', appendTo: metaEl, textContent: field.name || 'Unnamed Field' });
 
-		new Elem({ tag: 'span', appendTo: metaEl, textContent: formatDate(event.date, { short: true }) });
+		new Elem({
+			tag: 'span',
+			appendTo: metaEl,
+			textContent: formatDate(event.date, { month: 'numeric', day: 'numeric' }),
+		});
 
 		const d = details;
 

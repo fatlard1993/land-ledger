@@ -1,4 +1,4 @@
-import { Elem } from '@vanilla-bean/components';
+import { Elem, formatDate } from '@vanilla-bean/components';
 
 import AsyncView from '../AsyncView';
 
@@ -6,7 +6,6 @@ import { getMaintenance, getEquipment, updateMaintenance, deleteMaintenance } fr
 import context from '../context';
 import { PageView, PageToolbar, PageTitle, Card, AppEmptyState, SectionHeader } from '../Layout';
 import MaintenanceDialog, { WORK_TYPES } from '../Equipment/MaintenanceDialog';
-import { formatDate } from '../utils/dates';
 
 const workTypeMeta = value => WORK_TYPES.find(w => w.value === value) || WORK_TYPES[0];
 

@@ -1,4 +1,4 @@
-import { Component, Elem, Button } from '@vanilla-bean/components';
+import { Button, Component, Elem, formatDate } from '@vanilla-bean/components';
 
 import { ActionHeader, SectionHeader } from '../Layout';
 import { formatDollar } from '../utils/format';
@@ -18,7 +18,6 @@ import {
 	updateRevenue,
 	deleteRevenue,
 } from '../api';
-import { formatDate } from '../utils/dates';
 import { openRevenueDialog } from './EntityRevenue';
 
 export async function renderBuildingInventory(building, refresh, appendTo) {
@@ -221,7 +220,7 @@ export async function renderEntityRevenue(entityType, entity, refresh, appendTo)
 			tag: 'div',
 			appendTo: right,
 			style: { fontSize: '11px', color: 'rgba(255,255,255,0.3)' },
-			textContent: formatDate(rec.date, { empty: '—' }),
+			textContent: formatDate(rec.date) || '—',
 		});
 
 		row.onPointerPress(() =>

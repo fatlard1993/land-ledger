@@ -1,11 +1,10 @@
-import { Elem } from '@vanilla-bean/components';
+import { Elem, formatDate } from '@vanilla-bean/components';
 
 import AsyncView from '../AsyncView';
 
 import { getIncidents, updateIncident, deleteIncident } from '../api';
 import context from '../context';
 import { PageView, PageToolbar, PageTitle, Card, AppEmptyState, SectionHeader } from '../Layout';
-import { formatDate } from '../utils/dates';
 import IncidentDialog, { incidentEmoji, severityMeta } from './IncidentDialog';
 
 const entityIcon = type => ({ field: '📋', building: '🏚️', equipment: '🚜' })[type] || '📋';

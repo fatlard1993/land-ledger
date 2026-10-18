@@ -1,6 +1,8 @@
 import { afterAll, beforeAll, describe, expect, test } from 'bun:test';
 
-import { daysAgo, daysAgoLabel, formatDate, parseDate } from './dates';
+import { formatDate, parseDate } from '@vanilla-bean/components';
+
+import { daysAgo, daysAgoLabel } from './dates';
 
 // Chicago, where UTC midnight is the evening before; restored after, since the time zone is process-wide
 describe('dates, west of Greenwich', () => {
@@ -16,7 +18,7 @@ describe('dates, west of Greenwich', () => {
 	test('a date-only value is that calendar day, not the day before', () => {
 		expect(parseDate('2026-10-18').getDate()).toBe(18);
 		expect(formatDate('2026-10-18')).toBe(new Date(2026, 9, 18).toLocaleDateString());
-		expect(formatDate('2026-03-01', { short: true })).toBe('3/1');
+		expect(formatDate('2026-03-01', { locale: 'en-US', month: 'numeric', day: 'numeric' })).toBe('3/1');
 	});
 
 	test('a full timestamp keeps its instant', () => {
@@ -25,7 +27,7 @@ describe('dates, west of Greenwich', () => {
 
 	test('missing and unreadable values', () => {
 		expect(formatDate('')).toBe('');
-		expect(formatDate(null, { empty: '—' })).toBe('—');
+		expect(formatDate(null) || '—').toBe('—');
 		expect(formatDate('soon')).toBe('soon');
 	});
 

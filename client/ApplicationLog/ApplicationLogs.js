@@ -1,4 +1,4 @@
-import { Button, Icon, Table } from '@vanilla-bean/components';
+import { Button, Icon, Table, formatDate } from '@vanilla-bean/components';
 
 import AsyncView from '../AsyncView';
 
@@ -7,7 +7,6 @@ import { PageView, PageToolbar, PageTitle, AppEmptyState } from '../Layout';
 import context from '../context';
 import ExportDialog from '../Export/ExportDialog';
 
-import { formatDate } from '../utils/dates';
 import ApplicationLogDialog, { CATEGORIES } from './ApplicationLogDialog';
 
 const catMeta = val => CATEGORIES.find(c => c.value === val) || CATEGORIES.at(-1);
@@ -64,7 +63,7 @@ export default class ApplicationLogs extends AsyncView {
 
 		const data = all.map(log => ({
 			...log,
-			_date: formatDate(log.date, { empty: '—' }),
+			_date: formatDate(log.date) || '—',
 			_rate: log.rate ? `${log.rate} ${log.rateUnit || ''}`.trim() : '—',
 			_field: fieldMap[log.fieldId]?.name || '—',
 		}));

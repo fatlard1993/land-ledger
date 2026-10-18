@@ -1,4 +1,4 @@
-import { Component, Elem, Button } from '@vanilla-bean/components';
+import { Button, Component, Elem, formatDate } from '@vanilla-bean/components';
 
 import { ActionHeader } from '../Layout';
 import { formatDollar } from '../utils/format';
@@ -14,7 +14,6 @@ import {
 	updateEquipment,
 } from '../api';
 import { scheduleStatus } from '../utils/maintenanceUtils';
-import { formatDate } from '../utils/dates';
 
 export async function renderMaintenanceSection(equipment, maintenance, schedules, { refresh, appendTo }) {
 	const item = equipment;
@@ -265,7 +264,7 @@ export async function renderMaintenanceSection(equipment, maintenance, schedules
 				paddingLeft: '8px',
 				marginTop: '2px',
 			},
-			textContent: formatDate(rec.date, { empty: '—' }),
+			textContent: formatDate(rec.date) || '—',
 		});
 
 		row.onPointerPress(

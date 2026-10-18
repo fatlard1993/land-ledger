@@ -1,4 +1,4 @@
-import { Elem, Button, Icon, Component } from '@vanilla-bean/components';
+import { Button, Component, Elem, Icon, formatDate } from '@vanilla-bean/components';
 
 import AsyncView from '../AsyncView';
 
@@ -16,7 +16,6 @@ import {
 import context from '../context';
 import { PageView, PageToolbar, PageTitle, Card, AppEmptyState, SectionHeader } from '../Layout';
 
-import { formatDate } from '../utils/dates';
 import LeaseDialog, { rateLabel } from './LeaseDialog';
 
 const daysUntil = dateStr => {

@@ -1,4 +1,4 @@
-import { Component, Elem, Button, Dialog } from '@vanilla-bean/components';
+import { Button, Component, Dialog, Elem, formatDate } from '@vanilla-bean/components';
 
 import {
 	getFeedingSchedules,
@@ -12,7 +12,7 @@ import {
 import { frequencyLabel, frequencyInterval } from '../Livestock/FeedingScheduleDialog';
 import FeedingScheduleDialog from '../Livestock/FeedingScheduleDialog';
 import { SectionHeader, FormLabel, FormInput } from '../Layout';
-import { daysAgoLabel, formatDate } from '../utils/dates';
+import { daysAgoLabel } from '../utils/dates';
 
 const feedIcon = ft => {
 	if (/hay|straw|forage/i.test(ft)) return '🌾';
@@ -317,7 +317,7 @@ export async function renderFeedingSection(field, livestockEvents, refresh, cont
 			tag: 'span',
 			appendTo: row,
 			style: { flexShrink: '0', color: 'rgba(255,255,255,0.25)' },
-			textContent: formatDate(log.date, { empty: '—' }),
+			textContent: formatDate(log.date) || '—',
 		});
 
 		new Button({

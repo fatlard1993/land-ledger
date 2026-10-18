@@ -1,4 +1,4 @@
-import { Component, Elem, Button } from '@vanilla-bean/components';
+import { Button, Component, Elem, formatDate } from '@vanilla-bean/components';
 
 import { ActionHeader, SquareBadge } from '../Layout';
 import { formatDollar } from '../utils/format';
@@ -13,7 +13,6 @@ import {
 	updateBuilding,
 	updateEvent,
 } from '../api';
-import { formatDate } from '../utils/dates';
 
 export async function renderIncidents(entityType, entity, refresh, appendTo, { livestockEvents = [] } = {}) {
 	const data = await getIncidents();
@@ -146,7 +145,7 @@ export async function renderIncidents(entityType, entity, refresh, appendTo, { l
 				paddingLeft: '6px',
 				marginTop: '2px',
 			},
-			textContent: formatDate(rec.date, { empty: '—' }),
+			textContent: formatDate(rec.date) || '—',
 		});
 
 		row.onPointerPress(
