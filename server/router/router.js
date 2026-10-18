@@ -1,4 +1,4 @@
-import { ConflictError, requestMatch, serveStatic } from '@vanilla-bean/components/app';
+import { ConflictError, sameOrigin, serveApp, serveStatic, withErrors } from '@vanilla-bean/components/app';
 
 import { requireAuth, requireRole } from '../auth';
 import { enforceJsonBodyLimit, MAX_JSON_BYTES } from '../utils/limitBody.js';
@@ -39,10 +39,19 @@ const dispatch = async (request, handlers) => {
 
 const FINANCIAL_PREFIXES = ['/revenue', '/budget-items', '/loans'];
 
+// land-ledger's routes sit at the root, so the page is served only where nothing else answered
+const APP = { api: false };
+
 const router = async request => {
 	try {
+		// ── Cross-site guard ─────────────────────────────────────────────────────
+		// Another site's page can't write here or attach a socket, whatever its cookies
+		if (!sameOrigin(request)) return new Response('Cross-origin request refused', { status: 403 });
+
 		// ── App shell ────────────────────────────────────────────────────────────
-		if (requestMatch('GET', '/', request)) return new Response(Bun.file('client/build/index.html'));
+		const { pathname } = new URL(request.url);
+
+		if (pathname === '/' || pathname === '/index.html') return serveApp(request, APP);
 
 		// ── Public routes (no auth required) ────────────────────────────────────
 		const pub = await dispatch(request, [apiDocsRoutes, authRoutes, sharedRoutes, serveStatic]);
@@ -64,7 +73,6 @@ const router = async request => {
 		if (authGuard) return authGuard;
 
 		// Financial routes require the financials (or admin) role in addition to auth
-		const { pathname } = new URL(request.url);
 		if (FINANCIAL_PREFIXES.some(p => pathname.startsWith(p))) {
 			const roleGuard = requireRole(request, ['financials', 'admin']);
 			if (roleGuard) return roleGuard;
@@ -102,18 +110,19 @@ const router = async request => {
 			return response;
 		}
 
-		return request.method === 'GET'
-			? new Response(Bun.file('client/build/index.html'))
-			: new Response('Not Found', { status: 404 });
+		// The page for any other GET, so the client's router has every path; a missing file is a 404
+		return (await serveApp(request, APP)) ?? new Response('Not Found', { status: 404 });
 	} catch (error) {
-		if (error instanceof SyntaxError) return new Response('Invalid JSON', { status: 400 });
 		// The client's conflict dialog reads { _conflict, current }
-		if (error instanceof ConflictError) return Response.json({ _conflict: true, current: error.current }, { status: 409 });
+		if (error instanceof ConflictError) {
+			return Response.json({ _conflict: true, current: error.current }, { status: 409 });
+		}
 
-		console.error(`[router] ${request.method} ${request.url} failed:`, error);
-
-		return new Response('Server Error', { status: 500 });
+		throw error;
 	}
 };
 
-export default router;
+// Bad JSON and invalid fields answer 400; anything else is logged and answers 500
+export default withErrors(router, {
+	log: (...args) => console.error('[router]', ...args),
+});

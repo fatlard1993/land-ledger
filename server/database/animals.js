@@ -1,7 +1,8 @@
 import { collectionDBs } from './database';
 import { collectionStore } from './store';
 
-const animals = collectionStore([
+const animals = collectionStore(
+	[
 		'tagId', // ear tag, tattoo, or RFID — primary identifier
 		'name', // optional name (Bessie, etc.)
 		'species', // cattle | sheep | goat | pig | horse | chicken | alpaca | llama | other
@@ -14,6 +15,8 @@ const animals = collectionStore([
 		'status', // active | deceased | sold | transferred
 		'notes',
 		'properties',
-	], collectionDBs.animals);
+	],
+	collectionDBs.animals,
+);
 
 export default animals;

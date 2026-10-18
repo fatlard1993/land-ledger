@@ -1,7 +1,8 @@
 import { collectionDBs } from './database';
 import { collectionStore } from './store';
 
-const equipment = collectionStore([
+const equipment = collectionStore(
+	[
 		'name',
 		'type',
 		'tenure',
@@ -16,6 +17,8 @@ const equipment = collectionStore([
 		'showLabel',
 		'notes',
 		'properties',
-	], collectionDBs.equipment);
+	],
+	collectionDBs.equipment,
+);
 
 export default equipment;

@@ -84,3 +84,38 @@ describe('derived fields', () => {
 		expect(withWithdrawalDate({ date: '2025-06-01' }).withdrawalDate).toBe('');
 	});
 });
+
+describe('the router', () => {
+	const request = (path, init = {}) =>
+		router(
+			new Request(`http://localhost:7450${path}`, {
+				...init,
+				headers: { 'content-type': 'application/json', ...init.headers },
+			}),
+		);
+
+	test("another site's page can't write, though a script with no Origin can", async () => {
+		// The test DOM's Request drops Origin, so the cross-site write is built by hand
+		const crossSite = {
+			method: 'POST',
+			url: 'http://localhost:7450/fields',
+			headers: new Map([
+				['origin', 'https://evil.example'],
+				['host', 'localhost:7450'],
+			]),
+		};
+
+		expect((await router(crossSite)).status).toBe(403);
+		expect((await request('/fields', { method: 'POST', body: JSON.stringify({ name: 'x' }) })).status).toBe(201);
+	});
+
+	test('the page always revalidates; a file that is gone is a 404, not the page', async () => {
+		expect((await request('/')).headers.get('cache-control')).toBe('no-cache');
+		expect((await request('/chunk-from-last-build.js')).status).toBe(404);
+	});
+
+	test('a body that is not JSON answers 400, an unknown write 404', async () => {
+		expect((await request('/fields', { method: 'POST', body: '{bad' })).status).toBe(400);
+		expect((await request('/nowhere', { method: 'POST', body: '{}' })).status).toBe(404);
+	});
+});

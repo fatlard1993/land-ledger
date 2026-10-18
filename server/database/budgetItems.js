@@ -1,7 +1,8 @@
 import { collectionDBs } from './database';
 import { collectionStore } from './store';
 
-const budgetItems = collectionStore([
+const budgetItems = collectionStore(
+	[
 		'name',
 		'type',
 		'category',
@@ -14,6 +15,8 @@ const budgetItems = collectionStore([
 		'endDate',
 		'notes',
 		'properties',
-	], collectionDBs.budgetItems);
+	],
+	collectionDBs.budgetItems,
+);
 
 export default budgetItems;

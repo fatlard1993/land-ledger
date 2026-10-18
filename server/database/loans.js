@@ -1,7 +1,8 @@
 import { collectionDBs } from './database';
 import { collectionStore } from './store';
 
-const loans = collectionStore([
+const loans = collectionStore(
+	[
 		'entityType',
 		'entityId',
 		'entityName',
@@ -20,6 +21,8 @@ const loans = collectionStore([
 		'paymentDates',
 		'notes',
 		'properties',
-	], collectionDBs.loans);
+	],
+	collectionDBs.loans,
+);
 
 export default loans;

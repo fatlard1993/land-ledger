@@ -1,7 +1,8 @@
 import { collectionDBs } from './database';
 import { collectionStore } from './store';
 
-const supplies = collectionStore([
+const supplies = collectionStore(
+	[
 		'name',
 		'category',
 		'emoji',
@@ -14,6 +15,8 @@ const supplies = collectionStore([
 		'buildingId',
 		'notes',
 		'properties',
-	], collectionDBs.supplies);
+	],
+	collectionDBs.supplies,
+);
 
 export default supplies;

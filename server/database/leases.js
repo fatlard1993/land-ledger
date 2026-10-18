@@ -1,7 +1,8 @@
 import { collectionDBs } from './database';
 import { collectionStore } from './store';
 
-const leases = collectionStore([
+const leases = collectionStore(
+	[
 		// which side of the agreement
 		'role', // 'tenant' (I pay) | 'lessor' (I receive)
 		// entity being leased
@@ -34,6 +35,8 @@ const leases = collectionStore([
 		'paymentDates',
 		'notes',
 		'properties',
-	], collectionDBs.leases);
+	],
+	collectionDBs.leases,
+);
 
 export default leases;
