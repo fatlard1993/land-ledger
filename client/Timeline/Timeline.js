@@ -10,6 +10,7 @@ import SeasonCharts from '../Charts/SeasonCharts';
 
 import TabularImportDialog from '../Import/TabularImportDialog';
 import ExportDialog from '../Export/ExportDialog';
+import { formatDate } from '../utils/dates';
 import EventDialog, { categoryMeta, eventEmoji } from './EventDialog';
 
 const CURRENT_YEAR = new Date().getFullYear();
@@ -89,13 +90,6 @@ styled(
 		}
 	`,
 );
-
-const formatDate = d => {
-	if (!d) return '';
-	const date = new Date(`${d}T12:00:00`);
-
-	return isNaN(date) ? d : `${date.getMonth() + 1}/${date.getDate()}`;
-};
 
 export default class Timeline extends AsyncView {
 	_view = 'timeline'; // 'timeline' | 'insights'
@@ -487,7 +481,7 @@ export default class Timeline extends AsyncView {
 
 		if (field) new Elem({ tag: 'span', appendTo: metaEl, textContent: field.name || 'Unnamed Field' });
 
-		new Elem({ tag: 'span', appendTo: metaEl, textContent: formatDate(event.date) });
+		new Elem({ tag: 'span', appendTo: metaEl, textContent: formatDate(event.date, { short: true }) });
 
 		const d = details;
 

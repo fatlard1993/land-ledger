@@ -22,6 +22,7 @@ import { frequencyInterval, frequencyLabel } from '../Livestock/FeedingScheduleD
 import { incidentEmoji, severityMeta } from '../Incidents/IncidentDialog';
 import { categoryMeta, eventEmoji } from '../Timeline/EventDialog';
 import context from '../context';
+import { formatDate } from '../utils/dates';
 
 const TODAY = () => new Date();
 const daysBetween = (a, b) => (b - a) / 86_400_000;
@@ -80,8 +81,6 @@ const dateUrgency = (dateStr, soonThreshold = 30, laterThreshold = 90) => {
 
 	return null;
 };
-
-const formatDate = d => (d ? new Date(`${d}T12:00:00`).toLocaleDateString() : '');
 
 export default class Todo extends AsyncView {
 	_buildView() {

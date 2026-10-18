@@ -18,13 +18,8 @@ import {
 	updateRevenue,
 	deleteRevenue,
 } from '../api';
+import { formatDate } from '../utils/dates';
 import { openRevenueDialog } from './EntityRevenue';
-
-const formatDate = dateStr => {
-	if (!dateStr) return '—';
-	const d = new Date(dateStr);
-	return isNaN(d) ? dateStr : d.toLocaleDateString();
-};
 
 export async function renderBuildingInventory(building, refresh, appendTo) {
 	const data = await getSupplies();
@@ -226,7 +221,7 @@ export async function renderEntityRevenue(entityType, entity, refresh, appendTo)
 			tag: 'div',
 			appendTo: right,
 			style: { fontSize: '11px', color: 'rgba(255,255,255,0.3)' },
-			textContent: formatDate(rec.date),
+			textContent: formatDate(rec.date, { empty: '—' }),
 		});
 
 		row.onPointerPress(() =>

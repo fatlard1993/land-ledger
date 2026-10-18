@@ -16,14 +16,8 @@ import {
 import context from '../context';
 import { PageView, PageToolbar, PageTitle, Card, AppEmptyState, SectionHeader } from '../Layout';
 
+import { formatDate } from '../utils/dates';
 import LeaseDialog, { rateLabel } from './LeaseDialog';
-
-const formatDate = dateStr => {
-	if (!dateStr) return null;
-	const d = new Date(dateStr);
-
-	return isNaN(d) ? dateStr : d.toLocaleDateString();
-};
 
 const daysUntil = dateStr => {
 	if (!dateStr) return null;

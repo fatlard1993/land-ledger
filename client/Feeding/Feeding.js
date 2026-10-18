@@ -14,13 +14,7 @@ import {
 import context from '../context';
 import { PageView, PageToolbar, PageTitle, AppEmptyState, SectionHeader, Card } from '../Layout';
 import FeedingScheduleDialog, { frequencyLabel } from '../Livestock/FeedingScheduleDialog';
-
-const formatDate = d => {
-	if (!d) return '';
-	const date = new Date(d);
-
-	return isNaN(date) ? d : date.toLocaleDateString();
-};
+import { formatDate } from '../utils/dates';
 
 const feedIcon = ft => {
 	if (/hay|straw|forage/i.test(ft)) return '🌾';

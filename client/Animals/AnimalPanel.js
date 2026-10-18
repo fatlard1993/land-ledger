@@ -1,15 +1,11 @@
 import { Dialog, Component, Elem, Button } from '@vanilla-bean/components';
 
 import { getHealthRecords, getBreedingRecords } from '../api/animals';
+import { formatDate } from '../utils/dates';
 import { animalLabel, ageLabel, STATUS_COLORS, speciesMeta } from './constants';
 import AnimalDialog from './AnimalDialog';
 import HealthRecordDialog from './HealthRecordDialog';
 import BreedingDialog from './BreedingDialog';
-
-const format = dateStr => {
-	if (!dateStr) return '—';
-	return new Date(`${dateStr}T12:00:00`).toLocaleDateString();
-};
 
 const TODAY = new Date().toISOString().slice(0, 10);
 
@@ -246,7 +242,7 @@ export default class AnimalPanel extends Dialog {
 					textContent: r.drug || r.type || 'Record',
 				});
 
-				const meta = [format(r.date), r.dose, r.route].filter(Boolean).join(' · ');
+				const meta = [formatDate(r.date, { empty: '—' }), r.dose, r.route].filter(Boolean).join(' · ');
 				if (meta)
 					new Elem({
 						tag: 'div',
@@ -345,13 +341,13 @@ export default class AnimalPanel extends Dialog {
 						tag: 'div',
 						appendTo: info,
 						style: { fontSize: '13px', color: statusColor, fontWeight: '600' },
-						textContent: `${statusLabel} — bred ${format(r.breedingDate)}`,
+						textContent: `${statusLabel} — bred ${formatDate(r.breedingDate, { empty: '—' })}`,
 					});
 
 					const parts = [];
 					if (r.sire) parts.push(`sire: ${r.sire}`);
 					if (upcoming) parts.push(`due ${r.expectedDueDate}`);
-					if (r.actualBirthDate) parts.push(`born ${format(r.actualBirthDate)}`);
+					if (r.actualBirthDate) parts.push(`born ${formatDate(r.actualBirthDate, { empty: '—' })}`);
 					if (r.litterSize) parts.push(`${r.litterSize} born, ${r.offspringSurvived ?? r.litterSize} survived`);
 					if (parts.length)
 						new Elem({

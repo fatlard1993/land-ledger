@@ -12,12 +12,7 @@ import {
 import { frequencyLabel, frequencyInterval } from '../Livestock/FeedingScheduleDialog';
 import FeedingScheduleDialog from '../Livestock/FeedingScheduleDialog';
 import { SectionHeader, FormLabel, FormInput } from '../Layout';
-
-const formatDate = dateStr => {
-	if (!dateStr) return '—';
-	const d = new Date(`${dateStr}T12:00:00`);
-	return isNaN(d) ? dateStr : d.toLocaleDateString();
-};
+import { daysAgoLabel, formatDate } from '../utils/dates';
 
 const feedIcon = ft => {
 	if (/hay|straw|forage/i.test(ft)) return '🌾';
@@ -213,16 +208,11 @@ export async function renderFeedingSection(field, livestockEvents, refresh, cont
 				});
 
 			if (lastLog) {
-				const daysAgo = Math.floor((Date.now() - new Date(lastLog.date)) / 86_400_000);
-				let daysLabel;
-				if (daysAgo === 0) daysLabel = 'today';
-				else if (daysAgo === 1) daysLabel = 'yesterday';
-				else daysLabel = `${daysAgo}d ago`;
 				new Elem({
 					tag: 'div',
 					appendTo: info,
 					style: { fontSize: '11px', color: due ? '#e8c42a' : 'rgba(255,255,255,0.3)' },
-					textContent: `Last: ${daysLabel}${due ? ' · due' : ''}`,
+					textContent: `Last: ${daysAgoLabel(lastLog.date)}${due ? ' · due' : ''}`,
 				});
 			} else {
 				new Elem({
@@ -327,7 +317,7 @@ export async function renderFeedingSection(field, livestockEvents, refresh, cont
 			tag: 'span',
 			appendTo: row,
 			style: { flexShrink: '0', color: 'rgba(255,255,255,0.25)' },
-			textContent: formatDate(log.date),
+			textContent: formatDate(log.date, { empty: '—' }),
 		});
 
 		new Component({

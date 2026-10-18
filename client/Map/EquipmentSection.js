@@ -14,12 +14,7 @@ import {
 	updateEquipment,
 } from '../api';
 import { scheduleStatus } from '../utils/maintenanceUtils';
-
-const formatDate = dateStr => {
-	if (!dateStr) return '—';
-	const d = new Date(dateStr);
-	return isNaN(d) ? dateStr : d.toLocaleDateString();
-};
+import { formatDate } from '../utils/dates';
 
 export async function renderMaintenanceSection(equipment, maintenance, schedules, { refresh, appendTo }) {
 	const item = equipment;
@@ -270,7 +265,7 @@ export async function renderMaintenanceSection(equipment, maintenance, schedules
 				paddingLeft: '8px',
 				marginTop: '2px',
 			},
-			textContent: formatDate(rec.date),
+			textContent: formatDate(rec.date, { empty: '—' }),
 		});
 
 		row.onPointerPress(

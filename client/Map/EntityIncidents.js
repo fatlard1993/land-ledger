@@ -13,12 +13,7 @@ import {
 	updateBuilding,
 	updateEvent,
 } from '../api';
-
-const formatDate = dateStr => {
-	if (!dateStr) return '—';
-	const d = new Date(dateStr);
-	return isNaN(d) ? dateStr : d.toLocaleDateString();
-};
+import { formatDate } from '../utils/dates';
 
 export async function renderIncidents(entityType, entity, refresh, appendTo, { livestockEvents = [] } = {}) {
 	const data = await getIncidents();
@@ -151,7 +146,7 @@ export async function renderIncidents(entityType, entity, refresh, appendTo, { l
 				paddingLeft: '6px',
 				marginTop: '2px',
 			},
-			textContent: formatDate(rec.date),
+			textContent: formatDate(rec.date, { empty: '—' }),
 		});
 
 		row.onPointerPress(

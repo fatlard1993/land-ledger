@@ -7,15 +7,10 @@ import { PageView, PageToolbar, PageTitle, AppEmptyState } from '../Layout';
 import context from '../context';
 import ExportDialog from '../Export/ExportDialog';
 
+import { formatDate } from '../utils/dates';
 import ApplicationLogDialog, { CATEGORIES } from './ApplicationLogDialog';
 
 const catMeta = val => CATEGORIES.find(c => c.value === val) || CATEGORIES.at(-1);
-
-const format = dateStr => {
-	if (!dateStr) return '—';
-	const d = new Date(`${dateStr}T12:00:00`);
-	return isNaN(d) ? dateStr : d.toLocaleDateString();
-};
 
 export default class ApplicationLogs extends AsyncView {
 	_buildView() {
@@ -69,7 +64,7 @@ export default class ApplicationLogs extends AsyncView {
 
 		const data = all.map(log => ({
 			...log,
-			_date: format(log.date),
+			_date: formatDate(log.date, { empty: '—' }),
 			_rate: log.rate ? `${log.rate} ${log.rateUnit || ''}`.trim() : '—',
 			_field: fieldMap[log.fieldId]?.name || '—',
 		}));
