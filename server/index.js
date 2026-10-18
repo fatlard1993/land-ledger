@@ -16,7 +16,7 @@ import benchmarksDb from './database/benchmarks';
 import server from './server';
 import { setAgAnalyticsKey, setParcelServiceUrl } from './router';
 import { setNassApiKey } from './router/benchmarks';
-import { setTlsActive } from './auth';
+import { migrateApiTokens, pruneSessions, setTlsActive } from './auth';
 import { setPrecisionLayersPath } from './router/precisionLayers';
 
 import './exit';
@@ -65,6 +65,8 @@ await runMigrations();
 const settingsPath = options.database.replace('.json', '-settings.json');
 
 await settingsDb.init({ path: settingsPath });
+await migrateApiTokens();
+await pruneSessions();
 
 // Ensure the default admin account exists.
 // Auth is disabled by default — enable it via the admin panel when ready.

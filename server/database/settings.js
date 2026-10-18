@@ -10,6 +10,8 @@ const settingsDb = {
 		importTemplates: [],
 		shareTokens: [],
 		apiTokens: [],
+		// Signed-in sessions by token digest: { [digest]: { id, name, roles, createdAt } }
+		sessions: {},
 		adminPasskeyIsDefault: false,
 	},
 	async init({ path: dbPath }) {

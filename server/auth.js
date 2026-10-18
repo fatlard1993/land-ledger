@@ -1,14 +1,31 @@
-import { timingSafeEqual } from 'crypto';
+import { createHash, timingSafeEqual } from 'crypto';
 
 import { nanoid } from 'nanoid';
 import settingsDb from './database/settings';
 
-// ── Session store ──────────────────────────────────────────────────────────────
-// In-memory only — restart clears all sessions.
-// Acceptable for a self-hosted single-server app.
+// Tokens are kept only as their sha256 digest, so the settings file alone can't sign anyone in
+export const digest = token => createHash('sha256').update(token).digest('hex');
 
-const sessions = new Map(); // token → { id, name, roles, createdAt }
+const sameDigest = (a, b) =>
+	typeof a === 'string' && a.length === b.length && timingSafeEqual(Buffer.from(a), Buffer.from(b));
+
+// ── Session store ──────────────────────────────────────────────────────────────
+// Kept in the settings file by digest, so a restart doesn't sign everyone out.
+
 const SESSION_TTL_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
+
+const sessions = () => settingsDb.get('sessions') ?? {};
+const expired = session => Date.now() - session.createdAt > SESSION_TTL_MS;
+
+const saveSessions = next =>
+	settingsDb.set('sessions', next).catch(error => console.error('[auth] sessions not saved:', error));
+
+// Drops sessions that have run out — called once settings are loaded
+export async function pruneSessions() {
+	const kept = Object.fromEntries(Object.entries(sessions()).filter(([, session]) => !expired(session)));
+
+	if (Object.keys(kept).length !== Object.keys(sessions()).length) await saveSessions(kept);
+}
 
 // Whether TLS is active — set by index.js after cert detection
 let _tlsActive = false;
@@ -16,14 +33,12 @@ export function setTlsActive(active) {
 	_tlsActive = active;
 }
 
-export function createSession(account) {
+export async function createSession(account) {
 	const token = nanoid(48);
 
-	sessions.set(token, {
-		id: account.id,
-		name: account.name,
-		roles: account.roles,
-		createdAt: Date.now(),
+	await saveSessions({
+		...sessions(),
+		[digest(token)]: { id: account.id, name: account.name, roles: account.roles, createdAt: Date.now() },
 	});
 
 	return token;
@@ -39,22 +54,29 @@ export function getSession(request) {
 
 	if (!token) return null;
 
-	const session = sessions.get(token);
+	const key = digest(token);
+	const session = Object.hasOwn(sessions(), key) ? sessions()[key] : null;
 
 	if (!session) return null;
 
-	if (Date.now() - session.createdAt > SESSION_TTL_MS) {
-		sessions.delete(token);
+	if (expired(session)) {
+		const { [key]: _, ...rest } = sessions();
+
+		saveSessions(rest);
 		return null;
 	}
 
 	return session;
 }
 
-export function destroySession(request) {
+export async function destroySession(request) {
 	const token = tokenFromRequest(request);
 
-	if (token) sessions.delete(token);
+	if (!token) return;
+
+	const { [digest(token)]: _, ...rest } = sessions();
+
+	await saveSessions(rest);
 }
 
 export function sessionCookie(token, clear = false) {
@@ -66,9 +88,19 @@ export function sessionCookie(token, clear = false) {
 }
 
 // ── API token auth ─────────────────────────────────────────────────────────────
-// Long-lived tokens for programmatic/external access.
-// Tokens are stored plaintext in settingsDb — acceptable for a self-hosted app
-// where anyone with file access already has access to all data.
+// Long-lived tokens for programmatic/external access, stored as their digest.
+
+// Tokens saved before they were hashed: each keeps working, now kept as its digest
+export async function migrateApiTokens() {
+	const tokens = settingsDb.get('apiTokens') ?? [];
+
+	if (!tokens.some(record => record.token)) return;
+
+	await settingsDb.set(
+		'apiTokens',
+		tokens.map(({ token, ...record }) => (token ? { ...record, tokenHash: digest(token) } : record)),
+	);
+}
 
 function getSessionFromBearer(request) {
 	const auth = request.headers.get('authorization') || '';
@@ -78,14 +110,8 @@ function getSessionFromBearer(request) {
 	if (!token) return null;
 
 	const tokens = settingsDb.get('apiTokens') ?? [];
-	const tokenBuf = Buffer.from(token);
-	const record = tokens.find(t => {
-		try {
-			return timingSafeEqual(Buffer.from(t.token), tokenBuf);
-		} catch {
-			return false;
-		} // different lengths
-	});
+	const hash = digest(token);
+	const record = tokens.find(t => sameDigest(t.tokenHash, hash));
 
 	if (!record) return null;
 

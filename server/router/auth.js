@@ -3,7 +3,7 @@ import { nanoid } from 'nanoid';
 import { requestMatch } from '@vanilla-bean/components/app';
 
 import settingsDb from '../database/settings';
-import { createSession, getSession, destroySession, sessionCookie, requireRole } from '../auth';
+import { createSession, digest, getSession, destroySession, sessionCookie, requireRole } from '../auth';
 
 // ── Login rate limiting ────────────────────────────────────────────────────────
 // Tracks failed login attempts globally with a rolling window.
@@ -93,7 +93,7 @@ const handleLogin = async request => {
 		return new Response('Invalid passkey', { status: 401 });
 	}
 
-	const token = createSession(matched);
+	const token = await createSession(matched);
 
 	return new Response(null, {
 		status: 204,
@@ -102,8 +102,8 @@ const handleLogin = async request => {
 };
 
 // POST /auth/logout — clears the session.
-const handleLogout = request => {
-	destroySession(request);
+const handleLogout = async request => {
+	await destroySession(request);
 
 	return new Response(null, {
 		status: 204,
@@ -257,7 +257,7 @@ const handleListTokens = request => {
 	const guard = requireRole(request, ['admin']);
 	if (guard) return guard;
 
-	const tokens = (settingsDb.get('apiTokens') ?? []).map(({ token: _, ...safe }) => safe);
+	const tokens = (settingsDb.get('apiTokens') ?? []).map(({ token: _, tokenHash: __, ...safe }) => safe);
 	return Response.json(tokens);
 };
 
@@ -282,7 +282,7 @@ const handleCreateToken = async request => {
 		name,
 		accountId: 'admin',
 		roles: { admin: false, financials: false, farmhand: true, ...roles },
-		token,
+		tokenHash: digest(token),
 		tokenPrefix: token.slice(0, 16), // first 16 chars for display
 		createdAt: new Date().toISOString(),
 		lastUsed: null,
