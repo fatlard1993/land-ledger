@@ -1,4 +1,4 @@
-import { Component, Elem, styled, Button } from '@vanilla-bean/components';
+import { Notify } from '@vanilla-bean/components';
 import { nanoid } from 'nanoid';
 
 // crypto.randomUUID needs a secure context, which a plain-http LAN page isn't
@@ -6,85 +6,18 @@ const SESSION_ID = nanoid();
 
 // ── Toast ──────────────────────────────────────────────────────────────────────
 
-const SyncToast = styled(
-	Component,
-	() => `
-	position: fixed;
-	bottom: 80px;
-	left: 50%;
-	transform: translateX(-50%);
-	background: rgba(20,20,20,0.95);
-	color: #fff;
-	border-radius: 20px;
-	padding: 8px 14px;
-	font-size: 13px;
-	font-family: system-ui, sans-serif;
-	display: none;
-	align-items: center;
-	gap: 10px;
-	z-index: 9999;
-	box-shadow: 0 2px 12px rgba(0,0,0,0.5);
-	backdrop-filter: blur(4px);
-	white-space: nowrap;
-
-	&.visible {
-		display: flex;
-	}
-`,
-);
-
 let _toast = null;
-let _timer = null;
 
-function getToast() {
-	if (_toast) return _toast;
-
-	_toast = new SyncToast({ appendTo: document.body });
-
-	new Elem({ tag: 'span', appendTo: _toast, textContent: 'Updated on another device' });
-
-	new Button({
-		appendTo: _toast,
-		textContent: 'Refresh',
-		style: {
-			background: 'rgba(255,255,255,0.15)',
-			border: 'none',
-			color: 'inherit',
-			padding: '3px 10px',
-			borderRadius: '10px',
-			cursor: 'pointer',
-			fontSize: '12px',
-		},
-		onPointerPress: () => location.reload(),
-	});
-
-	new Button({
-		appendTo: _toast,
-		textContent: '×',
-		style: {
-			background: 'none',
-			border: 'none',
-			color: 'rgba(255,255,255,0.5)',
-			cursor: 'pointer',
-			fontSize: '18px',
-			lineHeight: '1',
-			padding: '0',
-		},
-		onPointerPress: () => {
-			_toast.removeClass('visible');
-			clearTimeout(_timer);
-		},
-	});
-
-	return _toast;
-}
-
+// One toast however many changes arrive while it's up
 function showToast() {
-	getToast().addClass('visible');
-	clearTimeout(_timer);
-	_timer = setTimeout(() => {
-		_toast.removeClass('visible');
-	}, 8_000);
+	if (_toast?.elem.isConnected) return;
+
+	_toast = new Notify({
+		type: 'info',
+		timeout: 8_000,
+		content: 'Updated on another device',
+		actions: [{ textContent: 'Refresh', onPress: () => location.reload() }],
+	});
 }
 
 // ── SSE connection ─────────────────────────────────────────────────────────────
@@ -113,9 +46,16 @@ function connect() {
 	};
 }
 
+let fetchWrapped = false;
+
 // Installs the x-client-id fetch wrapper without opening the SSE connection.
 // Must run before initOfflineQueue so queued replay requests carry the header.
+// A wrapper on fetch itself, not hypertether's beforeRequest: the raw fetch calls and the offline queue's replays
+// need the header too, and they don't go through hypertether.
 export function wrapFetch() {
+	if (fetchWrapped) return;
+	fetchWrapped = true;
+
 	const _fetch = globalThis.fetch;
 	globalThis.fetch = (url, init = {}) => {
 		const headers = new Headers(init.headers ?? {});
