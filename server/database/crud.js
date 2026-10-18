@@ -1,5 +1,7 @@
 import { nanoid } from 'nanoid';
 
+const isSafeKey = key => typeof key === 'string' && !['__proto__', 'constructor', 'prototype'].includes(key);
+
 export const createCRUD = (collection, fields, hooks = {}, db) => {
 	if (!db) throw new Error(`createCRUD('${collection}'): db argument is required`);
 
@@ -17,9 +19,15 @@ export const createCRUD = (collection, fields, hooks = {}, db) => {
 			return getData();
 		},
 
+		// Own keys only: `data.toString` is inherited by every plain object, and treating one as a stored entry let a
+		// request read, update or delete a record that was never created
+		has(id) {
+			return isSafeKey(id) && Object.hasOwn(this.data, id);
+		},
+
 		async create(data) {
 			let id = nanoid(12);
-			while (this.data[id]) id = nanoid(12);
+			while (this.has(id)) id = nanoid(12);
 
 			const entry = { ...Object.fromEntries(fields.map(f => [f, data[f] ?? ''])), id, _v: 1 };
 
@@ -40,12 +48,12 @@ export const createCRUD = (collection, fields, hooks = {}, db) => {
 		},
 
 		read({ id } = {}) {
-			if (id) return this.data[id] || false;
+			if (id) return this.has(id) && this.data[id];
 			return this.data;
 		},
 
 		async update({ id, update }) {
-			if (!this.data[id]) return false;
+			if (!this.has(id)) return false;
 
 			// Optimistic lock: reject if client's version is stale (only when both sides have _v)
 			if (update._v !== undefined && this.data[id]._v !== undefined && update._v !== this.data[id]._v) {
@@ -74,7 +82,7 @@ export const createCRUD = (collection, fields, hooks = {}, db) => {
 		},
 
 		async delete({ id, ...options }) {
-			if (!this.data[id]) return false;
+			if (!this.has(id)) return false;
 
 			const toDelete = this.data[id]; // capture year info before removal
 			const snap = snapshot();

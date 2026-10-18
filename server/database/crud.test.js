@@ -165,3 +165,21 @@ describe('delete', () => {
 		expect(db.data[created.id]).toBeDefined();
 	});
 });
+
+describe('ids that are not stored records', () => {
+	test.each(['__proto__', 'constructor', 'toString', 'hasOwnProperty'])(
+		'%s reads, updates and deletes nothing',
+		async id => {
+			const db = makeDb();
+			const crud = createCRUD('things', FIELDS, {}, db);
+
+			await crud.create({ name: 'foo' });
+
+			expect(crud.read({ id })).toBe(false);
+			expect(await crud.update({ id, update: { name: 'x' } })).toBe(false);
+			expect(await crud.delete({ id })).toBe(false);
+			expect(Object.getPrototypeOf(db.data)).toBe(Object.prototype);
+			expect(db.write).toHaveBeenCalledTimes(1);
+		},
+	);
+});
