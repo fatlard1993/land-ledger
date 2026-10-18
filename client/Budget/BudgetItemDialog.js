@@ -57,8 +57,6 @@ export default class BudgetItemDialog extends FormDialog {
 		const isEdit = !!options.item?.id;
 		const item = options.item || {};
 
-		const catDatalistId = `budget-cat-${Math.random().toString(36).slice(2)}`;
-
 		super({
 			size: 'large',
 			header: isEdit ? 'Edit Budget Item' : 'Add Budget Item',
@@ -76,7 +74,7 @@ export default class BudgetItemDialog extends FormDialog {
 					key: 'category',
 					label: 'Category',
 					placeholder: 'e.g. Utilities, Rental income, Insurance',
-					attributes: { list: catDatalistId },
+					suggestions: item.type === 'income' ? INCOME_CATEGORIES : EXPENSE_CATEGORIES,
 				},
 				{
 					type: 'group',
@@ -165,11 +163,6 @@ export default class BudgetItemDialog extends FormDialog {
 		const expBtn = makeType('📤 Expense', 'expense');
 		const typeSelect = { value: item.type || 'expense' };
 
-		// Datalist for category suggestions — swaps based on type
-		const catDatalist = new Elem({ tag: 'datalist', appendTo: this.body });
-
-		catDatalist.elem.id = catDatalistId;
-
 		const updateTypeStyle = () => {
 			for (const btn of [incBtn, expBtn]) {
 				const active = btn.elem.dataset.val === typeSelect.value;
@@ -179,15 +172,9 @@ export default class BudgetItemDialog extends FormDialog {
 				btn.elem.style.color = active ? '#8db4e8' : 'rgba(255,255,255,0.5)';
 			}
 
-			// Refresh datalist suggestions for the current type
-			catDatalist.elem.innerHTML = '';
-			const cats = typeSelect.value === 'income' ? INCOME_CATEGORIES : EXPENSE_CATEGORIES;
-
-			cats.forEach(c => {
-				const o = document.createElement('option');
-				o.value = c;
-				catDatalist.elem.append(o);
-			});
+			// Category suggestions follow the type
+			this.form.inputElements.category.options.suggestions =
+				typeSelect.value === 'income' ? INCOME_CATEGORIES : EXPENSE_CATEGORIES;
 		};
 
 		const preview = new Elem({

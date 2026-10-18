@@ -64,8 +64,6 @@ export default class IncidentDialog extends FormDialog {
 		const incident = options.incident || {};
 		const entityLabel = options.entityName || options.entity?.name || '';
 
-		const typeDatalistId = `inc-type-${Math.random().toString(36).slice(2)}`;
-
 		// Save and Mark Resolved send the same record; Mark Resolved marks it resolved and may restore the entity
 		const payloadFor = (d, button) => {
 			const resolved = button === 'Mark Resolved' ? true : !!d.resolved;
@@ -138,7 +136,7 @@ export default class IncidentDialog extends FormDialog {
 					key: 'type',
 					label: 'Type',
 					placeholder: 'e.g. Hail Damage, Equipment Breakdown, Livestock Death',
-					attributes: { list: typeDatalistId },
+					suggestions: INCIDENT_TYPES,
 				},
 				{
 					key: 'description',
@@ -176,17 +174,6 @@ export default class IncidentDialog extends FormDialog {
 			},
 			...withoutCallbacks(options),
 		});
-
-		// Type datalist — must exist in DOM before Form so the `list` attribute resolves
-		const typeDatalist = document.createElement('datalist');
-
-		typeDatalist.id = typeDatalistId;
-		INCIDENT_TYPES.forEach(t => {
-			const o = document.createElement('option');
-			o.value = t;
-			typeDatalist.append(o);
-		});
-		this.body.elem.prepend(typeDatalist);
 
 		// Main form fields
 

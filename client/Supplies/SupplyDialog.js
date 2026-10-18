@@ -74,10 +74,6 @@ export default class SupplyDialog extends FormDialog {
 		const supply = options.supply || {};
 		const preBuildingId = options.buildingId || supply.buildingId || '';
 
-		const catDatalistId = `supply-cat-${Math.random().toString(36).slice(2)}`;
-
-		const unitDatalistId = `supply-unit-${Math.random().toString(36).slice(2)}`;
-
 		super({
 			size: 'large',
 			header: isEdit ? `Edit Supply — ${supply.name}` : 'Add Supply Item',
@@ -100,7 +96,7 @@ export default class SupplyDialog extends FormDialog {
 					key: 'category',
 					label: 'Category',
 					placeholder: 'e.g. Seed, Herbicide, Lime',
-					attributes: { list: catDatalistId },
+					suggestions: SUPPLY_CATEGORY_SUGGESTIONS,
 					onChange: ({ value }) => {
 						if (!emojiInput.elem.dataset.manual) emojiInput.elem.value = detectSupplyEmoji(value);
 					},
@@ -109,7 +105,7 @@ export default class SupplyDialog extends FormDialog {
 					key: 'unit',
 					label: 'Unit',
 					placeholder: 'e.g. lbs, gallons, bags',
-					attributes: { list: unitDatalistId },
+					suggestions: SUPPLY_UNIT_SUGGESTIONS,
 				},
 				{
 					key: 'costPerUnit',
@@ -140,28 +136,6 @@ export default class SupplyDialog extends FormDialog {
 			...(isEdit && { onDelete: async () => options.onDelete?.() }),
 			...withoutCallbacks(options),
 		});
-
-		// Category datalist
-		const catDatalist = new Elem({ tag: 'datalist' });
-
-		catDatalist.elem.id = catDatalistId;
-		SUPPLY_CATEGORY_SUGGESTIONS.forEach(t => {
-			const o = document.createElement('option');
-			o.value = t;
-			catDatalist.elem.append(o);
-		});
-		this.body.elem.prepend(catDatalist.elem);
-
-		// Unit datalist
-		const unitDatalist = new Elem({ tag: 'datalist' });
-
-		unitDatalist.elem.id = unitDatalistId;
-		SUPPLY_UNIT_SUGGESTIONS.forEach(u => {
-			const o = document.createElement('option');
-			o.value = u;
-			unitDatalist.elem.append(o);
-		});
-		this.body.elem.prepend(unitDatalist.elem);
 
 		// Emoji row
 		const emojiRow = new Elem({

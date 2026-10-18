@@ -1,4 +1,4 @@
-import { FormDialog, Elem, Select } from '@vanilla-bean/components';
+import { FormDialog, Select } from '@vanilla-bean/components';
 import { makePropertiesEditor } from '../utils/PropertiesEditor';
 import { toNum } from '../utils/format.js';
 import { watchFormConflicts } from '../utils/watchFormConflicts.js';
@@ -64,10 +64,6 @@ export default class FeedingScheduleDialog extends FormDialog {
 		const isEdit = !!options.schedule?.id;
 		const schedule = options.schedule || {};
 
-		const feedTypeDatalistId = `fs-feed-${Math.random().toString(36).slice(2)}`;
-
-		const unitDatalistId = `fs-unit-${Math.random().toString(36).slice(2)}`;
-
 		super({
 			size: 'large',
 			header: isEdit ? `Edit Feeding — ${schedule.feedType || 'Feed'}` : 'Add Feeding Schedule',
@@ -84,7 +80,7 @@ export default class FeedingScheduleDialog extends FormDialog {
 					label: 'Feed Type',
 					type: 'text',
 					placeholder: 'e.g. Hay — Alfalfa, Corn Silage, Mineral Block',
-					attributes: { list: feedTypeDatalistId },
+					suggestions: FEED_TYPES,
 				},
 				{
 					type: 'group',
@@ -102,7 +98,7 @@ export default class FeedingScheduleDialog extends FormDialog {
 							label: 'Unit',
 							type: 'text',
 							placeholder: 'lbs/hd, bales, etc.',
-							attributes: { list: unitDatalistId },
+							suggestions: AMOUNT_UNITS,
 						},
 					],
 				},
@@ -133,26 +129,6 @@ export default class FeedingScheduleDialog extends FormDialog {
 			},
 			...(isEdit && { onDelete: async () => options.onDelete?.() }),
 			...withoutCallbacks(options),
-		});
-
-		// Feed type datalist
-		const feedTypeDatalist = new Elem({ tag: 'datalist', appendTo: this.body });
-
-		feedTypeDatalist.elem.id = feedTypeDatalistId;
-		FEED_TYPES.forEach(t => {
-			const o = document.createElement('option');
-			o.value = t;
-			feedTypeDatalist.elem.append(o);
-		});
-
-		// Unit datalist
-		const unitDatalist = new Elem({ tag: 'datalist', appendTo: this.body });
-
-		unitDatalist.elem.id = unitDatalistId;
-		AMOUNT_UNITS.forEach(u => {
-			const o = document.createElement('option');
-			o.value = u;
-			unitDatalist.elem.append(o);
 		});
 
 		if (isEdit) this.form.addCleanup('conflictWatch', watchFormConflicts(this.form, 'feeding-schedules', schedule.id));

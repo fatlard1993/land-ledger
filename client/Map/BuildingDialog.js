@@ -66,8 +66,6 @@ export default class BuildingDialog extends FormDialog {
 
 		const building = options.building || {};
 
-		const datalistId = `building-datalist-${Math.random().toString(36).slice(2)}`;
-
 		super({
 			size: 'large',
 			header: isEdit ? `Edit — ${options.building.name || 'Building'}` : 'Mark Building',
@@ -88,7 +86,7 @@ export default class BuildingDialog extends FormDialog {
 					key: 'type',
 					label: 'Type',
 					placeholder: 'e.g. Barn, Machine shed, Grain bin',
-					attributes: { list: datalistId },
+					suggestions: COMMON_TYPES,
 					onChange: ({ value }) => {
 						if (!emojiInput.elem.dataset.manual) emojiInput.elem.value = buildingEmoji(value);
 					},
@@ -122,17 +120,6 @@ export default class BuildingDialog extends FormDialog {
 			...(isEdit && { onDelete: async () => options.onDelete?.() }),
 			...withoutCallbacks(options),
 		});
-
-		// Datalist inside dialog body
-		const datalist = document.createElement('datalist');
-
-		datalist.id = datalistId;
-		COMMON_TYPES.forEach(t => {
-			const o = document.createElement('option');
-			o.value = t;
-			datalist.append(o);
-		});
-		this.body.elem.prepend(datalist);
 
 		// Emoji row
 		const emojiRow = new Elem({

@@ -63,8 +63,6 @@ export default class EquipmentDialog extends FormDialog {
 
 		const item = options.item || {};
 
-		const datalistId = `eq-datalist-${Math.random().toString(36).slice(2)}`;
-
 		super({
 			size: 'large',
 			header: isEdit ? `Edit — ${options.item.name || 'Equipment'}` : 'Place Equipment',
@@ -90,7 +88,7 @@ export default class EquipmentDialog extends FormDialog {
 					key: 'type',
 					label: 'Type',
 					placeholder: 'e.g. Row crop tractor, Sprayer, Grain cart',
-					attributes: { list: datalistId },
+					suggestions: COMMON_TYPES,
 					onChange: ({ value }) => {
 						if (!emojiInput.elem.dataset.manual) emojiInput.elem.value = equipmentEmoji(value);
 					},
@@ -165,17 +163,6 @@ export default class EquipmentDialog extends FormDialog {
 			...(isEdit && { onDelete: async () => options.onDelete?.() }),
 			...withoutCallbacks(options),
 		});
-
-		// Datalist inside dialog body
-		const datalist = new Elem({ tag: 'datalist' });
-
-		datalist.elem.id = datalistId;
-		COMMON_TYPES.forEach(t => {
-			const o = document.createElement('option');
-			o.value = t;
-			datalist.elem.append(o);
-		});
-		this.body.elem.prepend(datalist.elem);
 
 		// Emoji row — above form, same pattern as EventDialog
 		const emojiRow = new Elem({

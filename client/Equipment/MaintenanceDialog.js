@@ -148,17 +148,9 @@ export default class MaintenanceDialog extends FormDialog {
 			}
 		};
 
-		const typeDatalistId = `mt-type-${Math.random().toString(36).slice(2)}`;
-		const typeDatalist = new Elem({ tag: 'datalist', attributes: { id: typeDatalistId } });
-
+		// The type field's suggestions follow the kind of work
 		const refreshSuggestions = () => {
-			typeDatalist.elem.innerHTML = '';
-			(TYPE_SUGGESTIONS[this._workType] || []).forEach(t => {
-				const o = document.createElement('option');
-
-				o.value = t;
-				typeDatalist.elem.append(o);
-			});
+			this.form.inputElements.type.options.suggestions = TYPE_SUGGESTIONS[this._workType] || [];
 		};
 
 		for (const { value, label } of WORK_TYPES) {
@@ -189,13 +181,8 @@ export default class MaintenanceDialog extends FormDialog {
 
 		refreshTypeBtn();
 
-		// Append datalist to body before the Form so it's in the DOM
-		this.body.elem.append(typeDatalist.elem);
-
 		if (isEdit) this.form.addCleanup('conflictWatch', watchFormConflicts(this.form, 'maintenance', record.id));
 
-		// Wire datalist to the type input after Form construction
-		this.form.inputElements.type.elem.setAttribute('list', typeDatalistId);
 		refreshSuggestions();
 
 		const { collect: collectProps } = makePropertiesEditor(this.body, record.properties || {});
