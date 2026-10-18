@@ -233,8 +233,7 @@ export default class AccountsDialog extends Dialog {
 			appendTo: row,
 		});
 
-		new Component({
-			tag: 'button',
+		new Button({
 			textContent: 'Save',
 			style: {
 				fontSize: '12px',

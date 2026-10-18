@@ -1,4 +1,4 @@
-import { Component, Elem, copyToClipboard } from '@vanilla-bean/components';
+import { Elem, copyToClipboard, Button } from '@vanilla-bean/components';
 import { FormInput } from '../Layout';
 
 function showNewToken(container, data, { onRefresh }) {
@@ -59,8 +59,7 @@ function showNewToken(container, data, { onRefresh }) {
 	tokenVal.elem.value = data.token;
 	tokenVal.elem.addEventListener('click', () => tokenVal.elem.select());
 
-	const copyBtn = new Component({
-		tag: 'button',
+	const copyBtn = new Button({
 		textContent: 'Copy',
 		style: {
 			marginTop: '6px',
@@ -85,8 +84,7 @@ function showNewToken(container, data, { onRefresh }) {
 		},
 	});
 
-	new Component({
-		tag: 'button',
+	new Button({
 		textContent: 'Done',
 		style: {
 			marginTop: '6px',
@@ -137,8 +135,7 @@ function openTokenForm(container, { onRefresh }) {
 		appendTo: form,
 	});
 
-	new Component({
-		tag: 'button',
+	new Button({
 		textContent: 'Cancel',
 		style: {
 			fontSize: '12px',
@@ -154,8 +151,7 @@ function openTokenForm(container, { onRefresh }) {
 		onPointerPress: () => form.elem.remove(),
 	});
 
-	new Component({
-		tag: 'button',
+	new Button({
 		textContent: 'Generate token',
 		style: {
 			fontSize: '12px',
@@ -216,8 +212,7 @@ export async function renderApiTokensSection(container, { onRefresh }) {
 		appendTo: header,
 	});
 
-	new Component({
-		tag: 'button',
+	new Button({
 		textContent: '+ Generate',
 		style: {
 			fontSize: '12px',
@@ -278,8 +273,7 @@ export async function renderApiTokensSection(container, { onRefresh }) {
 			appendTo: rowInfo,
 		});
 
-		new Component({
-			tag: 'button',
+		new Button({
 			textContent: 'Revoke',
 			style: {
 				fontSize: '11px',

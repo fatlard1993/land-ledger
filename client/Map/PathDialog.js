@@ -1,4 +1,4 @@
-import { Elem, Component, FormDialog } from '@vanilla-bean/components';
+import { Elem, FormDialog, Button } from '@vanilla-bean/components';
 import { keepOpenIfFailed } from '../utils/keepOpenIfFailed';
 import { makePropertiesEditor } from '../utils/PropertiesEditor';
 
@@ -173,8 +173,7 @@ export default class PathDialog extends FormDialog {
 		});
 
 		for (const { value, label } of PATH_COLORS) {
-			new Component({
-				tag: 'button',
+			new Button({
 				textContent: label,
 				appendTo: colorRow,
 				attributes: { type: 'button' },

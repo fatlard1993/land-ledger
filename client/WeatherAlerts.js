@@ -1,4 +1,4 @@
-import { Component, Elem, styled } from '@vanilla-bean/components';
+import { Component, Elem, styled, Button } from '@vanilla-bean/components';
 import { centroidFromGeometry } from './geo';
 
 const DISMISSED_KEY = 'land-ledger-weather-dismissed';
@@ -203,8 +203,7 @@ function addAlertCard(container, alert) {
 		textContent: alert.dayLabel,
 	});
 
-	new Component({
-		tag: 'button',
+	new Button({
 		appendTo: card,
 		textContent: '×',
 		title: 'Dismiss',

@@ -596,8 +596,7 @@ export default class FieldPanel extends Component {
 		});
 
 		for (const { value, label } of PATH_COLORS) {
-			const btn = new Component({
-				tag: 'button',
+			const btn = new Button({
 				appendTo: colorGrid,
 				textContent: label,
 				style: {

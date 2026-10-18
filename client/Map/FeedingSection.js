@@ -320,8 +320,7 @@ export async function renderFeedingSection(field, livestockEvents, refresh, cont
 			textContent: formatDate(log.date, { empty: '—' }),
 		});
 
-		new Component({
-			tag: 'button',
+		new Button({
 			textContent: '×',
 			title: 'Delete this log entry',
 			appendTo: row,

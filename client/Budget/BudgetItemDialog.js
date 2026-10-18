@@ -1,4 +1,4 @@
-import { FormDialog, Component, Elem, Select } from '@vanilla-bean/components';
+import { FormDialog, Component, Elem, Select, Button } from '@vanilla-bean/components';
 import { makePropertiesEditor } from '../utils/PropertiesEditor';
 import { toNum } from '../utils/format.js';
 import { watchFormConflicts } from '../utils/watchFormConflicts.js';
@@ -135,8 +135,7 @@ export default class BudgetItemDialog extends FormDialog {
 		});
 		const makeType = (label, value) => {
 			const active = (item.type || 'expense') === value;
-			const btn = new Component({
-				tag: 'button',
+			const btn = new Button({
 				textContent: label,
 				style: {
 					flex: '1',

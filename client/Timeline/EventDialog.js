@@ -1,4 +1,4 @@
-import { Elem, Component, FormDialog } from '@vanilla-bean/components';
+import { Elem, Component, FormDialog, Button } from '@vanilla-bean/components';
 
 import { FormLabel, FormInput, FormSelect } from '../Layout';
 import { getFields } from '../api';
@@ -242,8 +242,7 @@ export default class EventDialog extends FormDialog {
 		};
 
 		for (const { value, label } of EVENT_CATEGORIES) {
-			const btn = new Component({
-				tag: 'button',
+			const btn = new Button({
 				textContent: label,
 				appendTo: catRow,
 				style: {

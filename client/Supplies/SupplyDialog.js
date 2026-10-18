@@ -1,4 +1,4 @@
-import { FormDialog, Component, Elem } from '@vanilla-bean/components';
+import { FormDialog, Elem, Button } from '@vanilla-bean/components';
 import { makePropertiesEditor } from '../utils/PropertiesEditor';
 
 import { getBuildings } from '../api';
@@ -302,8 +302,7 @@ export default class SupplyDialog extends FormDialog {
 		const makeModeBtn = (label, value, onPress) => {
 			const isActive = this._priceMode === value;
 
-			return new Component({
-				tag: 'button',
+			return new Button({
 				appendTo: modeRow,
 				textContent: label,
 				attributes: { type: 'button', 'data-mode': value },

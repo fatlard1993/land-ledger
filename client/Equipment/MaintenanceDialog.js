@@ -1,4 +1,4 @@
-import { FormDialog, Component, Elem } from '@vanilla-bean/components';
+import { FormDialog, Component, Elem, Button } from '@vanilla-bean/components';
 import { makePropertiesEditor } from '../utils/PropertiesEditor';
 import { toNum } from '../utils/format.js';
 import { watchFormConflicts } from '../utils/watchFormConflicts.js';
@@ -157,8 +157,7 @@ export default class MaintenanceDialog extends FormDialog {
 		};
 
 		for (const { value, label } of WORK_TYPES) {
-			const btn = new Component({
-				tag: 'button',
+			const btn = new Button({
 				textContent: label,
 				style: {
 					flex: '1',

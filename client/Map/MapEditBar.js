@@ -1,5 +1,5 @@
 import L from 'leaflet';
-import { Elem, Component } from '@vanilla-bean/components';
+import { Elem, Button } from '@vanilla-bean/components';
 
 /**
  * Renders a floating bottom-center edit bar inside the given container.
@@ -53,8 +53,7 @@ export function showEditBar(appendTo, { label, onSave, onCancel, extraButtons = 
 
 	extraButtons.forEach(
 		({ text, title, onClick }) =>
-			new Component({
-				tag: 'button',
+			new Button({
 				appendTo: bar,
 				textContent: text,
 				...(title ? { attributes: { title } } : {}),
@@ -72,8 +71,7 @@ export function showEditBar(appendTo, { label, onSave, onCancel, extraButtons = 
 			}),
 	);
 
-	new Component({
-		tag: 'button',
+	new Button({
 		appendTo: bar,
 		textContent: '✓ Save',
 		style: {
@@ -92,8 +90,7 @@ export function showEditBar(appendTo, { label, onSave, onCancel, extraButtons = 
 		},
 	});
 
-	new Component({
-		tag: 'button',
+	new Button({
 		appendTo: bar,
 		textContent: '✕ Cancel',
 		style: {

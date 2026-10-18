@@ -92,8 +92,7 @@ export function buildCoverCropSection(container, prev, g) {
 			style: { ...rowFieldStyle, padding: '8px 4px' },
 		});
 
-		new Component({
-			tag: 'button',
+		new Button({
 			textContent: '✕',
 			appendTo: row,
 			style: {

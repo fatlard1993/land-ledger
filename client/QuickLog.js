@@ -1,4 +1,4 @@
-import { Component, Elem, styled, BottomSheet } from '@vanilla-bean/components';
+import { Component, Elem, styled, BottomSheet, Button } from '@vanilla-bean/components';
 import { pointInPolygon } from './geo';
 import { getFields, getBuildings, createEvent } from './api';
 import { createApplicationLog } from './api/applicationLogs';
@@ -104,8 +104,7 @@ export function openQuickLog() {
 		textContent: new Date().toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }),
 	});
 
-	new Component({
-		tag: 'button',
+	new Button({
 		appendTo: header,
 		textContent: '×',
 		style: {
@@ -175,8 +174,7 @@ export function openQuickLog() {
 	let locationSelect = null;
 
 	LOG_TYPES.forEach(type => {
-		const chip = new Component({
-			tag: 'button',
+		const chip = new Button({
 			appendTo: typeGrid,
 			style: {
 				display: 'flex',
@@ -216,8 +214,7 @@ export function openQuickLog() {
 	const renderForm = logType => {
 		formArea.empty();
 
-		new Component({
-			tag: 'button',
+		new Button({
 			appendTo: formArea,
 			textContent: '← Choose type',
 			style: {
@@ -318,8 +315,7 @@ export function openQuickLog() {
 			const catChips = [];
 
 			EVENT_TYPES.forEach(t => {
-				const chip = new Component({
-					tag: 'button',
+				const chip = new Button({
 					appendTo: catGrid,
 					textContent: `${t.icon} ${t.label}`,
 					style: {
@@ -365,8 +361,7 @@ export function openQuickLog() {
 			const catChips = [];
 
 			APP_CATEGORIES.forEach(c => {
-				const chip = new Component({
-					tag: 'button',
+				const chip = new Button({
 					appendTo: catGrid,
 					textContent: c.label,
 					style: {
@@ -428,8 +423,7 @@ export function openQuickLog() {
 		}
 
 		// ── Submit button ──────────────────────────────────────────────────────
-		const submitBtn = new Component({
-			tag: 'button',
+		const submitBtn = new Button({
 			appendTo: formArea,
 			textContent: 'Log It',
 			style: {

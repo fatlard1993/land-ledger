@@ -1,4 +1,4 @@
-import { Elem, Component } from '@vanilla-bean/components';
+import { Elem, Component, Button } from '@vanilla-bean/components';
 
 import AsyncView from '../AsyncView';
 
@@ -213,8 +213,7 @@ export default class Feeding extends AsyncView {
 						textContent: `📋 ${fieldName || 'Deleted field'} · ${formatDate(log.date)}`,
 					});
 
-					const delBtn = new Component({
-						tag: 'button',
+					const delBtn = new Button({
 						appendTo: row,
 						textContent: '×',
 						attributes: { title: 'Delete this log entry' },

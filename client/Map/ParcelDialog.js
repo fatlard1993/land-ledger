@@ -1,4 +1,4 @@
-import { FormDialog, Component, Elem } from '@vanilla-bean/components';
+import { FormDialog, Elem, Button } from '@vanilla-bean/components';
 import { makePropertiesEditor } from '../utils/PropertiesEditor';
 import { watchFormConflicts } from '../utils/watchFormConflicts.js';
 
@@ -206,8 +206,7 @@ export default class ParcelDialog extends FormDialog {
 		addLabelToggle(this.body, parcel.showLabel !== false);
 
 		if (sqm) {
-			new Component({
-				tag: 'button',
+			new Button({
 				appendTo: areaRow,
 				textContent: '↺',
 				attributes: { type: 'button' },

@@ -1,4 +1,4 @@
-import { Component, Elem, copyToClipboard } from '@vanilla-bean/components';
+import { Elem, copyToClipboard, Button } from '@vanilla-bean/components';
 import { FormLabel, FormInput } from '../Layout';
 
 const PURPOSES = {
@@ -76,8 +76,7 @@ function openShareForm(container, { onRefresh }) {
 
 	const chips = {};
 	for (const [key, tpl] of Object.entries(TEMPLATES)) {
-		const chip = new Component({
-			tag: 'button',
+		const chip = new Button({
 			textContent: tpl.label,
 			style: {
 				fontSize: '11px',
@@ -123,8 +122,7 @@ function openShareForm(container, { onRefresh }) {
 		appendTo: form,
 	});
 
-	new Component({
-		tag: 'button',
+	new Button({
 		textContent: 'Cancel',
 		style: {
 			fontSize: '12px',
@@ -140,8 +138,7 @@ function openShareForm(container, { onRefresh }) {
 		onPointerPress: () => form.elem.remove(),
 	});
 
-	new Component({
-		tag: 'button',
+	new Button({
 		textContent: 'Generate Link',
 		style: {
 			fontSize: '12px',
@@ -252,8 +249,7 @@ function showShareLink(container, data, { onRefresh }) {
 	urlEl.elem.value = url;
 	urlEl.elem.addEventListener('click', () => urlEl.elem.select());
 
-	const copyBtn = new Component({
-		tag: 'button',
+	const copyBtn = new Button({
 		textContent: 'Copy Link',
 		style: {
 			fontSize: '12px',
@@ -277,8 +273,7 @@ function showShareLink(container, data, { onRefresh }) {
 		},
 	});
 
-	new Component({
-		tag: 'button',
+	new Button({
 		textContent: 'Done',
 		style: {
 			marginLeft: '6px',
@@ -323,8 +318,7 @@ export async function renderShareLinksSection(container, { onRefresh }) {
 		appendTo: header,
 	});
 
-	new Component({
-		tag: 'button',
+	new Button({
 		textContent: '+ New Link',
 		style: {
 			fontSize: '12px',
@@ -394,8 +388,7 @@ export async function renderShareLinksSection(container, { onRefresh }) {
 			appendTo: rowInfo,
 		});
 
-		const copyBtn = new Component({
-			tag: 'button',
+		const copyBtn = new Button({
 			textContent: 'Copy link',
 			style: {
 				fontSize: '11px',
@@ -426,8 +419,7 @@ export async function renderShareLinksSection(container, { onRefresh }) {
 			},
 		});
 
-		new Component({
-			tag: 'button',
+		new Button({
 			textContent: 'Revoke',
 			style: {
 				fontSize: '11px',

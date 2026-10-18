@@ -1,4 +1,4 @@
-import { Component, Elem, Dialog } from '@vanilla-bean/components';
+import { Elem, Dialog, Button } from '@vanilla-bean/components';
 
 import { formatDollar } from '../utils/format';
 import { makePropertiesEditor } from '../utils/PropertiesEditor';
@@ -256,8 +256,7 @@ export function openRevenueDialog(entityType, entity, existingRecord, onSave, on
 
 			Object.assign(priceI.elem, { type: 'number', step: '0.01', placeholder: '$/unit' });
 
-			new Component({
-				tag: 'button',
+			new Button({
 				appendTo: lineRow,
 				textContent: '✕',
 				style: {
@@ -300,8 +299,7 @@ export function openRevenueDialog(entityType, entity, existingRecord, onSave, on
 			});
 		};
 
-		new Component({
-			tag: 'button',
+		new Button({
 			appendTo: inventoryHeaderRow,
 			textContent: '+ Add item',
 			style: {

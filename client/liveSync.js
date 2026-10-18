@@ -1,4 +1,4 @@
-import { Component, Elem, styled } from '@vanilla-bean/components';
+import { Component, Elem, styled, Button } from '@vanilla-bean/components';
 import { nanoid } from 'nanoid';
 
 // crypto.randomUUID needs a secure context, which a plain-http LAN page isn't
@@ -43,8 +43,7 @@ function getToast() {
 
 	new Elem({ tag: 'span', appendTo: _toast, textContent: 'Updated on another device' });
 
-	new Component({
-		tag: 'button',
+	new Button({
 		appendTo: _toast,
 		textContent: 'Refresh',
 		style: {
@@ -59,8 +58,7 @@ function getToast() {
 		onPointerPress: () => location.reload(),
 	});
 
-	new Component({
-		tag: 'button',
+	new Button({
 		appendTo: _toast,
 		textContent: '×',
 		style: {
