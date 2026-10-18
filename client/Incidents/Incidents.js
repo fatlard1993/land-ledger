@@ -67,13 +67,18 @@ export default class Incidents extends AsyncView {
 					onSave: async data => {
 						const result = await updateIncident(incident.id, { body: { ...data, _v: incident._v } });
 
+						if (result?.status === 'error') return result;
+
 						if (result?.body && this.incidents?.body) {
 							this.incidents.body[incident.id] = result.body;
 							this._renderList();
 						}
 					},
 					onDelete: async () => {
-						await deleteIncident(incident.id);
+						const result = await deleteIncident(incident.id);
+
+						if (result?.status === 'error') return result;
+
 						if (this.incidents?.body) delete this.incidents.body[incident.id];
 						context.hasIncidents = Object.keys(this.incidents?.body || {}).length > 0;
 						this._renderList();

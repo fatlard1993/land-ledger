@@ -283,6 +283,8 @@ export default class MapView extends AsyncView {
 				onSave: async data => {
 					const result = await createEquipment({ body: data });
 
+					if (result?.status === 'error') return result;
+
 					if (result?.body && this.equipment?.body) {
 						this.equipment.body[result.body.id] = result.body;
 						this._renderEquipmentMarkers();
@@ -325,6 +327,9 @@ export default class MapView extends AsyncView {
 					acreage: geodesicAcreage(geometry),
 					onSave: async data => {
 						const result = await createParcel({ body: data });
+
+						if (result?.status === 'error') return result;
+
 						if (result?.body && this.parcels?.body) {
 							this.parcels.body[result.body.id] = result.body;
 							this._renderParcelLayers();
@@ -339,6 +344,9 @@ export default class MapView extends AsyncView {
 					geometry,
 					onSave: async data => {
 						const result = await createBuilding({ body: data });
+
+						if (result?.status === 'error') return result;
+
 						if (result?.body && this.buildings?.body) {
 							this.buildings.body[result.body.id] = result.body;
 							this._renderBuildingLayers();
@@ -354,6 +362,9 @@ export default class MapView extends AsyncView {
 					acreage,
 					onSave: async data => {
 						const result = await createField({ body: data });
+
+						if (result?.status === 'error') return result;
+
 						if (result?.body && this.fields?.body) {
 							this.fields.body[result.body.id] = result.body;
 							this._renderFieldLayers();
@@ -758,6 +769,9 @@ export default class MapView extends AsyncView {
 						prefillName: parcel.name,
 						onSave: async data => {
 							const result = await createField({ body: data });
+
+							if (result?.status === 'error') return result;
+
 							if (result?.body && this.fields?.body) {
 								this.fields.body[result.body.id] = result.body;
 								this._renderFieldLayers();
@@ -1175,6 +1189,9 @@ export default class MapView extends AsyncView {
 								prefillName: parcel.name,
 								onSave: async data => {
 									const result = await createField({ body: data });
+
+									if (result?.status === 'error') return result;
+
 									if (result?.body && this.fields?.body) {
 										this.fields.body[result.body.id] = result.body;
 										this._renderFieldLayers();

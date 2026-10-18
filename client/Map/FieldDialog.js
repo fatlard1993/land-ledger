@@ -3,6 +3,7 @@ import { FormDialog, Button, Elem, Select } from '@vanilla-bean/components';
 import { geodesicAreaSqm, convertArea, AREA_UNITS } from '../geo';
 import { makePropertiesEditor } from '../utils/PropertiesEditor';
 import { watchFormConflicts } from '../utils/watchFormConflicts.js';
+import { keepOpenIfFailed } from '../utils/keepOpenIfFailed';
 
 const ACREAGE_INPUT_STYLE = {
 	flex: '1',
@@ -65,10 +66,10 @@ export default class FieldDialog extends FormDialog {
 				if (options.geometry && !isEdit) data.geometry = options.geometry;
 				if (isEdit) data.geometry = options.field.geometry;
 
-				await options.onSave?.(data);
+				return keepOpenIfFailed(await options.onSave?.(data));
 			},
 			...(isEdit && {
-				onDelete: async () => options.onDelete?.(),
+				onDelete: async () => keepOpenIfFailed(await options.onDelete?.(), 'Delete'),
 				confirmDelete: { header: `Delete "${options.field.name || 'this field'}"?` },
 			}),
 			...withoutCallbacks(options),

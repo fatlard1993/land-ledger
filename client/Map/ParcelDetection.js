@@ -248,6 +248,8 @@ export function createParcelDetection({
 			onSave: async data => {
 				const result = await createParcel({ body: data });
 
+				if (result?.status === 'error') return result;
+
 				if (result?.body && parcels?.body) {
 					parcels.body[result.body.id] = result.body;
 					onRenderParcels();

@@ -62,6 +62,8 @@ export default class Supplies extends AsyncView {
 					onSave: async data => {
 						const result = await createSupply({ body: data });
 
+						if (result?.status === 'error') return result;
+
 						if (result?.body && this.supplies?.body) {
 							this.supplies.body[result.body.id] = result.body;
 							context.hasSupplies = true;
@@ -176,13 +178,18 @@ export default class Supplies extends AsyncView {
 							onSave: async data => {
 								const result = await updateSupply(supply.id, { body: { ...data, _v: supply._v } });
 
+								if (result?.status === 'error') return result;
+
 								if (result?.body && this.supplies?.body) {
 									this.supplies.body[supply.id] = result.body;
 									this._renderList();
 								}
 							},
 							onDelete: async () => {
-								await deleteSupply(supply.id);
+								const result = await deleteSupply(supply.id);
+
+								if (result?.status === 'error') return result;
+
 								if (this.supplies?.body) delete this.supplies.body[supply.id];
 								context.hasSupplies = Object.keys(this.supplies?.body || {}).length > 0;
 								this._renderList();

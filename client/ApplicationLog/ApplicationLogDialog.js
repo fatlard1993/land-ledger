@@ -4,6 +4,7 @@ import { getFields } from '../api';
 import { createApplicationLog, updateApplicationLog, deleteApplicationLog } from '../api/applicationLogs';
 import { watchFormConflicts } from '../utils/watchFormConflicts.js';
 import { toNum } from '../utils/format.js';
+import { keepOpenIfFailed } from '../utils/keepOpenIfFailed';
 
 export const CATEGORIES = [
 	{ value: 'herbicide', label: 'Herbicide', color: '#4caf50' },
@@ -215,7 +216,8 @@ export default class ApplicationLogDialog extends FormDialog {
 				confirmDelete: { header: `Delete the ${rec.product || 'application'} record?` },
 				onDelete: async () => {
 					try {
-						await deleteApplicationLog(rec.id);
+						if (keepOpenIfFailed(await deleteApplicationLog(rec.id), 'Delete') === false) return false;
+
 						options.onDelete?.();
 
 						return true;
@@ -292,9 +294,15 @@ export default class ApplicationLogDialog extends FormDialog {
 		try {
 			if (isNew) {
 				const result = await createApplicationLog({ body });
+
+				if (keepOpenIfFailed(result) === false) return false;
+
 				options.onSave?.(result?.body);
 			} else {
 				const result = await updateApplicationLog(id, { body: { ...body, _v } });
+
+				if (keepOpenIfFailed(result) === false) return false;
+
 				options.onSave?.(result?.body);
 			}
 

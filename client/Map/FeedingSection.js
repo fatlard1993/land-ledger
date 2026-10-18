@@ -132,7 +132,10 @@ export async function renderFeedingSection(field, livestockEvents, refresh, cont
 			new FeedingScheduleDialog({
 				fieldId: field.id,
 				onSave: async data => {
-					await import('../api').then(({ createFeedingSchedule: c }) => c({ body: data }));
+					const result = await import('../api').then(({ createFeedingSchedule: c }) => c({ body: data }));
+
+					if (result?.status === 'error') return result;
+
 					refresh();
 				},
 			}),
@@ -258,11 +261,17 @@ export async function renderFeedingSection(field, livestockEvents, refresh, cont
 						schedule: schedule,
 						fieldId: field.id,
 						onSave: async data => {
-							await updateFeedingSchedule(schedule.id, { body: { ...data, _v: schedule._v } });
+							const result = await updateFeedingSchedule(schedule.id, { body: { ...data, _v: schedule._v } });
+
+							if (result?.status === 'error') return result;
+
 							refresh();
 						},
 						onDelete: async () => {
-							await deleteFeedingSchedule(schedule.id);
+							const result = await deleteFeedingSchedule(schedule.id);
+
+							if (result?.status === 'error') return result;
+
 							refresh();
 						},
 					}),

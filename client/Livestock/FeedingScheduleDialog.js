@@ -4,6 +4,7 @@ import { toNum } from '../utils/format.js';
 import { watchFormConflicts } from '../utils/watchFormConflicts.js';
 
 import { getSupplies } from '../api';
+import { keepOpenIfFailed } from '../utils/keepOpenIfFailed';
 
 export const FEED_TYPES = [
 	'Hay — Grass',
@@ -116,19 +117,21 @@ export default class FeedingScheduleDialog extends FormDialog {
 				},
 			],
 			onSave: async d => {
-				await options.onSave?.({
-					fieldId: options.fieldId || schedule.fieldId || '',
-					eventId: options.eventId || schedule.eventId || '',
-					feedType: d.feedType,
-					amountPerHead: toNum(d.amountPerHead),
-					amountUnit: d.amountUnit,
-					frequency: d.frequency,
-					supplyId: d.supplyId || null,
-					properties: collectProps(),
-				});
+				return keepOpenIfFailed(
+					await options.onSave?.({
+						fieldId: options.fieldId || schedule.fieldId || '',
+						eventId: options.eventId || schedule.eventId || '',
+						feedType: d.feedType,
+						amountPerHead: toNum(d.amountPerHead),
+						amountUnit: d.amountUnit,
+						frequency: d.frequency,
+						supplyId: d.supplyId || null,
+						properties: collectProps(),
+					}),
+				);
 			},
 			...(isEdit && {
-				onDelete: async () => options.onDelete?.(),
+				onDelete: async () => keepOpenIfFailed(await options.onDelete?.(), 'Delete'),
 				confirmDelete: { header: `Delete the ${schedule.feedType || 'feeding'} schedule?` },
 			}),
 			...withoutCallbacks(options),

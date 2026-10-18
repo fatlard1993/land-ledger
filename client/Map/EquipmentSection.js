@@ -38,6 +38,8 @@ export async function renderMaintenanceSection(equipment, maintenance, schedules
 				onSave: async data => {
 					const result = await createMaintenance({ body: data });
 
+					if (result?.status === 'error') return result;
+
 					if (result?.body) {
 						if (data.usageAtService) {
 							await updateEquipment(item.id, { body: { usage: data.usageAtService, _v: item._v } });
@@ -58,7 +60,10 @@ export async function renderMaintenanceSection(equipment, maintenance, schedules
 			new MaintenanceScheduleDialog({
 				equipment: item,
 				onSave: async data => {
-					await createMaintenanceSchedule({ body: data });
+					const result = await createMaintenanceSchedule({ body: data });
+
+					if (result?.status === 'error') return result;
+
 					refresh();
 				},
 			}),
@@ -156,11 +161,17 @@ export async function renderMaintenanceSection(equipment, maintenance, schedules
 						schedule: schedule,
 						equipment: item,
 						onSave: async data => {
-							await updateMaintenanceSchedule(schedule.id, { body: { ...data, _v: schedule._v } });
+							const result = await updateMaintenanceSchedule(schedule.id, { body: { ...data, _v: schedule._v } });
+
+							if (result?.status === 'error') return result;
+
 							refresh();
 						},
 						onDelete: async () => {
-							await deleteMaintenanceSchedule(schedule.id);
+							const result = await deleteMaintenanceSchedule(schedule.id);
+
+							if (result?.status === 'error') return result;
+
 							refresh();
 						},
 					}),
@@ -175,7 +186,10 @@ export async function renderMaintenanceSection(equipment, maintenance, schedules
 			workType: 'maintenance',
 			record: { type: schedule.name, date: new Date().toISOString().slice(0, 10) },
 			onSave: async data => {
-				await createMaintenance({ body: data });
+				const result = await createMaintenance({ body: data });
+
+				if (result?.status === 'error') return result;
+
 				await updateMaintenanceSchedule(schedule.id, {
 					body: {
 						lastDoneDate: data.date,
@@ -273,11 +287,17 @@ export async function renderMaintenanceSection(equipment, maintenance, schedules
 					record: rec,
 					equipment: item,
 					onSave: async data => {
-						await updateMaintenance(rec.id, { body: { ...data, _v: rec._v } });
+						const result = await updateMaintenance(rec.id, { body: { ...data, _v: rec._v } });
+
+						if (result?.status === 'error') return result;
+
 						refresh();
 					},
 					onDelete: async () => {
-						await deleteMaintenance(rec.id);
+						const result = await deleteMaintenance(rec.id);
+
+						if (result?.status === 'error') return result;
+
 						refresh();
 					},
 				}),

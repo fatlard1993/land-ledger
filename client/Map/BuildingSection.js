@@ -36,7 +36,10 @@ export async function renderBuildingInventory(building, refresh, appendTo) {
 			new SupplyDialog({
 				buildingId: building.id,
 				onSave: async d => {
-					await createSupply({ body: { ...d, buildingId: building.id } });
+					const result = await createSupply({ body: { ...d, buildingId: building.id } });
+
+					if (result?.status === 'error') return result;
+
 					refresh();
 				},
 			}),
@@ -87,11 +90,17 @@ export async function renderBuildingInventory(building, refresh, appendTo) {
 					supply: s,
 					buildingId: building.id,
 					onSave: async d => {
-						await updateSupply(s.id, { body: { ...d, buildingId: building.id, _v: s._v } });
+						const result = await updateSupply(s.id, { body: { ...d, buildingId: building.id, _v: s._v } });
+
+						if (result?.status === 'error') return result;
+
 						refresh();
 					},
 					onDelete: async () => {
-						await deleteSupply(s.id);
+						const result = await deleteSupply(s.id);
+
+						if (result?.status === 'error') return result;
+
 						refresh();
 					},
 				}),
@@ -288,7 +297,10 @@ export async function renderBudgetItems(entityType, entity, refresh, appendTo) {
 				entityType,
 				entity,
 				onSave: async d => {
-					await createBudgetItem({ body: d });
+					const result = await createBudgetItem({ body: d });
+
+					if (result?.status === 'error') return result;
+
 					refresh();
 				},
 			}),
@@ -372,11 +384,17 @@ export async function renderBudgetItems(entityType, entity, refresh, appendTo) {
 						entityType,
 						entity,
 						onSave: async d => {
-							await updateBudgetItem(bi.id, { body: { ...d, _v: bi._v } });
+							const result = await updateBudgetItem(bi.id, { body: { ...d, _v: bi._v } });
+
+							if (result?.status === 'error') return result;
+
 							refresh();
 						},
 						onDelete: async () => {
-							await deleteBudgetItem(bi.id);
+							const result = await deleteBudgetItem(bi.id);
+
+							if (result?.status === 'error') return result;
+
 							refresh();
 						},
 					}),

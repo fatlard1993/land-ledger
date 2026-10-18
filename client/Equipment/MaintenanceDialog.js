@@ -2,6 +2,7 @@ import { FormDialog, Component, Elem, Button } from '@vanilla-bean/components';
 import { makePropertiesEditor } from '../utils/PropertiesEditor';
 import { toNum } from '../utils/format.js';
 import { watchFormConflicts } from '../utils/watchFormConflicts.js';
+import { keepOpenIfFailed } from '../utils/keepOpenIfFailed';
 
 export const WORK_TYPES = [
 	{ value: 'maintenance', label: '🔩 Maintenance', color: '#4a90d9' },
@@ -112,20 +113,22 @@ export default class MaintenanceDialog extends FormDialog {
 				},
 			],
 			onSave: async d => {
-				await options.onSave?.({
-					equipmentId: equipment.id,
-					workType: this._workType,
-					type: d.type,
-					date: d.date,
-					usageAtService: toNum(d.usageAtService),
-					cost: toNum(d.cost),
-					parts: d.parts,
-					procedure: d.procedure,
-					properties: collectProps(),
-				});
+				return keepOpenIfFailed(
+					await options.onSave?.({
+						equipmentId: equipment.id,
+						workType: this._workType,
+						type: d.type,
+						date: d.date,
+						usageAtService: toNum(d.usageAtService),
+						cost: toNum(d.cost),
+						parts: d.parts,
+						procedure: d.procedure,
+						properties: collectProps(),
+					}),
+				);
 			},
 			...(isEdit && {
-				onDelete: async () => options.onDelete?.(),
+				onDelete: async () => keepOpenIfFailed(await options.onDelete?.(), 'Delete'),
 				confirmDelete: { header: `Delete this ${record.type || 'service'} record?` },
 			}),
 			...withoutCallbacks(options),

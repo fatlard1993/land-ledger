@@ -4,6 +4,7 @@ import { getFields } from '../api';
 import { createAnimal, updateAnimal, deleteAnimal } from '../api/animals';
 import { watchFormConflicts } from '../utils/watchFormConflicts.js';
 import { SPECIES } from './constants';
+import { keepOpenIfFailed } from '../utils/keepOpenIfFailed';
 
 const withoutCallbacks = ({ onSave: _onSave, onDelete: _onDelete, ...options }) => options;
 
@@ -110,7 +111,8 @@ export default class AnimalDialog extends FormDialog {
 				confirmDelete: { header: `Delete "${rec.name || rec.tagId || 'this animal'}"?` },
 				onDelete: async () => {
 					try {
-						await deleteAnimal(rec.id);
+						if (keepOpenIfFailed(await deleteAnimal(rec.id), 'Delete') === false) return false;
+
 						options.onDelete?.();
 					} catch (err) {
 						new Notify({ type: 'error', textContent: err.message || 'Delete failed', timeout: 4000 });
@@ -150,6 +152,9 @@ export default class AnimalDialog extends FormDialog {
 		try {
 			const fn = isNew ? createAnimal : body => updateAnimal(id, body);
 			const result = await fn({ body: data });
+
+			if (keepOpenIfFailed(result) === false) return false;
+
 			options.onSave?.(result?.body);
 		} catch (err) {
 			new Notify({ type: 'error', textContent: err.message || 'Save failed', timeout: 4000 });

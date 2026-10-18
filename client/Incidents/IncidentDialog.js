@@ -2,6 +2,7 @@ import { FormDialog, Elem, conditionalList, Select } from '@vanilla-bean/compone
 import { makePropertiesEditor } from '../utils/PropertiesEditor';
 import { toNum } from '../utils/format.js';
 import { watchFormConflicts } from '../utils/watchFormConflicts.js';
+import { keepOpenIfFailed } from '../utils/keepOpenIfFailed';
 
 export const INCIDENT_TYPES = [
 	'Crop Damage — Hail',
@@ -162,18 +163,19 @@ export default class IncidentDialog extends FormDialog {
 				{ key: 'resolved', label: 'Incident resolved / closed', type: 'checkbox' },
 			],
 			onSave: async d => {
-				await options.onSave?.(payloadFor(d, 'Save'));
+				return keepOpenIfFailed(await options.onSave?.(payloadFor(d, 'Save')));
 			},
 			...(isEdit && {
-				onDelete: async () => options.onDelete?.(),
+				onDelete: async () => keepOpenIfFailed(await options.onDelete?.(), 'Delete'),
 				confirmDelete: { header: `Delete this ${incident.type || 'incident'} report?` },
 			}),
 			// Mark Resolved is a button of this dialog's own; FormDialog passes it through
 			onButtonPress: async ({ button, closeDialog }) => {
 				if (button !== 'Mark Resolved') return;
 
-				await options.onSave?.(payloadFor({ ...this.form.options.data }, 'Mark Resolved'));
-				closeDialog();
+				const result = await options.onSave?.(payloadFor({ ...this.form.options.data }, 'Mark Resolved'));
+
+				if (keepOpenIfFailed(result, 'Mark Resolved') !== false) closeDialog();
 			},
 			...withoutCallbacks(options),
 		});

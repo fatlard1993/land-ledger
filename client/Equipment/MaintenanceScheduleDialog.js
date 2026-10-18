@@ -2,6 +2,7 @@ import { FormDialog, Elem } from '@vanilla-bean/components';
 import { makePropertiesEditor } from '../utils/PropertiesEditor';
 import { toNum } from '../utils/format.js';
 import { watchFormConflicts } from '../utils/watchFormConflicts.js';
+import { keepOpenIfFailed } from '../utils/keepOpenIfFailed';
 
 const COMMON_SCHEDULES = [
 	{
@@ -111,19 +112,21 @@ export default class MaintenanceScheduleDialog extends FormDialog {
 				},
 			],
 			onSave: async d => {
-				await options.onSave?.({
-					equipmentId: equipment.id,
-					name: d.name,
-					procedure: d.procedure,
-					intervalUsage: toNum(d.intervalUsage),
-					intervalDays: toNum(d.intervalDays),
-					lastDoneDate: d.lastDoneDate || null,
-					lastDoneUsage: toNum(d.lastDoneUsage),
-					properties: collectProps(),
-				});
+				return keepOpenIfFailed(
+					await options.onSave?.({
+						equipmentId: equipment.id,
+						name: d.name,
+						procedure: d.procedure,
+						intervalUsage: toNum(d.intervalUsage),
+						intervalDays: toNum(d.intervalDays),
+						lastDoneDate: d.lastDoneDate || null,
+						lastDoneUsage: toNum(d.lastDoneUsage),
+						properties: collectProps(),
+					}),
+				);
 			},
 			...(isEdit && {
-				onDelete: async () => options.onDelete?.(),
+				onDelete: async () => keepOpenIfFailed(await options.onDelete?.(), 'Delete'),
 				confirmDelete: { header: `Delete the "${schedule.name || 'maintenance'}" schedule?` },
 			}),
 			...withoutCallbacks(options),

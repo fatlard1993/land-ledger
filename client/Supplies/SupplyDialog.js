@@ -3,6 +3,7 @@ import { makePropertiesEditor } from '../utils/PropertiesEditor';
 
 import { getBuildings } from '../api';
 import { watchFormConflicts } from '../utils/watchFormConflicts.js';
+import { keepOpenIfFailed } from '../utils/keepOpenIfFailed';
 
 export const SUPPLY_CATEGORY_SUGGESTIONS = [
 	'Seed',
@@ -123,18 +124,20 @@ export default class SupplyDialog extends FormDialog {
 				},
 			],
 			onSave: async d => {
-				await options.onSave?.({
-					...d,
-					emoji: this._getEmoji?.() || '',
-					buildingId: this._buildingId ?? preBuildingId,
-					priceMode: this._priceMode ?? 'markup',
-					markupPercent: this._markupPct ?? '50',
-					pricePerUnit: this._fixedPrice ?? '',
-					properties: this._collectProps?.() ?? {},
-				});
+				return keepOpenIfFailed(
+					await options.onSave?.({
+						...d,
+						emoji: this._getEmoji?.() || '',
+						buildingId: this._buildingId ?? preBuildingId,
+						priceMode: this._priceMode ?? 'markup',
+						markupPercent: this._markupPct ?? '50',
+						pricePerUnit: this._fixedPrice ?? '',
+						properties: this._collectProps?.() ?? {},
+					}),
+				);
 			},
 			...(isEdit && {
-				onDelete: async () => options.onDelete?.(),
+				onDelete: async () => keepOpenIfFailed(await options.onDelete?.(), 'Delete'),
 				confirmDelete: { header: `Delete "${supply.name || 'this supply'}"?` },
 			}),
 			...withoutCallbacks(options),

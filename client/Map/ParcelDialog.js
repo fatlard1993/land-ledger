@@ -3,6 +3,7 @@ import { makePropertiesEditor } from '../utils/PropertiesEditor';
 import { watchFormConflicts } from '../utils/watchFormConflicts.js';
 
 import { geodesicAreaSqm, convertArea, AREA_UNITS } from '../geo';
+import { keepOpenIfFailed } from '../utils/keepOpenIfFailed';
 
 const ACREAGE_STYLE = {
 	flex: '1',
@@ -55,10 +56,10 @@ export default class ParcelDialog extends FormDialog {
 				if (geometry && !isEdit) data.geometry = geometry;
 				if (isEdit) data.geometry = options.parcel.geometry;
 
-				await options.onSave?.(data);
+				return keepOpenIfFailed(await options.onSave?.(data));
 			},
 			...(isEdit && {
-				onDelete: async () => options.onDelete?.(),
+				onDelete: async () => keepOpenIfFailed(await options.onDelete?.(), 'Delete'),
 				confirmDelete: { header: `Delete this property line?` },
 			}),
 			...withoutCallbacks(options),

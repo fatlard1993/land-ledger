@@ -85,12 +85,18 @@ export default class Feeding extends AsyncView {
 							schedule: schedule,
 							fieldId: schedule.fieldId,
 							onSave: async data => {
-								await updateFeedingSchedule(schedule.id, { body: { ...data, _v: schedule._v } });
+								const result = await updateFeedingSchedule(schedule.id, { body: { ...data, _v: schedule._v } });
+
+								if (result?.status === 'error') return result;
+
 								this._schedules.body[schedule.id] = { ...schedule, ...data };
 								this._renderList();
 							},
 							onDelete: async () => {
-								await deleteFeedingSchedule(schedule.id);
+								const result = await deleteFeedingSchedule(schedule.id);
+
+								if (result?.status === 'error') return result;
+
 								if (this._schedules?.body) delete this._schedules.body[schedule.id];
 								context.hasFeedingHistory =
 									Object.keys(this._logs?.body || {}).length > 0 || Object.keys(this._schedules?.body || {}).length > 0;

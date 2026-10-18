@@ -72,6 +72,8 @@ export default class Fields extends AsyncView {
 					onSave: async data => {
 						const result = await createField({ body: data });
 
+						if (result?.status === 'error') return result;
+
 						if (result?.body && this.fields?.body) {
 							this.fields.body[result.body.id] = result.body;
 							this._renderList();
@@ -106,6 +108,8 @@ export default class Fields extends AsyncView {
 					new FieldDialog({
 						onSave: async data => {
 							const result = await createField({ body: data });
+
+							if (result?.status === 'error') return result;
 
 							if (result?.body && this.fields?.body) {
 								this.fields.body[result.body.id] = result.body;
@@ -167,6 +171,8 @@ export default class Fields extends AsyncView {
 					onSave: async data => {
 						const result = await updateField(field.id, { body: { ...data, _v: field._v } });
 
+						if (result?.status === 'error') return result;
+
 						if (result?.body && this.fields?.body) {
 							this.fields.body[field.id] = result.body;
 							this._selectedField = result.body;
@@ -174,7 +180,10 @@ export default class Fields extends AsyncView {
 						}
 					},
 					onDelete: async () => {
-						await deleteField(field.id);
+						const result = await deleteField(field.id);
+
+						if (result?.status === 'error') return result;
+
 						if (this.fields?.body) delete this.fields.body[field.id];
 						this._selectedField = null;
 						this._renderList();

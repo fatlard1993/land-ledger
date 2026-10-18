@@ -3,6 +3,7 @@ import { FormDialog, Select, Elem, Notify } from '@vanilla-bean/components';
 import { createHealthRecord, updateHealthRecord, deleteHealthRecord } from '../api/animals';
 import { watchFormConflicts } from '../utils/watchFormConflicts.js';
 import { animalLabel } from './constants';
+import { keepOpenIfFailed } from '../utils/keepOpenIfFailed';
 
 const withoutCallbacks = ({ onSave: _onSave, onDelete: _onDelete, ...options }) => options;
 
@@ -90,7 +91,8 @@ export default class HealthRecordDialog extends FormDialog {
 				confirmDelete: { header: `Delete this ${rec.type || 'health'} record for ${animalLabel(animal)}?` },
 				onDelete: async () => {
 					try {
-						await deleteHealthRecord(rec.id);
+						if (keepOpenIfFailed(await deleteHealthRecord(rec.id), 'Delete') === false) return false;
+
 						options.onDelete?.();
 					} catch (err) {
 						new Notify({ type: 'error', textContent: err.message || 'Delete failed', timeout: 4000 });
@@ -139,6 +141,9 @@ export default class HealthRecordDialog extends FormDialog {
 		try {
 			const fn = isNew ? createHealthRecord : body => updateHealthRecord(id, body);
 			const result = await fn({ body: data });
+
+			if (keepOpenIfFailed(result) === false) return false;
+
 			options.onSave?.(result?.body);
 		} catch (err) {
 			new Notify({ type: 'error', textContent: err.message || 'Save failed', timeout: 4000 });

@@ -39,7 +39,10 @@ export async function renderIncidents(entityType, entity, refresh, appendTo, { l
 				entity,
 				livestockEvents,
 				onSave: async incData => {
-					await createIncident({ body: incData });
+					const result = await createIncident({ body: incData });
+
+					if (result?.status === 'error') return result;
+
 					if (incData.entityStatusUpdate) await applyEntityStatus(incData.entityStatusUpdate);
 					await applyLivestockLosses(incData.livestockLosses, livestockEvents);
 					refresh();
@@ -156,13 +159,19 @@ export async function renderIncidents(entityType, entity, refresh, appendTo, { l
 					entity,
 					livestockEvents,
 					onSave: async incData => {
-						await updateIncident(rec.id, { body: { ...incData, _v: rec._v } });
+						const result = await updateIncident(rec.id, { body: { ...incData, _v: rec._v } });
+
+						if (result?.status === 'error') return result;
+
 						if (incData.entityStatusUpdate) await applyEntityStatus(incData.entityStatusUpdate);
 						await applyLivestockLosses(incData.livestockLosses, livestockEvents, rec.livestockLosses);
 						refresh();
 					},
 					onDelete: async () => {
-						await deleteIncident(rec.id);
+						const result = await deleteIncident(rec.id);
+
+						if (result?.status === 'error') return result;
+
 						refresh();
 					},
 				}),

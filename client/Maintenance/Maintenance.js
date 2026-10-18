@@ -75,13 +75,18 @@ export default class Maintenance extends AsyncView {
 					onSave: async data => {
 						const result = await updateMaintenance(rec.id, { body: { ...data, _v: rec._v } });
 
+						if (result?.status === 'error') return result;
+
 						if (result?.body && this._maintenance?.body) {
 							this._maintenance.body[rec.id] = result.body;
 							this._renderList();
 						}
 					},
 					onDelete: async () => {
-						await deleteMaintenance(rec.id);
+						const result = await deleteMaintenance(rec.id);
+
+						if (result?.status === 'error') return result;
+
 						if (this._maintenance?.body) delete this._maintenance.body[rec.id];
 						context.hasMaintenanceHistory = Object.keys(this._maintenance?.body || {}).length > 0;
 						this._renderList();

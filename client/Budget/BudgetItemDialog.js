@@ -2,6 +2,7 @@ import { FormDialog, Component, Elem, Select, Button } from '@vanilla-bean/compo
 import { makePropertiesEditor } from '../utils/PropertiesEditor';
 import { toNum } from '../utils/format.js';
 import { watchFormConflicts } from '../utils/watchFormConflicts.js';
+import { keepOpenIfFailed } from '../utils/keepOpenIfFailed';
 
 export const FREQUENCIES = [
 	{ value: 'daily', label: 'Daily', multiplier: 365 },
@@ -107,22 +108,24 @@ export default class BudgetItemDialog extends FormDialog {
 				},
 			],
 			onSave: async d => {
-				await options.onSave?.({
-					name: d.name,
-					type: typeSelect.value,
-					category: d.category,
-					amount: toNum(d.amount),
-					frequency: d.frequency,
-					entityType: options.entityType || item.entityType || '',
-					entityId: options.entity?.id || item.entityId || '',
-					entityName: options.entity?.name || item.entityName || '',
-					startDate: d.startDate || null,
-					endDate: d.endDate || null,
-					properties: collectProps(),
-				});
+				return keepOpenIfFailed(
+					await options.onSave?.({
+						name: d.name,
+						type: typeSelect.value,
+						category: d.category,
+						amount: toNum(d.amount),
+						frequency: d.frequency,
+						entityType: options.entityType || item.entityType || '',
+						entityId: options.entity?.id || item.entityId || '',
+						entityName: options.entity?.name || item.entityName || '',
+						startDate: d.startDate || null,
+						endDate: d.endDate || null,
+						properties: collectProps(),
+					}),
+				);
 			},
 			...(isEdit && {
-				onDelete: async () => options.onDelete?.(),
+				onDelete: async () => keepOpenIfFailed(await options.onDelete?.(), 'Delete'),
 				confirmDelete: { header: `Delete "${item.name || 'this budget item'}"?` },
 			}),
 			...withoutCallbacks(options),

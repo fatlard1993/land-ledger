@@ -3,6 +3,7 @@ import { FormDialog, Select, Elem, Notify } from '@vanilla-bean/components';
 import { createBreedingRecord, updateBreedingRecord, deleteBreedingRecord } from '../api/animals';
 import { watchFormConflicts } from '../utils/watchFormConflicts.js';
 import { animalLabel, speciesMeta } from './constants';
+import { keepOpenIfFailed } from '../utils/keepOpenIfFailed';
 
 const withoutCallbacks = ({ onSave: _onSave, onDelete: _onDelete, ...options }) => options;
 
@@ -97,7 +98,8 @@ export default class BreedingDialog extends FormDialog {
 				confirmDelete: { header: `Delete this breeding record for ${animalLabel(dam)}?` },
 				onDelete: async () => {
 					try {
-						await deleteBreedingRecord(rec.id);
+						if (keepOpenIfFailed(await deleteBreedingRecord(rec.id), 'Delete') === false) return false;
+
 						options.onDelete?.();
 					} catch (err) {
 						new Notify({ type: 'error', textContent: err.message || 'Delete failed', timeout: 4000 });
@@ -151,6 +153,9 @@ export default class BreedingDialog extends FormDialog {
 		try {
 			const fn = isNew ? createBreedingRecord : body => updateBreedingRecord(id, body);
 			const result = await fn({ body: data });
+
+			if (keepOpenIfFailed(result) === false) return false;
+
 			options.onSave?.(result?.body);
 		} catch (err) {
 			new Notify({ type: 'error', textContent: err.message || 'Save failed', timeout: 4000 });
