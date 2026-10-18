@@ -30,36 +30,14 @@ const OUTPUT_SUGGESTIONS = [
 const UNIT_SUGGESTIONS = ['bu', 'tons', 'cwt', 'lbs', 'head', 'dozen', 'gallons', 'bales', 'bags'];
 
 export function buildHarvestSection(container, prev, g, { onEmojiRefresh } = {}) {
-	const datalistId = `harvest-out-${Math.random().toString(36).slice(2)}`;
-	const datalist = document.createElement('datalist');
-
-	datalist.id = datalistId;
-	OUTPUT_SUGGESTIONS.forEach(s => {
-		const o = document.createElement('option');
-		o.value = s;
-		datalist.append(o);
-	});
-	container.elem.append(datalist);
-
-	const unitDatalistId = `harvest-unit-${Math.random().toString(36).slice(2)}`;
-	const unitDatalist = document.createElement('datalist');
-
-	unitDatalist.id = unitDatalistId;
-	UNIT_SUGGESTIONS.forEach(u => {
-		const o = document.createElement('option');
-		o.value = u;
-		unitDatalist.append(o);
-	});
-	container.elem.append(unitDatalist);
-
 	new FormLabel({ appendTo: container, textContent: 'Output' });
 	const outputEl = new FormInput({
 		appendTo: container,
 		attributes: { placeholder: 'e.g. Corn, Hay — 1st cutting, Eggs' },
+		suggestions: OUTPUT_SUGGESTIONS,
 	});
 
 	outputEl.elem.value = prev.outputType || '';
-	outputEl.elem.setAttribute('list', datalistId);
 	outputEl.elem.addEventListener('input', () => onEmojiRefresh?.(outputEl.elem.value));
 
 	// Yield / acre — the key field for county benchmark comparison
@@ -77,10 +55,13 @@ export function buildHarvestSection(container, prev, g, { onEmojiRefresh } = {})
 	yieldEl.elem.value = prev.yieldPerAcre != null ? String(prev.yieldPerAcre) : '';
 
 	new FormLabel({ appendTo: yieldRow, textContent: 'Unit' });
-	const yieldUnitEl = new FormInput({ appendTo: yieldRow, attributes: { placeholder: 'bu' } });
+	const yieldUnitEl = new FormInput({
+		appendTo: yieldRow,
+		attributes: { placeholder: 'bu' },
+		suggestions: UNIT_SUGGESTIONS,
+	});
 
 	yieldUnitEl.elem.value = prev.yieldUnit || prev.unit || '';
-	yieldUnitEl.elem.setAttribute('list', unitDatalistId);
 
 	const row1 = new Component({
 		appendTo: container,
@@ -96,10 +77,13 @@ export function buildHarvestSection(container, prev, g, { onEmojiRefresh } = {})
 	qtyEl.elem.value = prev.quantity || '';
 
 	new FormLabel({ appendTo: row1, textContent: 'Unit' });
-	const unitEl = new FormInput({ appendTo: row1, attributes: { placeholder: 'bu, lbs…' } });
+	const unitEl = new FormInput({
+		appendTo: row1,
+		attributes: { placeholder: 'bu, lbs…' },
+		suggestions: UNIT_SUGGESTIONS,
+	});
 
 	unitEl.elem.value = prev.unit || prev.yieldUnit || '';
-	unitEl.elem.setAttribute('list', unitDatalistId);
 
 	// Keep yield unit and quantity unit in sync
 	yieldUnitEl.elem.addEventListener('input', () => {

@@ -1,4 +1,4 @@
-import { styled, Component } from '@vanilla-bean/components';
+import { styled, Component, Input, Select } from '@vanilla-bean/components';
 
 export const BottomNav = styled(
 	Component,
@@ -431,9 +431,7 @@ export class FormLabel extends _FormLabelBase {
 	}
 }
 
-const _FormInputBase = styled(
-	Component,
-	() => `
+const fieldStyles = `
 	display: block;
 	width: 100%;
 	box-sizing: border-box;
@@ -444,34 +442,14 @@ const _FormInputBase = styled(
 	font-size: 14px;
 	padding: 8px 10px;
 	font-family: inherit;
-`,
-);
+`;
 
-export class FormInput extends _FormInputBase {
-	constructor(options = {}, ...children) {
-		super({ tag: 'input', ...options }, ...children);
-	}
-}
+export const FormInput = styled(Input, () => fieldStyles);
 
-const _FormSelectBase = styled(
-	Component,
+export const FormSelect = styled(
+	Select,
 	() => `
-	display: block;
-	width: 100%;
-	box-sizing: border-box;
-	background: rgba(255,255,255,0.07);
-	border: 1px solid rgba(255,255,255,0.12);
-	border-radius: 4px;
-	color: #fff;
-	font-size: 14px;
-	padding: 8px 10px;
-	font-family: inherit;
+	${fieldStyles}
 	cursor: pointer;
 `,
 );
-
-export class FormSelect extends _FormSelectBase {
-	constructor(options = {}, ...children) {
-		super({ tag: 'select', ...options }, ...children);
-	}
-}

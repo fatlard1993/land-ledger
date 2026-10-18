@@ -155,8 +155,7 @@ export default class EventDialog extends Dialog {
 	}
 
 	async _buildForm() {
-		// Build livestock species datalist from previous events — appended inside the dialog body
-		// so the <datalist> is in the same DOM tree as the inputs (required for modal dialogs)
+		// Livestock species suggestions: the common ones, plus every species already logged
 		const { getEvents } = await import('../api/events');
 		const eventsData = await getEvents();
 		const knownSpecies = new Set([
@@ -184,19 +183,7 @@ export default class EventDialog extends Dialog {
 			}
 		}
 
-		this._speciesDatalistId = `ls-datalist-${Math.random().toString(36).slice(2)}`;
-		const speciesDatalist = document.createElement('datalist');
-
-		speciesDatalist.id = this._speciesDatalistId;
-
-		for (const s of knownSpecies) {
-			const opt = document.createElement('option');
-
-			opt.value = s;
-			speciesDatalist.append(opt);
-		}
-
-		this.body.elem.prepend(speciesDatalist);
+		this._knownSpecies = [...knownSpecies];
 
 		const fieldsData = await getFields();
 		const fieldOptions = Object.values(fieldsData?.body || {}).map(f => ({
@@ -746,11 +733,10 @@ export default class EventDialog extends Dialog {
 		const speciesInput = new FormInput({
 			appendTo: container,
 			attributes: { placeholder: 'e.g. Angus cattle, Dorper sheep, Broiler chickens' },
+			value: prev.species || '',
+			suggestions: this._knownSpecies,
 		});
 
-		speciesInput.elem.value = prev.species || '';
-
-		if (this._speciesDatalistId) speciesInput.elem.setAttribute('list', this._speciesDatalistId);
 		speciesInput.elem.addEventListener('input', () => this._refreshEmoji?.(speciesInput.elem.value));
 
 		const row1 = new Component({

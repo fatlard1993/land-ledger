@@ -110,22 +110,13 @@ export function openRevenueDialog(entityType, entity, existingRecord, onSave, on
 	});
 
 	// Type
-	const typeDatalistId = `rev-type-${Math.random().toString(36).slice(2)}`;
-	const typeDatalist = new Elem({ tag: 'datalist', appendTo: dialog.body, attributes: { id: typeDatalistId } });
-
-	INCOME_TYPES.forEach(t => {
-		const o = document.createElement('option');
-		o.value = t;
-		typeDatalist.elem.append(o);
-	});
-
 	new FormLabel({ appendTo: dialog.body, textContent: 'Income Type' });
 	const typeEl = new FormInput({
 		appendTo: dialog.body,
 		placeholder: 'e.g. Barn rental, Airbnb, Event hosting',
-		list: typeDatalistId,
+		suggestions: INCOME_TYPES,
+		value: rec.type || '',
 	});
-	typeEl.elem.value = rec.type || '';
 
 	// Amount + Date
 	const row = new Elem({

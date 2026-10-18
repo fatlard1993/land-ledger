@@ -54,10 +54,7 @@ export function openTreatDialog(field, totalHead, refresh) {
 		},
 	});
 
-	const datalistId = `tr-feed-${Math.random().toString(36).slice(2)}`;
-	const datalist = new Elem({ tag: 'datalist', attributes: { id: datalistId }, appendTo: dialog.body });
-
-	[
+	const feedSuggestions = [
 		'Hay — Grass',
 		'Hay — Alfalfa',
 		'Grain — Corn',
@@ -69,18 +66,14 @@ export function openTreatDialog(field, totalHead, refresh) {
 		'Pellets',
 		'Apple / Carrot',
 		'Other treat',
-	].forEach(t => {
-		const o = document.createElement('option');
-		o.value = t;
-		datalist.elem.append(o);
-	});
+	];
 
 	new FormLabel({ appendTo: dialog.body, textContent: 'What they got' });
 	const feedTypeEl = new FormInput({
 		appendTo: dialog.body,
 		type: 'text',
 		placeholder: 'e.g. Hay, Range cake, Apple slices',
-		attributes: { list: datalistId },
+		suggestions: feedSuggestions,
 	});
 
 	const rowEl = new Elem({

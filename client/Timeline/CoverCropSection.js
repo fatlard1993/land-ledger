@@ -1,4 +1,4 @@
-import { Component, Elem, Button } from '@vanilla-bean/components';
+import { Component, Button } from '@vanilla-bean/components';
 
 import { FormLabel, FormInput, FormSelect } from '../Layout';
 import { makePropertiesEditor } from '../utils/PropertiesEditor';
@@ -48,20 +48,9 @@ export const SEEDING_METHODS = [
 	{ value: 'overseeded', label: 'Overseeded' },
 ];
 
+const rowFieldStyle = { fontSize: '16px', marginTop: '0' };
+
 export function buildCoverCropSection(container, prev, g) {
-	// Datalist for species autocomplete
-	const datalistId = `cc-species-${Math.random().toString(36).slice(2)}`;
-	const datalist = document.createElement('datalist');
-
-	datalist.id = datalistId;
-	COVER_CROP_SPECIES.forEach(s => {
-		const opt = document.createElement('option');
-
-		opt.value = s;
-		datalist.append(opt);
-	});
-	container.elem.append(datalist);
-
 	// Species mix rows
 	new FormLabel({ appendTo: container, textContent: 'Species Mix' });
 
@@ -78,77 +67,30 @@ export function buildCoverCropSection(container, prev, g) {
 			style: { display: 'grid', gridTemplateColumns: '1fr 80px 70px 28px', gap: '4px', marginBottom: '4px' },
 		});
 
-		const nameEl = new Elem({
-			tag: 'input',
+		const nameEl = new FormInput({
 			appendTo: row,
-			style: {
-				display: 'block',
-				width: '100%',
-				background: 'rgba(255,255,255,0.07)',
-				border: '1px solid rgba(255,255,255,0.12)',
-				borderRadius: '4px',
-				color: '#fff',
-				fontSize: '16px',
-				padding: '8px 10px',
-				boxSizing: 'border-box',
-				marginTop: '0',
-				fontFamily: 'inherit',
-			},
-			attributes: { type: 'text', placeholder: 'Species' },
+			type: 'text',
+			placeholder: 'Species',
+			value: rowData.name || '',
+			suggestions: COVER_CROP_SPECIES,
+			style: rowFieldStyle,
 		});
 
-		nameEl.elem.value = rowData.name || '';
-		nameEl.elem.setAttribute('list', datalistId);
-
-		const rateEl = new Elem({
-			tag: 'input',
+		const rateEl = new FormInput({
 			appendTo: row,
-			style: {
-				display: 'block',
-				width: '100%',
-				background: 'rgba(255,255,255,0.07)',
-				border: '1px solid rgba(255,255,255,0.12)',
-				borderRadius: '4px',
-				color: '#fff',
-				fontSize: '16px',
-				padding: '8px 10px',
-				boxSizing: 'border-box',
-				marginTop: '0',
-				fontFamily: 'inherit',
-			},
-			attributes: { type: 'number', step: '0.1', placeholder: 'Rate' },
+			type: 'number',
+			placeholder: 'Rate',
+			value: rowData.rate || '',
+			attributes: { step: '0.1' },
+			style: rowFieldStyle,
 		});
 
-		rateEl.elem.value = rowData.rate || '';
-
-		const unitEl = new Elem({
-			tag: 'select',
+		const unitEl = new FormSelect({
 			appendTo: row,
-			style: {
-				display: 'block',
-				width: '100%',
-				background: 'rgba(255,255,255,0.07)',
-				border: '1px solid rgba(255,255,255,0.12)',
-				borderRadius: '4px',
-				color: '#fff',
-				fontSize: '16px',
-				padding: '8px 4px',
-				boxSizing: 'border-box',
-				marginTop: '0',
-				fontFamily: 'inherit',
-				cursor: 'pointer',
-			},
+			options: RATE_UNITS,
+			value: rowData.unit || 'lbs/ac',
+			style: { ...rowFieldStyle, padding: '8px 4px' },
 		});
-
-		for (const { value, label } of RATE_UNITS) {
-			const opt = document.createElement('option');
-
-			opt.value = value;
-			opt.textContent = label;
-			unitEl.elem.append(opt);
-		}
-
-		unitEl.elem.value = rowData.unit || 'lbs/ac';
 
 		new Component({
 			tag: 'button',
