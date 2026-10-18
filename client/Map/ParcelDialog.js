@@ -57,7 +57,10 @@ export default class ParcelDialog extends FormDialog {
 
 				await options.onSave?.(data);
 			},
-			...(isEdit && { onDelete: async () => options.onDelete?.() }),
+			...(isEdit && {
+				onDelete: async () => options.onDelete?.(),
+				confirmDelete: { header: `Delete this property line?` },
+			}),
 			...withoutCallbacks(options),
 		});
 

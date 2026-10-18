@@ -103,6 +103,7 @@ export default class AnimalDialog extends FormDialog {
 			// Required fields are checked in _save, which keeps the dialog open (false) when one is missing
 			onSave: () => this._save(rec.id, isNew, options),
 			...(!isNew && {
+				confirmDelete: { header: `Delete "${rec.name || rec.tagId || 'this animal'}"?` },
 				onDelete: async () => {
 					try {
 						await deleteAnimal(rec.id);

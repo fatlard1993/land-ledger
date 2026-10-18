@@ -160,7 +160,10 @@ export default class EquipmentDialog extends FormDialog {
 
 				await options.onSave?.(data);
 			},
-			...(isEdit && { onDelete: async () => options.onDelete?.() }),
+			...(isEdit && {
+				onDelete: async () => options.onDelete?.(),
+				confirmDelete: { header: `Delete "${options.item.name || 'this equipment'}"?` },
+			}),
 			...withoutCallbacks(options),
 		});
 

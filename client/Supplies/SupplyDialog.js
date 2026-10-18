@@ -133,7 +133,10 @@ export default class SupplyDialog extends FormDialog {
 					properties: this._collectProps?.() ?? {},
 				});
 			},
-			...(isEdit && { onDelete: async () => options.onDelete?.() }),
+			...(isEdit && {
+				onDelete: async () => options.onDelete?.(),
+				confirmDelete: { header: `Delete "${supply.name || 'this supply'}"?` },
+			}),
 			...withoutCallbacks(options),
 		});
 

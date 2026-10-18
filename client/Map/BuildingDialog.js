@@ -117,7 +117,10 @@ export default class BuildingDialog extends FormDialog {
 
 				await options.onSave?.(data);
 			},
-			...(isEdit && { onDelete: async () => options.onDelete?.() }),
+			...(isEdit && {
+				onDelete: async () => options.onDelete?.(),
+				confirmDelete: { header: `Delete "${options.building.name || 'this building'}"?` },
+			}),
 			...withoutCallbacks(options),
 		});
 

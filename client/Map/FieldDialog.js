@@ -67,7 +67,10 @@ export default class FieldDialog extends FormDialog {
 
 				await options.onSave?.(data);
 			},
-			...(isEdit && { onDelete: async () => options.onDelete?.() }),
+			...(isEdit && {
+				onDelete: async () => options.onDelete?.(),
+				confirmDelete: { header: `Delete "${options.field.name || 'this field'}"?` },
+			}),
 			...withoutCallbacks(options),
 		});
 

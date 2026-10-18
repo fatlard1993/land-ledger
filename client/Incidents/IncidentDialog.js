@@ -164,7 +164,10 @@ export default class IncidentDialog extends FormDialog {
 			onSave: async d => {
 				await options.onSave?.(payloadFor(d, 'Save'));
 			},
-			...(isEdit && { onDelete: async () => options.onDelete?.() }),
+			...(isEdit && {
+				onDelete: async () => options.onDelete?.(),
+				confirmDelete: { header: `Delete this ${incident.type || 'incident'} report?` },
+			}),
 			// Mark Resolved is a button of this dialog's own; FormDialog passes it through
 			onButtonPress: async ({ button, closeDialog }) => {
 				if (button !== 'Mark Resolved') return;

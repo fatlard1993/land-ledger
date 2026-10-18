@@ -124,7 +124,10 @@ export default class MaintenanceDialog extends FormDialog {
 					properties: collectProps(),
 				});
 			},
-			...(isEdit && { onDelete: async () => options.onDelete?.() }),
+			...(isEdit && {
+				onDelete: async () => options.onDelete?.(),
+				confirmDelete: { header: `Delete this ${record.type || 'service'} record?` },
+			}),
 			...withoutCallbacks(options),
 		});
 

@@ -90,6 +90,7 @@ export default class BreedingDialog extends FormDialog {
 			// Required fields are checked in _save, which keeps the dialog open (false) when one is missing
 			onSave: () => this._save(rec.id, isNew, options),
 			...(!isNew && {
+				confirmDelete: { header: `Delete this breeding record for ${animalLabel(dam)}?` },
 				onDelete: async () => {
 					try {
 						await deleteBreedingRecord(rec.id);

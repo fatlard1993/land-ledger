@@ -207,6 +207,7 @@ export default class ApplicationLogDialog extends FormDialog {
 			],
 			onSave: d => self.dialog._save(d, rec.id, rec._v, isNew, options),
 			...(!isNew && {
+				confirmDelete: { header: `Delete the ${rec.product || 'application'} record?` },
 				onDelete: async () => {
 					try {
 						await deleteApplicationLog(rec.id);

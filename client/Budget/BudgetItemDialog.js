@@ -121,7 +121,10 @@ export default class BudgetItemDialog extends FormDialog {
 					properties: collectProps(),
 				});
 			},
-			...(isEdit && { onDelete: async () => options.onDelete?.() }),
+			...(isEdit && {
+				onDelete: async () => options.onDelete?.(),
+				confirmDelete: { header: `Delete "${item.name || 'this budget item'}"?` },
+			}),
 			...withoutCallbacks(options),
 		});
 

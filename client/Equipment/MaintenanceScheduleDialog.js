@@ -122,7 +122,10 @@ export default class MaintenanceScheduleDialog extends FormDialog {
 					properties: collectProps(),
 				});
 			},
-			...(isEdit && { onDelete: async () => options.onDelete?.() }),
+			...(isEdit && {
+				onDelete: async () => options.onDelete?.(),
+				confirmDelete: { header: `Delete the "${schedule.name || 'maintenance'}" schedule?` },
+			}),
 			...withoutCallbacks(options),
 		});
 

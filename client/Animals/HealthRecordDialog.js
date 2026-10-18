@@ -78,6 +78,7 @@ export default class HealthRecordDialog extends FormDialog {
 			// Required fields are checked in _save, which keeps the dialog open (false) when one is missing
 			onSave: () => this._save(rec.id, isNew, options),
 			...(!isNew && {
+				confirmDelete: { header: `Delete this ${rec.type || 'health'} record for ${animalLabel(animal)}?` },
 				onDelete: async () => {
 					try {
 						await deleteHealthRecord(rec.id);

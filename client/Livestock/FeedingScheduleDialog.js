@@ -127,7 +127,10 @@ export default class FeedingScheduleDialog extends FormDialog {
 					properties: collectProps(),
 				});
 			},
-			...(isEdit && { onDelete: async () => options.onDelete?.() }),
+			...(isEdit && {
+				onDelete: async () => options.onDelete?.(),
+				confirmDelete: { header: `Delete the ${schedule.feedType || 'feeding'} schedule?` },
+			}),
 			...withoutCallbacks(options),
 		});
 
