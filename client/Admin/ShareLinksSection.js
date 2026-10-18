@@ -1,4 +1,4 @@
-import { Component, Elem } from '@vanilla-bean/components';
+import { Component, Elem, copyToClipboard } from '@vanilla-bean/components';
 import { FormLabel, FormInput } from '../Layout';
 
 const PURPOSES = {
@@ -267,7 +267,9 @@ function showShareLink(container, data, { onRefresh }) {
 		},
 		appendTo: reveal,
 		onPointerPress: async () => {
-			await navigator.clipboard.writeText(url).catch(() => urlEl.elem.select());
+			// Where the copy is refused, the link is selected for copying by hand
+			if (!(await copyToClipboard(url))) return urlEl.elem.select();
+
 			copyBtn.elem.textContent = 'Copied ✓';
 			setTimeout(() => {
 				copyBtn.elem.textContent = 'Copy Link';
@@ -414,7 +416,8 @@ export async function renderShareLinksSection(container, { onRefresh }) {
 					.then(list => list.find(x => x.id === s.id)?.token)
 					.catch(() => null);
 				if (full) {
-					await navigator.clipboard.writeText(`${window.location.origin}/shared/${full}`).catch(() => {});
+					if (!(await copyToClipboard(`${window.location.origin}/shared/${full}`))) return;
+
 					copyBtn.elem.textContent = 'Copied ✓';
 					setTimeout(() => {
 						copyBtn.elem.textContent = 'Copy link';

@@ -1,4 +1,4 @@
-import { Component, Elem } from '@vanilla-bean/components';
+import { Component, Elem, copyToClipboard } from '@vanilla-bean/components';
 import { FormInput } from '../Layout';
 
 function showNewToken(container, data, { onRefresh }) {
@@ -75,7 +75,9 @@ function showNewToken(container, data, { onRefresh }) {
 		},
 		appendTo: reveal,
 		onPointerPress: async () => {
-			await navigator.clipboard.writeText(data.token).catch(() => tokenVal.elem.select());
+			// Where the copy is refused, the token is selected for copying by hand
+			if (!(await copyToClipboard(data.token))) return tokenVal.elem.select();
+
 			copyBtn.elem.textContent = 'Copied ✓';
 			setTimeout(() => {
 				copyBtn.elem.textContent = 'Copy';
