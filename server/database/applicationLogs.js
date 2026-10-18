@@ -1,9 +1,6 @@
-import { createCRUD } from './crud';
-import archiveDb from './archive';
+import { archiveStore } from './store';
 
-const applicationLogs = createCRUD(
-	'applicationLogs',
-	[
+const applicationLogs = archiveStore('applicationLogs', [
 		'fieldId',
 		'date',
 		'category', // herbicide | insecticide | fungicide | fertilizer | fuel | adjuvant | other
@@ -25,9 +22,6 @@ const applicationLogs = createCRUD(
 		'temperature', // °F at application
 		'notes',
 		'properties',
-	],
-	{},
-	archiveDb,
-);
+	]);
 
 export default applicationLogs;

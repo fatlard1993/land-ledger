@@ -1,11 +1,5 @@
-import { createCRUD } from './crud';
-import archiveDb from './archive';
+import { archiveStore } from './store';
 
-const events = createCRUD(
-	'events',
-	['fieldId', 'date', 'season', 'category', 'name', 'emoji', 'details', 'notes', 'properties'],
-	{},
-	archiveDb,
-);
+const events = archiveStore('events', ['fieldId', 'date', 'season', 'category', 'name', 'emoji', 'details', 'notes', 'properties']);
 
 export default events;

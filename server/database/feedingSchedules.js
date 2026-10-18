@@ -1,11 +1,6 @@
 import { collectionDBs } from './database';
-import { createCRUD } from './crud';
+import { collectionStore } from './store';
 
-const feedingSchedules = createCRUD(
-	'feedingSchedules',
-	['fieldId', 'feedType', 'amountPerHead', 'amountUnit', 'frequency', 'supplyId', 'notes'],
-	{},
-	collectionDBs.feedingSchedules,
-);
+const feedingSchedules = collectionStore(['fieldId', 'feedType', 'amountPerHead', 'amountUnit', 'frequency', 'supplyId', 'notes'], collectionDBs.feedingSchedules);
 
 export default feedingSchedules;

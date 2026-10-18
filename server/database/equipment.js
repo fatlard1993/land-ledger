@@ -1,9 +1,7 @@
 import { collectionDBs } from './database';
-import { createCRUD } from './crud';
+import { collectionStore } from './store';
 
-const equipment = createCRUD(
-	'equipment',
-	[
+const equipment = collectionStore([
 		'name',
 		'type',
 		'tenure',
@@ -18,9 +16,6 @@ const equipment = createCRUD(
 		'showLabel',
 		'notes',
 		'properties',
-	],
-	{},
-	collectionDBs.equipment,
-);
+	], collectionDBs.equipment);
 
 export default equipment;

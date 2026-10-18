@@ -1,9 +1,7 @@
 import { collectionDBs } from './database';
-import { createCRUD } from './crud';
+import { collectionStore } from './store';
 
-const loans = createCRUD(
-	'loans',
-	[
+const loans = collectionStore([
 		'entityType',
 		'entityId',
 		'entityName',
@@ -22,9 +20,6 @@ const loans = createCRUD(
 		'paymentDates',
 		'notes',
 		'properties',
-	],
-	{},
-	collectionDBs.loans,
-);
+	], collectionDBs.loans);
 
 export default loans;

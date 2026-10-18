@@ -1,9 +1,7 @@
 import { collectionDBs } from './database';
-import { createCRUD } from './crud';
+import { collectionStore } from './store';
 
-const budgetItems = createCRUD(
-	'budgetItems',
-	[
+const budgetItems = collectionStore([
 		'name',
 		'type',
 		'category',
@@ -16,9 +14,6 @@ const budgetItems = createCRUD(
 		'endDate',
 		'notes',
 		'properties',
-	],
-	{},
-	collectionDBs.budgetItems,
-);
+	], collectionDBs.budgetItems);
 
 export default budgetItems;

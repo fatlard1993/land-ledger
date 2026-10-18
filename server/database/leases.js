@@ -1,9 +1,7 @@
 import { collectionDBs } from './database';
-import { createCRUD } from './crud';
+import { collectionStore } from './store';
 
-const leases = createCRUD(
-	'leases',
-	[
+const leases = collectionStore([
 		// which side of the agreement
 		'role', // 'tenant' (I pay) | 'lessor' (I receive)
 		// entity being leased
@@ -36,9 +34,6 @@ const leases = createCRUD(
 		'paymentDates',
 		'notes',
 		'properties',
-	],
-	{},
-	collectionDBs.leases,
-);
+	], collectionDBs.leases);
 
 export default leases;

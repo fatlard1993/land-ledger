@@ -1,9 +1,6 @@
-import { createCRUD } from './crud';
-import archiveDb from './archive';
+import { archiveStore } from './store';
 
-const incidents = createCRUD(
-	'incidents',
-	[
+const incidents = archiveStore('incidents', [
 		'date',
 		'type',
 		'severity',
@@ -18,9 +15,6 @@ const incidents = createCRUD(
 		'resolutionNotes',
 		'notes',
 		'properties',
-	],
-	{},
-	archiveDb,
-);
+	]);
 
 export default incidents;

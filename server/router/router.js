@@ -1,4 +1,4 @@
-import { requestMatch, serveStatic } from '@vanilla-bean/components/app';
+import { ConflictError, requestMatch, serveStatic } from '@vanilla-bean/components/app';
 
 import { requireAuth, requireRole } from '../auth';
 import { enforceJsonBodyLimit, MAX_JSON_BYTES } from '../utils/limitBody.js';
@@ -145,6 +145,8 @@ const router = async request => {
 			: new Response('Not Found', { status: 404 });
 	} catch (error) {
 		if (error instanceof SyntaxError) return new Response('Invalid JSON', { status: 400 });
+		// The client's conflict dialog reads { _conflict, current }
+		if (error instanceof ConflictError) return Response.json({ _conflict: true, current: error.current }, { status: 409 });
 
 		console.error(`[router] ${request.method} ${request.url} failed:`, error);
 

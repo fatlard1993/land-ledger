@@ -7,8 +7,6 @@ import { createDebouncedWriter } from './createDebouncedWriter.js';
 // coalesce into one disk write per file rather than one per record.
 
 export class CollectionDB {
-	isCollectionDB = true; // discriminator used by createCRUD
-
 	data = {};
 	path = null;
 

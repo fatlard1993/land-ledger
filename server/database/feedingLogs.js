@@ -1,11 +1,5 @@
-import { createCRUD } from './crud';
-import archiveDb from './archive';
+import { archiveStore } from './store';
 
-const feedingLogs = createCRUD(
-	'feedingLogs',
-	['scheduleId', 'fieldId', 'feedType', 'amountPerHead', 'amountUnit', 'headCount', 'type', 'date', 'notes'],
-	{},
-	archiveDb,
-);
+const feedingLogs = archiveStore('feedingLogs', ['scheduleId', 'fieldId', 'feedType', 'amountPerHead', 'amountUnit', 'headCount', 'type', 'date', 'notes']);
 
 export default feedingLogs;

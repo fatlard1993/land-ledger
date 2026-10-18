@@ -1,9 +1,6 @@
-import { createCRUD } from './crud';
-import archiveDb from './archive';
+import { archiveStore } from './store';
 
-const healthRecords = createCRUD(
-	'healthRecords',
-	[
+const healthRecords = archiveStore('healthRecords', [
 		'animalId',
 		'date',
 		'type', // vaccination | treatment | observation | injury
@@ -15,9 +12,6 @@ const healthRecords = createCRUD(
 		'treatedBy',
 		'notes',
 		'properties',
-	],
-	{},
-	archiveDb,
-);
+	]);
 
 export default healthRecords;

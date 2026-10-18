@@ -1,11 +1,5 @@
-import { createCRUD } from './crud';
-import archiveDb from './archive';
+import { archiveStore } from './store';
 
-const revenue = createCRUD(
-	'revenue',
-	['entityType', 'entityId', 'entityName', 'date', 'amount', 'type', 'description', 'notes', 'properties'],
-	{},
-	archiveDb,
-);
+const revenue = archiveStore('revenue', ['entityType', 'entityId', 'entityName', 'date', 'amount', 'type', 'description', 'notes', 'properties']);
 
 export default revenue;

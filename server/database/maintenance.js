@@ -1,11 +1,5 @@
-import { createCRUD } from './crud';
-import archiveDb from './archive';
+import { archiveStore } from './store';
 
-const maintenance = createCRUD(
-	'maintenance',
-	['equipmentId', 'workType', 'type', 'date', 'usageAtService', 'cost', 'parts', 'procedure', 'notes', 'properties'],
-	{},
-	archiveDb,
-);
+const maintenance = archiveStore('maintenance', ['equipmentId', 'workType', 'type', 'date', 'usageAtService', 'cost', 'parts', 'procedure', 'notes', 'properties']);
 
 export default maintenance;

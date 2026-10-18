@@ -1,9 +1,7 @@
 import { collectionDBs } from './database';
-import { createCRUD } from './crud';
+import { collectionStore } from './store';
 
-const supplies = createCRUD(
-	'supplies',
-	[
+const supplies = collectionStore([
 		'name',
 		'category',
 		'emoji',
@@ -16,9 +14,6 @@ const supplies = createCRUD(
 		'buildingId',
 		'notes',
 		'properties',
-	],
-	{},
-	collectionDBs.supplies,
-);
+	], collectionDBs.supplies);
 
 export default supplies;

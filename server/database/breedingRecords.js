@@ -1,9 +1,6 @@
-import { createCRUD } from './crud';
-import archiveDb from './archive';
+import { archiveStore } from './store';
 
-const breedingRecords = createCRUD(
-	'breedingRecords',
-	[
+const breedingRecords = archiveStore('breedingRecords', [
 		'damId', // animal ID of the dam
 		'sire', // animal ID (internal) or external sire name
 		'breedingDate',
@@ -14,9 +11,6 @@ const breedingRecords = createCRUD(
 		'status', // pending | confirmed | delivered | failed
 		'notes',
 		'properties',
-	],
-	{},
-	archiveDb,
-);
+	]);
 
 export default breedingRecords;
