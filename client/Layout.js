@@ -1,4 +1,4 @@
-import { styled, Component, Input, Select } from '@vanilla-bean/components';
+import { Component, Input, SectionLabel, Select, styled } from '@vanilla-bean/components';
 
 export const BottomNav = styled(
 	Component,
@@ -265,16 +265,8 @@ export const PanelHandle = styled(
 	`,
 );
 
-export const SectionHeader = styled(
-	Component,
-	({ colors }) => `
-		font-size: 11px;
-		text-transform: uppercase;
-		letter-spacing: 0.08em;
-		color: ${colors.gray};
-		margin: 16px 0 6px;
-	`,
-);
+// The library's section label, at the 11px land-ledger's denser panels use
+export const SectionHeader = styled(SectionLabel, () => 'font-size: 11px;');
 
 export const DetailRow = styled(
 	Component,
