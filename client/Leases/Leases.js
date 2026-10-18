@@ -43,7 +43,7 @@ export default class Leases extends AsyncView {
 				new LeaseDialog({
 					role: 'tenant',
 					onSave: async data => {
-						await this._save(data);
+						return this._save(data);
 					},
 				}),
 		});
@@ -55,7 +55,7 @@ export default class Leases extends AsyncView {
 			onPointerPress: () =>
 				new LeaseDialog({
 					onSave: async data => {
-						await this._save(data);
+						return this._save(data);
 					},
 				}),
 		});
@@ -69,7 +69,7 @@ export default class Leases extends AsyncView {
 				new LeaseDialog({
 					role: 'lessor',
 					onSave: async data => {
-						await this._save(data);
+						return this._save(data);
 					},
 				}),
 		});
@@ -83,7 +83,7 @@ export default class Leases extends AsyncView {
 				new LeaseDialog({
 					role: 'loan',
 					onSave: async data => {
-						await this._save(data);
+						return this._save(data);
 					},
 				}),
 		});
@@ -99,22 +99,19 @@ export default class Leases extends AsyncView {
 		this._renderList();
 	}
 
+	// Hands back the request's result, so the dialog stays open when it failed
 	async _save(data) {
-		if (data.role === 'loan') {
-			const result = await createLoan({ body: data });
-			if (result?.body && this.loans?.body) {
-				this.loans.body[result.body.id] = result.body;
-				context.hasLeases = true;
-				this._renderList();
-			}
-		} else {
-			const result = await createLease({ body: data });
-			if (result?.body && this.leases?.body) {
-				this.leases.body[result.body.id] = result.body;
-				context.hasLeases = true;
-				this._renderList();
-			}
+		const isLoan = data.role === 'loan';
+		const result = isLoan ? await createLoan({ body: data }) : await createLease({ body: data });
+		const collection = isLoan ? this.loans : this.leases;
+
+		if (result?.status === 'success' && collection?.body) {
+			collection.body[result.body.id] = result.body;
+			context.hasLeases = true;
+			this._renderList();
 		}
+
+		return result;
 	}
 
 	_renderList() {
@@ -179,31 +176,29 @@ export default class Leases extends AsyncView {
 				new LeaseDialog({
 					lease: isLoan ? { ...lease, role: 'loan' } : lease,
 					onSave: async data => {
-						if (isFromLoansCollection) {
-							const result = await updateLoan(lease.id, { body: { ...data, _v: lease._v } });
-							if (result?.body && this.loans?.body) {
-								this.loans.body[lease.id] = result.body;
-								this._renderList();
-							}
-						} else {
-							const result = await updateLease(lease.id, { body: { ...data, _v: lease._v } });
-							if (result?.body && this.leases?.body) {
-								this.leases.body[lease.id] = result.body;
-								this._renderList();
-							}
+						const update = isFromLoansCollection ? updateLoan : updateLease;
+						const collection = isFromLoansCollection ? this.loans : this.leases;
+						const result = await update(lease.id, { body: { ...data, _v: lease._v } });
+
+						if (result?.status === 'success' && result.body && collection?.body) {
+							collection.body[lease.id] = result.body;
+							this._renderList();
 						}
+
+						return result;
 					},
 					onDelete: async () => {
-						if (isFromLoansCollection) {
-							await deleteLoan(lease.id);
-							if (this.loans?.body) delete this.loans.body[lease.id];
-						} else {
-							await deleteLease(lease.id);
-							if (this.leases?.body) delete this.leases.body[lease.id];
-						}
+						const collection = isFromLoansCollection ? this.loans : this.leases;
+						const result = isFromLoansCollection ? await deleteLoan(lease.id) : await deleteLease(lease.id);
+
+						if (result?.status !== 'success') return result;
+
+						if (collection?.body) delete collection.body[lease.id];
 						context.hasLeases =
 							Object.keys(this.leases?.body || {}).length > 0 || Object.keys(this.loans?.body || {}).length > 0;
 						this._renderList();
+
+						return result;
 					},
 				}),
 		});

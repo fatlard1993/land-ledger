@@ -1,4 +1,5 @@
-import { Dialog, Elem, Component, conditionalList } from '@vanilla-bean/components';
+import { Elem, Component, FormDialog } from '@vanilla-bean/components';
+import { keepOpenIfFailed } from '../utils/keepOpenIfFailed';
 import { makePropertiesEditor } from '../utils/PropertiesEditor';
 
 export const PATH_COLORS = [
@@ -55,16 +56,24 @@ const BASE_INPUT = {
 	fontFamily: 'inherit',
 };
 
-export default class PathDialog extends Dialog {
+const withoutCallbacks = ({ onSave: _onSave, onDelete: _onDelete, ...options }) => options;
+
+export default class PathDialog extends FormDialog {
 	constructor(options = {}) {
 		const isEdit = !!options.path?.id;
 
-		// Pass onButtonPress as placeholder — replaced after super() so 'this' is initialized
+		// The body is built by hand below, so the form holds no inputs and saving collects from the body
 		super({
 			size: 'large',
 			header: isEdit ? `Edit Path — ${options.path.name || ''}` : 'Mark Path / Road',
-			buttons: conditionalList([{ alwaysItem: 'Save' }, { if: isEdit, thenItem: 'Delete' }, { alwaysItem: 'Cancel' }]),
-			...options,
+			inputs: [],
+			onSave: async () => keepOpenIfFailed(await options.onSave?.(this._collect())),
+			...(isEdit &&
+				options.onDelete && {
+					onDelete: async () => keepOpenIfFailed(await options.onDelete(), 'Delete'),
+					confirmDelete: { header: `Delete "${options.path.name || 'this path'}"?` },
+				}),
+			...withoutCallbacks(options),
 		});
 
 		const path = options.path || {};
@@ -237,29 +246,22 @@ export default class PathDialog extends Dialog {
 			this._showLabelEl.elem.checked = !this._showLabelEl.elem.checked;
 		});
 
-		// Wire onButtonPress AFTER super() so all DOM refs (this._widthEl etc.) are initialized
-		this.options.onButtonPress = ({ button }) => {
-			if (button === 'Save') {
-				const data = {
-					name: this._nameEl.elem.value,
-					type: this._typeEl.elem.value,
-					widthFt: this._widthEl.elem.value || '10',
-					color: this._selectedColor,
-					emoji: this._getEmoji?.() || '',
-					status: this._statusSelect?.elem.value || '',
-					showLabel: this._showLabelEl.elem.checked,
-					properties: this._collectProps?.() ?? {},
-				};
+		this._collect = () => {
+			const data = {
+				name: this._nameEl.elem.value,
+				type: this._typeEl.elem.value,
+				widthFt: this._widthEl.elem.value || '10',
+				color: this._selectedColor,
+				emoji: this._getEmoji?.() || '',
+				status: this._statusSelect?.elem.value || '',
+				showLabel: this._showLabelEl.elem.checked,
+				properties: this._collectProps?.() ?? {},
+			};
 
-				if (options.geometry && !isEdit) data.geometry = options.geometry;
-				if (isEdit) data.geometry = options.path.geometry;
+			if (options.geometry && !isEdit) data.geometry = options.geometry;
+			if (isEdit) data.geometry = options.path.geometry;
 
-				options.onSave?.(data);
-			} else if (button === 'Delete') {
-				options.onDelete?.();
-			}
-
-			this.close();
+			return data;
 		};
 	}
 }

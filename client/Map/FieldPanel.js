@@ -1013,8 +1013,11 @@ export default class FieldPanel extends Component {
 				new EventDialog({
 					fieldId: building.id,
 					onSave: async data => {
-						await import('../api').then(({ createEvent }) => createEvent({ body: data }));
-						this._renderBuildingView();
+						const result = await import('../api').then(({ createEvent }) => createEvent({ body: data }));
+
+						if (result?.status === 'success') this._renderBuildingView();
+
+						return result;
 					},
 				}),
 		});
@@ -1091,12 +1094,18 @@ export default class FieldPanel extends Component {
 					new EventDialog({
 						event: event,
 						onSave: async data => {
-							await updateEvent(event.id, { body: { ...data, _v: event._v } });
-							this._renderBuildingView();
+							const result = await updateEvent(event.id, { body: { ...data, _v: event._v } });
+
+							if (result?.status === 'success') this._renderBuildingView();
+
+							return result;
 						},
 						onDelete: async () => {
-							await import('../api').then(({ deleteEvent }) => deleteEvent(event.id));
-							this._renderBuildingView();
+							const result = await import('../api').then(({ deleteEvent }) => deleteEvent(event.id));
+
+							if (result?.status === 'success') this._renderBuildingView();
+
+							return result;
 						},
 					}),
 			);
@@ -1782,8 +1791,11 @@ export default class FieldPanel extends Component {
 				new EventDialog({
 					fieldId: field.id,
 					onSave: async data => {
-						await import('../api').then(({ createEvent }) => createEvent({ body: data }));
-						this._renderViewMode();
+						const result = await import('../api').then(({ createEvent }) => createEvent({ body: data }));
+
+						if (result?.status === 'success') this._renderViewMode();
+
+						return result;
 					},
 				}),
 		});

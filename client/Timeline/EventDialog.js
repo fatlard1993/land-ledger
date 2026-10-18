@@ -1,8 +1,9 @@
-import { Dialog, Elem, Component } from '@vanilla-bean/components';
+import { Elem, Component, FormDialog } from '@vanilla-bean/components';
 
 import { FormLabel, FormInput, FormSelect } from '../Layout';
 import { getFields } from '../api';
 import { makeCropCombobox } from '../Charts/cropCombobox';
+import { keepOpenIfFailed } from '../utils/keepOpenIfFailed';
 import { makePropertiesEditor } from '../utils/PropertiesEditor';
 import { buildHarvestSection } from './HarvestSection.js';
 import { buildCoverCropSection } from './CoverCropSection.js';
@@ -121,28 +122,31 @@ const OBS_TYPES = [
 	{ value: 'other', label: 'Other' },
 ];
 
-export default class EventDialog extends Dialog {
+const withoutCallbacks = ({ onSave: _onSave, onDelete: _onDelete, ...options }) => options;
+
+export default class EventDialog extends FormDialog {
 	constructor(options = {}) {
 		const isEdit = !!options.event?.id;
 
+		// The body is built by hand below, so the form holds no inputs and saving collects from the body; a body that
+		// doesn't validate collects nothing and keeps the dialog open
 		super({
 			size: 'large',
 			header: isEdit ? 'Edit Event' : 'Log Event',
-			buttons: isEdit ? ['Save', 'Delete', 'Cancel'] : ['Save', 'Cancel'],
-			onButtonPress: ({ button }) => {
-				if (button === 'Save') {
-					const data = this._collectData();
+			inputs: [],
+			onSave: async () => {
+				const data = this._collectData();
 
-					if (!data) return;
+				if (!data) return false;
 
-					options.onSave?.(data);
-				} else if (button === 'Delete') {
-					options.onDelete?.();
-				}
-
-				this.close();
+				return keepOpenIfFailed(await options.onSave?.(data));
 			},
-			...options,
+			...(isEdit &&
+				options.onDelete && {
+					onDelete: async () => keepOpenIfFailed(await options.onDelete(), 'Delete'),
+					confirmDelete: { header: 'Delete this event?' },
+				}),
+			...withoutCallbacks(options),
 		});
 
 		this._event = options.event || {};

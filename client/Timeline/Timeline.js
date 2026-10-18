@@ -745,27 +745,27 @@ export default class Timeline extends AsyncView {
 			event: event || undefined,
 			fieldId: fieldId || undefined,
 			onSave: async data => {
-				if (event) {
-					const result = await updateEvent(event.id, { body: { ...data, _v: event._v } });
+				const result = event
+					? await updateEvent(event.id, { body: { ...data, _v: event._v } })
+					: await createEvent({ body: data });
 
-					if (result?.body && this.events?.body) {
-						this.events.body[event.id] = result.body;
-						this._renderCurrent();
-					}
-				} else {
-					const result = await createEvent({ body: data });
-
-					if (result?.body && this.events?.body) {
-						this.events.body[result.body.id] = result.body;
-						this._renderCurrent();
-					}
+				if (result?.status === 'success' && result.body && this.events?.body) {
+					this.events.body[event?.id ?? result.body.id] = result.body;
+					this._renderCurrent();
 				}
+
+				return result;
 			},
 			onDelete: event
 				? async () => {
-						await deleteEvent(event.id);
+						const result = await deleteEvent(event.id);
+
+						if (result?.status !== 'success') return result;
+
 						if (this.events?.body) delete this.events.body[event.id];
 						this._renderCurrent();
+
+						return result;
 					}
 				: undefined,
 		});

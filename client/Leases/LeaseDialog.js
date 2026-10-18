@@ -1,4 +1,5 @@
-import { Dialog, Elem, Component, Button, conditionalList } from '@vanilla-bean/components';
+import { Elem, Component, Button, FormDialog } from '@vanilla-bean/components';
+import { keepOpenIfFailed } from '../utils/keepOpenIfFailed';
 import { makePropertiesEditor } from '../utils/PropertiesEditor';
 import { FormLabel, FormInput, FormSelect } from '../Layout';
 
@@ -65,7 +66,9 @@ const rateLabel = lease => {
 
 export { rateLabel };
 
-export default class LeaseDialog extends Dialog {
+const withoutCallbacks = ({ onSave: _onSave, onDelete: _onDelete, ...options }) => options;
+
+export default class LeaseDialog extends FormDialog {
 	constructor(options = {}) {
 		const isEdit = !!options.lease?.id;
 		const lease = options.lease || {};
@@ -80,20 +83,18 @@ export default class LeaseDialog extends Dialog {
 		const preRole = options.role || lease.role || inferredRole;
 		const headerLabels = { tenant: 'Add Lease', lessor: 'Lease Out Asset', loan: 'Add Loan / Mortgage' };
 
+		// The body is built by hand below, so the form holds no inputs and saving collects from the body
 		super({
 			size: 'large',
 			header: isEdit ? 'Edit' : headerLabels[preRole] || 'Add Lease',
-			buttons: conditionalList([{ alwaysItem: 'Save' }, { if: isEdit, thenItem: 'Delete' }, { alwaysItem: 'Cancel' }]),
-			onButtonPress: ({ button }) => {
-				if (button === 'Save') {
-					options.onSave?.(this._collect());
-				} else if (button === 'Delete') {
-					options.onDelete?.();
-				}
-
-				this.close();
-			},
-			...options,
+			inputs: [],
+			onSave: async () => keepOpenIfFailed(await options.onSave?.(this._collect())),
+			...(isEdit &&
+				options.onDelete && {
+					onDelete: async () => keepOpenIfFailed(await options.onDelete(), 'Delete'),
+					confirmDelete: { header: `Delete this ${preRole === 'loan' ? 'loan' : 'lease'}?` },
+				}),
+			...withoutCallbacks(options),
 		});
 
 		this._lease = lease;

@@ -308,11 +308,13 @@ export default class MapView extends AsyncView {
 					geometry,
 					onSave: async data => {
 						const result = await createPath({ body: data });
-						if (result?.body && this.paths?.body) {
+						if (result?.status === 'success' && result.body && this.paths?.body) {
 							this.paths.body[result.body.id] = result.body;
 							this._renderPathLayers();
 							this._updateLabels();
 						}
+
+						return result;
 					},
 				});
 			} else if (this._drawMode === 'parcel') {

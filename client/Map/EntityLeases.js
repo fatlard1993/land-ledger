@@ -81,14 +81,19 @@ export async function renderLeases(entityType, entity, refresh, appendTo) {
 				new LeaseDialog({
 					lease: lease._isLoan ? { ...lease, role: 'loan' } : lease,
 					onSave: async leaseData => {
-						if (lease._isLoan) await updateLoan(lease.id, { body: { ...leaseData, _v: lease._v } });
-						else await updateLease(lease.id, { body: { ...leaseData, _v: lease._v } });
-						refresh();
+						const update = lease._isLoan ? updateLoan : updateLease;
+						const result = await update(lease.id, { body: { ...leaseData, _v: lease._v } });
+
+						if (result?.status === 'success') refresh();
+
+						return result;
 					},
 					onDelete: async () => {
-						if (lease._isLoan) await deleteLoan(lease.id);
-						else await deleteLease(lease.id);
-						refresh();
+						const result = lease._isLoan ? await deleteLoan(lease.id) : await deleteLease(lease.id);
+
+						if (result?.status === 'success') refresh();
+
+						return result;
 					},
 				}),
 		);
