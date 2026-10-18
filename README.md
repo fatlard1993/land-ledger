@@ -117,11 +117,13 @@ Then open `http://localhost:7450`.
 bun run service:start    # start
 bun run service:stop     # stop
 bun run service:reload   # restart after a manual update
-bun run service:enable   # register to start on login
+bun run service:enable   # register to start on login (add --port 8080 for another port)
 bun run service:disable  # unregister
+bun run service:status   # is it running
+bun run service:logs     # what it has printed
 ```
 
-macOS uses launchd; Linux and WSL use systemd (falls back to a background process if systemd is unavailable).
+These run the library's `vbc-service`. macOS uses launchd, as the agent `com.vanilla-bean.land-ledger`, logging to `~/Library/Logs/land-ledger.log`; Linux and WSL use the systemd user unit `land-ledger` (falls back to a background process if systemd is unavailable). The installer retires the agent older installs used on macOS, `com.landledger.app`, before registering the new one.
 
 ---
 

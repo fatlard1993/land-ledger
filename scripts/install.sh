@@ -90,14 +90,24 @@ _systemd_available() {
 	command -v systemctl >/dev/null 2>&1 && systemctl --user status >/dev/null 2>&1
 }
 
+# Installs from before the shared service script ran under launchd as com.landledger.app; retire that agent so the
+# new one (com.vanilla-bean.land-ledger) isn't fighting it for the port
+_OLD_PLIST="$HOME/Library/LaunchAgents/com.landledger.app.plist"
+if [ "$_platform" = "Darwin" ] && [ -f "$_OLD_PLIST" ]; then
+	say "Retiring the old launchd agent…"
+	launchctl bootout "gui/$(id -u)/com.landledger.app" 2>/dev/null || true
+	rm -f "$_OLD_PLIST"
+	FRESH_INSTALL=true
+fi
+
 if [ "$FRESH_INSTALL" = "true" ]; then
 	if [ "$_platform" = "Darwin" ]; then
 		say "Registering launchd service…"
-		bun run service:enable
+		bun run service:enable --port "$PORT"
 
 	elif _systemd_available; then
 		say "Registering systemd user service…"
-		bun run service:enable
+		bun run service:enable --port "$PORT"
 		# Persist the service without an active login session (always-on boxes, servers)
 		if command -v loginctl >/dev/null 2>&1; then
 			loginctl enable-linger "$(id -un)" 2>/dev/null && say "loginctl linger enabled — service persists without login." || true
@@ -156,11 +166,11 @@ if [ "$_up" = "true" ]; then
 	printf "  %sLand Ledger is running at http://localhost:%s%s\n" "${GRN}${BLD}" "$PORT" "$RST"
 else
 	warn "Server did not respond within 15 seconds."
-	warn "Check logs: tail -20 $HOME/.landLedger.log"
+	warn "Check logs: cd $APP && bun run service:logs"
 fi
 
 printf "\n"
 printf "  Update:   curl -fsSL %s/scripts/install.sh | sh\n" "$RAW"
 printf "  Stop:     cd %s && bun run service:stop\n" "$APP"
-printf "  Logs:     %s/.landLedger.log\n" "$HOME"
+printf "  Logs:     cd %s && bun run service:logs\n" "$APP"
 printf "\n"
