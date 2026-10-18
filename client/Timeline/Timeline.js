@@ -1,10 +1,10 @@
-import { Button, Component, Elem, Icon, formatDate, styled } from '@vanilla-bean/components';
+import { Button, Component, Elem, EmptyState, Icon, formatDate, styled } from '@vanilla-bean/components';
 
 import AsyncView from '../AsyncView';
 
 import { getEvents, getFields, createEvent, updateEvent, deleteEvent, getWeather, getCountyYield } from '../api';
 import { centroidFromGeometry } from '../geo';
-import { PageView, PageToolbar, PageTitle, EmptyState } from '../Layout';
+import { PageView, PageToolbar, PageTitle } from '../Layout';
 import context from '../context';
 import SeasonCharts from '../Charts/SeasonCharts';
 
@@ -266,15 +266,11 @@ export default class Timeline extends AsyncView {
 			});
 
 		if (!allEvents.length) {
-			const empty = new EmptyState({ appendTo: this.content });
-
-			new Elem({ tag: 'div', appendTo: empty, addClass: 'empty-icon', textContent: '📅' });
-			new Elem({ tag: 'div', appendTo: empty, addClass: 'empty-title', textContent: 'No events logged yet' });
-			new Elem({
-				tag: 'div',
-				appendTo: empty,
-				addClass: 'empty-subtitle',
-				textContent: 'Log crops, livestock, cover crops, inputs, and soil tests — tap + to start',
+			new EmptyState({
+				appendTo: this.content,
+				icon: 'calendar-days',
+				title: 'No events logged yet',
+				message: 'Log crops, livestock, cover crops, inputs, and soil tests — tap + to start',
 			});
 
 			return;
@@ -562,15 +558,11 @@ export default class Timeline extends AsyncView {
 		}
 
 		if (!fieldList.length || !allEvents.length) {
-			const empty = new EmptyState({ appendTo: this.content });
-
-			new Elem({ tag: 'div', appendTo: empty, addClass: 'empty-icon', textContent: '📊' });
-			new Elem({ tag: 'div', appendTo: empty, addClass: 'empty-title', textContent: 'No data yet' });
-			new Elem({
-				tag: 'div',
-				appendTo: empty,
-				addClass: 'empty-subtitle',
-				textContent: 'Log events across multiple fields and seasons — patterns will appear here',
+			new EmptyState({
+				appendTo: this.content,
+				icon: 'chart-column',
+				title: 'No data yet',
+				message: 'Log events across multiple fields and seasons — patterns will appear here',
 			});
 
 			return;

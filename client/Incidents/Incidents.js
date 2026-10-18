@@ -1,10 +1,10 @@
-import { Elem, formatDate } from '@vanilla-bean/components';
+import { Elem, EmptyState, formatDate } from '@vanilla-bean/components';
 
 import AsyncView from '../AsyncView';
 
 import { getIncidents, updateIncident, deleteIncident } from '../api';
 import context from '../context';
-import { PageView, PageToolbar, PageTitle, Card, AppEmptyState, SectionHeader } from '../Layout';
+import { PageView, PageToolbar, PageTitle, Card, SectionHeader } from '../Layout';
 import IncidentDialog, { incidentEmoji, severityMeta } from './IncidentDialog';
 
 const entityIcon = type => ({ field: '📋', building: '🏚️', equipment: '🚜' })[type] || '📋';
@@ -33,11 +33,11 @@ export default class Incidents extends AsyncView {
 		context.hasIncidents = all.length > 0;
 
 		if (!all.length) {
-			new AppEmptyState({
+			new EmptyState({
 				appendTo: this.content,
-				icon: '⚠️',
+				icon: 'triangle-exclamation',
 				title: 'No incidents recorded',
-				subtitle: 'Incidents are logged from the field, building, or equipment panel on the map',
+				message: 'Incidents are logged from the field, building, or equipment panel on the map',
 			});
 			return;
 		}

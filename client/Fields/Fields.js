@@ -1,4 +1,4 @@
-import { Elem, Button, Icon, Component, styled } from '@vanilla-bean/components';
+import { Button, Component, Elem, EmptyState, Icon, styled } from '@vanilla-bean/components';
 
 import AsyncView from '../AsyncView';
 
@@ -7,7 +7,7 @@ import context from '../context';
 import { toSqm, convertArea, formatArea } from '../geo';
 import parseDetails from '../utils/parseDetails';
 import { eventEmoji, categoryMeta } from '../Timeline/EventDialog';
-import { PageView, PageToolbar, PageTitle, Card, AppEmptyState, SectionHeader } from '../Layout';
+import { PageView, PageToolbar, PageTitle, Card, SectionHeader } from '../Layout';
 import SeasonCharts from '../Charts/SeasonCharts';
 
 import ExportDialog from '../Export/ExportDialog';
@@ -119,11 +119,11 @@ export default class Fields extends AsyncView {
 		const fieldList = Object.values(this.fields?.body || {}).sort((a, b) => (a.name || '').localeCompare(b.name || ''));
 
 		if (!fieldList.length) {
-			new AppEmptyState({
+			new EmptyState({
 				appendTo: this.content,
-				icon: '🌾',
+				icon: 'wheat-awn',
 				title: 'No fields yet',
-				subtitle: 'Add a field from the Map view or tap + above',
+				message: 'Add a field from the Map view or tap + above',
 			});
 			return;
 		}

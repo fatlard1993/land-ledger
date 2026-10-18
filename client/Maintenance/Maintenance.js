@@ -1,10 +1,10 @@
-import { Elem, formatDate } from '@vanilla-bean/components';
+import { Elem, EmptyState, formatDate } from '@vanilla-bean/components';
 
 import AsyncView from '../AsyncView';
 
 import { getMaintenance, getEquipment, updateMaintenance, deleteMaintenance } from '../api';
 import context from '../context';
-import { PageView, PageToolbar, PageTitle, Card, AppEmptyState, SectionHeader } from '../Layout';
+import { PageView, PageToolbar, PageTitle, Card, SectionHeader } from '../Layout';
 import MaintenanceDialog, { WORK_TYPES } from '../Equipment/MaintenanceDialog';
 
 const workTypeMeta = value => WORK_TYPES.find(w => w.value === value) || WORK_TYPES[0];
@@ -35,11 +35,11 @@ export default class Maintenance extends AsyncView {
 		context.hasMaintenanceHistory = allRecords.length > 0;
 
 		if (!allRecords.length) {
-			new AppEmptyState({
+			new EmptyState({
 				appendTo: this.content,
-				icon: '🔧',
+				icon: 'wrench',
 				title: 'No maintenance recorded',
-				subtitle: 'Log maintenance from the equipment panel on the map',
+				message: 'Log maintenance from the equipment panel on the map',
 			});
 			return;
 		}

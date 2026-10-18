@@ -1,10 +1,10 @@
-import { Elem, Button, Icon, Component, styled } from '@vanilla-bean/components';
+import { Button, Component, Elem, EmptyState, Icon, styled } from '@vanilla-bean/components';
 
 import AsyncView from '../AsyncView';
 
 import { getSupplies, getBuildings, createSupply, updateSupply, deleteSupply } from '../api';
 import context from '../context';
-import { PageView, PageToolbar, PageTitle, AppEmptyState } from '../Layout';
+import { PageView, PageToolbar, PageTitle } from '../Layout';
 
 import TabularImportDialog from '../Import/TabularImportDialog';
 import ExportDialog from '../Export/ExportDialog';
@@ -88,11 +88,11 @@ export default class Supplies extends AsyncView {
 		const supplyList = Object.values(this.supplies?.body || {});
 
 		if (!supplyList.length) {
-			new AppEmptyState({
+			new EmptyState({
 				appendTo: this.content,
-				icon: '📦',
+				icon: 'box',
 				title: 'No supplies yet',
-				subtitle: 'Track seed, fertilizer, amendments, and other inputs with costs and stock levels',
+				message: 'Track seed, fertilizer, amendments, and other inputs with costs and stock levels',
 			});
 			return;
 		}

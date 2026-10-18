@@ -1,8 +1,8 @@
-import { Elem, Button, Icon, Component, styled } from '@vanilla-bean/components';
+import { Button, Component, Elem, EmptyState, Icon, styled } from '@vanilla-bean/components';
 
 import AsyncView from '../AsyncView';
 import { getAnimals, getFields } from '../api';
-import { PageView, PageToolbar, PageTitle, AppEmptyState } from '../Layout';
+import { PageView, PageToolbar, PageTitle } from '../Layout';
 import context from '../context';
 
 import { ageLabel, speciesMeta, STATUS_COLORS } from './constants';
@@ -63,11 +63,11 @@ export default class Animals extends AsyncView {
 		context.hasAnimals = all.length > 0;
 
 		if (!all.length) {
-			new AppEmptyState({
+			new EmptyState({
 				appendTo: this.content,
-				icon: '🐾',
+				icon: 'paw',
 				title: 'No animals registered',
-				subtitle: 'Add animals to track individual health records, breeding, and treatments with withdrawal periods',
+				message: 'Add animals to track individual health records, breeding, and treatments with withdrawal periods',
 			});
 			return;
 		}

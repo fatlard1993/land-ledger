@@ -1,4 +1,4 @@
-import { Button, Component, Elem, formatDate } from '@vanilla-bean/components';
+import { Button, Component, Elem, EmptyState, formatDate } from '@vanilla-bean/components';
 
 import AsyncView from '../AsyncView';
 
@@ -12,7 +12,7 @@ import {
 	updateFeedingSchedule,
 } from '../api';
 import context from '../context';
-import { PageView, PageToolbar, PageTitle, AppEmptyState, SectionHeader, Card } from '../Layout';
+import { PageView, PageToolbar, PageTitle, SectionHeader, Card } from '../Layout';
 import FeedingScheduleDialog, { frequencyLabel } from '../Livestock/FeedingScheduleDialog';
 
 const feedIcon = ft => {
@@ -61,11 +61,11 @@ export default class Feeding extends AsyncView {
 		context.hasFeedingHistory = hasAny;
 
 		if (!hasAny) {
-			new AppEmptyState({
+			new EmptyState({
 				appendTo: this.content,
-				icon: '🐄',
+				icon: 'cow',
 				title: 'No feeding records',
-				subtitle: 'Feeding logs and schedules are managed from the field panel on the map',
+				message: 'Feeding logs and schedules are managed from the field panel on the map',
 			});
 			return;
 		}

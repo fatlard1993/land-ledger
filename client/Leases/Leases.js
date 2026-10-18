@@ -1,4 +1,4 @@
-import { Button, Component, Elem, Icon, formatDate } from '@vanilla-bean/components';
+import { Button, Component, Elem, EmptyState, Icon, formatDate } from '@vanilla-bean/components';
 
 import AsyncView from '../AsyncView';
 
@@ -14,7 +14,7 @@ import {
 	deleteLoan,
 } from '../api';
 import context from '../context';
-import { PageView, PageToolbar, PageTitle, Card, AppEmptyState, SectionHeader } from '../Layout';
+import { PageView, PageToolbar, PageTitle, Card, SectionHeader } from '../Layout';
 
 import LeaseDialog, { rateLabel } from './LeaseDialog';
 
@@ -122,11 +122,11 @@ export default class Leases extends AsyncView {
 		context.hasLeases = allLeases.length > 0 || allLoans.length > 0;
 
 		if (!allLeases.length && !allLoans.length) {
-			new AppEmptyState({
+			new EmptyState({
 				appendTo: this.content,
-				icon: '📝',
+				icon: 'file-contract',
 				title: 'No leases or loans recorded',
-				subtitle: 'Track land rent you pay, income from leasing out assets, and farm loans',
+				message: 'Track land rent you pay, income from leasing out assets, and farm loans',
 			});
 			return;
 		}

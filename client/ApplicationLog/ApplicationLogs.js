@@ -1,9 +1,9 @@
-import { Button, Icon, Table, formatDate } from '@vanilla-bean/components';
+import { Button, EmptyState, Icon, Table, formatDate } from '@vanilla-bean/components';
 
 import AsyncView from '../AsyncView';
 
 import { getApplicationLogs, getFields } from '../api';
-import { PageView, PageToolbar, PageTitle, AppEmptyState } from '../Layout';
+import { PageView, PageToolbar, PageTitle } from '../Layout';
 import context from '../context';
 import ExportDialog from '../Export/ExportDialog';
 
@@ -49,11 +49,11 @@ export default class ApplicationLogs extends AsyncView {
 		context.hasApplicationLogs = all.length > 0;
 
 		if (!all.length) {
-			new AppEmptyState({
+			new EmptyState({
 				appendTo: this.content,
-				icon: '🧪',
+				icon: 'flask',
 				title: 'No application records',
-				subtitle:
+				message:
 					'Log pesticide, herbicide, fertilizer, and fuel applications with EPA registration numbers and compliance data',
 			});
 			return;

@@ -1,6 +1,6 @@
 import { describe, test, expect } from 'bun:test';
 
-import { ActionHeader, EmptyState } from './Layout.js';
+import { ActionHeader } from './Layout.js';
 
 describe('ActionHeader', () => {
 	test('title is the header text, not a tooltip', () => {
@@ -23,19 +23,5 @@ describe('ActionHeader', () => {
 
 		expect(header.elem.style.display).toBe('flex');
 		expect(header.elem.style.justifyContent).toBe('space-between');
-	});
-});
-
-describe('EmptyState', () => {
-	test('shows its icon, title and subtitle', () => {
-		const empty = new EmptyState({
-			appendTo: document.body,
-			icon: '⚠️',
-			title: 'No incidents recorded',
-			subtitle: 'Incidents are logged from the map',
-		});
-
-		expect(empty.elem.textContent).toBe('⚠️No incidents recordedIncidents are logged from the map');
-		expect(empty.elem.title).toBe('');
 	});
 });

@@ -112,49 +112,6 @@ export const Card = styled(
 	`,
 );
 
-export class EmptyState extends Component {
-	build() {
-		this.setStyle({
-			display: 'flex',
-			flexDirection: 'column',
-			alignItems: 'center',
-			justifyContent: 'center',
-			padding: '40px 16px',
-			gap: '8px',
-			flex: '1',
-			textAlign: 'center',
-			color: 'rgba(255,255,255,0.4)',
-		});
-		this._icon = new Component({ tag: 'div', appendTo: this, style: { fontSize: '48px' } });
-		this._title = new Component({
-			tag: 'div',
-			appendTo: this,
-			style: { fontSize: '16px', fontWeight: '600', color: 'rgba(255,255,255,0.7)' },
-		});
-		this._subtitle = new Component({ tag: 'div', appendTo: this, style: { fontSize: '13px', marginTop: '4px' } });
-	}
-
-	static schema = {
-		icon: {
-			set(v) {
-				this._icon.options.textContent = v;
-			},
-		},
-		title: {
-			set(v) {
-				this._title.options.textContent = v;
-			},
-		},
-		subtitle: {
-			set(v) {
-				this._subtitle.options.textContent = v;
-			},
-		},
-	};
-}
-
-export { EmptyState as AppEmptyState };
-
 export const AppShell = styled(
 	Component,
 	() => `
