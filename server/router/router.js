@@ -2,30 +2,11 @@ import { ConflictError, requestMatch, serveStatic } from '@vanilla-bean/componen
 
 import { requireAuth, requireRole } from '../auth';
 import { enforceJsonBodyLimit, MAX_JSON_BYTES } from '../utils/limitBody.js';
-import fieldsRoutes from './fields';
-import leasesRoutes from './leases';
-import loansRoutes from './loans';
+import collectionsRoutes from './collections';
 import importRoutes from './import';
 import tabularImportRoutes from './tabularImport';
 import referenceFieldsRoutes from './referenceFields';
 import geocodeRoutes from './geocode';
-import eventsRoutes from './events';
-import buildingsRoutes from './buildings';
-import equipmentRoutes from './equipment';
-import parcelsRoutes from './parcels';
-import pathsRoutes from './paths';
-import suppliesRoutes from './supplies';
-import maintenanceRoutes from './maintenance';
-import maintenanceSchedulesRoutes from './maintenanceSchedules';
-import incidentsRoutes from './incidents';
-import feedingSchedulesRoutes from './feedingSchedules';
-import feedingLogsRoutes from './feedingLogs';
-import applicationLogsRoutes from './applicationLogs';
-import animalsRoutes from './animals';
-import healthRecordsRoutes from './healthRecords';
-import breedingRecordsRoutes from './breedingRecords';
-import revenueRoutes from './revenue';
-import budgetItemsRoutes from './budgetItems';
 import parcelBoundariesRoutes, { setParcelServiceUrl } from './parcelBoundaries';
 import settingsRoutes from './settings';
 import weatherRoutes from './weather';
@@ -91,30 +72,11 @@ const router = async request => {
 
 		// ── Protected routes ─────────────────────────────────────────────────────
 		const response = await dispatch(request, [
-			fieldsRoutes,
-			leasesRoutes,
-			loansRoutes,
+			collectionsRoutes,
 			importRoutes,
 			tabularImportRoutes,
 			r => referenceFieldsRoutes(r, _agAnalyticsKey),
 			geocodeRoutes,
-			eventsRoutes,
-			buildingsRoutes,
-			equipmentRoutes,
-			parcelsRoutes,
-			pathsRoutes,
-			suppliesRoutes,
-			maintenanceRoutes,
-			maintenanceSchedulesRoutes,
-			incidentsRoutes,
-			feedingSchedulesRoutes,
-			feedingLogsRoutes,
-			applicationLogsRoutes,
-			animalsRoutes,
-			healthRecordsRoutes,
-			breedingRecordsRoutes,
-			revenueRoutes,
-			budgetItemsRoutes,
 			parcelBoundariesRoutes,
 			settingsRoutes,
 			weatherRoutes,
