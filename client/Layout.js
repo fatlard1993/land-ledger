@@ -15,6 +15,13 @@ export const BottomNav = styled(
 		flex-shrink: 0;
 		order: 1;
 
+		@media (max-width: 767px) {
+			/* Toasts stack above the bar while it runs along the bottom */
+			:root:has(&) {
+				--vbc-notify-offset: 56px;
+			}
+		}
+
 		@media (min-width: 768px) {
 			flex-direction: column;
 			justify-content: flex-start;
