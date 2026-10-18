@@ -483,10 +483,10 @@ export function openQuickLog() {
 
 const QuickLogFAB = styled(
 	Component,
-	() => `
+	({ safeArea }) => `
     position: fixed;
-    bottom: calc(env(safe-area-inset-bottom, 0px) + 68px);
-    right: 16px;
+    bottom: calc(${safeArea.bottom} + 68px);
+    right: calc(16px + ${safeArea.right});
     z-index: 9500;
     width: 54px;
     height: 54px;

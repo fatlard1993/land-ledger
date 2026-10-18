@@ -1,26 +1,29 @@
 import { Component, Input, SectionLabel, Select, styled } from '@vanilla-bean/components';
 
+// Clear of the home indicator below, and of a landscape notch beside the rail
 export const BottomNav = styled(
 	Component,
-	({ colors }) => `
+	({ colors, safeArea }) => `
 		display: flex;
 		justify-content: space-around;
 		align-items: center;
 		background-color: ${colors.darker(colors.gray)};
 		border-top: 1px solid ${colors.dark(colors.gray)};
-		height: 56px;
+		box-sizing: border-box;
+		height: calc(56px + ${safeArea.bottom});
+		padding-bottom: ${safeArea.bottom};
 		flex-shrink: 0;
 		order: 1;
 
 		@media (min-width: 768px) {
 			flex-direction: column;
 			justify-content: flex-start;
-			width: 64px;
+			width: calc(64px + ${safeArea.left});
 			height: 100%;
 			border-top: none;
 			border-right: 1px solid ${colors.dark(colors.gray)};
 			order: -1;
-			padding: 8px 0;
+			padding: 8px 0 ${safeArea.bottom} ${safeArea.left};
 		}
 	`,
 );
@@ -112,13 +115,16 @@ export const Card = styled(
 	`,
 );
 
+// The page reaches under the notch and status bar (viewport-fit=cover), so the shell keeps its content clear of them
 export const AppShell = styled(
 	Component,
-	() => `
+	({ safeArea }) => `
 		display: flex;
 		flex-direction: column;
+		box-sizing: border-box;
 		height: 100dvh;
 		width: 100vw;
+		padding: ${safeArea.top} ${safeArea.right} 0 0;
 		overflow: hidden;
 		position: fixed;
 		inset: 0;
