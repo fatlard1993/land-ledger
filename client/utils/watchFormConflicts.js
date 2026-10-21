@@ -9,7 +9,26 @@
 //
 // Returns a cleanup function — pass it to form.addCleanup() or call on dialog close.
 
+import { Button, Component, styled } from '@vanilla-bean/components';
+
 import { formatVal } from './format.js';
+
+const Banner = styled(
+	Component,
+	({ colors, radius }) => `
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 8px;
+		margin-bottom: 10px;
+		padding: 8px 10px;
+		border: 1px solid ${colors.alpha(colors.warning, 0.35)};
+		border-radius: ${radius.sm};
+		background: ${colors.alpha(colors.warning, 0.1)};
+		font-size: 12px;
+		color: ${colors.light(colors.warning)};
+	`,
+);
 
 export function watchFormConflicts(form, collection, id) {
 	if (!form || !collection || !id) return () => {};
@@ -85,56 +104,20 @@ export function watchFormConflicts(form, collection, id) {
 		}
 
 		// Build banner
-		_banner = document.createElement('div');
-		Object.assign(_banner.style, {
-			background: 'rgba(232,196,42,0.1)',
-			border: '1px solid rgba(232,196,42,0.35)',
-			borderRadius: '4px',
-			padding: '8px 10px',
-			fontSize: '12px',
-			color: '#e8c42a',
-			display: 'flex',
-			alignItems: 'center',
-			justifyContent: 'space-between',
-			gap: '8px',
-			marginBottom: '10px',
+		const banner = new Banner();
+
+		new Component({
+			tag: 'span',
+			appendTo: banner,
+			textContent: `${changed.size} field${changed.size !== 1 ? 's' : ''} changed on another device`,
 		});
 
-		const msg = document.createElement('span');
-		msg.textContent = `${changed.size} field${changed.size !== 1 ? 's' : ''} changed on another device`;
-		_banner.append(msg);
+		const buttons = new Component({ appendTo: banner, style: { display: 'flex', gap: '6px', flexShrink: '0' } });
 
-		const buttons = document.createElement('div');
-		Object.assign(buttons.style, { display: 'flex', gap: '6px', flexShrink: '0' });
+		new Button({ appendTo: buttons, variant: 'chip', textContent: 'Accept all', onPointerPress: acceptAll });
+		new Button({ appendTo: buttons, variant: 'flat', textContent: 'Dismiss', onPointerPress: clearAll });
 
-		const acceptBtn = document.createElement('button');
-		acceptBtn.textContent = 'Accept all';
-		Object.assign(acceptBtn.style, {
-			background: 'rgba(232,196,42,0.2)',
-			border: '1px solid rgba(232,196,42,0.5)',
-			color: '#e8c42a',
-			fontSize: '11px',
-			padding: '2px 8px',
-			borderRadius: '3px',
-			cursor: 'pointer',
-		});
-		acceptBtn.addEventListener('click', acceptAll);
-
-		const dismissBtn = document.createElement('button');
-		dismissBtn.textContent = 'Dismiss';
-		Object.assign(dismissBtn.style, {
-			background: 'none',
-			border: '1px solid rgba(255,255,255,0.15)',
-			color: 'rgba(255,255,255,0.5)',
-			fontSize: '11px',
-			padding: '2px 8px',
-			borderRadius: '3px',
-			cursor: 'pointer',
-		});
-		dismissBtn.addEventListener('click', clearAll);
-
-		buttons.append(acceptBtn, dismissBtn);
-		_banner.append(buttons);
+		_banner = banner.elem;
 
 		// Insert directly before the form element
 		form.elem.insertAdjacentElement('beforebegin', _banner);

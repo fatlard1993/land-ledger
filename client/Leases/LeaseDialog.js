@@ -1,9 +1,30 @@
-import { Elem, Component, Button, FormDialog } from '@vanilla-bean/components';
+import { Button, Component, Elem, FormDialog, Input, Select, styled, theme } from '@vanilla-bean/components';
 import { keepOpenIfFailed } from '../utils/keepOpenIfFailed';
 import { makePropertiesEditor } from '../utils/PropertiesEditor';
-import { FormLabel, FormInput, FormSelect } from '../Layout';
+import { FormLabel } from '../Layout';
 
 import { getFields, getBuildings, getEquipment } from '../api';
+
+const { colors } = theme;
+
+const Hint = styled(
+	Component,
+	({ colors }) => `
+		padding: 2px 0 4px;
+		font-size: 11px;
+		color: ${colors.gray};
+	`,
+);
+
+// The asset a lease or loan was opened from, named in place of a picker
+const PresetEntity = styled(
+	Component,
+	({ colors }) => `
+		padding: 6px 0 2px;
+		font-size: 13px;
+		color: ${colors.muted};
+	`,
+);
 
 export const RATE_TYPES = [
 	{ value: 'cash_per_acre', label: 'Cash Rent ($/acre)' },
@@ -126,36 +147,30 @@ export default class LeaseDialog extends FormDialog {
 
 			const toggleButtons = [];
 
-			const makeToggle = (label, value) => {
+			const makeToggle = (icon, label, value) => {
 				const btn = new Button({
 					appendTo: toggleRow,
+					variant: 'chip',
+					icon,
 					textContent: label,
-					style: {
-						flex: '1',
-						fontSize: '12px',
-						padding: '7px 4px',
-						background: role === value ? 'rgba(74,144,217,0.25)' : 'rgba(255,255,255,0.05)',
-						border: `1px solid ${role === value ? '#4a90d9' : 'rgba(255,255,255,0.1)'}`,
-					},
+					style: { flex: '1' },
 					onPointerPress: async () => {
 						role = value;
-						for (const [b, v] of toggleButtons) {
-							b.elem.style.background = role === v ? 'rgba(74,144,217,0.25)' : 'rgba(255,255,255,0.05)';
-							b.elem.style.border = `1px solid ${role === v ? '#4a90d9' : 'rgba(255,255,255,0.1)'}`;
-						}
+						for (const [b, v] of toggleButtons) b.toggleClass('active', role === v);
 
 						await rebuildBody();
 					},
 				});
 
+				btn.toggleClass('active', role === value);
 				toggleButtons.push([btn, value]);
 
 				return btn;
 			};
 
-			makeToggle('📤 I pay rent', 'tenant');
-			makeToggle('📥 I receive rent', 'lessor');
-			makeToggle('🏦 Loan / Mortgage', 'loan');
+			makeToggle('arrow-trend-down', 'I pay rent', 'tenant');
+			makeToggle('arrow-trend-up', 'I receive rent', 'lessor');
+			makeToggle('building-columns', 'Loan / Mortgage', 'loan');
 		}
 
 		const formArea = new Component({ appendTo: this.body });
@@ -183,12 +198,7 @@ export default class LeaseDialog extends FormDialog {
 				} else {
 					entityIcon = '🚜';
 				}
-				new Elem({
-					tag: 'div',
-					appendTo: container,
-					style: { fontSize: '13px', color: 'rgba(255,255,255,0.55)', padding: '6px 0 2px' },
-					textContent: `${entityIcon} ${preEntity.name || 'Selected asset'}`,
-				});
+				new PresetEntity({ appendTo: container, textContent: `${entityIcon} ${preEntity.name || 'Selected asset'}` });
 			}
 
 			this._entityId = preEntity.id;
@@ -200,7 +210,7 @@ export default class LeaseDialog extends FormDialog {
 
 			if (isLessor) {
 				new FormLabel({ appendTo: container, textContent: 'Asset Type' });
-				const typeSelect = new FormSelect({ appendTo: container });
+				const typeSelect = new Select({ appendTo: container });
 				for (const { value: v, label: l } of [
 					{ value: 'field', label: '📋 Field' },
 					{ value: 'building', label: '🏚️ Building' },
@@ -243,7 +253,7 @@ export default class LeaseDialog extends FormDialog {
 						items = Object.values(d?.body || {});
 					}
 
-					const select = new FormSelect({ appendTo: entityPickerWrap });
+					const select = new Select({ appendTo: entityPickerWrap });
 					for (const { value: v, label: l } of items.map(i => ({ value: i.id, label: i.name || `Unnamed ${type}` }))) {
 						const o = document.createElement('option');
 						o.value = v;
@@ -271,7 +281,7 @@ export default class LeaseDialog extends FormDialog {
 				new FormLabel({ appendTo: container, textContent: 'Field' });
 				const fieldsData = await getFields();
 				const fields = Object.values(fieldsData?.body || {});
-				const fieldSelect = new FormSelect({ appendTo: container });
+				const fieldSelect = new Select({ appendTo: container });
 				for (const { value: v, label: l } of fields.map(f => ({ value: f.id, label: f.name || 'Unnamed' }))) {
 					const o = document.createElement('option');
 					o.value = v;
@@ -296,14 +306,14 @@ export default class LeaseDialog extends FormDialog {
 			const col = new Component({ appendTo: parent });
 
 			new FormLabel({ appendTo: col, textContent: label });
-			const el = new FormInput({ appendTo: col, ...inputOpts });
+			const el = new Input({ appendTo: col, ...inputOpts });
 			if (inputOpts?.value !== undefined) el.elem.value = inputOpts.value;
 
 			return el;
 		};
 
 		new FormLabel({ appendTo: container, textContent: isLessor ? 'Tenant Name' : 'Landlord Name' });
-		const nameEl = new FormInput({ appendTo: container, placeholder: 'Full name' });
+		const nameEl = new Input({ appendTo: container, placeholder: 'Full name' });
 		nameEl.elem.value = lease[nameKey] || '';
 
 		// Rate
@@ -317,7 +327,7 @@ export default class LeaseDialog extends FormDialog {
 		new FormLabel({ appendTo: rateTypeCol, textContent: 'Rate Type' });
 
 		const rateOpts = isLessor ? RATE_TYPES : RATE_TYPES.filter(r => ['cash_per_acre', 'crop_share'].includes(r.value));
-		const typeSelect = new FormSelect({ appendTo: rateTypeCol });
+		const typeSelect = new Select({ appendTo: rateTypeCol });
 		for (const { value: v, label: l } of rateOpts) {
 			const o = document.createElement('option');
 			o.value = v;
@@ -329,14 +339,14 @@ export default class LeaseDialog extends FormDialog {
 		const rateAmtCol = new Component({ appendTo: rateTypeRow });
 
 		new FormLabel({ appendTo: rateAmtCol, textContent: 'Amount' });
-		const rateEl = new FormInput({ appendTo: rateAmtCol, type: 'number', step: '0.01', placeholder: '0.00' });
+		const rateEl = new Input({ appendTo: rateAmtCol, type: 'number', step: '0.01', placeholder: '0.00' });
 		rateEl.elem.value = lease.rateAmount || '';
 
 		// Crop share — shown only when type is crop_share
 		const shareWrap = new Component({ appendTo: container });
 
 		new FormLabel({ appendTo: shareWrap, textContent: 'Crop Share (%)' });
-		const shareEl = new FormInput({ appendTo: shareWrap, type: 'number', placeholder: 'e.g. 50' });
+		const shareEl = new Input({ appendTo: shareWrap, type: 'number', placeholder: 'e.g. 50' });
 		shareEl.elem.value = lease.cropSharePercent || '';
 
 		const updateRateUI = () => {
@@ -368,7 +378,7 @@ export default class LeaseDialog extends FormDialog {
 		const renewEl = makeCol(dateRow, 'Renewal Date', { type: 'date', value: lease.renewalDate || '' });
 
 		new FormLabel({ appendTo: container, textContent: 'Payment Terms' });
-		const payEl = new FormInput({ appendTo: container, placeholder: 'e.g. March 1 & Sept 1, First of month' });
+		const payEl = new Input({ appendTo: container, placeholder: 'e.g. March 1 & Sept 1, First of month' });
 		payEl.elem.value = lease.paymentTerms || lease.paymentDates || '';
 
 		const { collect: collectProps } = makePropertiesEditor(container, lease.properties || {});
@@ -403,12 +413,7 @@ export default class LeaseDialog extends FormDialog {
 			} else {
 				loanEntityIcon = '🚜';
 			}
-			new Elem({
-				tag: 'div',
-				appendTo: container,
-				style: { fontSize: '13px', color: 'rgba(255,255,255,0.55)', padding: '6px 0 2px' },
-				textContent: `${loanEntityIcon} ${preEntity.name || 'Selected asset'}`,
-			});
+			new PresetEntity({ appendTo: container, textContent: `${loanEntityIcon} ${preEntity.name || 'Selected asset'}` });
 
 			this._entityId = preEntity.id;
 			this._entityType = preEntityType;
@@ -419,7 +424,7 @@ export default class LeaseDialog extends FormDialog {
 			const col = new Component({ appendTo: parent });
 
 			new FormLabel({ appendTo: col, textContent: label });
-			const el = new FormInput({ appendTo: col, ...inputOpts });
+			const el = new Input({ appendTo: col, ...inputOpts });
 			if (inputOpts?.value !== undefined) el.elem.value = inputOpts.value;
 
 			return el;
@@ -482,12 +487,7 @@ export default class LeaseDialog extends FormDialog {
 		});
 
 		// Auto-calc payment hint
-		const calcHint = new Elem({
-			tag: 'div',
-			appendTo: container,
-			style: { fontSize: '11px', color: 'rgba(255,255,255,0.3)', padding: '2px 0 4px' },
-			textContent: '',
-		});
+		const calcHint = new Hint({ appendTo: container });
 
 		const recalculatePayment = () => {
 			const P = Number(principalEl.elem.value);
@@ -519,7 +519,6 @@ export default class LeaseDialog extends FormDialog {
 			appendTo: escrowRow,
 			type: 'checkbox',
 			id: 'loan-escrow-cb',
-			style: { accentColor: '#4a90d9' },
 		});
 
 		escrowCb.elem.checked = !!lease.escrow;
@@ -528,7 +527,7 @@ export default class LeaseDialog extends FormDialog {
 			tag: 'label',
 			appendTo: escrowRow,
 			textContent: 'Escrow includes taxes and/or insurance',
-			style: { fontSize: '13px', color: 'rgba(255,255,255,0.6)', cursor: 'pointer' },
+			style: { fontSize: '13px', color: colors.muted, cursor: 'pointer' },
 			attributes: { for: 'loan-escrow-cb' },
 		});
 
@@ -555,7 +554,7 @@ export default class LeaseDialog extends FormDialog {
 
 		// Asset appraisal — tracked separately from loan amount
 		new FormLabel({ appendTo: container, textContent: 'Asset Appraisal Value ($)' });
-		const appraisalEl = new FormInput({
+		const appraisalEl = new Input({
 			appendTo: container,
 			type: 'number',
 			step: '1',
@@ -564,12 +563,7 @@ export default class LeaseDialog extends FormDialog {
 		appraisalEl.elem.value = lease.assetAppraisalValue || '';
 
 		// Live equity preview
-		const equityHint = new Elem({
-			tag: 'div',
-			appendTo: container,
-			style: { fontSize: '11px', color: 'rgba(255,255,255,0.3)', padding: '2px 0 4px' },
-			textContent: '',
-		});
+		const equityHint = new Hint({ appendTo: container });
 
 		const updateEquity = () => {
 			const av = Number(appraisalEl.elem.value);
@@ -578,9 +572,9 @@ export default class LeaseDialog extends FormDialog {
 			if (av && balance) {
 				const equity = av - balance;
 				const ltv = ((balance / av) * 100).toFixed(1);
-				const color = equity >= 0 ? '#4caf50' : '#e05252';
+				const color = equity >= 0 ? colors.success : colors.danger;
 
-				equityHint.elem.style.color = color;
+				equityHint.elem.style.color = `${colors.light(color)}`;
 				equityHint.elem.textContent = `Equity: ${Number(equity).toLocaleString('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 })} · LTV ${ltv}%`;
 			} else {
 				equityHint.elem.textContent = '';

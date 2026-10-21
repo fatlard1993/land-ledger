@@ -7,6 +7,7 @@ module.exports = {
 		'homedir',
 		'geojson',
 		'leaflet',
+		'minmax',
 		'geoman',
 		'GeoJSON',
 		'CLU',

@@ -1,6 +1,4 @@
-import { Dialog, Component, Elem, Button } from '@vanilla-bean/components';
-
-const toLabel = key => key.replace(/([A-Z])/g, ' $1').replace(/^./, s => s.toUpperCase());
+import { Button, capitalize, Card, Component, Dialog, Elem, fromCamelCase, styled } from '@vanilla-bean/components';
 
 const formatVal = v => {
 	if (v == null || v === '') return '—';
@@ -14,15 +12,78 @@ const entityLabel = snapshot => {
 	return snapshot.name || snapshot.description || snapshot.type || null;
 };
 
-// Button style tokens — applied directly to .elem.style to update in place
-const BTN_ON = { background: 'rgba(74,144,217,0.25)', borderColor: '#4a90d9', color: '#4a90d9' };
-const BTN_OFF = { background: 'transparent', borderColor: 'rgba(255,255,255,0.12)', color: 'rgba(255,255,255,0.45)' };
+const COLUMNS = 'minmax(70px, 100px) minmax(0, 1fr) minmax(0, 1fr) auto';
 
-const applyBtnStyle = (btn, on) => {
-	btn.elem.style.background = on ? BTN_ON.background : BTN_OFF.background;
-	btn.elem.style.borderColor = on ? BTN_ON.borderColor : BTN_OFF.borderColor;
-	btn.elem.style.color = on ? BTN_ON.color : BTN_OFF.color;
-};
+const Intro = styled(
+	Component,
+	({ colors }) => `
+		margin: 0 0 12px;
+		font-size: 13px;
+		color: ${colors.gray};
+	`,
+	{ tag: 'p' },
+);
+
+const RecordTitle = styled(
+	Component,
+	({ colors }) => `
+		margin-bottom: 8px;
+		font-size: 13px;
+		font-weight: 600;
+		color: ${colors.white};
+	`,
+);
+
+// On a phone the field's name and the choice take rows of their own, so the two values get the width between them
+const Row = styled(
+	Component,
+	({ colors, media }) => `
+		display: grid;
+		grid-template-columns: ${COLUMNS};
+		gap: 6px;
+		align-items: center;
+		padding: 5px 0;
+		border-bottom: 1px solid ${colors.border};
+		font-size: 12px;
+		overflow-wrap: anywhere;
+
+		&.head {
+			padding: 3px 0;
+			margin-bottom: 4px;
+			font-size: 10px;
+			letter-spacing: 0.06em;
+			text-transform: uppercase;
+			color: ${colors.gray};
+		}
+
+		& .key {
+			font-weight: 500;
+			color: ${colors.gray};
+		}
+
+		& .value {
+			color: ${colors.gray};
+		}
+
+		& .value.kept {
+			font-weight: 600;
+			color: ${colors.white};
+		}
+
+		@media ${media.phone} {
+			grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+
+			& > :first-child,
+			& > :last-child {
+				grid-column: 1 / -1;
+			}
+
+			&.head > :last-child {
+				display: none;
+			}
+		}
+	`,
+);
 
 // Shows a field-level conflict resolution dialog.
 // Returns a Promise that resolves to:
@@ -72,10 +133,8 @@ export function showConflictDialog(conflicts) {
 			onClose: () => resolve(null),
 		});
 
-		new Elem({
-			tag: 'p',
+		new Intro({
 			appendTo: dialog.body,
-			style: { fontSize: '13px', color: 'rgba(255,255,255,0.5)', margin: '0 0 12px' },
 			textContent:
 				'These queued changes conflict with edits made on the server while you were offline. Choose which value to keep for each conflicting field.',
 		});
@@ -95,119 +154,79 @@ export function showConflictDialog(conflicts) {
 
 		new Button({
 			appendTo: shortcuts,
+			variant: 'flat',
 			textContent: 'Keep all mine',
-			style: { fontSize: '12px', padding: '4px 10px' },
 			onPointerPress: () => applyAll('mine'),
 		});
 		new Button({
 			appendTo: shortcuts,
+			variant: 'flat',
 			textContent: "Use all server's",
-			style: { fontSize: '12px', padding: '4px 10px' },
 			onPointerPress: () => applyAll('theirs'),
 		});
 
 		const cardsWrap = new Component({ appendTo: dialog.body, style: { maxHeight: '420px', overflowY: 'auto' } });
 
 		for (const { entry, current, conflictingFields } of conflicts) {
-			const card = new Component({
-				appendTo: cardsWrap,
-				style: {
-					background: 'rgba(255,255,255,0.04)',
-					border: '1px solid rgba(255,255,255,0.1)',
-					borderRadius: '6px',
-					padding: '10px 12px',
-					marginBottom: '8px',
-				},
-			});
+			const card = new Card({ appendTo: cardsWrap, style: { marginBottom: '8px' } });
 
 			const snapshot = entry.snapshot;
 			const label = entityLabel(snapshot || current);
 			const collection = (entry.url.split('/')[1] ?? '').replace(/-/g, ' ');
 
-			new Elem({
-				tag: 'div',
+			new RecordTitle({
 				appendTo: card,
-				style: { fontWeight: '600', fontSize: '13px', marginBottom: '8px', color: '#fff' },
 				textContent: label ? `${label} (${collection})` : collection,
 			});
 
 			// Column headers
-			const header = new Component({
-				appendTo: card,
-				style: {
-					display: 'grid',
-					gridTemplateColumns: '100px 1fr 1fr 130px',
-					gap: '6px',
-					padding: '3px 0',
-					borderBottom: '1px solid rgba(255,255,255,0.08)',
-					marginBottom: '4px',
-				},
-			});
+			const header = new Row({ appendTo: card, addClass: 'head' });
 
 			for (const t of ['Field', 'Your version', "Server's version", '']) {
-				new Elem({
-					tag: 'div',
-					appendTo: header,
-					style: {
-						fontSize: '10px',
-						textTransform: 'uppercase',
-						letterSpacing: '.06em',
-						color: 'rgba(255,255,255,0.3)',
-					},
-					textContent: t,
-				});
+				new Elem({ tag: 'div', appendTo: header, textContent: t });
 			}
 
 			const perField = decisions.get(entry.timestamp);
 
 			for (const { key, serverValue, ourValue } of conflictingFields) {
-				const row = new Component({
-					appendTo: card,
-					style: {
-						display: 'grid',
-						gridTemplateColumns: '100px 1fr 1fr 130px',
-						gap: '6px',
-						alignItems: 'center',
-						padding: '5px 0',
-						borderBottom: '1px solid rgba(255,255,255,0.05)',
-						fontSize: '12px',
-					},
-				});
+				const row = new Row({ appendTo: card });
 
-				new Elem({
+				new Elem({ tag: 'div', appendTo: row, addClass: 'key', textContent: capitalize(fromCamelCase(key)) });
+
+				const myValueCell = new Elem({
 					tag: 'div',
 					appendTo: row,
-					style: { color: 'rgba(255,255,255,0.5)', fontWeight: '500' },
-					textContent: toLabel(key),
+					addClass: 'value',
+					textContent: formatVal(ourValue),
 				});
-
-				const myValueCell = new Elem({ tag: 'div', appendTo: row, textContent: formatVal(ourValue) });
-				const serverValueCell = new Elem({ tag: 'div', appendTo: row, textContent: formatVal(serverValue) });
+				const serverValueCell = new Elem({
+					tag: 'div',
+					appendTo: row,
+					addClass: 'value',
+					textContent: formatVal(serverValue),
+				});
 				const toggleRow = new Component({ appendTo: row, style: { display: 'flex', gap: '4px' } });
 
 				const mineBtn = new Button({
 					appendTo: toggleRow,
+					variant: 'chip',
 					textContent: 'Mine',
-					style: { fontSize: '11px', padding: '2px 7px', border: '1px solid' },
 					onPointerPress: () => applyChoice('mine'),
 				});
 				const theirsBtn = new Button({
 					appendTo: toggleRow,
+					variant: 'chip',
 					textContent: "Server's",
-					style: { fontSize: '11px', padding: '2px 7px', border: '1px solid' },
 					onPointerPress: () => applyChoice('theirs'),
 				});
 
 				const applyChoice = choice => {
 					perField[key] = choice;
 
-					applyBtnStyle(mineBtn, choice === 'mine');
-					applyBtnStyle(theirsBtn, choice === 'theirs');
-
-					myValueCell.elem.style.color = choice === 'mine' ? '#fff' : 'rgba(255,255,255,0.28)';
-					myValueCell.elem.style.fontWeight = choice === 'mine' ? '600' : '400';
-					serverValueCell.elem.style.color = choice === 'theirs' ? '#fff' : 'rgba(255,255,255,0.28)';
-					serverValueCell.elem.style.fontWeight = choice === 'theirs' ? '600' : '400';
+					mineBtn.toggleClass('active', choice === 'mine');
+					theirsBtn.toggleClass('active', choice === 'theirs');
+					myValueCell.toggleClass('kept', choice === 'mine');
+					serverValueCell.toggleClass('kept', choice === 'theirs');
 				};
 
 				applyChoice(perField[key]); // apply initial state

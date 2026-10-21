@@ -1,4 +1,16 @@
-import { Button, Component, Dialog, Elem, Input, Notify, styled } from '@vanilla-bean/components';
+import {
+	Button,
+	Component,
+	Dialog,
+	Elem,
+	EmptyState,
+	Icon,
+	Input,
+	Notify,
+	Select,
+	styled,
+	theme,
+} from '@vanilla-bean/components';
 
 import {
 	parseTabularFile,
@@ -7,6 +19,9 @@ import {
 	saveImportTemplate,
 	deleteImportTemplate,
 } from '../api/tabularImport';
+import { FormLabel } from '../Layout';
+
+const { colors } = theme;
 
 const DropZone = styled(
 	Component,
@@ -34,7 +49,7 @@ const MapRow = styled(
 		align-items: center;
 		gap: 6px;
 		padding: 5px 0;
-		border-bottom: 1px solid ${colors.dark(colors.gray)};
+		border-bottom: 1px solid ${colors.border};
 		font-size: 13px;
 
 		& .col-source {
@@ -52,23 +67,38 @@ const MapRow = styled(
 		}
 
 		& select {
-			width: 100%;
-			background: rgba(255,255,255,0.07);
-			border: 1px solid rgba(255,255,255,0.12);
-			border-radius: 4px;
-			color: #fff;
 			font-size: 12px;
 			padding: 4px 6px;
-			cursor: pointer;
-			font-family: inherit;
 		}
-
-		& select option { background: #1a1a1a; }
 	`,
 );
 
-const SEL_STYLE =
-	'display:block;width:100%;box-sizing:border-box;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);border-radius:4px;color:#fff;font-size:13px;padding:6px 8px;cursor:pointer;font-family:inherit;margin-bottom:10px;';
+const MapHeader = styled(
+	Component,
+	({ colors }) => `
+		display: grid;
+		grid-template-columns: 1fr 28px 1fr;
+		gap: 6px;
+		padding: 4px 0;
+		margin-bottom: 2px;
+		font-size: 10px;
+		letter-spacing: 0.06em;
+		text-transform: uppercase;
+		color: ${colors.gray};
+	`,
+);
+
+const Intro = styled(
+	Component,
+	({ colors }) => `
+		margin: 0 0 10px;
+		font-size: 13px;
+		color: ${colors.muted};
+	`,
+	{ tag: 'p' },
+);
+
+const CAPTION_STYLE = { marginTop: '0' };
 
 const COLLECTIONS = {
 	events: {
@@ -145,17 +175,19 @@ export default class TabularImportDialog extends Dialog {
 	_renderUpload() {
 		this.body.empty();
 
-		new Elem({
-			tag: 'p',
+		new Intro({
 			appendTo: this.body,
-			style: { fontSize: '13px', color: 'rgba(255,255,255,0.5)', margin: '0 0 10px' },
 			textContent:
 				"Import a CSV or JSON file into any collection. Columns you don't map go into free-form Properties — nothing is discarded.",
 		});
 
 		const dropZone = new DropZone({ appendTo: this.body });
 
-		new Elem({ tag: 'div', appendTo: dropZone, style: { fontSize: '32px', marginBottom: '6px' }, textContent: '📂' });
+		new Icon({
+			appendTo: dropZone,
+			icon: 'folder-open',
+			style: { display: 'block', fontSize: '32px', marginBottom: '6px' },
+		});
 		new Elem({
 			tag: 'div',
 			appendTo: dropZone,
@@ -177,12 +209,7 @@ export default class TabularImportDialog extends Dialog {
 	async _loadFile(file) {
 		this.body.empty();
 
-		new Elem({
-			tag: 'div',
-			appendTo: this.body,
-			style: { fontSize: '13px', color: 'rgba(255,255,255,0.5)', padding: '24px 0', textAlign: 'center' },
-			textContent: `Parsing ${file.name}…`,
-		});
+		new EmptyState({ appendTo: this.body, loading: true, title: `Parsing ${file.name}…` });
 
 		try {
 			const result = await parseTabularFile(file);
@@ -217,33 +244,20 @@ export default class TabularImportDialog extends Dialog {
 		new Elem({
 			tag: 'div',
 			appendTo: this.body,
-			style: { fontSize: '13px', color: 'rgba(255,255,255,0.5)', marginBottom: '12px' },
+			style: { fontSize: '13px', color: colors.muted, marginBottom: '12px' },
 			textContent: `${this._rows.length} row${this._rows.length !== 1 ? 's' : ''} · ${this._columns.length} column${this._columns.length !== 1 ? 's' : ''}`,
 		});
 
 		// Template picker (only if any templates saved)
 		if (templates.length) {
-			new Elem({
-				tag: 'div',
-				appendTo: this.body,
-				style: {
-					fontSize: '11px',
-					textTransform: 'uppercase',
-					letterSpacing: '.08em',
-					color: 'rgba(255,255,255,0.45)',
-					marginBottom: '4px',
-				},
-				textContent: 'Load saved template',
-			});
+			new FormLabel({ appendTo: this.body, style: CAPTION_STYLE, textContent: 'Load saved template' });
 
 			const tplRow = new Component({
 				appendTo: this.body,
 				style: { display: 'flex', gap: '6px', marginBottom: '10px' },
 			});
 
-			const templateSelect = new Elem({ tag: 'select', appendTo: tplRow });
-
-			templateSelect.elem.style.cssText = SEL_STYLE + 'margin-bottom:0;flex:1;';
+			const templateSelect = new Select({ appendTo: tplRow, style: { flex: '1' } });
 
 			const blankOpt = document.createElement('option');
 
@@ -262,7 +276,7 @@ export default class TabularImportDialog extends Dialog {
 			new Button({
 				appendTo: tplRow,
 				textContent: 'Load',
-				style: { flexShrink: '0', fontSize: '12px', padding: '5px 12px' },
+				style: { flexShrink: '0' },
 				onPointerPress: () => {
 					const tpl = templates.find(t => t.name === templateSelect.elem.value);
 
@@ -276,9 +290,10 @@ export default class TabularImportDialog extends Dialog {
 
 			new Button({
 				appendTo: tplRow,
-				textContent: '✕',
+				variant: 'flat',
+				icon: 'xmark',
 				title: 'Delete selected template',
-				style: { flexShrink: '0', fontSize: '12px', padding: '5px 8px', color: '#e05252' },
+				style: { flexShrink: '0', color: colors.light(colors.danger) },
 				onPointerPress: async () => {
 					if (!templateSelect.elem.value) return;
 
@@ -289,22 +304,9 @@ export default class TabularImportDialog extends Dialog {
 		}
 
 		// Collection picker
-		new Elem({
-			tag: 'div',
-			appendTo: this.body,
-			style: {
-				fontSize: '11px',
-				textTransform: 'uppercase',
-				letterSpacing: '.08em',
-				color: 'rgba(255,255,255,0.45)',
-				marginBottom: '4px',
-			},
-			textContent: 'Import into',
-		});
+		new FormLabel({ appendTo: this.body, style: CAPTION_STYLE, textContent: 'Import into' });
 
-		const collectionSelect = new Elem({ tag: 'select', appendTo: this.body });
-
-		collectionSelect.elem.style.cssText = SEL_STYLE;
+		const collectionSelect = new Select({ appendTo: this.body, style: { marginBottom: '10px' } });
 
 		for (const [key, { label }] of Object.entries(COLLECTIONS)) {
 			const opt = document.createElement('option');
@@ -317,30 +319,11 @@ export default class TabularImportDialog extends Dialog {
 		collectionSelect.elem.value = this._collection;
 
 		// Column mapper header
-		const mapHeader = new Component({
-			appendTo: this.body,
-			style: {
-				display: 'grid',
-				gridTemplateColumns: '1fr 28px 1fr',
-				gap: '6px',
-				padding: '4px 0',
-				marginBottom: '2px',
-			},
-		});
+		const mapHeader = new MapHeader({ appendTo: this.body });
 
-		new Elem({
-			tag: 'div',
-			appendTo: mapHeader,
-			style: { fontSize: '10px', textTransform: 'uppercase', letterSpacing: '.06em', color: 'rgba(255,255,255,0.35)' },
-			textContent: 'Source Column',
-		});
+		new Elem({ tag: 'div', appendTo: mapHeader, textContent: 'Source Column' });
 		new Elem({ tag: 'div', appendTo: mapHeader });
-		new Elem({
-			tag: 'div',
-			appendTo: mapHeader,
-			style: { fontSize: '10px', textTransform: 'uppercase', letterSpacing: '.06em', color: 'rgba(255,255,255,0.35)' },
-			textContent: 'Maps To',
-		});
+		new Elem({ tag: 'div', appendTo: mapHeader, textContent: 'Maps To' });
 
 		// Scrollable mapper list
 		const mapList = new Component({
@@ -379,7 +362,7 @@ export default class TabularImportDialog extends Dialog {
 			new Elem({ tag: 'div', appendTo: row, addClass: 'col-source', textContent: col, title: col });
 			new Elem({ tag: 'div', appendTo: row, addClass: 'col-arrow', textContent: '→' });
 
-			const selectEl = new Elem({ tag: 'select', appendTo: row });
+			const selectEl = new Select({ appendTo: row });
 
 			// Known fields for this collection
 			const knownGroup = document.createElement('optgroup');
@@ -487,34 +470,21 @@ export default class TabularImportDialog extends Dialog {
 		new Elem({
 			tag: 'div',
 			appendTo: this.body,
-			style: { fontSize: '14px', fontWeight: '600', marginBottom: '8px', color: '#fff' },
+			style: { fontSize: '14px', fontWeight: '600', marginBottom: '8px', color: colors.white },
 			textContent: 'Import complete',
 		});
 
-		new Elem({
-			tag: 'p',
+		new Intro({
 			appendTo: this.body,
-			style: { fontSize: '13px', color: 'rgba(255,255,255,0.55)', margin: '0 0 16px' },
+			style: { marginBottom: '16px' },
 			textContent: 'Save this column mapping as a template to reuse it next time you import from the same source.',
 		});
 
-		const nameInput = new Elem({
-			tag: 'input',
+		const nameInput = new Input({
 			appendTo: this.body,
-			attributes: { type: 'text', placeholder: 'e.g. Waypoint Analytical Soil Test' },
-			style: {
-				display: 'block',
-				width: '100%',
-				boxSizing: 'border-box',
-				background: 'rgba(255,255,255,0.07)',
-				border: '1px solid rgba(255,255,255,0.12)',
-				borderRadius: '4px',
-				color: '#fff',
-				fontSize: '13px',
-				padding: '8px 10px',
-				fontFamily: 'inherit',
-				marginBottom: '12px',
-			},
+			type: 'text',
+			placeholder: 'e.g. Waypoint Analytical Soil Test',
+			style: { marginBottom: '12px' },
 		});
 
 		const buttons = new Component({ appendTo: this.body, style: { display: 'flex', gap: '8px' } });

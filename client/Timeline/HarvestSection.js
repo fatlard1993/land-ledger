@@ -1,6 +1,6 @@
-import { Component } from '@vanilla-bean/components';
+import { Component, Input } from '@vanilla-bean/components';
 
-import { FormLabel, FormInput } from '../Layout';
+import { FormLabel } from '../Layout';
 
 const OUTPUT_SUGGESTIONS = [
 	'Corn',
@@ -31,7 +31,7 @@ const UNIT_SUGGESTIONS = ['bu', 'tons', 'cwt', 'lbs', 'head', 'dozen', 'gallons'
 
 export function buildHarvestSection(container, prev, g, { onEmojiRefresh } = {}) {
 	new FormLabel({ appendTo: container, textContent: 'Output' });
-	const outputEl = new FormInput({
+	const outputEl = new Input({
 		appendTo: container,
 		attributes: { placeholder: 'e.g. Corn, Hay — 1st cutting, Eggs' },
 		suggestions: OUTPUT_SUGGESTIONS,
@@ -47,7 +47,7 @@ export function buildHarvestSection(container, prev, g, { onEmojiRefresh } = {})
 	});
 
 	new FormLabel({ appendTo: yieldRow, textContent: 'Yield / Acre' });
-	const yieldEl = new FormInput({
+	const yieldEl = new Input({
 		appendTo: yieldRow,
 		attributes: { type: 'number', step: '0.01', placeholder: 'e.g. 85.5' },
 	});
@@ -55,7 +55,7 @@ export function buildHarvestSection(container, prev, g, { onEmojiRefresh } = {})
 	yieldEl.elem.value = prev.yieldPerAcre != null ? String(prev.yieldPerAcre) : '';
 
 	new FormLabel({ appendTo: yieldRow, textContent: 'Unit' });
-	const yieldUnitEl = new FormInput({
+	const yieldUnitEl = new Input({
 		appendTo: yieldRow,
 		attributes: { placeholder: 'bu' },
 		suggestions: UNIT_SUGGESTIONS,
@@ -69,7 +69,7 @@ export function buildHarvestSection(container, prev, g, { onEmojiRefresh } = {})
 	});
 
 	new FormLabel({ appendTo: row1, textContent: 'Total quantity (optional)' });
-	const qtyEl = new FormInput({
+	const qtyEl = new Input({
 		appendTo: row1,
 		attributes: { type: 'number', step: '0.01', placeholder: 'Whole-field total' },
 	});
@@ -77,7 +77,7 @@ export function buildHarvestSection(container, prev, g, { onEmojiRefresh } = {})
 	qtyEl.elem.value = prev.quantity || '';
 
 	new FormLabel({ appendTo: row1, textContent: 'Unit' });
-	const unitEl = new FormInput({
+	const unitEl = new Input({
 		appendTo: row1,
 		attributes: { placeholder: 'bu, lbs…' },
 		suggestions: UNIT_SUGGESTIONS,
@@ -99,7 +99,7 @@ export function buildHarvestSection(container, prev, g, { onEmojiRefresh } = {})
 	});
 
 	new FormLabel({ appendTo: row2, textContent: 'Price / Unit ($)' });
-	const priceEl = new FormInput({
+	const priceEl = new Input({
 		appendTo: row2,
 		attributes: { type: 'number', step: '0.0001', placeholder: 'Optional' },
 	});
@@ -107,7 +107,7 @@ export function buildHarvestSection(container, prev, g, { onEmojiRefresh } = {})
 	priceEl.elem.value = prev.pricePerUnit || '';
 
 	new FormLabel({ appendTo: row2, textContent: 'Revenue ($)' });
-	const revenueEl = new FormInput({
+	const revenueEl = new Input({
 		appendTo: row2,
 		attributes: { type: 'number', step: '0.01', placeholder: 'Optional' },
 	});

@@ -1,4 +1,15 @@
-import { FormDialog, Elem, conditionalList, Select } from '@vanilla-bean/components';
+import {
+	Component,
+	conditionalList,
+	Elem,
+	FormDialog,
+	SectionLabel,
+	Select,
+	styled,
+	theme,
+} from '@vanilla-bean/components';
+
+import { FormLabel } from '../Layout';
 import { makePropertiesEditor } from '../utils/PropertiesEditor';
 import { toNum } from '../utils/format.js';
 import { watchFormConflicts } from '../utils/watchFormConflicts.js';
@@ -31,12 +42,44 @@ export const INCIDENT_TYPES = [
 	'Other',
 ];
 
+const { colors } = theme;
+
+// Hex, so a reader can append an alpha pair (`${color}22`); light enough to read as text on the dark ground
 export const SEVERITY_LEVELS = [
-	{ value: 'minor', label: 'Minor', color: '#e8c42a' },
-	{ value: 'moderate', label: 'Moderate', color: '#e8932a' },
-	{ value: 'major', label: 'Major', color: '#e05252' },
-	{ value: 'total_loss', label: 'Total Loss', color: '#c62828' },
+	{ value: 'minor', label: 'Minor', color: colors.light(colors.warning).toHexString() },
+	{ value: 'moderate', label: 'Moderate', color: colors.light(colors.orange).toHexString() },
+	{ value: 'major', label: 'Major', color: colors.light(colors.danger).toHexString() },
+	{ value: 'total_loss', label: 'Total Loss', color: colors.danger.toHexString() },
 ];
+
+const Divider = styled(
+	Component,
+	({ colors, space }) => `
+		margin-top: 14px;
+		padding-top: ${space.md};
+		border-top: 1px solid ${colors.border};
+	`,
+);
+
+// The stock loss table: a species, then head lost and injured
+const LossGrid = styled(
+	Component,
+	({ colors, space }) => `
+		display: grid;
+		grid-template-columns: 1fr 80px 80px;
+		gap: ${space.sm};
+		align-items: center;
+		margin-bottom: 6px;
+
+		&.header {
+			margin-bottom: 2px;
+			font-size: 10px;
+			letter-spacing: 0.04em;
+			text-transform: uppercase;
+			color: ${colors.gray};
+		}
+	`,
+);
 
 export const severityMeta = v => SEVERITY_LEVELS.find(s => s.value === v) || SEVERITY_LEVELS[0];
 
@@ -189,24 +232,9 @@ export default class IncidentDialog extends FormDialog {
 		const lossRows = []; // { eventId, species, lostEl, injuredEl }
 
 		if (liveEvents.length > 0) {
-			const lossDiv = new Elem({
-				tag: 'div',
-				appendTo: this.body,
-				style: { borderTop: '1px solid rgba(255,255,255,0.08)', marginTop: '14px', paddingTop: '10px' },
-			});
+			const lossDiv = new Divider({ appendTo: this.body });
 
-			new Elem({
-				tag: 'div',
-				appendTo: lossDiv,
-				textContent: '🐄 Stock Loss',
-				style: {
-					fontSize: '11px',
-					textTransform: 'uppercase',
-					letterSpacing: '.06em',
-					color: 'rgba(255,255,255,0.35)',
-					marginBottom: '8px',
-				},
-			});
+			new SectionLabel({ appendTo: lossDiv, textContent: 'Stock Loss', style: { marginTop: 0 } });
 
 			// Parse existing losses keyed by eventId for pre-fill on edit
 			const existingLosses = {};
@@ -236,23 +264,13 @@ export default class IncidentDialog extends FormDialog {
 				const headCount = Number(details.headCount) || 0;
 				const existing = existingLosses[event.id] || {};
 
-				const eventRow = new Elem({
-					tag: 'div',
-					appendTo: lossDiv,
-					style: {
-						display: 'grid',
-						gridTemplateColumns: '1fr 80px 80px',
-						gap: '8px',
-						alignItems: 'center',
-						marginBottom: '6px',
-					},
-				});
+				const eventRow = new LossGrid({ appendTo: lossDiv });
 
 				new Elem({
 					tag: 'div',
 					appendTo: eventRow,
 					textContent: `${species}${headCount ? ` (${headCount} hd)` : ''}`,
-					style: { fontSize: '13px', color: 'rgba(255,255,255,0.75)' },
+					style: { fontSize: '13px' },
 				});
 
 				const lostInput = new Elem({
@@ -282,19 +300,7 @@ export default class IncidentDialog extends FormDialog {
 			}
 
 			// Column headers — inserted before the first eventRow (index 1, after lossHeader)
-			const colHeader = new Elem({
-				tag: 'div',
-				style: {
-					display: 'grid',
-					gridTemplateColumns: '1fr 80px 80px',
-					gap: '8px',
-					fontSize: '10px',
-					color: 'rgba(255,255,255,0.25)',
-					textTransform: 'uppercase',
-					letterSpacing: '.04em',
-					marginBottom: '2px',
-				},
-			});
+			const colHeader = new LossGrid({ addClass: 'header' });
 
 			colHeader.elem.innerHTML =
 				'<span></span><span style="text-align:center">Lost</span><span style="text-align:center">Injured</span>';
@@ -313,26 +319,10 @@ export default class IncidentDialog extends FormDialog {
 		let restoreEl = null;
 
 		if (entityType === 'equipment' || entityType === 'building') {
-			const divider = new Elem({
-				tag: 'div',
-				appendTo: this.body,
-				style: { borderTop: '1px solid rgba(255,255,255,0.1)', marginTop: '14px', paddingTop: '12px' },
-			});
+			const divider = new Divider({ appendTo: this.body });
 
 			if (!isEdit) {
-				new Elem({
-					tag: 'label',
-					appendTo: divider,
-					textContent: 'Entity Status After This Incident',
-					style: {
-						display: 'block',
-						fontSize: '11px',
-						textTransform: 'uppercase',
-						letterSpacing: '.06em',
-						color: 'rgba(255,255,255,0.35)',
-						marginBottom: '4px',
-					},
-				});
+				new FormLabel({ appendTo: divider, textContent: 'Entity Status After This Incident', style: { marginTop: 0 } });
 				statusImpactSelect = new Elem({ tag: 'select', appendTo: divider });
 				[
 					{ value: '', label: '— no change —' },
@@ -359,13 +349,13 @@ export default class IncidentDialog extends FormDialog {
 				restoreEl.elem.type = 'checkbox';
 				restoreEl.elem.id = 'inc-restore-cb';
 				restoreEl.elem.checked = false;
-				restoreEl.elem.style.accentColor = '#4caf50';
+				restoreEl.elem.style.accentColor = `${colors.success}`;
 
 				new Elem({
 					tag: 'label',
 					appendTo: restoreRow,
 					textContent: `Restore ${entityType} to active service`,
-					style: { fontSize: '13px', color: 'rgba(255,255,255,0.6)', cursor: 'pointer' },
+					style: { fontSize: '13px', color: colors.muted, cursor: 'pointer' },
 					attributes: { for: 'inc-restore-cb' },
 				});
 			}

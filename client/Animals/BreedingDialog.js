@@ -1,9 +1,11 @@
-import { FormDialog, Select, Elem, Notify } from '@vanilla-bean/components';
+import { Elem, FormDialog, Notify, Select, theme } from '@vanilla-bean/components';
 
 import { createBreedingRecord, updateBreedingRecord, deleteBreedingRecord } from '../api/animals';
 import { watchFormConflicts } from '../utils/watchFormConflicts.js';
 import { animalLabel, speciesMeta } from './constants';
 import { keepOpenIfFailed } from '../utils/keepOpenIfFailed';
+
+const { colors } = theme;
 
 const withoutCallbacks = ({ onSave: _onSave, onDelete: _onDelete, ...options }) => options;
 
@@ -119,7 +121,7 @@ export default class BreedingDialog extends FormDialog {
 		const dueDisplay = new Elem({
 			tag: 'div',
 			appendTo: this.body,
-			style: { fontSize: '12px', color: '#4caf50', padding: '2px 0 6px' },
+			style: { fontSize: '12px', color: colors.light(colors.success), padding: '2px 0 6px' },
 		});
 
 		if (gestation) {

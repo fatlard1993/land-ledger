@@ -1,13 +1,16 @@
-import { FormDialog, Component, Elem, Button } from '@vanilla-bean/components';
+import { Button, Component, Elem, FormDialog, theme } from '@vanilla-bean/components';
+
 import { makePropertiesEditor } from '../utils/PropertiesEditor';
 import { toNum } from '../utils/format.js';
 import { watchFormConflicts } from '../utils/watchFormConflicts.js';
 import { keepOpenIfFailed } from '../utils/keepOpenIfFailed';
 
+const { colors } = theme;
+
 export const WORK_TYPES = [
-	{ value: 'maintenance', label: '🔩 Maintenance', color: '#4a90d9' },
-	{ value: 'repair', label: '🔧 Repair', color: '#e8832a' },
-	{ value: 'enhancement', label: '⬆️ Enhancement', color: '#9c6de8' },
+	{ value: 'maintenance', label: '🔩 Maintenance' },
+	{ value: 'repair', label: '🔧 Repair' },
+	{ value: 'enhancement', label: '⬆️ Enhancement' },
 ];
 
 const TYPE_SUGGESTIONS = {
@@ -144,14 +147,7 @@ export default class MaintenanceDialog extends FormDialog {
 		const typeButtons = [];
 
 		const refreshTypeBtn = () => {
-			for (const [wt, btn] of typeButtons) {
-				const active = this._workType === wt;
-				const meta = WORK_TYPES.find(t => t.value === wt);
-
-				btn.elem.style.background = active ? `${meta.color}33` : 'rgba(255,255,255,0.05)';
-				btn.elem.style.border = `1px solid ${active ? meta.color : 'rgba(255,255,255,0.1)'}`;
-				btn.elem.style.color = active ? meta.color : 'rgba(255,255,255,0.5)';
-			}
+			for (const [wt, btn] of typeButtons) btn.toggleClass('active', this._workType === wt);
 		};
 
 		// The type field's suggestions follow the kind of work
@@ -162,14 +158,8 @@ export default class MaintenanceDialog extends FormDialog {
 		for (const { value, label } of WORK_TYPES) {
 			const btn = new Button({
 				textContent: label,
-				style: {
-					flex: '1',
-					borderRadius: '4px',
-					cursor: 'pointer',
-					fontSize: '12px',
-					padding: '6px 4px',
-					fontFamily: 'inherit',
-				},
+				variant: 'chip',
+				style: { flex: '1' },
 				appendTo: typeRow,
 				onPointerPress: () => {
 					this._workType = value;
@@ -202,13 +192,13 @@ export default class MaintenanceDialog extends FormDialog {
 			const cb = new Elem({ tag: 'input', type: 'checkbox', appendTo: checkRow, attributes: { id: cbId } });
 
 			cb.elem.checked = true;
-			cb.elem.style.accentColor = '#4a90d9';
+			cb.elem.style.accentColor = `${colors.info}`;
 
 			const lbl = new Elem({
 				tag: 'label',
 				appendTo: checkRow,
 				textContent: 'Update equipment hours from this record',
-				style: { fontSize: '12px', color: 'rgba(255,255,255,0.5)', cursor: 'pointer' },
+				style: { fontSize: '12px', color: colors.gray, cursor: 'pointer' },
 			});
 
 			lbl.elem.htmlFor = cbId;

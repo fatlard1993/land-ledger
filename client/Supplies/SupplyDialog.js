@@ -1,9 +1,12 @@
-import { FormDialog, Elem, Button } from '@vanilla-bean/components';
+import { FormDialog, Elem, Button, Input, SectionLabel, Select, theme } from '@vanilla-bean/components';
 import { makePropertiesEditor } from '../utils/PropertiesEditor';
 
 import { getBuildings } from '../api';
 import { watchFormConflicts } from '../utils/watchFormConflicts.js';
 import { keepOpenIfFailed } from '../utils/keepOpenIfFailed';
+import { FormLabel } from '../Layout';
+
+const { colors } = theme;
 
 export const SUPPLY_CATEGORY_SUGGESTIONS = [
 	'Seed',
@@ -150,27 +153,14 @@ export default class SupplyDialog extends FormDialog {
 			style: { display: 'flex', alignItems: 'center', gap: '8px', margin: '8px 0' },
 		});
 
-		const emojiInput = new Elem({
-			tag: 'input',
+		const emojiInput = new Input({
 			appendTo: emojiRow,
+			type: 'text',
 			attributes: {
-				type: 'text',
 				maxlength: '4',
 				title: 'Tap to change emoji — auto-detected from category',
 			},
-			style: {
-				background: 'rgba(255,255,255,0.07)',
-				border: '1px solid rgba(255,255,255,0.12)',
-				borderRadius: '4px',
-				color: '#fff',
-				fontSize: '22px',
-				padding: '4px',
-				width: '52px',
-				textAlign: 'center',
-				flexShrink: '0',
-				fontFamily: 'inherit',
-				boxSizing: 'border-box',
-			},
+			style: { fontSize: '22px', padding: '4px', width: '52px', textAlign: 'center', flexShrink: '0' },
 		});
 
 		emojiInput.elem.value = supply.emoji || detectSupplyEmoji(supply.category || '');
@@ -178,7 +168,7 @@ export default class SupplyDialog extends FormDialog {
 		const emojiHint = new Elem({
 			tag: 'span',
 			appendTo: emojiRow,
-			style: { fontSize: '11px', color: 'rgba(255,255,255,0.3)' },
+			style: { fontSize: '11px', color: colors.gray },
 			textContent: supply.emoji ? 'Custom · clear to auto-detect' : 'Auto-detected · tap to change',
 		});
 
@@ -195,24 +185,9 @@ export default class SupplyDialog extends FormDialog {
 		if (!options.buildingId) {
 			const bldgRow = new Elem({ tag: 'div', appendTo: this.intro, style: { marginBottom: '4px' } });
 
-			new Elem({
-				tag: 'label',
-				appendTo: bldgRow,
-				textContent: 'Stored in building (optional)',
-				style: {
-					display: 'block',
-					fontSize: '11px',
-					textTransform: 'uppercase',
-					letterSpacing: '.06em',
-					color: 'rgba(255,255,255,0.4)',
-					marginBottom: '4px',
-				},
-			});
+			new FormLabel({ appendTo: bldgRow, textContent: 'Stored in building (optional)', style: { marginTop: '0' } });
 
-			const buildingSelect = new Elem({ tag: 'select', appendTo: bldgRow });
-
-			buildingSelect.elem.style.cssText =
-				'display:block;width:100%;box-sizing:border-box;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);border-radius:4px;color:#fff;font-size:14px;padding:8px 10px;font-family:inherit;cursor:pointer;';
+			const buildingSelect = new Select({ appendTo: bldgRow });
 
 			const noOpt = document.createElement('option');
 
@@ -258,25 +233,10 @@ export default class SupplyDialog extends FormDialog {
 		const pricingDiv = new Elem({
 			tag: 'div',
 			appendTo: this.body,
-			style: {
-				marginTop: '12px',
-				borderTop: '1px solid rgba(255,255,255,0.08)',
-				paddingTop: '12px',
-			},
+			style: { marginTop: '12px', borderTop: `1px solid ${colors.border}`, paddingTop: '12px' },
 		});
 
-		new Elem({
-			tag: 'div',
-			appendTo: pricingDiv,
-			textContent: 'Sale Price',
-			style: {
-				fontSize: '11px',
-				textTransform: 'uppercase',
-				letterSpacing: '.06em',
-				color: 'rgba(255,255,255,0.3)',
-				marginBottom: '8px',
-			},
-		});
+		new SectionLabel({ appendTo: pricingDiv, textContent: 'Sale Price', style: { margin: '0 0 8px' } });
 
 		// Mode toggle
 		const modeRow = new Elem({
@@ -285,44 +245,19 @@ export default class SupplyDialog extends FormDialog {
 			style: { display: 'flex', gap: '6px', marginBottom: '8px' },
 		});
 
-		const INP_S = {
-			display: 'block',
-			width: '100%',
-			boxSizing: 'border-box',
-			background: 'rgba(255,255,255,0.07)',
-			border: '1px solid rgba(255,255,255,0.12)',
-			borderRadius: '4px',
-			color: '#fff',
-			fontSize: '14px',
-			padding: '8px 10px',
-			fontFamily: 'inherit',
-		};
-
 		this._priceMode = supply.priceMode || 'markup';
 		this._markupPct = supply.markupPercent || '50';
 		this._fixedPrice = supply.pricePerUnit || '';
 
-		const makeModeBtn = (label, value, onPress) => {
-			const isActive = this._priceMode === value;
-
-			return new Button({
+		const makeModeBtn = (label, value, onPress) =>
+			new Button({
 				appendTo: modeRow,
+				variant: 'chip',
 				textContent: label,
 				attributes: { type: 'button', 'data-mode': value },
-				style: {
-					flex: '1',
-					fontSize: '12px',
-					padding: '5px',
-					borderRadius: '4px',
-					cursor: 'pointer',
-					fontFamily: 'inherit',
-					border: `1px solid ${isActive ? '#4a90d9' : 'rgba(255,255,255,0.1)'}`,
-					background: isActive ? 'rgba(74,144,217,0.2)' : 'rgba(255,255,255,0.05)',
-					color: isActive ? '#8db4e8' : 'rgba(255,255,255,0.45)',
-				},
+				style: { flex: '1' },
 				onPointerPress: onPress,
 			});
-		};
 
 		// Markup fields
 		const markupWrap = new Elem({
@@ -331,42 +266,16 @@ export default class SupplyDialog extends FormDialog {
 			style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' },
 		});
 
-		const markupLabelStyle = {
-			fontSize: '11px',
-			textTransform: 'uppercase',
-			letterSpacing: '.06em',
-			color: 'rgba(255,255,255,0.4)',
-			marginBottom: '4px',
-			display: 'block',
-		};
+		const markupLabelStyle = { marginTop: '0' };
 
-		new Elem({
-			tag: 'label',
-			appendTo: markupWrap,
-			textContent: 'Markup (%)',
-			style: markupLabelStyle,
-		});
+		new FormLabel({ appendTo: markupWrap, textContent: 'Markup (%)', style: markupLabelStyle });
+		new FormLabel({ appendTo: markupWrap, textContent: 'Calculated price', style: markupLabelStyle });
 
-		new Elem({
-			tag: 'label',
-			appendTo: markupWrap,
-			textContent: 'Calculated price',
-			style: markupLabelStyle,
-		});
-
-		const markupInput = new Elem({
-			tag: 'input',
-			appendTo: markupWrap,
-			style: { ...INP_S, marginTop: '0' },
-		});
+		const markupInput = new Input({ appendTo: markupWrap });
 
 		Object.assign(markupInput.elem, { type: 'number', step: '1', min: '0', value: this._markupPct, placeholder: '50' });
 
-		const calcDisplay = new Elem({
-			tag: 'input',
-			appendTo: markupWrap,
-			style: { ...INP_S, marginTop: '0', opacity: '0.6' },
-		});
+		const calcDisplay = new Input({ appendTo: markupWrap, style: { opacity: '0.6' } });
 
 		Object.assign(calcDisplay.elem, { type: 'text', readOnly: true, placeholder: '—' });
 
@@ -377,18 +286,9 @@ export default class SupplyDialog extends FormDialog {
 			style: { display: 'none' },
 		});
 
-		new Elem({
-			tag: 'label',
-			appendTo: fixedWrap,
-			textContent: 'Fixed sale price ($)',
-			style: markupLabelStyle,
-		});
+		new FormLabel({ appendTo: fixedWrap, textContent: 'Fixed sale price ($)', style: markupLabelStyle });
 
-		const fixedInput = new Elem({
-			tag: 'input',
-			appendTo: fixedWrap,
-			style: { ...INP_S, marginTop: '0' },
-		});
+		const fixedInput = new Input({ appendTo: fixedWrap });
 
 		Object.assign(fixedInput.elem, { type: 'number', step: '0.01', value: this._fixedPrice, placeholder: '0.00' });
 
@@ -406,11 +306,7 @@ export default class SupplyDialog extends FormDialog {
 			fixedWrap.setStyle({ display: isMarkup ? 'none' : 'block' });
 
 			for (const btn of modeRow.elem.querySelectorAll('button')) {
-				const active = btn.dataset.mode === this._priceMode;
-
-				btn.style.border = `1px solid ${active ? '#4a90d9' : 'rgba(255,255,255,0.1)'}`;
-				btn.style.background = active ? 'rgba(74,144,217,0.2)' : 'rgba(255,255,255,0.05)';
-				btn.style.color = active ? '#8db4e8' : 'rgba(255,255,255,0.45)';
+				btn.classList.toggle('active', btn.dataset.mode === this._priceMode);
 			}
 
 			updateCalc();

@@ -1,4 +1,4 @@
-import { FormDialog, Select, Notify } from '@vanilla-bean/components';
+import { FormDialog, Notify, Select, theme } from '@vanilla-bean/components';
 
 import { getFields } from '../api';
 import { createApplicationLog, updateApplicationLog, deleteApplicationLog } from '../api/applicationLogs';
@@ -6,14 +6,17 @@ import { watchFormConflicts } from '../utils/watchFormConflicts.js';
 import { toNum } from '../utils/format.js';
 import { keepOpenIfFailed } from '../utils/keepOpenIfFailed';
 
+const { colors } = theme;
+
+// Hex, so a reader can append an alpha pair (`${color}22`) for a tint; light enough to read as text on the dark ground
 export const CATEGORIES = [
-	{ value: 'herbicide', label: 'Herbicide', color: '#4caf50' },
-	{ value: 'insecticide', label: 'Insecticide', color: '#e8832a' },
-	{ value: 'fungicide', label: 'Fungicide', color: '#9c6de8' },
-	{ value: 'fertilizer', label: 'Fertilizer', color: '#4a90d9' },
-	{ value: 'adjuvant', label: 'Adjuvant/Surfactant', color: '#e8c42a' },
-	{ value: 'fuel', label: 'Fuel', color: '#888' },
-	{ value: 'other', label: 'Other', color: '#9e9e9e' },
+	{ value: 'herbicide', label: 'Herbicide', color: colors.light(colors.green).toHexString() },
+	{ value: 'insecticide', label: 'Insecticide', color: colors.light(colors.orange).toHexString() },
+	{ value: 'fungicide', label: 'Fungicide', color: colors.light(colors.purple).toHexString() },
+	{ value: 'fertilizer', label: 'Fertilizer', color: colors.light(colors.blue).toHexString() },
+	{ value: 'adjuvant', label: 'Adjuvant/Surfactant', color: colors.light(colors.yellow).toHexString() },
+	{ value: 'fuel', label: 'Fuel', color: colors.gray.toHexString() },
+	{ value: 'other', label: 'Other', color: colors.muted.toHexString() },
 ];
 
 export const RATE_UNITS = ['oz/ac', 'fl oz/ac', 'lbs/ac', 'gal/ac', 'pts/ac', 'qts/ac', 'tons/ac', 'mL/ac'];

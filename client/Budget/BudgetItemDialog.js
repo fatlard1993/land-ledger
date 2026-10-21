@@ -1,8 +1,10 @@
-import { FormDialog, Component, Elem, Select, Button } from '@vanilla-bean/components';
+import { FormDialog, Component, Elem, Select, Button, theme } from '@vanilla-bean/components';
 import { makePropertiesEditor } from '../utils/PropertiesEditor';
 import { toNum } from '../utils/format.js';
 import { watchFormConflicts } from '../utils/watchFormConflicts.js';
 import { keepOpenIfFailed } from '../utils/keepOpenIfFailed';
+
+const { colors } = theme;
 
 export const FREQUENCIES = [
 	{ value: 'daily', label: 'Daily', multiplier: 365 },
@@ -136,21 +138,12 @@ export default class BudgetItemDialog extends FormDialog {
 			appendTo: this.intro,
 			style: { display: 'flex', gap: '6px', marginBottom: '4px' },
 		});
-		const makeType = (label, value) => {
-			const active = (item.type || 'expense') === value;
+		const makeType = (icon, label, value) => {
 			const btn = new Button({
+				variant: 'chip',
+				icon,
 				textContent: label,
-				style: {
-					flex: '1',
-					padding: '7px',
-					borderRadius: '4px',
-					cursor: 'pointer',
-					fontSize: '13px',
-					fontFamily: 'inherit',
-					border: `1px solid ${active ? '#4a90d9' : 'rgba(255,255,255,0.1)'}`,
-					background: active ? 'rgba(74,144,217,0.2)' : 'rgba(255,255,255,0.05)',
-					color: active ? '#8db4e8' : 'rgba(255,255,255,0.5)',
-				},
+				style: { flex: '1' },
 				appendTo: typeRow,
 				onPointerPress: () => {
 					typeSelect.value = value;
@@ -164,17 +157,13 @@ export default class BudgetItemDialog extends FormDialog {
 			return btn;
 		};
 
-		const incBtn = makeType('📥 Income', 'income');
-		const expBtn = makeType('📤 Expense', 'expense');
+		const incBtn = makeType('arrow-trend-up', 'Income', 'income');
+		const expBtn = makeType('arrow-trend-down', 'Expense', 'expense');
 		const typeSelect = { value: item.type || 'expense' };
 
 		const updateTypeStyle = () => {
 			for (const btn of [incBtn, expBtn]) {
-				const active = btn.elem.dataset.val === typeSelect.value;
-
-				btn.elem.style.borderColor = active ? '#4a90d9' : 'rgba(255,255,255,0.1)';
-				btn.elem.style.background = active ? 'rgba(74,144,217,0.2)' : 'rgba(255,255,255,0.05)';
-				btn.elem.style.color = active ? '#8db4e8' : 'rgba(255,255,255,0.5)';
+				btn.toggleClass('active', btn.elem.dataset.val === typeSelect.value);
 			}
 
 			// Category suggestions follow the type
@@ -184,7 +173,7 @@ export default class BudgetItemDialog extends FormDialog {
 
 		const preview = new Elem({
 			tag: 'div',
-			style: { fontSize: '11px', color: 'rgba(255,255,255,0.3)', marginTop: '6px' },
+			style: { fontSize: '11px', color: colors.gray, marginTop: '6px' },
 		});
 
 		const updatePreview = () => {
@@ -207,7 +196,7 @@ export default class BudgetItemDialog extends FormDialog {
 		if (options.entity) {
 			new Elem({
 				tag: 'div',
-				style: { fontSize: '11px', color: 'rgba(255,255,255,0.25)', marginTop: '10px' },
+				style: { fontSize: '11px', color: colors.gray, marginTop: '10px' },
 				textContent: `Linked to: ${options.entity.name || options.entityType}`,
 				appendTo: this.body,
 			});

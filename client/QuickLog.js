@@ -1,9 +1,9 @@
-import { Component, Elem, styled, BottomSheet, Button } from '@vanilla-bean/components';
+import { BottomSheet, Button, Component, Elem, Icon, Input, Select, styled, theme } from '@vanilla-bean/components';
 import { pointInPolygon } from './geo';
 import { getFields, getBuildings, createEvent } from './api';
 import { createApplicationLog } from './api/applicationLogs';
 import { CATEGORIES as APP_CATEGORIES } from './ApplicationLog/ApplicationLogDialog';
-import { FormLabel, FormInput, FormSelect } from './Layout';
+import { FormLabel } from './Layout';
 
 // ── Constants ──────────────────────────────────────────────────────────────────
 
@@ -19,10 +19,123 @@ const EVENT_TYPES = [
 ];
 
 const LOG_TYPES = [
-	{ value: 'event', label: 'Field event', icon: '📋', sub: 'Crop, livestock, harvest, input…' },
-	{ value: 'application', label: 'Application', icon: '🧪', sub: 'Pesticide, herbicide, fertilizer…' },
-	{ value: 'note', label: 'Quick note', icon: '✏️', sub: 'Observation or reminder' },
+	{ value: 'event', label: 'Field event', icon: 'calendar-plus', sub: 'Crop, livestock, harvest, input…' },
+	{ value: 'application', label: 'Application', icon: 'flask', sub: 'Pesticide, herbicide, fertilizer…' },
+	{ value: 'note', label: 'Quick note', icon: 'pen', sub: 'Observation or reminder' },
 ];
+
+const { colors } = theme;
+
+const SheetHeader = styled(
+	Component,
+	({ colors }) => `
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 8px;
+		padding: 14px 16px 10px;
+
+		& .where {
+			flex: 1;
+			min-width: 0;
+		}
+
+		& .location {
+			overflow: hidden;
+			font-size: 16px;
+			font-weight: 700;
+			color: ${colors.white};
+			text-overflow: ellipsis;
+			white-space: nowrap;
+		}
+
+		& .location > .icon {
+			margin-right: 6px;
+			color: ${colors.light(colors.danger)};
+		}
+
+		& .date {
+			margin-top: 2px;
+			font-size: 12px;
+			color: ${colors.gray};
+		}
+	`,
+);
+
+const TypeGrid = styled(
+	Component,
+	({ colors, radius }) => `
+		display: grid;
+		grid-template-columns: repeat(3, minmax(0, 1fr));
+		gap: 8px;
+		margin-bottom: 4px;
+
+		& > .vbc-button {
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+			gap: 4px;
+			padding: 14px 8px;
+			border-radius: ${radius.lg};
+			background-color: ${colors.alpha(colors.white, 0.05)};
+			font-size: 12px;
+			white-space: normal;
+		}
+
+		& .type-icon {
+			font-size: 22px;
+			line-height: 1;
+		}
+
+		& .type-label {
+			font-size: 13px;
+			font-weight: 600;
+		}
+
+		& .type-sub {
+			font-size: 10px;
+			color: ${colors.gray};
+			text-align: center;
+		}
+	`,
+);
+
+// Big enough to hit outdoors; a tinted chip takes its category's own color when chosen
+const ChipRow = styled(
+	Component,
+	() => `
+		display: flex;
+		flex-wrap: wrap;
+		gap: 6px;
+		margin-bottom: 4px;
+
+		& > .vbc-button {
+			padding: 7px 12px;
+			font-size: 13px;
+		}
+
+		& > .vbc-button.tinted.active {
+			color: var(--tint);
+			border-color: color-mix(in hsl, var(--tint) 40%, transparent);
+			background-color: color-mix(in hsl, var(--tint) 13%, transparent);
+		}
+	`,
+);
+
+const SubmitButton = styled(
+	Button,
+	({ colors, radius }) => `
+		display: block;
+		width: 100%;
+		margin-top: 18px;
+		padding: 15px;
+		border-radius: ${radius.lg};
+		background-color: ${colors.dark(colors.green)};
+		font-size: 16px;
+		font-weight: 700;
+		letter-spacing: 0.01em;
+	`,
+);
 
 // ── GPS + field detection ──────────────────────────────────────────────────────
 
@@ -69,6 +182,7 @@ export function openQuickLog() {
 	}
 
 	const sheet = new BottomSheet({
+		addClass: 'quick-log',
 		onClose: () => {
 			_sheet = null;
 		},
@@ -76,46 +190,28 @@ export function openQuickLog() {
 	_sheet = sheet;
 
 	// ── Header ─────────────────────────────────────────────────────────────────
-	const header = new Component({
-		appendTo: sheet.body,
-		style: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 16px 10px' },
-	});
+	const header = new SheetHeader({ appendTo: sheet.body });
 
-	const fieldLabel = new Component({ appendTo: header, style: { flex: '1', minWidth: '0' } });
+	const fieldLabel = new Component({ appendTo: header, addClass: 'where' });
 
-	const fieldName = new Elem({
-		tag: 'div',
-		appendTo: fieldLabel,
-		style: {
-			fontSize: '16px',
-			fontWeight: '700',
-			color: '#fff',
-			overflow: 'hidden',
-			textOverflow: 'ellipsis',
-			whiteSpace: 'nowrap',
-		},
-		textContent: '📍 Detecting your location…',
-	});
+	const fieldName = new Elem({ tag: 'div', appendTo: fieldLabel, addClass: 'location' });
+
+	new Icon({ appendTo: fieldName, icon: 'location-dot' });
+
+	const locationText = new Elem({ tag: 'span', appendTo: fieldName, textContent: 'Detecting your location…' });
 
 	new Elem({
 		tag: 'div',
 		appendTo: fieldLabel,
-		style: { fontSize: '12px', color: 'rgba(255,255,255,0.4)', marginTop: '2px' },
+		addClass: 'date',
 		textContent: new Date().toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }),
 	});
 
 	new Button({
 		appendTo: header,
-		textContent: '×',
-		style: {
-			background: 'none',
-			border: 'none',
-			color: 'rgba(255,255,255,0.5)',
-			fontSize: '22px',
-			cursor: 'pointer',
-			padding: '4px 8px',
-			flexShrink: '0',
-		},
+		variant: 'flat',
+		icon: 'xmark',
+		title: 'Close',
 		onPointerPress: () => sheet.hide(),
 	});
 
@@ -134,13 +230,13 @@ export function openQuickLog() {
 		currentBuilding = building;
 
 		if (building && field) {
-			fieldName.elem.textContent = `📍 ${building.name || 'Building'} · ${field.name || 'Field'}`;
+			locationText.elem.textContent = `${building.name || 'Building'} · ${field.name || 'Field'}`;
 		} else if (building) {
-			fieldName.elem.textContent = `📍 ${building.name || 'Building'}`;
+			locationText.elem.textContent = building.name || 'Building';
 		} else if (field) {
-			fieldName.elem.textContent = `📍 ${field.name || 'Field'}`;
+			locationText.elem.textContent = field.name || 'Field';
 		} else {
-			fieldName.elem.textContent = '📍 Not in a mapped field or building';
+			locationText.elem.textContent = 'Not in a mapped field or building';
 		}
 	};
 
@@ -161,36 +257,19 @@ export function openQuickLog() {
 			setLocation(field, building);
 			if (locationSelect && !locationUserPicked) locationSelect.elem.value = building?.id || field?.id || '';
 		} else {
-			fieldName.elem.textContent = '📍 Location unavailable — select location';
+			locationText.elem.textContent = 'Location unavailable — select location';
 		}
 	});
 
 	// ── Log type picker ────────────────────────────────────────────────────────
-	const typeGrid = new Component({
-		appendTo: body,
-		style: { display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: '8px', marginBottom: '4px' },
-	});
+	const typeGrid = new TypeGrid({ appendTo: body });
 
 	let locationSelect = null;
 
 	LOG_TYPES.forEach(type => {
 		const chip = new Button({
 			appendTo: typeGrid,
-			style: {
-				display: 'flex',
-				flexDirection: 'column',
-				alignItems: 'center',
-				gap: '4px',
-				padding: '14px 8px',
-				background: 'rgba(255,255,255,0.06)',
-				border: '1px solid rgba(255,255,255,0.1)',
-				borderRadius: '10px',
-				cursor: 'pointer',
-				fontFamily: 'inherit',
-				color: '#fff',
-				fontSize: '12px',
-				fontWeight: '500',
-			},
+			variant: 'flat',
 			onPointerPress: () => {
 				typeGrid.setStyle({ display: 'none' });
 				formArea.setStyle({ display: '' });
@@ -198,14 +277,9 @@ export function openQuickLog() {
 			},
 		});
 
-		new Elem({ tag: 'span', appendTo: chip, style: { fontSize: '24px', lineHeight: '1' }, textContent: type.icon });
-		new Elem({ tag: 'span', appendTo: chip, style: { fontSize: '13px', fontWeight: '600' }, textContent: type.label });
-		new Elem({
-			tag: 'span',
-			appendTo: chip,
-			style: { fontSize: '10px', color: 'rgba(255,255,255,0.4)', textAlign: 'center' },
-			textContent: type.sub,
-		});
+		new Icon({ appendTo: chip, addClass: 'type-icon', icon: type.icon });
+		new Elem({ tag: 'span', appendTo: chip, addClass: 'type-label', textContent: type.label });
+		new Elem({ tag: 'span', appendTo: chip, addClass: 'type-sub', textContent: type.sub });
 	});
 
 	// ── Form area (hidden until type picked) ───────────────────────────────────
@@ -216,19 +290,10 @@ export function openQuickLog() {
 
 		new Button({
 			appendTo: formArea,
-			textContent: '← Choose type',
-			style: {
-				display: 'flex',
-				alignItems: 'center',
-				gap: '5px',
-				background: 'none',
-				border: 'none',
-				color: 'rgba(255,255,255,0.5)',
-				fontSize: '13px',
-				cursor: 'pointer',
-				padding: '0 0 12px',
-				fontFamily: 'inherit',
-			},
+			variant: 'flat',
+			icon: 'arrow-left',
+			textContent: 'Choose type',
+			style: { marginBottom: '8px', color: colors.muted },
 			onPointerPress: () => {
 				typeGrid.setStyle({ display: '' });
 				formArea.setStyle({ display: 'none' });
@@ -239,7 +304,7 @@ export function openQuickLog() {
 
 		// Location selector — fields + buildings grouped, GPS-detected pre-selected
 		new FormLabel({ appendTo: formArea, textContent: 'Location' });
-		locationSelect = new FormSelect({ appendTo: formArea });
+		locationSelect = new Select({ appendTo: formArea });
 		locationSelect.elem.addEventListener('change', () => {
 			locationUserPicked = true;
 		});
@@ -256,7 +321,6 @@ export function openQuickLog() {
 				group.label = 'Buildings';
 				buildingList.forEach(b => {
 					const o = new Option(b.name || 'Unnamed building', b.id);
-					o.style.background = '#111';
 					group.append(o);
 				});
 				locationSelect.elem.append(group);
@@ -267,7 +331,6 @@ export function openQuickLog() {
 				group.label = 'Fields';
 				fieldList.forEach(f => {
 					const o = new Option(f.name || 'Unnamed field', f.id);
-					o.style.background = '#111';
 					group.append(o);
 				});
 				locationSelect.elem.append(group);
@@ -290,7 +353,7 @@ export function openQuickLog() {
 
 		if (logType === 'note') {
 			new FormLabel({ appendTo: formArea, textContent: 'Note' });
-			const noteText = new FormInput({
+			const noteText = new Input({
 				tag: 'textarea',
 				appendTo: formArea,
 				rows: 4,
@@ -307,41 +370,29 @@ export function openQuickLog() {
 			});
 		} else if (logType === 'event') {
 			new FormLabel({ appendTo: formArea, textContent: 'Type' });
-			const catGrid = new Component({
-				appendTo: formArea,
-				style: { display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: '4px' },
-			});
+			const catGrid = new ChipRow({ appendTo: formArea });
 			let selectedCat = 'crop';
 			const catChips = [];
 
 			EVENT_TYPES.forEach(t => {
 				const chip = new Button({
 					appendTo: catGrid,
+					variant: 'chip',
+					addClass: t.value === selectedCat ? 'active' : [],
 					textContent: `${t.icon} ${t.label}`,
-					style: {
-						padding: '7px 12px',
-						borderRadius: '20px',
-						cursor: 'pointer',
-						fontSize: '13px',
-						fontFamily: 'inherit',
-						border: `1px solid ${t.value === selectedCat ? 'rgba(255,255,255,0.3)' : 'rgba(255,255,255,0.15)'}`,
-						background: t.value === selectedCat ? 'rgba(255,255,255,0.15)' : 'transparent',
-						color: '#fff',
-					},
 					onPointerPress: () => {
 						selectedCat = t.value;
-						catChips.forEach(c => c.setStyle({ background: 'transparent', borderColor: 'rgba(255,255,255,0.15)' }));
-						chip.setStyle({ background: 'rgba(255,255,255,0.15)', borderColor: 'rgba(255,255,255,0.3)' });
+						catChips.forEach(c => c.toggleClass('active', c === chip));
 					},
 				});
 				catChips.push(chip);
 			});
 
 			new FormLabel({ appendTo: formArea, textContent: 'Name (optional)' });
-			const nameInput = new FormInput({ appendTo: formArea, placeholder: 'e.g. Planted corn, 32,000 seeds/ac' });
+			const nameInput = new Input({ appendTo: formArea, placeholder: 'e.g. Planted corn, 32,000 seeds/ac' });
 
 			new FormLabel({ appendTo: formArea, textContent: 'Notes (optional)' });
-			const noteInput = new FormInput({ appendTo: formArea, placeholder: 'Anything else worth capturing' });
+			const noteInput = new Input({ appendTo: formArea, placeholder: 'Anything else worth capturing' });
 
 			getPayload = () => ({
 				fieldId: locationSelect.elem.value || null,
@@ -353,40 +404,27 @@ export function openQuickLog() {
 			});
 		} else if (logType === 'application') {
 			new FormLabel({ appendTo: formArea, textContent: 'Category' });
-			const catGrid = new Component({
-				appendTo: formArea,
-				style: { display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: '4px' },
-			});
+			const catGrid = new ChipRow({ appendTo: formArea });
 			let selectedCat = 'herbicide';
 			const catChips = [];
 
 			APP_CATEGORIES.forEach(c => {
 				const chip = new Button({
 					appendTo: catGrid,
+					variant: 'chip',
+					addClass: ['tinted', ...(c.value === selectedCat ? ['active'] : [])],
 					textContent: c.label,
-					style: {
-						padding: '7px 12px',
-						borderRadius: '20px',
-						cursor: 'pointer',
-						fontSize: '13px',
-						fontFamily: 'inherit',
-						border: `1px solid ${c.value === selectedCat ? `${c.color}66` : 'rgba(255,255,255,0.15)'}`,
-						background: c.value === selectedCat ? `${c.color}22` : 'transparent',
-						color: c.value === selectedCat ? c.color : '#fff',
-					},
 					onPointerPress: () => {
 						selectedCat = c.value;
-						catChips.forEach(ch =>
-							ch.setStyle({ background: 'transparent', color: '#fff', borderColor: 'rgba(255,255,255,0.15)' }),
-						);
-						chip.setStyle({ background: `${c.color}22`, color: c.color, borderColor: `${c.color}66` });
+						catChips.forEach(ch => ch.toggleClass('active', ch === chip));
 					},
 				});
+				chip.elem.style.setProperty('--tint', String(c.color));
 				catChips.push(chip);
 			});
 
 			new FormLabel({ appendTo: formArea, textContent: 'Product *' });
-			const productInput = new FormInput({ appendTo: formArea, placeholder: 'e.g. Roundup PowerMAX' });
+			const productInput = new Input({ appendTo: formArea, placeholder: 'e.g. Roundup PowerMAX' });
 			focusOnError = productInput;
 
 			const rateRow = new Component({
@@ -397,18 +435,17 @@ export function openQuickLog() {
 			const rateCol2 = new Component({ appendTo: rateRow });
 
 			new FormLabel({ appendTo: rateCol1, textContent: 'Rate' });
-			const rateInput = new FormInput({ appendTo: rateCol1, type: 'number', step: '0.1', placeholder: '22' });
+			const rateInput = new Input({ appendTo: rateCol1, type: 'number', step: '0.1', placeholder: '22' });
 
 			new FormLabel({ appendTo: rateCol2, textContent: 'Unit' });
-			const unitSelect = new FormSelect({ appendTo: rateCol2 });
+			const unitSelect = new Select({ appendTo: rateCol2 });
 			['oz/ac', 'fl oz/ac', 'lbs/ac', 'gal/ac', 'pts/ac'].forEach(u => {
 				const o = new Option(u, u);
-				o.style.background = '#111';
 				unitSelect.elem.append(o);
 			});
 
 			new FormLabel({ appendTo: formArea, textContent: 'EPA Reg. # (optional)' });
-			const epaInput = new FormInput({ appendTo: formArea, placeholder: '12345-67890' });
+			const epaInput = new Input({ appendTo: formArea, placeholder: '12345-67890' });
 
 			getPayload = () => ({
 				fieldId: locationSelect.elem.value || null,
@@ -423,24 +460,9 @@ export function openQuickLog() {
 		}
 
 		// ── Submit button ──────────────────────────────────────────────────────
-		const submitBtn = new Button({
+		const submitBtn = new SubmitButton({
 			appendTo: formArea,
 			textContent: 'Log It',
-			style: {
-				display: 'block',
-				width: '100%',
-				marginTop: '18px',
-				padding: '15px',
-				borderRadius: '10px',
-				border: 'none',
-				background: '#2d6a2d',
-				color: '#fff',
-				fontSize: '16px',
-				fontWeight: '700',
-				cursor: 'pointer',
-				fontFamily: 'inherit',
-				letterSpacing: '.01em',
-			},
 			onPointerPress: async () => {
 				if (!getPayload) return;
 
@@ -462,13 +484,13 @@ export function openQuickLog() {
 					}
 
 					submitBtn.elem.textContent = '✓ Logged';
-					submitBtn.setStyle({ background: '#15803d' });
+					submitBtn.setStyle({ backgroundColor: colors.success });
 					setTimeout(() => sheet.hide(), 800);
 				} catch {
 					submitBtn.elem.disabled = false;
 					submitBtn.elem.textContent = 'Log It';
-					submitBtn.setStyle({ background: '#7f1d1d' });
-					setTimeout(() => submitBtn.setStyle({ background: '#2d6a2d' }), 2000);
+					submitBtn.setStyle({ backgroundColor: colors.dark(colors.danger) });
+					setTimeout(() => submitBtn.setStyle({ backgroundColor: '' }), 2000);
 				}
 			},
 		});
@@ -483,32 +505,38 @@ export function openQuickLog() {
 
 const QuickLogFAB = styled(
 	Component,
-	({ safeArea }) => `
-    position: fixed;
-    bottom: calc(${safeArea.bottom} + 68px);
-    right: calc(16px + ${safeArea.right});
-    z-index: 9500;
-    width: 54px;
-    height: 54px;
-    border-radius: 50%;
-    border: none;
-    background: #2d6a2d;
-    color: #fff;
-    font-size: 22px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    box-shadow: 0 3px 12px rgba(0,0,0,0.5);
-    transition: transform 0.1s, background 0.15s;
-    font-family: inherit;
+	({ colors, media, safeArea }) => `
+		position: fixed;
+		bottom: calc(${safeArea.bottom} + 68px);
+		right: calc(16px + ${safeArea.right});
+		z-index: 9500;
+		width: 54px;
+		height: 54px;
+		border-radius: 50%;
+		border: none;
+		background: ${colors.dark(colors.green)};
+		color: ${colors.white};
+		font-size: 22px;
+		cursor: pointer;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		box-shadow: 0 3px 12px ${colors.alpha(colors.vantablack, 0.5)};
+		transition: transform 0.1s, background 0.15s;
+		font-family: inherit;
 
-    &:active { transform: scale(0.92); }
-`,
+		&:active { transform: scale(0.92); }
+
+		/* Phones only: BottomNav turns into the left rail at this same breakpoint */
+		@media ${media.wide} { display: none; }
+
+		/* Out of the way of an open sheet's own buttons */
+		:root:has(.quick-log.open, .field-panel-outer.open) & { display: none; }
+	`,
 );
 
 export function mountQuickLogButton() {
-	const btn = new QuickLogFAB({
+	new QuickLogFAB({
 		tag: 'button',
 		appendTo: document.body,
 		title: 'Quick log',
@@ -516,9 +544,4 @@ export function mountQuickLogButton() {
 		attributes: { 'aria-label': 'Quick log' },
 		onPointerPress: openQuickLog,
 	});
-
-	const mediaQuery = window.matchMedia('(max-width: 768px)');
-	const update = () => btn.setStyle({ display: mediaQuery.matches ? 'flex' : 'none' });
-	mediaQuery.addEventListener('change', update);
-	update();
 }

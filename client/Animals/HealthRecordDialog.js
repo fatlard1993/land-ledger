@@ -1,9 +1,11 @@
-import { FormDialog, Select, Elem, Notify } from '@vanilla-bean/components';
+import { Elem, FormDialog, Notify, Select, theme } from '@vanilla-bean/components';
 
 import { createHealthRecord, updateHealthRecord, deleteHealthRecord } from '../api/animals';
 import { watchFormConflicts } from '../utils/watchFormConflicts.js';
 import { animalLabel } from './constants';
 import { keepOpenIfFailed } from '../utils/keepOpenIfFailed';
+
+const { colors } = theme;
 
 const withoutCallbacks = ({ onSave: _onSave, onDelete: _onDelete, ...options }) => options;
 
@@ -108,7 +110,7 @@ export default class HealthRecordDialog extends FormDialog {
 		const withdrawalDisplay = new Elem({
 			tag: 'div',
 			appendTo: this.body,
-			style: { fontSize: '13px', color: '#e8c42a', fontWeight: '600', padding: '4px 0 8px' },
+			style: { fontSize: '13px', color: colors.light(colors.warning), fontWeight: '600', padding: '4px 0 8px' },
 		});
 
 		const updateWithdrawal = () => {
@@ -118,7 +120,7 @@ export default class HealthRecordDialog extends FormDialog {
 				const d = new Date(`${dateVal}T12:00:00`);
 				d.setDate(d.getDate() + days);
 				withdrawalDisplay.options.textContent = `Withdrawal until: ${d.toISOString().slice(0, 10)}`;
-				withdrawalDisplay.options.style = { color: '#e8c42a' };
+				withdrawalDisplay.options.style = { color: colors.light(colors.warning) };
 			} else {
 				withdrawalDisplay.options.textContent = '';
 			}

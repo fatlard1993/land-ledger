@@ -1,6 +1,6 @@
-import { Component, Button } from '@vanilla-bean/components';
+import { Button, Component, Input, Select, styled } from '@vanilla-bean/components';
 
-import { FormLabel, FormInput, FormSelect } from '../Layout';
+import { FormLabel } from '../Layout';
 import { makePropertiesEditor } from '../utils/PropertiesEditor';
 
 export const COVER_CROP_SPECIES = [
@@ -48,7 +48,26 @@ export const SEEDING_METHODS = [
 	{ value: 'overseeded', label: 'Overseeded' },
 ];
 
-const rowFieldStyle = { fontSize: '16px', marginTop: '0' };
+// 16px keeps a phone from zooming in on focus
+const MixRow = styled(
+	Component,
+	() => `
+		display: grid;
+		grid-template-columns: 1fr 80px 70px 30px;
+		align-items: center;
+		gap: 4px;
+		margin-bottom: 4px;
+
+		& input, & select {
+			margin-top: 0;
+			font-size: 16px;
+		}
+
+		& select {
+			padding-inline: 4px;
+		}
+	`,
+);
 
 export function buildCoverCropSection(container, prev, g) {
 	// Species mix rows
@@ -62,48 +81,35 @@ export function buildCoverCropSection(container, prev, g) {
 	const prevMix = Array.isArray(prev.species) ? prev.species : defaultMixRow;
 
 	const addSpeciesRow = (rowData = { name: '', rate: '', unit: 'lbs/ac' }) => {
-		const row = new Component({
-			appendTo: mixContainer,
-			style: { display: 'grid', gridTemplateColumns: '1fr 80px 70px 28px', gap: '4px', marginBottom: '4px' },
-		});
+		const row = new MixRow({ appendTo: mixContainer });
 
-		const nameEl = new FormInput({
+		const nameEl = new Input({
 			appendTo: row,
 			type: 'text',
 			placeholder: 'Species',
 			value: rowData.name || '',
 			suggestions: COVER_CROP_SPECIES,
-			style: rowFieldStyle,
 		});
 
-		const rateEl = new FormInput({
+		const rateEl = new Input({
 			appendTo: row,
 			type: 'number',
 			placeholder: 'Rate',
 			value: rowData.rate || '',
 			attributes: { step: '0.1' },
-			style: rowFieldStyle,
 		});
 
-		const unitEl = new FormSelect({
+		const unitEl = new Select({
 			appendTo: row,
 			options: RATE_UNITS,
 			value: rowData.unit || 'lbs/ac',
-			style: { ...rowFieldStyle, padding: '8px 4px' },
 		});
 
 		new Button({
-			textContent: '✕',
 			appendTo: row,
-			style: {
-				background: 'rgba(255,255,255,0.07)',
-				border: '1px solid rgba(255,255,255,0.12)',
-				borderRadius: '4px',
-				color: 'rgba(255,255,255,0.5)',
-				cursor: 'pointer',
-				fontSize: '12px',
-				marginTop: '0',
-			},
+			variant: 'flat',
+			icon: 'xmark',
+			title: 'Remove species',
 			onPointerPress: () => {
 				const idx = speciesRows.findIndex(r => r.row === row);
 
@@ -119,13 +125,15 @@ export function buildCoverCropSection(container, prev, g) {
 
 	new Button({
 		appendTo: container,
-		textContent: '+ Add species',
-		style: { fontSize: '12px', padding: '4px 10px', marginTop: '4px', marginBottom: '4px' },
+		variant: 'flat',
+		icon: 'plus',
+		textContent: 'Add species',
+		style: { margin: '4px 0' },
 		onPointerPress: () => addSpeciesRow(),
 	});
 
 	new FormLabel({ appendTo: container, textContent: 'Seeding Method' });
-	const seedingMethodSelect = new FormSelect({ appendTo: container });
+	const seedingMethodSelect = new Select({ appendTo: container });
 
 	for (const { value: v, label: l } of SEEDING_METHODS) {
 		const o = document.createElement('option');
@@ -137,7 +145,7 @@ export function buildCoverCropSection(container, prev, g) {
 	seedingMethodSelect.elem.value = prev.seedingMethod || 'drilled';
 
 	new FormLabel({ appendTo: container, textContent: 'Termination Method' });
-	const terminationSelect = new FormSelect({ appendTo: container });
+	const terminationSelect = new Select({ appendTo: container });
 
 	for (const { value: v, label: l } of TERMINATION_METHODS) {
 		const o = document.createElement('option');
@@ -154,7 +162,7 @@ export function buildCoverCropSection(container, prev, g) {
 	});
 
 	new FormLabel({ appendTo: costRow, textContent: 'Seed Cost/Acre ($)' });
-	const ccSeedCostEl = new FormInput({
+	const ccSeedCostEl = new Input({
 		appendTo: costRow,
 		attributes: { type: 'number', step: '0.01', placeholder: 'Optional' },
 	});
@@ -162,7 +170,7 @@ export function buildCoverCropSection(container, prev, g) {
 	ccSeedCostEl.elem.value = prev.seedCostPerAcre || '';
 
 	new FormLabel({ appendTo: costRow, textContent: 'Application Cost/Acre ($)' });
-	const ccAppCostEl = new FormInput({
+	const ccAppCostEl = new Input({
 		appendTo: costRow,
 		attributes: { type: 'number', step: '0.01', placeholder: 'Optional' },
 	});

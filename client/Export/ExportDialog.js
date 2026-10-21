@@ -1,12 +1,42 @@
-import { Dialog, Component, Elem, Button } from '@vanilla-bean/components';
+import { Dialog, Card, Component, Elem, Button, SectionLabel, styled, theme } from '@vanilla-bean/components';
 
-const SECTION_STYLE = {
-	fontSize: '10px',
-	textTransform: 'uppercase',
-	letterSpacing: '.08em',
-	color: 'rgba(255,255,255,0.35)',
-	margin: '14px 0 6px',
-};
+const { colors } = theme;
+
+const SECTION_STYLE = { margin: '14px 0 6px' };
+
+const ExportRow = styled(
+	Card,
+	({ colors }) => `
+		display: flex;
+		align-items: center;
+		gap: 10px;
+		padding: 7px 10px;
+
+		/* The everyday exports stand out with a hairline */
+		&.featured {
+			box-shadow: inset 0 0 0 1px ${colors.border};
+		}
+
+		& .export-label {
+			font-size: 13px;
+			font-weight: 600;
+			color: ${colors.white};
+		}
+
+		& .export-sub {
+			margin-top: 1px;
+			font-size: 11px;
+			color: ${colors.gray};
+		}
+
+		& .export-ext {
+			flex-shrink: 0;
+			font-size: 10px;
+			font-weight: 700;
+			letter-spacing: 0.06em;
+		}
+	`,
+);
 
 const EXPORTS = [
 	{
@@ -124,58 +154,27 @@ function triggerDownload(url) {
 }
 
 function renderExportRow(container, { label, sub, url, ext, accent = false }) {
-	const row = new Component({
-		appendTo: container,
-		style: {
-			display: 'flex',
-			alignItems: 'center',
-			gap: '10px',
-			padding: '7px 10px',
-			background: 'rgba(255,255,255,0.04)',
-			border: `1px solid ${accent ? 'rgba(255,255,255,0.12)' : 'transparent'}`,
-			borderRadius: '6px',
-			cursor: 'pointer',
-		},
-	});
+	const row = new ExportRow({ appendTo: container, interactive: true });
+
+	if (accent) row.addClass('featured');
 
 	const info = new Component({ appendTo: row, style: { flex: '1', minWidth: '0' } });
 
-	new Elem({
-		tag: 'div',
-		appendTo: info,
-		style: { fontSize: '13px', fontWeight: '600', color: '#fff' },
-		textContent: label,
-	});
-	new Elem({
-		tag: 'div',
-		appendTo: info,
-		style: { fontSize: '11px', color: 'rgba(255,255,255,0.4)', marginTop: '1px' },
-		textContent: sub,
-	});
+	new Elem({ tag: 'div', appendTo: info, addClass: 'export-label', textContent: label });
+	new Elem({ tag: 'div', appendTo: info, addClass: 'export-sub', textContent: sub });
 
 	const extUpper = ext.toUpperCase();
 	let extColor;
-	if (extUpper === 'GEOJSON') extColor = '#4a90d9';
-	else if (extUpper === 'CSV') extColor = '#4caf50';
-	else extColor = '#e8c42a';
-	new Elem({
-		tag: 'div',
-		appendTo: row,
-		style: {
-			fontSize: '10px',
-			fontWeight: '700',
-			color: extColor,
-			flexShrink: '0',
-			letterSpacing: '.06em',
-		},
-		textContent: extUpper,
-	});
+	if (extUpper === 'GEOJSON') extColor = colors.light(colors.blue);
+	else if (extUpper === 'CSV') extColor = colors.light(colors.green);
+	else extColor = colors.light(colors.yellow);
+	new Elem({ tag: 'div', appendTo: row, addClass: 'export-ext', style: { color: extColor }, textContent: extUpper });
 
 	new Button({
 		appendTo: row,
-		textContent: '↓',
+		icon: 'download',
 		title: `Download ${label}`,
-		style: { fontSize: '16px', padding: '3px 10px', flexShrink: '0', fontWeight: '700' },
+		style: { flexShrink: '0' },
 		onPointerPress: () => triggerDownload(url),
 	});
 
@@ -198,12 +197,12 @@ export default class ExportDialog extends Dialog {
 		new Elem({
 			tag: 'p',
 			appendTo: this.body,
-			style: { fontSize: '13px', color: 'rgba(255,255,255,0.5)', margin: '0 0 2px' },
+			style: { fontSize: '13px', color: colors.muted, margin: '0 0 2px' },
 			textContent: 'Files download instantly — no data leaves your machine.',
 		});
 
 		for (const { section, items } of EXPORTS) {
-			new Elem({ tag: 'div', appendTo: this.body, style: SECTION_STYLE, textContent: section });
+			new SectionLabel({ appendTo: this.body, style: SECTION_STYLE, textContent: section });
 
 			const grid = new Component({
 				appendTo: this.body,
@@ -230,7 +229,7 @@ export default class ExportDialog extends Dialog {
 
 		if (!templates.length || !this.body.elem.isConnected) return;
 
-		new Elem({ tag: 'div', appendTo: this.body, style: SECTION_STYLE, textContent: 'Saved Templates' });
+		new SectionLabel({ appendTo: this.body, style: SECTION_STYLE, textContent: 'Saved Templates' });
 
 		const grid = new Component({
 			appendTo: this.body,

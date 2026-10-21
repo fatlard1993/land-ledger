@@ -1,8 +1,12 @@
-import { FormDialog, Elem } from '@vanilla-bean/components';
+import { Elem, FormDialog, theme } from '@vanilla-bean/components';
+
+import { FormLabel } from '../Layout';
 import { makePropertiesEditor } from '../utils/PropertiesEditor';
 import { toNum } from '../utils/format.js';
 import { watchFormConflicts } from '../utils/watchFormConflicts.js';
 import { keepOpenIfFailed } from '../utils/keepOpenIfFailed';
+
+const { colors } = theme;
 
 const COMMON_SCHEDULES = [
 	{
@@ -136,37 +140,9 @@ export default class MaintenanceScheduleDialog extends FormDialog {
 		let tplSelect;
 
 		if (!isEdit) {
-			new Elem({
-				tag: 'label',
-				appendTo: this.intro,
-				textContent: 'Start from template (optional)',
-				style: {
-					display: 'block',
-					fontSize: '11px',
-					textTransform: 'uppercase',
-					letterSpacing: '.06em',
-					color: 'rgba(255,255,255,0.4)',
-					marginTop: '12px',
-					marginBottom: '4px',
-				},
-			});
-			tplSelect = new Elem({
-				tag: 'select',
-				appendTo: this.intro,
-				style: {
-					display: 'block',
-					width: '100%',
-					boxSizing: 'border-box',
-					background: 'rgba(255,255,255,0.07)',
-					border: '1px solid rgba(255,255,255,0.12)',
-					borderRadius: '4px',
-					color: '#fff',
-					fontSize: '14px',
-					padding: '8px 10px',
-					fontFamily: 'inherit',
-					cursor: 'pointer',
-				},
-			});
+			new FormLabel({ appendTo: this.intro, textContent: 'Start from template (optional)' });
+			// A bare select takes the theme's field look
+			tplSelect = new Elem({ tag: 'select', appendTo: this.intro, style: { cursor: 'pointer' } });
 
 			const blankOpt = document.createElement('option');
 
@@ -186,7 +162,7 @@ export default class MaintenanceScheduleDialog extends FormDialog {
 		new Elem({
 			tag: 'div',
 			appendTo: this.intro,
-			style: { fontSize: '11px', color: 'rgba(255,255,255,0.3)', marginTop: '10px', marginBottom: '2px' },
+			style: { fontSize: '11px', color: colors.gray, marginTop: '10px', marginBottom: '2px' },
 			textContent: 'Set one or both interval types — whichever comes first triggers the reminder',
 		});
 

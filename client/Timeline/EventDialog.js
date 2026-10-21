@@ -1,6 +1,6 @@
-import { Elem, Component, FormDialog, Button } from '@vanilla-bean/components';
+import { Button, Component, Elem, FormDialog, Input, Select, styled, theme } from '@vanilla-bean/components';
 
-import { FormLabel, FormInput, FormSelect } from '../Layout';
+import { FormLabel } from '../Layout';
 import { getFields } from '../api';
 import { makeCropCombobox } from '../Charts/cropCombobox';
 import { keepOpenIfFailed } from '../utils/keepOpenIfFailed';
@@ -8,16 +8,78 @@ import { makePropertiesEditor } from '../utils/PropertiesEditor';
 import { buildHarvestSection } from './HarvestSection.js';
 import { buildCoverCropSection } from './CoverCropSection.js';
 
+const { colors } = theme;
+
+// Each category's emoji is part of its label and of the events logged under it; the color marks it in lists
 export const EVENT_CATEGORIES = [
-	{ value: 'crop', label: '🌽 Crop', color: '#e8c42a', primary: true },
-	{ value: 'livestock', label: '🐄 Stock', color: '#a0522d', primary: true },
-	{ value: 'harvest', label: '🌾 Harvest', color: '#c8a84b', primary: true },
-	{ value: 'cover_crop', label: '🌱 Cover Crop', color: '#4caf50' },
-	{ value: 'input', label: '🧪 Input', color: '#7b68ee' },
-	{ value: 'tillage', label: '🚜 Tillage', color: '#8b7355' },
-	{ value: 'soil_test', label: '🔬 Soil Test', color: '#4a90d9' },
-	{ value: 'observation', label: '👁️ Observation', color: '#9e9e9e' },
+	{ value: 'crop', label: '🌽 Crop', color: colors.light(colors.yellow), primary: true },
+	{ value: 'livestock', label: '🐄 Stock', color: colors.orange, primary: true },
+	{ value: 'harvest', label: '🌾 Harvest', color: colors.yellow, primary: true },
+	{ value: 'cover_crop', label: '🌱 Cover Crop', color: colors.green },
+	{ value: 'input', label: '🧪 Input', color: colors.light(colors.purple) },
+	{ value: 'tillage', label: '🚜 Tillage', color: colors.dark(colors.orange) },
+	{ value: 'soil_test', label: '🔬 Soil Test', color: colors.blue },
+	{ value: 'observation', label: '👁️ Observation', color: colors.gray },
 ];
+
+const CategoryGrid = styled(
+	Component,
+	() => `
+		display: grid;
+		grid-template-columns: repeat(4, 1fr);
+		gap: 5px;
+		margin-bottom: 6px;
+
+		/* A long label ends in an ellipsis */
+		& > .vbc-button {
+			min-width: 0;
+			padding: 6px 4px;
+			overflow: hidden;
+		}
+	`,
+);
+
+const EmojiRow = styled(
+	Component,
+	({ colors }) => `
+		display: flex;
+		align-items: center;
+		gap: 8px;
+		margin-bottom: 4px;
+
+		& > input {
+			flex-shrink: 0;
+			width: 52px;
+			padding: 4px;
+			font-size: 22px;
+			text-align: center;
+			cursor: text;
+		}
+
+		& > .hint {
+			font-size: 11px;
+			color: ${colors.gray};
+		}
+	`,
+);
+
+const ResultsGrid = styled(
+	Component,
+	() => `
+		display: grid;
+		grid-template-columns: 1fr 1fr;
+		gap: 6px 10px;
+		margin-top: 4px;
+
+		& label {
+			margin-top: 0;
+		}
+
+		& input {
+			margin-top: 2px;
+		}
+	`,
+);
 
 export const categoryMeta = cat => EVENT_CATEGORIES.find(c => c.value === cat) || EVENT_CATEGORIES[0];
 
@@ -199,7 +261,7 @@ export default class EventDialog extends FormDialog {
 		const form = new Component({ appendTo: this.body, style: { paddingBottom: '8px' } });
 
 		new FormLabel({ appendTo: form, textContent: 'Field' });
-		const fieldSelect = new FormSelect({ appendTo: form });
+		const fieldSelect = new Select({ appendTo: form });
 
 		for (const { value: v, label: l } of fieldOptions) {
 			const o = document.createElement('option');
@@ -224,38 +286,19 @@ export default class EventDialog extends FormDialog {
 
 		let _selectedCategory = this._event.category || 'crop';
 
-		const catRow = new Component({
-			appendTo: form,
-			style: { display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '5px', marginBottom: '6px' },
-		});
+		const catRow = new CategoryGrid({ appendTo: form });
 
 		const categoryButtons = new Map();
 
 		const updateCategoryButtons = () => {
-			for (const [value, btn] of categoryButtons) {
-				const active = value === _selectedCategory;
-
-				btn.elem.style.background = active ? 'rgba(255,255,255,0.18)' : 'rgba(255,255,255,0.06)';
-				btn.elem.style.borderColor = active ? 'rgba(255,255,255,0.35)' : 'rgba(255,255,255,0.1)';
-				btn.elem.style.fontWeight = active ? '700' : '400';
-			}
+			for (const [value, btn] of categoryButtons) btn.toggleClass('active', value === _selectedCategory);
 		};
 
 		for (const { value, label } of EVENT_CATEGORIES) {
 			const btn = new Button({
 				textContent: label,
 				appendTo: catRow,
-				style: {
-					background: 'rgba(255,255,255,0.06)',
-					border: '1px solid rgba(255,255,255,0.1)',
-					borderRadius: '6px',
-					color: '#fff',
-					cursor: 'pointer',
-					fontFamily: 'inherit',
-					fontSize: '13px',
-					padding: '7px 4px',
-					textAlign: 'center',
-				},
+				variant: 'chip',
 				onPointerPress: () => {
 					_selectedCategory = value;
 					updateCategoryButtons();
@@ -273,18 +316,14 @@ export default class EventDialog extends FormDialog {
 		this._getters.category = () => _selectedCategory;
 
 		// Emoji row: auto-detected with override
-		const emojiRow = new Component({
-			appendTo: form,
-			style: { display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' },
-		});
+		const emojiRow = new EmojiRow({ appendTo: form });
 
-		const emojiPreview = new FormInput({
+		const emojiPreview = new Input({
 			tag: 'input',
 			appendTo: emojiRow,
 			type: 'text',
 			maxLength: 4,
 			title: 'Tap to change emoji — auto-detected from event name',
-			style: { width: '52px', textAlign: 'center', fontSize: '22px', padding: '4px', flexShrink: '0', cursor: 'text' },
 		});
 
 		emojiPreview.elem.value = this._event.emoji || detectEmoji(_selectedCategory, '');
@@ -292,7 +331,7 @@ export default class EventDialog extends FormDialog {
 		const emojiHint = new Elem({
 			tag: 'span',
 			appendTo: emojiRow,
-			style: { fontSize: '11px', color: 'rgba(255,255,255,0.3)' },
+			addClass: 'hint',
 			textContent: 'Auto-detected · tap to change',
 		});
 
@@ -323,7 +362,7 @@ export default class EventDialog extends FormDialog {
 		const today = new Date().toISOString().slice(0, 10);
 
 		new FormLabel({ appendTo: form, textContent: 'Date' });
-		const dateIn = new FormInput({ appendTo: form, attributes: { type: 'date' } });
+		const dateIn = new Input({ appendTo: form, attributes: { type: 'date' } });
 
 		dateIn.elem.value = this._event.date || today;
 
@@ -358,7 +397,7 @@ export default class EventDialog extends FormDialog {
 		buildDetails();
 
 		new FormLabel({ appendTo: form, textContent: 'Notes' });
-		const notesEl = new FormInput({
+		const notesEl = new Input({
 			tag: 'input',
 			appendTo: form,
 			attributes: { type: 'text', placeholder: 'Optional' },
@@ -379,7 +418,7 @@ export default class EventDialog extends FormDialog {
 
 			// Seed cost from inventory
 			new FormLabel({ appendTo: container, textContent: 'Seed from inventory (optional)' });
-			const seedSelect = new FormSelect({ appendTo: container });
+			const seedSelect = new Select({ appendTo: container });
 
 			seedSelect.elem.style.width = '100%';
 
@@ -390,7 +429,7 @@ export default class EventDialog extends FormDialog {
 			seedSelect.elem.append(seedNoneOpt);
 
 			new FormLabel({ appendTo: container, textContent: 'Seed Cost/Acre ($)' });
-			const seedCostEl = new FormInput({
+			const seedCostEl = new Input({
 				appendTo: container,
 				attributes: { type: 'number', step: '0.01', placeholder: 'Optional' },
 			});
@@ -444,7 +483,7 @@ export default class EventDialog extends FormDialog {
 			this._buildLivestockSection(container, prev, g);
 		} else if (category === 'input') {
 			new FormLabel({ appendTo: container, textContent: 'Type' });
-			const typeSelect = new FormSelect({ appendTo: container });
+			const typeSelect = new Select({ appendTo: container });
 
 			for (const { value: v, label: l } of INPUT_TYPES) {
 				const o = document.createElement('option');
@@ -456,23 +495,23 @@ export default class EventDialog extends FormDialog {
 			typeSelect.elem.value = prev.inputType || 'herbicide';
 
 			new FormLabel({ appendTo: container, textContent: 'Product' });
-			const productEl = new FormInput({ appendTo: container, attributes: { placeholder: 'e.g. Roundup' } });
+			const productEl = new Input({ appendTo: container, attributes: { placeholder: 'e.g. Roundup' } });
 
 			productEl.elem.value = prev.product || '';
 
 			new FormLabel({ appendTo: container, textContent: 'Rate' });
-			const rateEl = new FormInput({ appendTo: container, attributes: { placeholder: 'e.g. 22 oz/ac' } });
+			const rateEl = new Input({ appendTo: container, attributes: { placeholder: 'e.g. 22 oz/ac' } });
 
 			rateEl.elem.value = prev.rate || '';
 
 			new FormLabel({ appendTo: container, textContent: 'Cost/Acre ($)' });
-			const costEl = new FormInput({ appendTo: container, attributes: { type: 'number', step: '0.01' } });
+			const costEl = new Input({ appendTo: container, attributes: { type: 'number', step: '0.01' } });
 
 			costEl.elem.value = prev.costPerAcre || '';
 
 			// Supply inventory link
 			new FormLabel({ appendTo: container, textContent: 'From inventory (optional)' });
-			const supplySelect = new FormSelect({ appendTo: container });
+			const supplySelect = new Select({ appendTo: container });
 
 			supplySelect.elem.style.width = '100%';
 
@@ -545,7 +584,7 @@ export default class EventDialog extends FormDialog {
 			});
 		} else if (category === 'tillage') {
 			new FormLabel({ appendTo: container, textContent: 'Type' });
-			const typeSelect = new FormSelect({ appendTo: container });
+			const typeSelect = new Select({ appendTo: container });
 
 			for (const { value: v, label: l } of TILLAGE_TYPES) {
 				const o = document.createElement('option');
@@ -557,7 +596,7 @@ export default class EventDialog extends FormDialog {
 			typeSelect.elem.value = prev.type || 'no_till';
 
 			new FormLabel({ appendTo: container, textContent: 'Cost/Acre ($)' });
-			const tillageCostEl = new FormInput({
+			const tillageCostEl = new Input({
 				appendTo: container,
 				attributes: { type: 'number', step: '0.01', placeholder: 'Optional' },
 			});
@@ -589,12 +628,12 @@ export default class EventDialog extends FormDialog {
 			];
 
 			new FormLabel({ appendTo: container, textContent: 'Lab' });
-			const labEl = new FormInput({ appendTo: container, attributes: { placeholder: 'e.g. Regen Ag, Ward Labs' } });
+			const labEl = new Input({ appendTo: container, attributes: { placeholder: 'e.g. Regen Ag, Ward Labs' } });
 
 			labEl.elem.value = prev.lab || '';
 
 			new FormLabel({ appendTo: container, textContent: 'Timing' });
-			const timingEl = new FormSelect({ appendTo: container });
+			const timingEl = new Select({ appendTo: container });
 
 			for (const { value: v, label: l } of TIMING_OPTS) {
 				const o = document.createElement('option');
@@ -606,7 +645,7 @@ export default class EventDialog extends FormDialog {
 			timingEl.elem.value = prev.timing || 'pre-season';
 
 			new FormLabel({ appendTo: container, textContent: 'Sample Depth' });
-			const depthEl = new FormSelect({ appendTo: container });
+			const depthEl = new Select({ appendTo: container });
 
 			for (const { value: v, label: l } of DEPTH_OPTS) {
 				const o = document.createElement('option');
@@ -619,26 +658,17 @@ export default class EventDialog extends FormDialog {
 
 			new FormLabel({ appendTo: container, textContent: 'Results' });
 
-			const gridEl = new Elem({
-				tag: 'div',
-				appendTo: container,
-				style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px 10px', marginTop: '4px' },
-			});
+			const gridEl = new ResultsGrid({ appendTo: container });
 
 			const makeNum = (label, key, unit = '') => {
 				const cell = new Elem({ tag: 'div', appendTo: gridEl });
 				new FormLabel({ appendTo: cell, textContent: unit ? `${label} (${unit})` : label });
-				cell.elem.querySelector('label').style.marginTop = '0';
-				cell.elem.querySelector('label').style.fontSize = '10px';
-				const el = new FormInput({
+				const el = new Input({
 					tag: 'input',
 					appendTo: cell,
 					attributes: { type: 'number', step: 'any', placeholder: '—' },
 				});
 
-				el.elem.style.marginTop = '2px';
-				el.elem.style.fontSize = '14px';
-				el.elem.style.padding = '6px 8px';
 				el.elem.value = prev[key] != null && prev[key] !== '' ? String(prev[key]) : '';
 				return el;
 			};
@@ -652,7 +682,7 @@ export default class EventDialog extends FormDialog {
 			const nitrateEl = makeNum('Nitrate', 'nitrate', 'ppm');
 
 			new FormLabel({ appendTo: container, textContent: 'Lab Cost ($)' });
-			const labCostEl = new FormInput({
+			const labCostEl = new Input({
 				appendTo: container,
 				attributes: { type: 'number', step: '0.01', placeholder: 'Total cost for this test' },
 			});
@@ -699,7 +729,7 @@ export default class EventDialog extends FormDialog {
 			});
 		} else {
 			new FormLabel({ appendTo: container, textContent: 'Type' });
-			const typeEl = new FormSelect({ appendTo: container });
+			const typeEl = new Select({ appendTo: container });
 
 			for (const { value: v, label: l } of OBS_TYPES) {
 				const o = document.createElement('option');
@@ -733,7 +763,7 @@ export default class EventDialog extends FormDialog {
 
 	_buildLivestockSection(container, prev, g) {
 		new FormLabel({ appendTo: container, textContent: 'Species' });
-		const speciesInput = new FormInput({
+		const speciesInput = new Input({
 			appendTo: container,
 			attributes: { placeholder: 'e.g. Angus cattle, Dorper sheep, Broiler chickens' },
 			value: prev.species || '',
@@ -748,12 +778,12 @@ export default class EventDialog extends FormDialog {
 		});
 
 		new FormLabel({ appendTo: row1, textContent: 'Head Count' });
-		const headEl = new FormInput({ appendTo: row1, attributes: { type: 'number', min: '1' } });
+		const headEl = new Input({ appendTo: row1, attributes: { type: 'number', min: '1' } });
 
 		headEl.elem.value = prev.headCount || '';
 
 		new FormLabel({ appendTo: row1, textContent: 'Entry Wt (lbs/head)' });
-		const entryWtEl = new FormInput({ appendTo: row1, attributes: { type: 'number' } });
+		const entryWtEl = new Input({ appendTo: row1, attributes: { type: 'number' } });
 
 		entryWtEl.elem.value = prev.entryWeight || '';
 

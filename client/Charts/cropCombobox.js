@@ -1,4 +1,4 @@
-import { FormInput } from '../Layout';
+import { Input } from '@vanilla-bean/components';
 import { getCropSuggestions } from '../api/cropSuggestions';
 
 /**
@@ -7,10 +7,10 @@ import { getCropSuggestions } from '../api/cropSuggestions';
  * @param {HTMLElement} parent - Element to append to
  * @param {string} value - Initial value
  * @param {string} placeholder
- * @returns {FormInput}
+ * @returns {Input}
  */
 export const makeCropCombobox = (parent, value = '', placeholder = 'e.g. Corn, Winter Wheat, Cover Mix…') => {
-	const input = new FormInput({ type: 'text', placeholder, value, appendTo: parent });
+	const input = new Input({ type: 'text', placeholder, value, appendTo: parent });
 
 	// Populate asynchronously — dialog opens immediately, suggestions appear within ~100ms
 	getCropSuggestions()

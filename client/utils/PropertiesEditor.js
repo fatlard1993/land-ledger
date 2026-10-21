@@ -1,41 +1,9 @@
-import { Elem, Component, styled } from '@vanilla-bean/components';
-import { FormInput, SectionHeader } from '../Layout';
-
-const DeleteBtn = styled(
-	Component,
-	() => `
-    flex-shrink: 0;
-    background: none;
-    border: none;
-    color: rgba(255,255,255,0.3);
-    font-size: 16px;
-    cursor: pointer;
-    padding: 0 4px;
-    line-height: 1;
-    &:hover { color: #e05252; }
-`,
-);
-
-const AddPropertyBtn = styled(
-	Component,
-	() => `
-    background: none;
-    border: 1px solid rgba(255,255,255,0.15);
-    border-radius: 4px;
-    color: rgba(255,255,255,0.5);
-    font-size: 13px;
-    padding: 5px 10px;
-    cursor: pointer;
-    font-family: inherit;
-    margin-top: 2px;
-    &:hover { color: #fff; border-color: rgba(255,255,255,0.35); }
-`,
-);
+import { Button, Elem, Input, SectionLabel } from '@vanilla-bean/components';
 
 export const makePropertiesEditor = (container, initialProperties = {}) => {
 	const root = container.elem ?? container;
 
-	new SectionHeader({ appendTo: root, textContent: 'Properties' });
+	new SectionLabel({ appendTo: root, textContent: 'Properties' });
 
 	const rowsEl = new Elem({ tag: 'div', appendTo: root });
 
@@ -44,16 +12,18 @@ export const makePropertiesEditor = (container, initialProperties = {}) => {
 	const addRow = (key = '', value = '') => {
 		const row = new Elem({ tag: 'div', style: { display: 'flex', gap: '6px', marginBottom: '5px' }, appendTo: rowsEl });
 
-		const keyInput = new FormInput({ appendTo: row, style: { flex: '1' }, placeholder: 'Key' });
-		const valueInput = new FormInput({ appendTo: row, style: { flex: '2' }, placeholder: 'Value' });
+		const keyInput = new Input({ appendTo: row, style: { flex: '1' }, placeholder: 'Key' });
+		const valueInput = new Input({ appendTo: row, style: { flex: '2' }, placeholder: 'Value' });
 
 		keyInput.elem.value = key;
 		valueInput.elem.value = value;
 
-		new DeleteBtn({
-			tag: 'button',
-			textContent: '×',
+		new Button({
 			appendTo: row,
+			variant: 'flat',
+			icon: 'xmark',
+			title: 'Remove property',
+			style: { flexShrink: '0' },
 			onPointerPress: () => {
 				rowsEl.elem.removeChild(row.elem);
 				const idx = rows.indexOf(entry);
@@ -70,10 +40,12 @@ export const makePropertiesEditor = (container, initialProperties = {}) => {
 		addRow(k, String(v));
 	}
 
-	new AddPropertyBtn({
-		tag: 'button',
-		textContent: '+ Add Property',
+	new Button({
 		appendTo: root,
+		variant: 'flat',
+		icon: 'plus',
+		textContent: 'Add Property',
+		style: { marginTop: '2px' },
 		onPointerPress: () => addRow(),
 	});
 
