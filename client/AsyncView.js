@@ -4,7 +4,6 @@ export default class AsyncView extends View {
 	_loadOnConnect = false;
 
 	build() {
-		this._subscriptions = [];
 		this._buildView();
 
 		if (this._loadOnConnect) {
@@ -29,22 +28,26 @@ export default class AsyncView extends View {
 		const entries = Object.entries(this._datasources());
 		if (!entries.length) return;
 
+		this._dataReady = false;
+
 		const results = await Promise.all(
 			entries.map(([key, apiFn]) =>
-				this._sub(
-					apiFn({
-						onRefetch: result => {
-							this[key] = result;
-							this._scheduleOnData();
-						},
-					}),
-				),
+				apiFn({
+					// Also called for this load's own fetch, before it resolves; only a later fetch is news
+					onSuccess: result => {
+						if (!this._dataReady) return;
+
+						this[key] = result;
+						this._scheduleOnData();
+					},
+					scope: this.signal,
+				}),
 			),
 		);
 
 		for (let i = 0; i < entries.length; i++) this[entries[i][0]] = results[i];
 
-		this._subsCleanup();
+		this._dataReady = true;
 		this._onData();
 	}
 
@@ -62,17 +65,4 @@ export default class AsyncView extends View {
 	}
 
 	_onData() {}
-
-	async _sub(promise) {
-		const data = await promise;
-		this._subscriptions.push(data);
-		return data;
-	}
-
-	_subsCleanup() {
-		this.replaceCleanup('subs', () => {
-			for (const s of this._subscriptions) s?.unsubscribe?.();
-			this._subscriptions = [];
-		});
-	}
 }

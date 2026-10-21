@@ -100,67 +100,59 @@ export default class MapView extends AsyncView {
 	}
 
 	async _loadData() {
+		// Each onSuccess also runs for this load's own fetch, before there's a map to draw on; only a later fetch redraws
 		[this.fields, this.events, this.buildings, this.equipment, this.parcels, this.paths, this.leases] =
 			await Promise.all([
-				this._sub(
-					getFields({
-						onRefetch: r => {
-							this.fields = r;
-							if (this.map) this._renderFieldLayers();
-						},
-					}),
-				),
-				this._sub(
-					getEvents({
-						onRefetch: r => {
-							this.events = r;
-							if (this.map) this._renderFieldLayers();
-						},
-					}),
-				),
-				this._sub(
-					getBuildings({
-						onRefetch: r => {
-							this.buildings = r;
-							if (this.map) this._renderBuildingLayers();
-						},
-					}),
-				),
-				this._sub(
-					getEquipment({
-						onRefetch: r => {
-							this.equipment = r;
-							if (this.map) this._renderEquipmentMarkers();
-						},
-					}),
-				),
-				this._sub(
-					getParcels({
-						onRefetch: r => {
-							this.parcels = r;
-							if (this.map) this._renderParcelLayers();
-						},
-					}),
-				),
-				this._sub(
-					getPaths({
-						onRefetch: r => {
-							this.paths = r;
-							if (this.map) this._renderPathLayers();
-						},
-					}),
-				),
-				this._sub(
-					getLeases({
-						onRefetch: r => {
-							this.leases = r;
-							if (this.map) this._updateLabels();
-						},
-					}),
-				),
+				getFields({
+					onSuccess: r => {
+						this.fields = r;
+						if (this.map) this._renderFieldLayers();
+					},
+					scope: this.signal,
+				}),
+				getEvents({
+					onSuccess: r => {
+						this.events = r;
+						if (this.map) this._renderFieldLayers();
+					},
+					scope: this.signal,
+				}),
+				getBuildings({
+					onSuccess: r => {
+						this.buildings = r;
+						if (this.map) this._renderBuildingLayers();
+					},
+					scope: this.signal,
+				}),
+				getEquipment({
+					onSuccess: r => {
+						this.equipment = r;
+						if (this.map) this._renderEquipmentMarkers();
+					},
+					scope: this.signal,
+				}),
+				getParcels({
+					onSuccess: r => {
+						this.parcels = r;
+						if (this.map) this._renderParcelLayers();
+					},
+					scope: this.signal,
+				}),
+				getPaths({
+					onSuccess: r => {
+						this.paths = r;
+						if (this.map) this._renderPathLayers();
+					},
+					scope: this.signal,
+				}),
+				getLeases({
+					onSuccess: r => {
+						this.leases = r;
+						if (this.map) this._updateLabels();
+					},
+					scope: this.signal,
+				}),
 			]);
-
-		this._subsCleanup();
 
 		this._importDialog = () => new ImportDialog({ onImport: features => this._handleImport(features) });
 

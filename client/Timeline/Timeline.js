@@ -140,29 +140,33 @@ export default class Timeline extends AsyncView {
 	}
 
 	async _loadData() {
+		this._dataReady = false;
+
+		// Also called for this load's own fetches, before they resolve; only a later fetch is news
 		const [events, fields] = await Promise.all([
-			this._sub(
-				getEvents({
-					onRefetch: response => {
-						this.events = response;
-						this._renderCurrent();
-					},
-				}),
-			),
-			this._sub(
-				getFields({
-					onRefetch: response => {
-						this.fields = response;
-						this._renderCurrent();
-					},
-				}),
-			),
+			getEvents({
+				onSuccess: response => {
+					if (!this._dataReady) return;
+
+					this.events = response;
+					this._renderCurrent();
+				},
+				scope: this.signal,
+			}),
+			getFields({
+				onSuccess: response => {
+					if (!this._dataReady) return;
+
+					this.fields = response;
+					this._renderCurrent();
+				},
+				scope: this.signal,
+			}),
 		]);
 
 		this.events = events;
 		this.fields = fields;
-
-		this._subsCleanup();
+		this._dataReady = true;
 
 		// Check if navigated here with a field filter (e.g. from FieldPanel)
 		if (context.timelineFieldFilter) {
