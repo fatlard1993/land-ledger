@@ -1,78 +1,29 @@
-import { Elem, copyToClipboard, Button } from '@vanilla-bean/components';
-import { FormInput } from '../Layout';
+import { Button, Card, Component, copyToClipboard, Elem, Input, SectionLabel } from '@vanilla-bean/components';
+
+import { AdminSection, EmptyLine, ItemRow, Reveal, SecretField, SectionHead } from './parts';
 
 function showNewToken(container, data, { onRefresh }) {
-	const reveal = new Elem({
-		tag: 'div',
-		style: {
-			marginTop: '10px',
-			padding: '12px',
-			background: 'rgba(45,106,45,0.15)',
-			border: '1px solid rgba(45,106,45,0.4)',
-			borderRadius: '6px',
-		},
-	});
+	const reveal = new Reveal();
 
 	container.append(reveal.elem);
 
-	new Elem({
-		tag: 'div',
-		style: {
-			fontSize: '11px',
-			fontWeight: '700',
-			color: '#4caf50',
-			textTransform: 'uppercase',
-			letterSpacing: '.06em',
-			marginBottom: '6px',
-		},
-		textContent: `Token created — ${data.name}`,
+	new Component({ appendTo: reveal, addClass: 'title', textContent: `Token created — ${data.name}` });
+	new Component({
 		appendTo: reveal,
-	});
-
-	new Elem({
-		tag: 'div',
-		style: { fontSize: '11px', color: 'rgba(255,255,255,0.5)', marginBottom: '8px' },
+		addClass: 'note',
 		textContent: 'Copy this token now. It will not be shown again.',
-		appendTo: reveal,
 	});
 
-	// Read-only token display — custom monospace/green style, not a form input
-	const tokenVal = new Elem({
-		tag: 'input',
-		attributes: { type: 'text', readonly: true },
-		style: {
-			display: 'block',
-			width: '100%',
-			boxSizing: 'border-box',
-			background: 'rgba(0,0,0,0.4)',
-			border: '1px solid rgba(255,255,255,0.12)',
-			borderRadius: '4px',
-			color: '#4caf50',
-			fontSize: '12px',
-			padding: '7px 10px',
-			fontFamily: 'monospace',
-			cursor: 'text',
-		},
-		appendTo: reveal,
-	});
+	const tokenVal = new SecretField({ appendTo: reveal, attributes: { type: 'text', readonly: true } });
 
 	tokenVal.elem.value = data.token;
 	tokenVal.elem.addEventListener('click', () => tokenVal.elem.select());
 
+	const actions = new Component({ appendTo: reveal, addClass: 'actions' });
+
 	const copyBtn = new Button({
 		textContent: 'Copy',
-		style: {
-			marginTop: '6px',
-			fontSize: '12px',
-			padding: '4px 12px',
-			background: 'rgba(255,255,255,0.08)',
-			border: '1px solid rgba(255,255,255,0.15)',
-			borderRadius: '4px',
-			color: '#fff',
-			cursor: 'pointer',
-			fontFamily: 'inherit',
-		},
-		appendTo: reveal,
+		appendTo: actions,
 		onPointerPress: async () => {
 			// Where the copy is refused, the token is selected for copying by hand
 			if (!(await copyToClipboard(data.token))) return tokenVal.elem.select();
@@ -86,19 +37,8 @@ function showNewToken(container, data, { onRefresh }) {
 
 	new Button({
 		textContent: 'Done',
-		style: {
-			marginTop: '6px',
-			marginLeft: '6px',
-			fontSize: '12px',
-			padding: '4px 12px',
-			background: 'transparent',
-			border: '1px solid rgba(255,255,255,0.12)',
-			borderRadius: '4px',
-			color: 'rgba(255,255,255,0.5)',
-			cursor: 'pointer',
-			fontFamily: 'inherit',
-		},
-		appendTo: reveal,
+		variant: 'flat',
+		appendTo: actions,
 		onPointerPress: () => {
 			reveal.elem.remove();
 			onRefresh();
@@ -113,21 +53,12 @@ function openTokenForm(container, { onRefresh }) {
 		return;
 	}
 
-	const form = new Elem({
-		tag: 'div',
-		style: {
-			marginTop: '8px',
-			padding: '10px',
-			background: 'rgba(255,255,255,0.04)',
-			border: '1px solid rgba(255,255,255,0.1)',
-			borderRadius: '6px',
-		},
-	});
+	const form = new Card({ style: { marginTop: '8px' } });
 
 	form.elem.dataset.tokenForm = '1';
 	container.append(form.elem);
 
-	const input = new FormInput({ appendTo: form, placeholder: 'Token name (e.g. JD Operations, Home Automation)' });
+	const input = new Input({ appendTo: form, placeholder: 'Token name (e.g. JD Operations, Home Automation)' });
 
 	const row = new Elem({
 		tag: 'div',
@@ -137,33 +68,13 @@ function openTokenForm(container, { onRefresh }) {
 
 	new Button({
 		textContent: 'Cancel',
-		style: {
-			fontSize: '12px',
-			padding: '5px 12px',
-			background: 'transparent',
-			border: '1px solid rgba(255,255,255,0.12)',
-			borderRadius: '4px',
-			color: 'rgba(255,255,255,0.5)',
-			cursor: 'pointer',
-			fontFamily: 'inherit',
-		},
+		variant: 'flat',
 		appendTo: row,
 		onPointerPress: () => form.elem.remove(),
 	});
 
 	new Button({
 		textContent: 'Generate token',
-		style: {
-			fontSize: '12px',
-			padding: '5px 14px',
-			background: '#2d6a2d',
-			border: 'none',
-			borderRadius: '4px',
-			color: '#fff',
-			cursor: 'pointer',
-			fontFamily: 'inherit',
-			fontWeight: '600',
-		},
 		appendTo: row,
 		onPointerPress: async () => {
 			const name = input.elem.value.trim();
@@ -193,99 +104,44 @@ export async function renderApiTokensSection(container, { onRefresh }) {
 		.then(r => (r.ok ? r.json() : []))
 		.catch(() => []);
 
-	const sec = new Elem({
-		tag: 'div',
-		style: { marginTop: '18px', paddingTop: '14px', borderTop: '1px solid rgba(255,255,255,0.08)' },
-		appendTo: container,
-	});
+	const sec = new AdminSection({ appendTo: container });
 
-	const header = new Elem({
-		tag: 'div',
-		style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' },
-		appendTo: sec,
-	});
+	const header = new SectionHead({ appendTo: sec });
 
-	new Elem({
-		tag: 'div',
-		style: { fontSize: '10px', textTransform: 'uppercase', letterSpacing: '.08em', color: 'rgba(255,255,255,0.35)' },
-		textContent: 'API Tokens',
-		appendTo: header,
-	});
+	new SectionLabel({ appendTo: header, textContent: 'API Tokens' });
 
 	new Button({
-		textContent: '+ Generate',
-		style: {
-			fontSize: '12px',
-			padding: '3px 10px',
-			background: 'rgba(255,255,255,0.07)',
-			border: '1px solid rgba(255,255,255,0.12)',
-			borderRadius: '4px',
-			color: '#fff',
-			cursor: 'pointer',
-			fontFamily: 'inherit',
-		},
+		textContent: 'Generate',
+		icon: 'plus',
+		variant: 'flat',
 		appendTo: header,
 		onPointerPress: () => openTokenForm(sec.elem, { onRefresh }),
 	});
 
 	if (!existing.length) {
-		new Elem({
-			tag: 'div',
-			style: { fontSize: '12px', color: 'rgba(255,255,255,0.3)' },
-			textContent: 'No tokens — generate one to enable programmatic access',
-			appendTo: sec,
-		});
+		new EmptyLine({ appendTo: sec, textContent: 'No tokens — generate one to enable programmatic access' });
 	}
 
 	for (const t of existing) {
-		const row = new Elem({
-			tag: 'div',
-			style: {
-				display: 'flex',
-				alignItems: 'center',
-				gap: '8px',
-				padding: '7px 0',
-				borderBottom: '1px solid rgba(255,255,255,0.06)',
-				fontSize: '12px',
-			},
-			appendTo: sec,
-		});
+		const row = new ItemRow({ appendTo: sec });
 
-		const rowInfo = new Elem({
-			tag: 'div',
-			style: { flex: '1', minWidth: '0' },
-			appendTo: row,
-		});
+		const rowInfo = new Component({ appendTo: row, addClass: 'info' });
 
-		new Elem({
-			tag: 'div',
-			style: { fontWeight: '600', color: '#fff' },
-			textContent: t.name,
-			appendTo: rowInfo,
-		});
+		new Component({ appendTo: rowInfo, addClass: 'name', textContent: t.name });
 
 		const lastUsed = t.lastUsed ? `last used ${t.lastUsed.slice(0, 10)}` : 'never used';
 
-		new Elem({
-			tag: 'div',
-			style: { color: 'rgba(255,255,255,0.35)', fontSize: '11px', marginTop: '1px', fontFamily: 'monospace' },
-			textContent: `${t.tokenPrefix}…  ·  ${lastUsed}`,
+		new Component({
 			appendTo: rowInfo,
+			addClass: 'meta',
+			style: { fontFamily: 'monospace' },
+			textContent: `${t.tokenPrefix}…  ·  ${lastUsed}`,
 		});
 
 		new Button({
 			textContent: 'Revoke',
-			style: {
-				fontSize: '11px',
-				padding: '2px 8px',
-				background: 'transparent',
-				border: '1px solid rgba(224,82,82,0.4)',
-				borderRadius: '4px',
-				color: '#e05252',
-				cursor: 'pointer',
-				fontFamily: 'inherit',
-				flexShrink: '0',
-			},
+			variant: 'flat',
+			addClass: 'danger',
 			appendTo: row,
 			onPointerPress: async () => {
 				await fetch(`/auth/tokens/${t.id}`, { method: 'DELETE' });

@@ -1,16 +1,78 @@
-import { Dialog, Component, Elem, Button, Notify } from '@vanilla-bean/components';
+import {
+	Button,
+	Card,
+	Component,
+	Dialog,
+	Elem,
+	Input,
+	Notify,
+	SectionLabel,
+	styled,
+	theme,
+} from '@vanilla-bean/components';
 
 import { getAccounts, createAccount, updateAccount, deleteAccount, setAuthEnabled, getAuthSettings } from '../api/auth';
 import { getAppSettings, updateAppSettings } from '../api';
-import { FormLabel, FormInput } from '../Layout';
+import { FormLabel } from '../Layout';
 import { renderShareLinksSection } from './ShareLinksSection.js';
 import { renderApiTokensSection } from './ApiTokensSection.js';
+import { AdminSection, EmptyLine, Hint, ItemRow, Notice, SectionHead } from './parts';
+
+const { colors } = theme;
 
 const ROLES = [
 	{ key: 'admin', label: 'Admin', sub: 'Full access + account management' },
 	{ key: 'financials', label: 'Financials', sub: 'Revenue, budgets, loans' },
 	{ key: 'farmhand', label: 'Farmhand', sub: 'Fields, events, equipment, feeding' },
 ];
+
+const AuthToggleRow = styled(
+	Component,
+	({ colors }) => `
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 12px;
+		padding-bottom: 14px;
+		margin-bottom: 14px;
+		border-bottom: 1px solid ${colors.border};
+
+		& .title {
+			font-size: 13px;
+			font-weight: 600;
+			color: ${colors.white};
+		}
+
+		& .sub {
+			margin-top: 2px;
+			font-size: 11px;
+			color: ${colors.gray};
+		}
+	`,
+);
+
+// A role to grant, as a pill holding its checkbox
+const RoleChip = styled(
+	Component,
+	({ colors, radius }) => `
+		display: flex;
+		align-items: center;
+		gap: 5px;
+		padding: 5px 10px;
+		border: 1px solid ${colors.border};
+		border-radius: ${radius.pill};
+		background: ${colors.alpha(colors.white, 0.05)};
+		font-size: 12px;
+		color: ${colors.white};
+		cursor: pointer;
+		user-select: none;
+
+		&.locked {
+			opacity: 0.5;
+		}
+	`,
+	{ tag: 'label' },
+);
 
 export default class AccountsDialog extends Dialog {
 	constructor(options = {}) {
@@ -47,37 +109,21 @@ export default class AccountsDialog extends Dialog {
 		this.body.empty();
 
 		// ── Auth toggle ──────────────────────────────────────────────────────────
-		const toggleRow = new Component({
-			appendTo: this.body,
-			style: {
-				display: 'flex',
-				alignItems: 'center',
-				justifyContent: 'space-between',
-				paddingBottom: '14px',
-				borderBottom: '1px solid rgba(255,255,255,0.08)',
-				marginBottom: '14px',
-			},
-		});
+		const toggleRow = new AuthToggleRow({ appendTo: this.body });
 
 		const info = new Component({ appendTo: toggleRow });
 
-		new Elem({
-			tag: 'div',
+		new Component({ appendTo: info, addClass: 'title', textContent: 'Require login' });
+		new Component({
 			appendTo: info,
-			style: { fontWeight: '600', color: '#fff', fontSize: '13px' },
-			textContent: 'Require login',
-		});
-		new Elem({
-			tag: 'div',
-			appendTo: info,
-			style: { fontSize: '11px', color: 'rgba(255,255,255,0.4)', marginTop: '2px' },
+			addClass: 'sub',
 			textContent: 'When enabled, a passkey is required to open the app',
 		});
 
 		const toggle = new Elem({
 			tag: 'input',
 			attributes: { type: 'checkbox' },
-			style: { width: '20px', height: '20px', accentColor: '#2d6a2d', cursor: 'pointer', flexShrink: '0' },
+			style: { flexShrink: '0' },
 			appendTo: toggleRow,
 		});
 
@@ -100,42 +146,24 @@ export default class AccountsDialog extends Dialog {
 
 		// ── Default passkey warning ──────────────────────────────────────────────
 		if (this._adminPasskeyIsDefault) {
-			new Elem({
-				tag: 'div',
+			new Notice({
 				appendTo: this.body,
-				style: {
-					background: 'rgba(220,120,0,0.12)',
-					border: '1px solid rgba(220,120,0,0.35)',
-					borderRadius: '6px',
-					padding: '10px 12px',
-					marginBottom: '10px',
-					fontSize: '12px',
-					color: '#f5a623',
-					lineHeight: '1.5',
-				},
 				textContent:
 					'⚠ The admin account is still using the default passkey ("admin"). Edit the Admin account below and set a strong passkey before enabling login.',
 			});
 		}
 
 		// ── Accounts header ──────────────────────────────────────────────────────
-		const header = new Component({
-			appendTo: this.body,
-			style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' },
-		});
+		const header = new SectionHead({ appendTo: this.body });
 
-		new Elem({
-			tag: 'div',
-			appendTo: header,
-			style: { fontSize: '10px', textTransform: 'uppercase', letterSpacing: '.08em', color: 'rgba(255,255,255,0.35)' },
-			textContent: 'Accounts',
-		});
+		new SectionLabel({ appendTo: header, textContent: 'Accounts' });
 
 		if (this._editingId !== 'new') {
 			new Button({
 				appendTo: header,
-				textContent: '+ Add Account',
-				style: { fontSize: '12px', padding: '4px 10px' },
+				textContent: 'Add Account',
+				icon: 'plus',
+				variant: 'flat',
 				onPointerPress: () => {
 					this._editingId = 'new';
 					this._draw();
@@ -158,12 +186,7 @@ export default class AccountsDialog extends Dialog {
 		}
 
 		if (!this._accounts.length && this._editingId !== 'new') {
-			new Elem({
-				tag: 'div',
-				appendTo: this.body,
-				style: { fontSize: '12px', color: 'rgba(255,255,255,0.3)', padding: '6px 0' },
-				textContent: 'No accounts yet',
-			});
+			new EmptyLine({ appendTo: this.body, textContent: 'No accounts yet' });
 		}
 
 		// ── USDA NASS API Key ────────────────────────────────────────────────────
@@ -175,36 +198,11 @@ export default class AccountsDialog extends Dialog {
 	}
 
 	_renderNassSection() {
-		const sec = new Elem({
-			tag: 'div',
-			style: { marginTop: '18px', paddingTop: '14px', borderTop: '1px solid rgba(255,255,255,0.08)' },
-			appendTo: this.body,
-		});
+		const sec = new AdminSection({ appendTo: this.body });
 
-		const nassHeader = new Elem({
-			tag: 'div',
-			style: { marginBottom: '6px' },
-			appendTo: sec,
-		});
+		new SectionLabel({ appendTo: sec, textContent: 'USDA NASS API Key', style: { margin: '0 0 3px' } });
 
-		new Elem({
-			tag: 'div',
-			style: {
-				fontSize: '10px',
-				textTransform: 'uppercase',
-				letterSpacing: '.08em',
-				color: 'rgba(255,255,255,0.35)',
-				marginBottom: '3px',
-			},
-			textContent: 'USDA NASS API Key',
-			appendTo: nassHeader,
-		});
-
-		const sub = new Elem({
-			tag: 'div',
-			style: { fontSize: '11px', color: 'rgba(255,255,255,0.4)', lineHeight: '1.5' },
-			appendTo: nassHeader,
-		});
+		const sub = new Hint({ appendTo: sec, style: { marginBottom: '0' } });
 
 		sub.elem.innerHTML = `Enables county yield benchmarks in Timeline Insights. Free registration at <b>quickstats.nass.usda.gov/api</b>`;
 
@@ -214,39 +212,16 @@ export default class AccountsDialog extends Dialog {
 			appendTo: sec,
 		});
 
-		const input = new Elem({
-			tag: 'input',
-			attributes: {
-				type: 'password',
-				placeholder: this._nassKeySet ? '(key is set — enter new key to replace)' : 'Paste your NASS API key',
-			},
-			style: {
-				flex: '1',
-				background: 'rgba(255,255,255,0.07)',
-				border: '1px solid rgba(255,255,255,0.12)',
-				borderRadius: '4px',
-				color: '#fff',
-				fontSize: '13px',
-				padding: '7px 10px',
-				fontFamily: 'inherit',
-			},
+		const input = new Input({
+			type: 'password',
+			placeholder: this._nassKeySet ? '(key is set — enter new key to replace)' : 'Paste your NASS API key',
+			style: { flex: '1' },
 			appendTo: row,
 		});
 
 		new Button({
 			textContent: 'Save',
-			style: {
-				fontSize: '12px',
-				padding: '5px 14px',
-				background: '#2d6a2d',
-				border: 'none',
-				borderRadius: '4px',
-				color: '#fff',
-				cursor: 'pointer',
-				fontFamily: 'inherit',
-				fontWeight: '600',
-				flexShrink: '0',
-			},
+			style: { flexShrink: '0' },
 			appendTo: row,
 			onPointerPress: async () => {
 				const key = input.elem.value.trim();
@@ -265,7 +240,7 @@ export default class AccountsDialog extends Dialog {
 		if (this._nassKeySet) {
 			new Elem({
 				tag: 'div',
-				style: { fontSize: '11px', color: '#4caf50', marginTop: '4px' },
+				style: { fontSize: '11px', color: colors.light(colors.success), marginTop: '4px' },
 				textContent: '✓ NASS key configured — county yield benchmarks active',
 				appendTo: sec,
 			});
@@ -273,42 +248,23 @@ export default class AccountsDialog extends Dialog {
 	}
 
 	_renderRow(container, account) {
-		const row = new Component({
-			appendTo: container,
-			style: {
-				display: 'flex',
-				alignItems: 'center',
-				gap: '10px',
-				padding: '9px 0',
-				borderBottom: '1px solid rgba(255,255,255,0.07)',
-			},
-		});
+		const row = new ItemRow({ appendTo: container, style: { gap: '10px', padding: '9px 0' } });
 
-		const info = new Component({ appendTo: row, style: { flex: '1', minWidth: '0' } });
+		const info = new Component({ appendTo: row, addClass: 'info' });
 
-		new Elem({
-			tag: 'div',
-			appendTo: info,
-			style: { fontSize: '13px', fontWeight: '600', color: '#fff' },
-			textContent: account.name,
-		});
+		new Component({ appendTo: info, addClass: 'name', style: { fontSize: '13px' }, textContent: account.name });
 
 		const roleLabels =
 			ROLES.filter(r => account.roles?.[r.key])
 				.map(r => r.label)
 				.join(', ') || 'No roles';
 
-		new Elem({
-			tag: 'div',
-			appendTo: info,
-			style: { fontSize: '11px', color: 'rgba(255,255,255,0.4)', marginTop: '1px' },
-			textContent: roleLabels,
-		});
+		new Component({ appendTo: info, addClass: 'meta', textContent: roleLabels });
 
 		new Button({
 			appendTo: row,
 			textContent: 'Edit',
-			style: { fontSize: '12px', padding: '3px 10px' },
+			variant: 'flat',
 			onPointerPress: () => {
 				this._editingId = account.id;
 				this._draw();
@@ -318,9 +274,10 @@ export default class AccountsDialog extends Dialog {
 		if (account.id !== 'admin') {
 			new Button({
 				appendTo: row,
-				textContent: '✕',
+				icon: 'xmark',
 				title: 'Delete account',
-				style: { fontSize: '12px', padding: '3px 8px', color: '#e05252' },
+				variant: 'flat',
+				addClass: 'danger',
 				onPointerPress: async () => {
 					try {
 						await deleteAccount(account.id);
@@ -338,16 +295,7 @@ export default class AccountsDialog extends Dialog {
 	_renderForm(container, existing) {
 		const isNew = !existing;
 
-		const card = new Component({
-			appendTo: container,
-			style: {
-				background: 'rgba(255,255,255,0.04)',
-				border: '1px solid rgba(255,255,255,0.1)',
-				borderRadius: '8px',
-				padding: '12px',
-				marginBottom: '8px',
-			},
-		});
+		const card = new Card({ appendTo: container, style: { marginBottom: '8px' } });
 
 		// Name + passkey side by side
 		const fields = new Component({
@@ -357,7 +305,7 @@ export default class AccountsDialog extends Dialog {
 
 		const nameWrap = new Elem({ tag: 'div', appendTo: fields });
 		new FormLabel({ appendTo: nameWrap, textContent: 'Name' });
-		const nameEl = new FormInput({
+		const nameEl = new Input({
 			appendTo: nameWrap,
 			placeholder: 'e.g. John, Field Team',
 			value: existing?.name ?? '',
@@ -365,7 +313,7 @@ export default class AccountsDialog extends Dialog {
 
 		const passkeyWrap = new Elem({ tag: 'div', appendTo: fields });
 		new FormLabel({ appendTo: passkeyWrap, textContent: isNew ? 'Passkey' : 'New passkey (blank = keep)' });
-		const passkeyEl = new FormInput({
+		const passkeyEl = new Input({
 			appendTo: passkeyWrap,
 			type: 'password',
 			placeholder: isNew ? 'Choose a passkey' : '••••••',
@@ -380,23 +328,16 @@ export default class AccountsDialog extends Dialog {
 		const callbacks = {};
 
 		for (const { key, label, sub } of ROLES) {
-			const chip = new Elem({
-				tag: 'label',
-				appendTo: rolesWrap,
-			});
+			const chip = new RoleChip({ appendTo: rolesWrap });
 
 			chip.elem.title = sub;
-			chip.elem.style.cssText =
-				'display:flex;align-items:center;gap:5px;padding:5px 10px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);border-radius:20px;cursor:pointer;font-size:12px;color:#fff;user-select:none;';
 
 			const cb = new Elem({ tag: 'input', type: 'checkbox', checked: existing?.roles?.[key] ?? key === 'farmhand' });
-
-			cb.elem.style.accentColor = '#2d6a2d';
 
 			// Admin account always keeps its admin role
 			if (existing?.id === 'admin' && key === 'admin') {
 				cb.elem.disabled = true;
-				chip.elem.style.opacity = '0.5';
+				chip.addClass('locked');
 			}
 
 			chip.append(cb);
@@ -414,7 +355,7 @@ export default class AccountsDialog extends Dialog {
 		new Button({
 			appendTo: buttons,
 			textContent: 'Cancel',
-			style: { fontSize: '12px', padding: '5px 14px' },
+			variant: 'flat',
 			onPointerPress: () => {
 				this._editingId = null;
 				this._draw();
@@ -424,7 +365,6 @@ export default class AccountsDialog extends Dialog {
 		const saveBtn = new Button({
 			appendTo: buttons,
 			textContent: isNew ? 'Create' : 'Save',
-			style: { fontSize: '12px', padding: '5px 14px', background: 'rgba(45,106,45,0.4)', border: '1px solid #2d6a2d' },
 			onPointerPress: async () => {
 				const name = nameEl.elem.value.trim();
 				const passkey = passkeyEl.elem.value;

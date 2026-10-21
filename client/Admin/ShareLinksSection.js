@@ -1,5 +1,7 @@
-import { Elem, copyToClipboard, Button } from '@vanilla-bean/components';
-import { FormLabel, FormInput } from '../Layout';
+import { Button, Card, Component, copyToClipboard, Elem, Input, SectionLabel } from '@vanilla-bean/components';
+
+import { FormLabel } from '../Layout';
+import { AdminSection, EmptyLine, Hint, ItemRow, Reveal, SecretField, SectionHead } from './parts';
 
 const PURPOSES = {
 	certification: '🌿 Organic / GAP cert',
@@ -39,22 +41,13 @@ function openShareForm(container, { onRefresh }) {
 		},
 	};
 
-	const form = new Elem({
-		tag: 'div',
-		style: {
-			marginTop: '10px',
-			padding: '12px',
-			background: 'rgba(255,255,255,0.04)',
-			border: '1px solid rgba(255,255,255,0.1)',
-			borderRadius: '6px',
-		},
-	});
+	const form = new Card({ style: { marginTop: '10px' } });
 
 	form.elem.dataset.shareForm = '1';
 	container.append(form.elem);
 
 	new FormLabel({ appendTo: form, textContent: 'Name / Recipient' });
-	const nameInput = new FormInput({ appendTo: form, placeholder: 'e.g. WSDA Inspector 2026, First National Bank' });
+	const nameInput = new Input({ appendTo: form, placeholder: 'e.g. WSDA Inspector 2026, First National Bank' });
 
 	new FormLabel({ appendTo: form, textContent: 'Purpose' });
 
@@ -67,38 +60,22 @@ function openShareForm(container, { onRefresh }) {
 	let selectedPurpose = 'certification';
 	let selectedCollections = TEMPLATES.certification.collections;
 
-	const noteEl = new Elem({
-		tag: 'div',
-		style: { fontSize: '11px', color: 'rgba(255,255,255,0.4)', marginBottom: '8px' },
-		textContent: TEMPLATES.certification.note,
-		appendTo: form,
-	});
+	const noteEl = new Hint({ textContent: TEMPLATES.certification.note, appendTo: form });
 
 	const chips = {};
 	for (const [key, tpl] of Object.entries(TEMPLATES)) {
 		const chip = new Button({
 			textContent: tpl.label,
-			style: {
-				fontSize: '11px',
-				padding: '4px 10px',
-				borderRadius: '20px',
-				border: `1px solid rgba(255,255,255,${key === selectedPurpose ? '0.3' : '0.12'})`,
-				background: key === selectedPurpose ? 'rgba(255,255,255,0.12)' : 'transparent',
-				color: '#fff',
-				cursor: 'pointer',
-				fontFamily: 'inherit',
-			},
+			variant: 'chip',
 			appendTo: chipRow,
 			onPointerPress: () => {
 				selectedPurpose = key;
 				selectedCollections = TEMPLATES[key].collections;
 				noteEl.elem.textContent = TEMPLATES[key].note;
-				for (const [k, c] of Object.entries(chips)) {
-					c.elem.style.borderColor = k === key ? 'rgba(255,255,255,0.3)' : 'rgba(255,255,255,0.12)';
-					c.elem.style.background = k === key ? 'rgba(255,255,255,0.12)' : 'transparent';
-				}
+				for (const [k, c] of Object.entries(chips)) c.toggleClass('active', k === key);
 			},
 		});
+		chip.toggleClass('active', key === selectedPurpose);
 		chips[key] = chip;
 	}
 
@@ -110,11 +87,11 @@ function openShareForm(container, { onRefresh }) {
 		appendTo: form,
 	});
 
-	const startInput = new FormInput({ appendTo: dateRangeRow, type: 'date' });
-	const endInput = new FormInput({ appendTo: dateRangeRow, type: 'date' });
+	const startInput = new Input({ appendTo: dateRangeRow, type: 'date' });
+	const endInput = new Input({ appendTo: dateRangeRow, type: 'date' });
 
 	new FormLabel({ appendTo: form, textContent: 'Link expiry date (optional)' });
-	const expInput = new FormInput({ appendTo: form, type: 'date' });
+	const expInput = new Input({ appendTo: form, type: 'date' });
 
 	const buttons = new Elem({
 		tag: 'div',
@@ -124,33 +101,13 @@ function openShareForm(container, { onRefresh }) {
 
 	new Button({
 		textContent: 'Cancel',
-		style: {
-			fontSize: '12px',
-			padding: '5px 12px',
-			background: 'transparent',
-			border: '1px solid rgba(255,255,255,0.12)',
-			borderRadius: '4px',
-			color: 'rgba(255,255,255,0.5)',
-			cursor: 'pointer',
-			fontFamily: 'inherit',
-		},
+		variant: 'flat',
 		appendTo: buttons,
 		onPointerPress: () => form.elem.remove(),
 	});
 
 	new Button({
 		textContent: 'Generate Link',
-		style: {
-			fontSize: '12px',
-			padding: '5px 14px',
-			background: '#2d6a2d',
-			border: 'none',
-			borderRadius: '4px',
-			color: '#fff',
-			cursor: 'pointer',
-			fontFamily: 'inherit',
-			fontWeight: '600',
-		},
 		appendTo: buttons,
 		onPointerPress: async () => {
 			const name = nameInput.elem.value.trim();
@@ -188,80 +145,30 @@ function openShareForm(container, { onRefresh }) {
 }
 
 function showShareLink(container, data, { onRefresh }) {
-	const reveal = new Elem({
-		tag: 'div',
-		style: {
-			marginTop: '10px',
-			padding: '12px',
-			background: 'rgba(45,106,45,0.12)',
-			border: '1px solid rgba(45,106,45,0.35)',
-			borderRadius: '6px',
-		},
-	});
+	const reveal = new Reveal();
 
 	container.append(reveal.elem);
 
 	const url = `${window.location.origin}/shared/${data.token}`;
 
-	new Elem({
-		tag: 'div',
-		style: {
-			fontSize: '11px',
-			fontWeight: '700',
-			color: '#4caf50',
-			textTransform: 'uppercase',
-			letterSpacing: '.06em',
-			marginBottom: '4px',
-		},
-		textContent: `Link created — ${data.name}`,
+	new Component({ appendTo: reveal, addClass: 'title', textContent: `Link created — ${data.name}` });
+	new Component({
 		appendTo: reveal,
-	});
-
-	new Elem({
-		tag: 'div',
-		style: { fontSize: '11px', color: 'rgba(255,255,255,0.5)', marginBottom: '8px' },
+		addClass: 'note',
 		textContent:
 			'Anyone with this link can view the scoped records — no login required. Revoke it when access is no longer needed.',
-		appendTo: reveal,
 	});
 
-	// Read-only URL display — custom monospace/green style, not a form input
-	const urlEl = new Elem({
-		tag: 'input',
-		attributes: { type: 'text', readonly: true },
-		style: {
-			display: 'block',
-			width: '100%',
-			boxSizing: 'border-box',
-			background: 'rgba(0,0,0,0.3)',
-			border: '1px solid rgba(255,255,255,0.12)',
-			borderRadius: '4px',
-			color: '#4caf50',
-			fontSize: '11px',
-			padding: '7px 10px',
-			fontFamily: 'monospace',
-			cursor: 'text',
-			marginBottom: '6px',
-		},
-		appendTo: reveal,
-	});
+	const urlEl = new SecretField({ appendTo: reveal, attributes: { type: 'text', readonly: true } });
 
 	urlEl.elem.value = url;
 	urlEl.elem.addEventListener('click', () => urlEl.elem.select());
 
+	const actions = new Component({ appendTo: reveal, addClass: 'actions' });
+
 	const copyBtn = new Button({
 		textContent: 'Copy Link',
-		style: {
-			fontSize: '12px',
-			padding: '4px 12px',
-			background: 'rgba(255,255,255,0.08)',
-			border: '1px solid rgba(255,255,255,0.15)',
-			borderRadius: '4px',
-			color: '#fff',
-			cursor: 'pointer',
-			fontFamily: 'inherit',
-		},
-		appendTo: reveal,
+		appendTo: actions,
 		onPointerPress: async () => {
 			// Where the copy is refused, the link is selected for copying by hand
 			if (!(await copyToClipboard(url))) return urlEl.elem.select();
@@ -275,18 +182,8 @@ function showShareLink(container, data, { onRefresh }) {
 
 	new Button({
 		textContent: 'Done',
-		style: {
-			marginLeft: '6px',
-			fontSize: '12px',
-			padding: '4px 12px',
-			background: 'transparent',
-			border: '1px solid rgba(255,255,255,0.12)',
-			borderRadius: '4px',
-			color: 'rgba(255,255,255,0.5)',
-			cursor: 'pointer',
-			fontFamily: 'inherit',
-		},
-		appendTo: reveal,
+		variant: 'flat',
+		appendTo: actions,
 		onPointerPress: () => {
 			reveal.elem.remove();
 			onRefresh();
@@ -299,108 +196,47 @@ export async function renderShareLinksSection(container, { onRefresh }) {
 		.then(r => (r.ok ? r.json() : []))
 		.catch(() => []);
 
-	const sec = new Elem({
-		tag: 'div',
-		style: { marginTop: '18px', paddingTop: '14px', borderTop: '1px solid rgba(255,255,255,0.08)' },
-		appendTo: container,
-	});
+	const sec = new AdminSection({ appendTo: container });
 
-	const header = new Elem({
-		tag: 'div',
-		style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' },
-		appendTo: sec,
-	});
+	const header = new SectionHead({ appendTo: sec });
 
-	new Elem({
-		tag: 'div',
-		style: { fontSize: '10px', textTransform: 'uppercase', letterSpacing: '.08em', color: 'rgba(255,255,255,0.35)' },
-		textContent: 'Shared Access Links',
-		appendTo: header,
-	});
+	new SectionLabel({ appendTo: header, textContent: 'Shared Access Links' });
 
 	new Button({
-		textContent: '+ New Link',
-		style: {
-			fontSize: '12px',
-			padding: '3px 10px',
-			background: 'rgba(255,255,255,0.07)',
-			border: '1px solid rgba(255,255,255,0.12)',
-			borderRadius: '4px',
-			color: '#fff',
-			cursor: 'pointer',
-			fontFamily: 'inherit',
-		},
+		textContent: 'New Link',
+		icon: 'plus',
+		variant: 'flat',
 		appendTo: header,
 		onPointerPress: () => openShareForm(sec.elem, { onRefresh }),
 	});
 
-	new Elem({
-		tag: 'div',
-		style: { fontSize: '11px', color: 'rgba(255,255,255,0.35)', marginBottom: '8px', lineHeight: '1.5' },
+	new Hint({
 		textContent:
 			'Generate read-only links scoped to specific records — for auditors, certifiers, lenders, or consultants. No login required.',
 		appendTo: sec,
 	});
 
-	if (!shares.length) {
-		new Elem({
-			tag: 'div',
-			style: { fontSize: '12px', color: 'rgba(255,255,255,0.3)' },
-			textContent: 'No active share links',
-			appendTo: sec,
-		});
-	}
+	if (!shares.length) new EmptyLine({ appendTo: sec, textContent: 'No active share links' });
 
 	for (const s of shares) {
-		const row = new Elem({
-			tag: 'div',
-			style: {
-				display: 'flex',
-				alignItems: 'flex-start',
-				gap: '8px',
-				padding: '7px 0',
-				borderBottom: '1px solid rgba(255,255,255,0.06)',
-				fontSize: '12px',
-			},
-			appendTo: sec,
-		});
+		const row = new ItemRow({ appendTo: sec, style: { alignItems: 'flex-start' } });
 
-		const rowInfo = new Elem({
-			tag: 'div',
-			style: { flex: '1', minWidth: '0' },
-			appendTo: row,
-		});
+		const rowInfo = new Component({ appendTo: row, addClass: 'info' });
 
-		new Elem({
-			tag: 'div',
-			style: { fontWeight: '600', color: '#fff' },
-			textContent: s.name,
-			appendTo: rowInfo,
-		});
+		new Component({ appendTo: rowInfo, addClass: 'name', textContent: s.name });
 
 		const viewed = s.lastViewed ? `viewed ${s.viewCount}× · last ${s.lastViewed.slice(0, 10)}` : 'never viewed';
 		const expires = s.expiresAt ? `expires ${s.expiresAt}` : 'no expiry';
 
-		new Elem({
-			tag: 'div',
-			style: { color: 'rgba(255,255,255,0.35)', fontSize: '11px', marginTop: '1px' },
+		new Component({
+			addClass: 'meta',
 			textContent: `${PURPOSES[s.purpose] ?? s.purpose}  ·  ${expires}  ·  ${viewed}`,
 			appendTo: rowInfo,
 		});
 
 		const copyBtn = new Button({
 			textContent: 'Copy link',
-			style: {
-				fontSize: '11px',
-				padding: '2px 8px',
-				background: 'rgba(74,144,217,0.15)',
-				border: '1px solid rgba(74,144,217,0.4)',
-				borderRadius: '4px',
-				color: '#4a90d9',
-				cursor: 'pointer',
-				fontFamily: 'inherit',
-				flexShrink: '0',
-			},
+			variant: 'chip',
 			appendTo: row,
 			onPointerPress: async () => {
 				// /auth/shares returns safe records without full token — re-fetch to get it
@@ -421,17 +257,8 @@ export async function renderShareLinksSection(container, { onRefresh }) {
 
 		new Button({
 			textContent: 'Revoke',
-			style: {
-				fontSize: '11px',
-				padding: '2px 8px',
-				background: 'transparent',
-				border: '1px solid rgba(224,82,82,0.4)',
-				borderRadius: '4px',
-				color: '#e05252',
-				cursor: 'pointer',
-				fontFamily: 'inherit',
-				flexShrink: '0',
-			},
+			variant: 'flat',
+			addClass: 'danger',
 			appendTo: row,
 			onPointerPress: async () => {
 				await fetch(`/auth/shares/${s.id}`, { method: 'DELETE' });
