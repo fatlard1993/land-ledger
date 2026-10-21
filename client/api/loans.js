@@ -1,15 +1,15 @@
-import { GET, POST, DELETE } from '@vanilla-bean/hypertether';
+import { resource } from '@vanilla-bean/hypertether';
 import { versionedUpdate } from './versionedUpdate.js';
 
-export const getLoans = async options => await GET('/loans', { apiId: 'loans', ...options });
+const loans = resource('/loans');
 
-export const getLoan = async (id, options) =>
-	await GET('/loans/:id', { apiId: ['loans', id], urlParameters: { id }, ...options });
+export const getLoans = loans.list;
 
-export const createLoan = async options => await POST('/loans', { invalidates: ['loans'], ...options });
+export const getLoan = loans.read;
+
+export const createLoan = loans.create;
 
 export const updateLoan = async (id, options) =>
 	await versionedUpdate('/loans/:id', { invalidates: ['loans'], urlParameters: { id }, ...options });
 
-export const deleteLoan = async (id, options) =>
-	await DELETE('/loans/:id', { invalidates: ['loans'], urlParameters: { id }, ...options });
+export const deleteLoan = loans.delete;
