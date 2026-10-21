@@ -1,34 +1,70 @@
-import { Button, Component, Elem, EmptyState, Icon, styled } from '@vanilla-bean/components';
+import { Button, Component, Elem, EmptyState, Icon, styled, theme, Toolbar } from '@vanilla-bean/components';
 
 import AsyncView from '../AsyncView';
 import { getAnimals, getFields } from '../api';
-import { PageView, PageToolbar, PageTitle } from '../Layout';
+import { PageView } from '../Layout';
 import context from '../context';
 
 import { ageLabel, speciesMeta, STATUS_COLORS } from './constants';
 import AnimalDialog from './AnimalDialog';
 import AnimalPanel from './AnimalPanel';
 
+const { colors } = theme;
+
+// One animal per row; a phone keeps the tag, name, species and status
 const AnimalRow = styled(
 	Component,
-	() => `
-	display: grid;
-	grid-template-columns: 80px 1fr 90px 100px 80px 70px;
-	gap: 6px;
-	padding: 8px 0;
-	border-bottom: 1px solid rgba(255,255,255,0.05);
-	cursor: pointer;
-	align-items: center;
-	&:hover { background: rgba(255,255,255,0.02); }
-`,
+	({ colors, media }) => `
+		display: grid;
+		grid-template-columns: 80px 1fr 90px 100px 80px 70px;
+		gap: 6px;
+		align-items: center;
+		padding: 8px 0;
+		border-bottom: 1px solid ${colors.border};
+		font-size: 12px;
+		color: ${colors.muted};
+		cursor: pointer;
+
+		&:hover { background: ${colors.alpha(colors.white, 0.03)}; }
+
+		& .tag { font-family: monospace; }
+		& .name { min-width: 0; }
+		& .name-text {
+			overflow: hidden;
+			font-size: 13px;
+			font-weight: 600;
+			color: ${colors.white};
+			text-overflow: ellipsis;
+			white-space: nowrap;
+		}
+		& .breed { font-size: 11px; color: ${colors.gray}; }
+		& .field { overflow: hidden; color: ${colors.gray}; text-overflow: ellipsis; white-space: nowrap; }
+		& .status { font-size: 11px; font-weight: 600; }
+
+		&.header {
+			padding: 3px 0 6px;
+			font-size: 10px;
+			letter-spacing: 0.06em;
+			text-transform: uppercase;
+			color: ${colors.gray};
+			cursor: default;
+
+			&:hover { background: none; }
+		}
+
+		@media ${media.phone} {
+			grid-template-columns: 64px 1fr 84px 64px;
+
+			& .field, & .age { display: none; }
+		}
+	`,
 );
 
 export default class Animals extends AsyncView {
 	_speciesFilter = '';
 
 	_buildView() {
-		this.toolbar = new PageToolbar({ appendTo: this });
-		new PageTitle({ appendTo: this.toolbar, textContent: 'Animals' });
+		this.toolbar = new Toolbar({ appendTo: this, variant: 'bar', heading: 'Animals', gap: 8, wrap: false });
 		new Button({
 			appendTo: this.toolbar,
 			append: new Icon({ icon: 'plus' }),
@@ -80,30 +116,20 @@ export default class Animals extends AsyncView {
 		if (presentSpecies.length > 1) {
 			const chipRow = new Component({
 				appendTo: this.content,
-				style: { display: 'flex', gap: '6px', flexWrap: 'wrap', marginBottom: '10px' },
+				style: { display: 'flex', gap: '6px', flexWrap: 'wrap', marginBottom: '2px' },
 			});
-			const chips = [];
 
-			const makeChip = (value, label) => {
-				const chip = new Component({
+			const makeChip = (value, label) =>
+				new Button({
 					appendTo: chipRow,
-					style: {
-						padding: '5px 12px',
-						borderRadius: '20px',
-						border: `1px solid ${this._speciesFilter === value ? 'rgba(255,255,255,0.3)' : 'rgba(255,255,255,0.1)'}`,
-						background: this._speciesFilter === value ? 'rgba(255,255,255,0.12)' : 'transparent',
-						fontSize: '12px',
-						color: '#fff',
-						cursor: 'pointer',
+					variant: 'chip',
+					...(this._speciesFilter === value && { addClass: 'active' }),
+					textContent: label,
+					onPointerPress: () => {
+						this._speciesFilter = this._speciesFilter === value ? '' : value;
+						this._render();
 					},
 				});
-				new Elem({ tag: 'span', appendTo: chip, textContent: label });
-				chip.onPointerPress(() => {
-					this._speciesFilter = this._speciesFilter === value ? '' : value;
-					this._render();
-				});
-				chips.push(chip);
-			};
 
 			makeChip('', 'All');
 			for (const species of presentSpecies) {
@@ -115,7 +141,7 @@ export default class Animals extends AsyncView {
 		// ── Summary bar ───────────────────────────────────────────────────────────
 		const summaryRow = new Component({
 			appendTo: this.content,
-			style: { display: 'flex', gap: '12px', flexWrap: 'wrap', marginBottom: '10px' },
+			style: { display: 'flex', gap: '12px', flexWrap: 'wrap', marginBottom: '2px' },
 		});
 		const speciesCounts = {};
 		for (const a of active) speciesCounts[a.species || 'other'] = (speciesCounts[a.species || 'other'] || 0) + 1;
@@ -125,7 +151,7 @@ export default class Animals extends AsyncView {
 			new Elem({
 				tag: 'span',
 				appendTo: summaryRow,
-				style: { fontSize: '12px', color: 'rgba(255,255,255,0.5)' },
+				style: { fontSize: '12px', color: colors.gray },
 				textContent: `${meta.icon} ${count} ${meta.label}`,
 			});
 		}
@@ -136,27 +162,22 @@ export default class Animals extends AsyncView {
 			.sort((a, b) => (a.tagId || '').localeCompare(b.tagId || ''));
 
 		// Column header
-		const header = new Component({
-			appendTo: this.content,
-			style: {
-				display: 'grid',
-				gridTemplateColumns: '80px 1fr 90px 100px 80px 70px',
-				gap: '6px',
-				padding: '3px 0 6px',
-				borderBottom: '1px solid rgba(255,255,255,0.08)',
-			},
-		});
-		for (const t of ['Tag', 'Name / Breed', 'Species', 'Field', 'Age', 'Status']) {
-			new Elem({
-				tag: 'div',
-				appendTo: header,
-				style: { fontSize: '10px', textTransform: 'uppercase', letterSpacing: '.06em', color: 'rgba(255,255,255,0.3)' },
-				textContent: t,
-			});
+		const header = new AnimalRow({ appendTo: this.content, addClass: 'header' });
+		const columns = {
+			tag: 'Tag',
+			name: 'Name / Breed',
+			species: 'Species',
+			field: 'Field',
+			age: 'Age',
+			status: 'Status',
+		};
+
+		for (const [cell, t] of Object.entries(columns)) {
+			new Elem({ tag: 'div', appendTo: header, addClass: cell, textContent: t });
 		}
 
 		for (const a of filtered) {
-			const statusColor = STATUS_COLORS[a.status] || '#4caf50';
+			const statusColor = STATUS_COLORS[a.status] || STATUS_COLORS.active;
 			const field = fieldMap[a.fieldId];
 
 			const row = new AnimalRow({
@@ -167,30 +188,23 @@ export default class Animals extends AsyncView {
 			new Elem({
 				tag: 'div',
 				appendTo: row,
-				style: { fontSize: '12px', color: 'rgba(255,255,255,0.7)', fontFamily: 'monospace' },
+				addClass: 'tag',
 				textContent: a.tagId ? `#${a.tagId}` : '—',
 			});
 
-			const nameWrap = new Component({ appendTo: row, style: { minWidth: '0' } });
+			const nameWrap = new Component({ appendTo: row, addClass: 'name' });
 			if (a.name)
 				new Elem({
 					tag: 'div',
 					appendTo: nameWrap,
-					style: {
-						fontSize: '13px',
-						fontWeight: '600',
-						color: '#fff',
-						overflow: 'hidden',
-						textOverflow: 'ellipsis',
-						whiteSpace: 'nowrap',
-					},
+					addClass: 'name-text',
 					textContent: a.name,
 				});
 			if (a.breed)
 				new Elem({
 					tag: 'div',
 					appendTo: nameWrap,
-					style: { fontSize: '11px', color: 'rgba(255,255,255,0.4)' },
+					addClass: 'breed',
 					textContent: a.breed,
 				});
 
@@ -198,31 +212,26 @@ export default class Animals extends AsyncView {
 			new Elem({
 				tag: 'div',
 				appendTo: row,
-				style: { fontSize: '12px', color: 'rgba(255,255,255,0.6)' },
+				addClass: 'species',
 				textContent: `${meta.icon} ${meta.label}`,
 			});
 			new Elem({
 				tag: 'div',
 				appendTo: row,
-				style: {
-					fontSize: '12px',
-					color: 'rgba(255,255,255,0.45)',
-					overflow: 'hidden',
-					textOverflow: 'ellipsis',
-					whiteSpace: 'nowrap',
-				},
+				addClass: 'field',
 				textContent: field?.name || '—',
 			});
 			new Elem({
 				tag: 'div',
 				appendTo: row,
-				style: { fontSize: '12px', color: 'rgba(255,255,255,0.5)' },
+				addClass: 'age',
 				textContent: ageLabel(a.birthDate) || '—',
 			});
 			new Elem({
 				tag: 'div',
 				appendTo: row,
-				style: { fontSize: '11px', fontWeight: '600', color: statusColor },
+				addClass: 'status',
+				style: { color: statusColor },
 				textContent: a.status || 'active',
 			});
 		}

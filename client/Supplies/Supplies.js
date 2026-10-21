@@ -1,10 +1,21 @@
-import { Button, Component, Elem, EmptyState, Icon, styled } from '@vanilla-bean/components';
+import {
+	Button,
+	Card,
+	Component,
+	Elem,
+	EmptyState,
+	Icon,
+	SectionLabel,
+	styled,
+	theme,
+	Toolbar,
+} from '@vanilla-bean/components';
 
 import AsyncView from '../AsyncView';
 
 import { getSupplies, getBuildings, createSupply, updateSupply, deleteSupply } from '../api';
 import context from '../context';
-import { PageView, PageToolbar, PageTitle } from '../Layout';
+import { PageView } from '../Layout';
 
 import TabularImportDialog from '../Import/TabularImportDialog';
 import ExportDialog from '../Export/ExportDialog';
@@ -12,33 +23,25 @@ import SupplyDialog, { detectSupplyEmoji } from './SupplyDialog';
 
 const format = n => n?.toFixed?.(2) ?? '0.00';
 
+const { colors } = theme;
+
 const InventoryCard = styled(
-	Component,
+	Card,
 	({ colors }) => `
-		background: ${colors.darker(colors.gray)};
-		border: 1px solid ${colors.dark(colors.gray)};
-		border-radius: 8px;
-		padding: 10px 12px;
-		margin-bottom: 6px;
-		cursor: pointer;
-		transition: border-color 0.15s;
 		display: flex;
 		align-items: center;
 		gap: 10px;
 
-		&:hover { border-color: ${colors.light(colors.blue)}; }
-
 		& .supply-name { font-size: 14px; font-weight: 600; color: ${colors.white}; flex: 1; }
-		& .supply-meta { font-size: 12px; color: ${colors.gray}; }
-		& .supply-cost { font-size: 13px; color: ${colors.light(colors.green)}; white-space: nowrap; }
-		& .supply-stock { font-size: 12px; color: ${colors.gray}; white-space: nowrap; }
+		& .supply-meta { font-size: 12px; color: ${colors.muted}; }
+		& .supply-cost { font-size: 13px; color: ${colors.light(colors.success)}; white-space: nowrap; }
+		& .supply-stock { font-size: 12px; color: ${colors.muted}; white-space: nowrap; }
 	`,
 );
 
 export default class Supplies extends AsyncView {
 	_buildView() {
-		this.toolbar = new PageToolbar({ appendTo: this });
-		new PageTitle({ appendTo: this.toolbar, textContent: 'Supplies' });
+		this.toolbar = new Toolbar({ appendTo: this, variant: 'bar', heading: 'Supplies', gap: 8, wrap: false });
 		new Button({
 			appendTo: this.toolbar,
 			append: new Icon({ icon: 'file-import' }),
@@ -108,25 +111,15 @@ export default class Supplies extends AsyncView {
 
 		for (const s of supplyList) categoryCounts[s.category] = (categoryCounts[s.category] || 0) + 1;
 
-		const summary = new Component({
+		const summary = new Card({
 			appendTo: this.content,
-			style: {
-				background: 'rgba(255,255,255,0.03)',
-				border: '1px solid rgba(255,255,255,0.08)',
-				borderRadius: '6px',
-				padding: '8px 12px',
-				marginBottom: '10px',
-				display: 'flex',
-				flexWrap: 'wrap',
-				gap: '10px',
-				fontSize: '12px',
-			},
+			style: { display: 'flex', flexWrap: 'wrap', gap: '10px', fontSize: '12px' },
 		});
 
 		new Elem({
 			tag: 'span',
 			appendTo: summary,
-			style: { color: 'rgba(255,255,255,0.5)' },
+			style: { color: colors.muted },
 			textContent: `${supplyList.length} items`,
 		});
 
@@ -134,7 +127,7 @@ export default class Supplies extends AsyncView {
 			new Elem({
 				tag: 'span',
 				appendTo: summary,
-				style: { color: '#4caf50', fontWeight: '600' },
+				style: { color: colors.light(colors.success), fontWeight: '600' },
 				textContent: `$${totalValue.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ',')} inventory value`,
 			});
 		}
@@ -153,18 +146,7 @@ export default class Supplies extends AsyncView {
 		for (const [cat, items] of [...grouped.entries()].sort((a, b) => a[0].localeCompare(b[0]))) {
 			const catEmoji = detectSupplyEmoji(cat);
 
-			new Elem({
-				tag: 'div',
-				appendTo: this.content,
-				style: {
-					fontSize: '11px',
-					textTransform: 'uppercase',
-					letterSpacing: '.07em',
-					color: 'rgba(255,255,255,0.35)',
-					padding: '10px 0 4px',
-				},
-				textContent: `${catEmoji} ${cat}`,
-			});
+			new SectionLabel({ appendTo: this.content, style: { margin: '8px 0 0' }, textContent: `${catEmoji} ${cat}` });
 
 			for (const supply of items) {
 				const building = this.buildings?.body?.[supply.buildingId];

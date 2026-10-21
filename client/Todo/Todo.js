@@ -1,4 +1,15 @@
-import { Button, Component, Elem, formatDate } from '@vanilla-bean/components';
+import {
+	Button,
+	Card,
+	Component,
+	Elem,
+	EmptyState,
+	formatDate,
+	SectionLabel,
+	styled,
+	theme,
+	Toolbar,
+} from '@vanilla-bean/components';
 
 import AsyncView from '../AsyncView';
 
@@ -17,11 +28,72 @@ import {
 	getLoans,
 	createFeedingLog,
 } from '../api';
-import { PageView, PageToolbar, PageTitle, SectionHeader } from '../Layout';
+import { PageView } from '../Layout';
 import { frequencyInterval, frequencyLabel } from '../Livestock/FeedingScheduleDialog';
 import { incidentEmoji, severityMeta } from '../Incidents/IncidentDialog';
 import { categoryMeta, eventEmoji } from '../Timeline/EventDialog';
 import context from '../context';
+
+const { colors } = theme;
+
+// A thing to do: its marker, what and where, then why it's due; the stripe says how soon
+const TodoCard = styled(
+	Card,
+	({ colors }) => `
+		display: flex;
+		align-items: flex-start;
+		gap: 10px;
+
+		& > .marker {
+			flex-shrink: 0;
+			margin-top: 1px;
+			font-size: 20px;
+			line-height: 1;
+		}
+
+		& > .body {
+			flex: 1;
+			min-width: 0;
+		}
+
+		& .title-row {
+			display: flex;
+			justify-content: space-between;
+			align-items: flex-start;
+			gap: 8px;
+		}
+
+		& .title {
+			font-size: 13px;
+			font-weight: 600;
+			color: ${colors.white};
+		}
+
+		& .entity {
+			flex-shrink: 0;
+			font-size: 11px;
+			color: ${colors.gray};
+		}
+
+		& .detail {
+			margin-top: 2px;
+			font-size: 12px;
+		}
+
+		& .detail2 {
+			margin-top: 2px;
+			overflow: hidden;
+			font-size: 11px;
+			color: ${colors.gray};
+			text-overflow: ellipsis;
+			white-space: nowrap;
+		}
+
+		& > .vbc-button {
+			flex-shrink: 0;
+		}
+	`,
+);
 
 const TODAY = () => new Date();
 const daysBetween = (a, b) => (b - a) / 86_400_000;
@@ -83,8 +155,7 @@ const dateUrgency = (dateStr, soonThreshold = 30, laterThreshold = 90) => {
 
 export default class Todo extends AsyncView {
 	_buildView() {
-		this.toolbar = new PageToolbar({ appendTo: this });
-		new PageTitle({ appendTo: this.toolbar, textContent: 'To Do' });
+		this.toolbar = new Toolbar({ appendTo: this, variant: 'bar', heading: 'To Do', gap: 8, wrap: false });
 
 		this.content = new PageView({ appendTo: this });
 	}
@@ -116,39 +187,30 @@ export default class Todo extends AsyncView {
 		const todos = this._collectTodos();
 
 		if (!todos.length) {
-			const wrap = new Component({ appendTo: this.content, style: { textAlign: 'center', padding: '48px 16px' } });
-
-			new Elem({ tag: 'div', appendTo: wrap, style: { fontSize: '40px', marginBottom: '12px' }, textContent: '✅' });
-			new Elem({
-				tag: 'div',
-				appendTo: wrap,
-				style: { fontSize: '16px', color: '#fff', fontWeight: '600' },
-				textContent: 'All clear',
-			});
-			new Elem({
-				tag: 'div',
-				appendTo: wrap,
-				style: { fontSize: '13px', color: 'rgba(255,255,255,0.35)', marginTop: '6px' },
-				textContent: 'Nothing overdue or coming up',
+			new EmptyState({
+				appendTo: this.content,
+				icon: 'circle-check',
+				title: 'All clear',
+				message: 'Nothing overdue or coming up',
 			});
 
 			return;
 		}
 
 		const tiers = [
-			{ key: NOW, label: '🔴 Needs Attention', color: '#e05252' },
-			{ key: SOON, label: '🟡 Coming Up', color: '#e8c42a' },
-			{ key: LATER, label: '⚪ Back Burner', color: 'rgba(255,255,255,0.4)' },
+			{ key: NOW, label: 'Needs Attention', color: colors.danger, text: colors.light(colors.danger) },
+			{ key: SOON, label: 'Coming Up', color: colors.warning, text: colors.light(colors.warning) },
+			{ key: LATER, label: 'Back Burner', color: colors.gray, text: colors.gray },
 		];
 
-		for (const { key, label, color } of tiers) {
+		for (const { key, label, ...tier } of tiers) {
 			const items = todos.filter(t => t.urgency === key);
 
 			if (!items.length) continue;
 
-			new SectionHeader({ appendTo: this.content, textContent: label });
+			new SectionLabel({ appendTo: this.content, textContent: label });
 
-			for (const item of items) this._renderItem(item, color);
+			for (const item of items) this._renderItem(item, tier);
 		}
 	}
 
@@ -221,7 +283,8 @@ export default class Todo extends AsyncView {
 				entity: field?.name || 'Field',
 				detail: status.label,
 				quickAction: {
-					label: '✓ Fed',
+					label: 'Fed',
+					icon: 'check',
 					fn: async () => {
 						await createFeedingLog({
 							body: {
@@ -455,98 +518,46 @@ export default class Todo extends AsyncView {
 		);
 	}
 
-	_renderItem(item, accentColor) {
-		const card = new Component({
-			appendTo: this.content,
-			style: {
-				display: 'flex',
-				gap: '10px',
-				padding: '10px 0',
-				borderBottom: '1px solid rgba(255,255,255,0.06)',
-				alignItems: 'flex-start',
-				cursor: item.navigate ? 'pointer' : 'default',
-			},
-		});
-
-		new Elem({
-			tag: 'span',
-			appendTo: card,
-			style: { fontSize: '20px', flexShrink: '0', marginTop: '1px', lineHeight: '1' },
-			textContent: item.icon,
-		});
-
-		const body = new Component({ appendTo: card, style: { flex: '1', minWidth: '0' } });
-
-		const titleRow = new Component({
-			appendTo: body,
-			style: { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '8px' },
-		});
-
-		new Elem({
-			tag: 'div',
-			appendTo: titleRow,
-			style: { fontSize: '13px', fontWeight: '600', color: '#fff' },
-			textContent: item.title,
-		});
-
-		if (item.entity) {
-			new Elem({
-				tag: 'div',
-				appendTo: titleRow,
-				style: { fontSize: '11px', color: 'rgba(255,255,255,0.4)', flexShrink: '0' },
-				textContent: item.entity,
+	_renderItem(item, tier) {
+		const navigate =
+			item.navigate &&
+			(() => {
+				window.location.hash = item.navigate === '/' ? '' : item.navigate;
 			});
-		}
+
+		const card = new TodoCard({ appendTo: this.content, accent: tier.color, onPointerPress: item.onPress || navigate });
+
+		new Elem({ tag: 'span', appendTo: card, addClass: 'marker', textContent: item.icon });
+
+		const body = new Component({ appendTo: card, addClass: 'body' });
+		const titleRow = new Component({ appendTo: body, addClass: 'title-row' });
+
+		new Elem({ tag: 'div', appendTo: titleRow, addClass: 'title', textContent: item.title });
+
+		if (item.entity) new Elem({ tag: 'div', appendTo: titleRow, addClass: 'entity', textContent: item.entity });
 
 		if (item.detail) {
 			new Elem({
 				tag: 'div',
 				appendTo: body,
-				style: { fontSize: '12px', color: accentColor, marginTop: '2px' },
+				addClass: 'detail',
+				style: { color: tier.text },
 				textContent: item.detail,
 			});
 		}
 
-		if (item.detail2) {
-			new Elem({
-				tag: 'div',
-				appendTo: body,
-				style: {
-					fontSize: '11px',
-					color: 'rgba(255,255,255,0.35)',
-					marginTop: '2px',
-					overflow: 'hidden',
-					textOverflow: 'ellipsis',
-					whiteSpace: 'nowrap',
-				},
-				textContent: item.detail2,
-			});
-		}
+		if (item.detail2) new Elem({ tag: 'div', appendTo: body, addClass: 'detail2', textContent: item.detail2 });
 
 		if (item.quickAction) {
 			new Button({
 				appendTo: card,
+				icon: item.quickAction.icon,
 				textContent: item.quickAction.label,
-				style: {
-					fontSize: '12px',
-					padding: '4px 10px',
-					flexShrink: '0',
-					background: 'rgba(76,175,80,0.15)',
-					border: '1px solid rgba(76,175,80,0.4)',
-					color: '#4caf50',
-				},
+				style: { backgroundColor: colors.dark(colors.success) },
 				onPointerPress: async e => {
 					e.stopPropagation?.();
 					await item.quickAction.fn();
 				},
-			});
-		}
-
-		if (item.onPress) {
-			card.onPointerPress(item.onPress);
-		} else if (item.navigate) {
-			card.onPointerPress(() => {
-				window.location.hash = item.navigate === '/' ? '' : item.navigate;
 			});
 		}
 	}

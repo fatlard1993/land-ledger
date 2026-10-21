@@ -1,4 +1,14 @@
-import { Button, Component, Elem, EmptyState, formatDate } from '@vanilla-bean/components';
+import {
+	Button,
+	Component,
+	Elem,
+	EmptyState,
+	formatDate,
+	SectionLabel,
+	styled,
+	theme,
+	Toolbar,
+} from '@vanilla-bean/components';
 
 import AsyncView from '../AsyncView';
 
@@ -12,8 +22,73 @@ import {
 	updateFeedingSchedule,
 } from '../api';
 import context from '../context';
-import { PageView, PageToolbar, PageTitle, SectionHeader, Card } from '../Layout';
+import { PageView, RecordCard } from '../Layout';
 import FeedingScheduleDialog, { frequencyLabel } from '../Livestock/FeedingScheduleDialog';
+
+const { colors } = theme;
+
+const TitleRow = styled(
+	Component,
+	() => `
+		display: flex;
+		justify-content: space-between;
+		align-items: flex-start;
+		gap: 8px;
+		margin-bottom: 4px;
+	`,
+);
+
+const Frequency = styled(
+	Component,
+	({ colors }) => `
+		flex-shrink: 0;
+		font-size: 11px;
+		color: ${colors.gray};
+	`,
+	{ tag: 'span' },
+);
+
+// One feeding in the log: what was fed, where and when, and a way to strike it
+const LogRow = styled(
+	Component,
+	({ colors }) => `
+		display: flex;
+		align-items: center;
+		gap: 8px;
+		padding: 5px 0;
+		border-bottom: 1px solid ${colors.border};
+		font-size: 12px;
+
+		& .icon-cell {
+			flex-shrink: 0;
+			font-size: 14px;
+		}
+
+		& .info {
+			flex: 1;
+			min-width: 0;
+		}
+
+		& .where {
+			font-size: 11px;
+			color: ${colors.gray};
+		}
+	`,
+);
+
+const DeleteButton = styled(
+	Button,
+	({ colors }) => `
+		flex-shrink: 0;
+		color: ${colors.gray};
+
+		&:hover {
+			color: ${colors.light(colors.danger)};
+		}
+	`,
+);
+
+const missing = { color: colors.gray, fontStyle: 'italic' };
 
 const feedIcon = ft => {
 	if (/hay|straw|forage/i.test(ft)) return '🌾';
@@ -27,8 +102,7 @@ const feedIcon = ft => {
 
 export default class Feeding extends AsyncView {
 	_buildView() {
-		this.toolbar = new PageToolbar({ appendTo: this });
-		new PageTitle({ appendTo: this.toolbar, textContent: 'Feeding Records' });
+		this.toolbar = new Toolbar({ appendTo: this, variant: 'bar', heading: 'Feeding Records', gap: 8, wrap: false });
 
 		this.content = new PageView({ appendTo: this });
 	}
@@ -72,13 +146,13 @@ export default class Feeding extends AsyncView {
 
 		// ── Schedules ─────────────────────────────────────────────────────────────
 		if (allSchedules.length) {
-			new SectionHeader({ appendTo: this.content, textContent: '📅 Schedules' });
+			new SectionLabel({ appendTo: this.content, textContent: 'Schedules' });
 
 			for (const schedule of allSchedules) {
 				const fieldName = this._fieldName(schedule.fieldId);
 				const supply = schedule.supplyId ? this._supplies?.body?.[schedule.supplyId] : null;
 
-				const card = new Card({
+				const card = new RecordCard({
 					appendTo: this.content,
 					onPointerPress: () =>
 						new FeedingScheduleDialog({
@@ -105,11 +179,7 @@ export default class Feeding extends AsyncView {
 						}),
 				});
 
-				const titleRow = new Elem({
-					tag: 'div',
-					appendTo: card,
-					style: { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '4px' },
-				});
+				const titleRow = new TitleRow({ appendTo: card });
 
 				new Elem({
 					tag: 'div',
@@ -119,12 +189,7 @@ export default class Feeding extends AsyncView {
 				});
 
 				if (schedule.frequency) {
-					new Elem({
-						tag: 'span',
-						appendTo: titleRow,
-						style: { fontSize: '11px', color: 'rgba(255,255,255,0.4)', flexShrink: '0', marginLeft: '8px' },
-						textContent: frequencyLabel(schedule.frequency),
-					});
+					new Frequency({ appendTo: titleRow, textContent: frequencyLabel(schedule.frequency) });
 				}
 
 				const meta = new Elem({ tag: 'div', appendTo: card, addClass: 'card-meta' });
@@ -132,10 +197,7 @@ export default class Feeding extends AsyncView {
 				new Elem({
 					tag: 'span',
 					appendTo: meta,
-					style: {
-						color: fieldName ? 'var(--color-medium)' : 'rgba(255,255,255,0.25)',
-						fontStyle: fieldName ? '' : 'italic',
-					},
+					style: fieldName ? {} : missing,
 					textContent: `📋 ${fieldName || 'Deleted field'}`,
 				});
 
@@ -151,7 +213,7 @@ export default class Feeding extends AsyncView {
 
 		// ── Feed logs grouped by year ──────────────────────────────────────────────
 		if (allLogs.length) {
-			new SectionHeader({ appendTo: this.content, textContent: '📋 Feed Log' });
+			new SectionLabel({ appendTo: this.content, textContent: 'Feed Log' });
 
 			const byYear = new Map();
 
@@ -163,75 +225,41 @@ export default class Feeding extends AsyncView {
 			}
 
 			for (const [year, logs] of byYear) {
-				new Elem({
-					tag: 'div',
-					appendTo: this.content,
-					style: {
-						fontSize: '11px',
-						textTransform: 'uppercase',
-						letterSpacing: '.06em',
-						color: 'rgba(255,255,255,0.25)',
-						padding: '10px 0 4px',
-					},
-					textContent: String(year),
-				});
+				new SectionLabel({ appendTo: this.content, level: 4, textContent: String(year) });
 
 				for (const log of logs) {
 					const fieldName = this._fieldName(log.fieldId);
 
-					const row = new Component({
-						appendTo: this.content,
-						style: {
-							display: 'flex',
-							gap: '8px',
-							fontSize: '12px',
-							padding: '5px 0',
-							borderBottom: '1px solid rgba(255,255,255,0.05)',
-							alignItems: 'center',
-						},
-					});
+					const row = new LogRow({ appendTo: this.content });
 
 					new Elem({
 						tag: 'span',
 						appendTo: row,
-						style: { flexShrink: '0', fontSize: '14px' },
+						addClass: 'icon-cell',
 						textContent: log.type === 'treat' ? '🍬' : feedIcon(log.feedType),
 					});
 
-					const info = new Component({ appendTo: row, style: { flex: '1', minWidth: '0' } });
+					const info = new Component({ appendTo: row, addClass: 'info' });
 
 					new Elem({
 						tag: 'div',
 						appendTo: info,
-						style: { color: '#fff' },
 						textContent: `${log.feedType || 'Feed'}${log.amountPerHead ? ` · ${log.amountPerHead} ${log.amountUnit || ''}` : ''}${log.headCount ? ` · ${log.headCount} hd` : ''}`,
 					});
 
 					new Elem({
 						tag: 'div',
 						appendTo: info,
-						style: {
-							fontSize: '11px',
-							color: fieldName ? 'rgba(255,255,255,0.35)' : 'rgba(255,255,255,0.2)',
-							fontStyle: fieldName ? '' : 'italic',
-						},
+						addClass: 'where',
+						style: fieldName ? {} : { fontStyle: 'italic' },
 						textContent: `📋 ${fieldName || 'Deleted field'} · ${formatDate(log.date)}`,
 					});
 
-					const delBtn = new Button({
+					new DeleteButton({
 						appendTo: row,
-						textContent: '×',
+						variant: 'flat',
+						icon: 'xmark',
 						attributes: { title: 'Delete this log entry' },
-						style: {
-							background: 'none',
-							border: 'none',
-							color: 'rgba(255,255,255,0.2)',
-							fontSize: '16px',
-							cursor: 'pointer',
-							padding: '0 4px',
-							flexShrink: '0',
-							lineHeight: '1',
-						},
 						onPointerPress: async e => {
 							e.stopPropagation();
 							await deleteFeedingLog(log.id);
@@ -240,12 +268,6 @@ export default class Feeding extends AsyncView {
 								Object.keys(this._logs?.body || {}).length > 0 || Object.keys(this._schedules?.body || {}).length > 0;
 							this._renderList();
 						},
-					});
-					delBtn.elem.addEventListener('pointerenter', () => {
-						delBtn.elem.style.color = '#e05252';
-					});
-					delBtn.elem.addEventListener('pointerleave', () => {
-						delBtn.elem.style.color = 'rgba(255,255,255,0.2)';
 					});
 				}
 			}

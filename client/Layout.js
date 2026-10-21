@@ -1,34 +1,34 @@
-import { Component, Input, SectionLabel, Select, styled } from '@vanilla-bean/components';
+import { Card, Component, Content, SectionLabel, styled } from '@vanilla-bean/components';
 
 // Clear of the home indicator below, and of a landscape notch beside the rail
 export const BottomNav = styled(
 	Component,
-	({ colors, safeArea }) => `
+	({ colors, media, safeArea }) => `
 		display: flex;
 		justify-content: space-around;
 		align-items: center;
-		background-color: ${colors.darker(colors.gray)};
-		border-top: 1px solid ${colors.dark(colors.gray)};
+		background-color: ${colors.surface};
+		border-top: 1px solid ${colors.border};
 		box-sizing: border-box;
 		height: calc(56px + ${safeArea.bottom});
 		padding-bottom: ${safeArea.bottom};
 		flex-shrink: 0;
 		order: 1;
 
-		@media (max-width: 767px) {
+		@media ${media.phone} {
 			/* Toasts stack above the bar while it runs along the bottom */
 			:root:has(&) {
 				--vbc-notify-offset: 56px;
 			}
 		}
 
-		@media (min-width: 768px) {
+		@media ${media.wide} {
 			flex-direction: column;
 			justify-content: flex-start;
 			width: calc(64px + ${safeArea.left});
 			height: 100%;
 			border-top: none;
-			border-right: 1px solid ${colors.dark(colors.gray)};
+			border-right: 1px solid ${colors.border};
 			order: -1;
 			padding: 8px 0 ${safeArea.bottom} ${safeArea.left};
 		}
@@ -37,24 +37,33 @@ export const BottomNav = styled(
 
 export const NavItem = styled(
 	Component,
-	({ colors }) => `
+	({ colors, media }) => `
 		display: flex;
 		flex-direction: column;
 		align-items: center;
 		justify-content: center;
-		gap: 2px;
+		gap: 4px;
 		flex: 1;
+		min-width: 0;
 		height: 100%;
 		cursor: pointer;
-		color: ${colors.gray};
+		color: ${colors.muted};
 		-webkit-tap-highlight-color: transparent;
+		transition: color 0.15s;
 
 		& .nav-icon { font-size: 18px; }
-		& .nav-label { font-size: 10px; }
+		& .nav-label {
+			max-width: 100%;
+			overflow: hidden;
+			font-size: 10px;
+			text-overflow: ellipsis;
+			white-space: nowrap;
+		}
 
-		&.active { color: ${colors.green}; }
+		&:hover { color: ${colors.white}; }
+		&.active { color: ${colors.light(colors.green)}; }
 
-		@media (min-width: 768px) {
+		@media ${media.wide} {
 			flex: none;
 			width: 100%;
 			height: 56px;
@@ -62,70 +71,43 @@ export const NavItem = styled(
 	`,
 );
 
-export const PageToolbar = styled(
-	Component,
-	({ colors }) => `
-		display: flex;
-		align-items: center;
-		gap: 8px;
-		padding: 8px 12px;
-		background-color: ${colors.darker(colors.gray)};
-		border-bottom: 1px solid ${colors.dark(colors.gray)};
-		min-height: 48px;
-		flex-shrink: 0;
-	`,
-);
-
-export const PageTitle = styled(
-	Component,
-	({ colors }) => `
-		flex: 1;
-		font-size: 16px;
-		font-weight: 600;
-		color: ${colors.white};
-		overflow: hidden;
-		text-overflow: ellipsis;
-		white-space: nowrap;
-	`,
-);
-
-export const PageView = styled(
-	Component,
-	() => `
-		flex: 1;
-		overflow-y: auto;
-		padding: 12px;
+// A view's scrolling body: its records in a column, centered in 960px on a wide screen
+export class PageView extends styled(
+	Content,
+	({ space }) => `
 		display: flex;
 		flex-direction: column;
-		gap: 8px;
-		min-height: 0;
+		gap: ${space.sm};
+		padding-block: ${space.md};
 	`,
-);
+) {
+	static prepareOptions(options) {
+		return { column: true, ...options };
+	}
+}
 
-export const Card = styled(
-	Component,
+// A record in a list view: a title row, then a muted line of facts about it
+export const RecordCard = styled(
+	Card,
 	({ colors }) => `
-		background-color: ${colors.darker(colors.gray)};
-		border: 1px solid ${colors.dark(colors.gray)};
-		border-radius: 8px;
-		padding: 12px;
-		cursor: pointer;
-		transition: background-color 0.15s;
-
 		& .card-title {
-			font-size: 14px;
 			font-weight: 600;
-			color: ${colors.white};
 		}
 
-		&:hover { background-color: ${colors.dark(colors.gray)}; }
+		& .card-meta {
+			display: flex;
+			flex-wrap: wrap;
+			gap: 2px 12px;
+			font-size: 12px;
+			color: ${colors.muted};
+		}
 	`,
 );
 
 // The page reaches under the notch and status bar (viewport-fit=cover), so the shell keeps its content clear of them
 export const AppShell = styled(
 	Component,
-	({ safeArea }) => `
+	({ media, safeArea }) => `
 		display: flex;
 		flex-direction: column;
 		box-sizing: border-box;
@@ -136,7 +118,7 @@ export const AppShell = styled(
 		position: fixed;
 		inset: 0;
 
-		@media (min-width: 768px) {
+		@media ${media.wide} {
 			flex-direction: row;
 		}
 	`,
@@ -165,62 +147,23 @@ export const MapWrap = styled(
 	`,
 );
 
-export const FloatingActions = styled(
-	Component,
-	() => `
-		position: absolute;
-		bottom: 16px;
-		right: 16px;
-		display: flex;
-		flex-direction: column;
-		gap: 10px;
-		z-index: 500;
-	`,
-);
-
-export const FAB = styled(
-	Component,
-	({ colors }) => `
-		width: 48px;
-		height: 48px;
-		border-radius: 50%;
-		background-color: ${colors.green};
-		color: ${colors.white};
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		font-size: 22px;
-		cursor: pointer;
-		box-shadow: 0 3px 8px rgba(0,0,0,0.4);
-		-webkit-tap-highlight-color: transparent;
-		transition: background-color 0.15s, transform 0.1s;
-
-		&:hover {
-			background-color: ${colors.light(colors.green)};
-		}
-
-		&:active {
-			transform: scale(0.93);
-		}
-	`,
-);
-
+// A sheet over the map on a phone; on a wide screen, a column beside it
 export const FieldPanel = styled(
 	Component,
-	({ colors }) => `
+	({ colors, media, space }) => `
 		position: absolute;
 		bottom: 0;
 		left: 0;
 		right: 0;
-		background-color: ${colors.darker(colors.gray)};
-		border-top: 1px solid ${colors.dark(colors.gray)};
+		background-color: ${colors.surface};
+		border-top: 1px solid ${colors.border};
 		border-radius: 16px 16px 0 0;
 		z-index: 1100;
 		transform: translateY(100%);
 		transition: transform 0.3s ease;
 		max-height: 82dvh;
 		overflow-y: auto;
-		padding: 0 16px 24px;
+		padding: 0 ${space.lg} ${space.xl};
 		-webkit-overflow-scrolling: touch;
 
 		/* Drag handle */
@@ -229,7 +172,7 @@ export const FieldPanel = styled(
 			display: block;
 			width: 36px;
 			height: 4px;
-			background: rgba(255,255,255,0.2);
+			background: ${colors.alpha(colors.white, 0.2)};
 			border-radius: 2px;
 			margin: 10px auto 8px;
 			flex-shrink: 0;
@@ -239,7 +182,7 @@ export const FieldPanel = styled(
 			transform: translateY(0);
 		}
 
-		@media (min-width: 768px) {
+		@media ${media.wide} {
 			position: relative;
 			top: auto;
 			left: auto;
@@ -253,33 +196,15 @@ export const FieldPanel = styled(
 			overflow-y: auto;
 			border-radius: 0;
 			border-top: none;
-			border-left: 1px solid ${colors.dark(colors.gray)};
+			border-left: 1px solid ${colors.border};
 			transform: none;
 			z-index: auto;
-			padding: 12px 16px 24px;
+			padding: ${space.md} ${space.lg} ${space.xl};
 
 			&::before { display: none; }
 		}
 	`,
 );
-
-export const PanelHandle = styled(
-	Component,
-	({ colors }) => `
-		width: 40px;
-		height: 4px;
-		background-color: ${colors.gray};
-		border-radius: 2px;
-		margin: 0 auto 12px;
-
-		@media (min-width: 768px) {
-			display: none;
-		}
-	`,
-);
-
-// The library's section label, at the 11px land-ledger's denser panels use
-export const SectionHeader = styled(SectionLabel, () => 'font-size: 11px;');
 
 export const DetailRow = styled(
 	Component,
@@ -287,12 +212,13 @@ export const DetailRow = styled(
 		display: flex;
 		justify-content: space-between;
 		align-items: center;
+		gap: 8px;
 		padding: 6px 0;
-		border-bottom: 1px solid ${colors.dark(colors.gray)};
+		border-bottom: 1px solid ${colors.border};
 		font-size: 14px;
 
 		& .label {
-			color: ${colors.gray};
+			color: ${colors.muted};
 			font-size: 12px;
 		}
 
@@ -302,30 +228,30 @@ export const DetailRow = styled(
 	`,
 );
 
-const BADGE_BASE = `
-	font-size: 11px;
-	padding: 2px 8px;
-	border-radius: 4px;
-	font-weight: 600;
+const badge = ({ radius }) => `
 	display: inline-block;
+	padding: 2px 8px;
+	border-radius: ${radius.sm};
+	font-size: 11px;
+	font-weight: 600;
 `;
 
 const OwnedBadge = styled(
 	Component,
-	({ colors }) => `
-	${BADGE_BASE}
-	background-color: ${colors.blackish(colors.blue)};
-	color: ${colors.light(colors.blue)};
-`,
+	theme => `
+		${badge(theme)}
+		background-color: ${theme.colors.alpha(theme.colors.info, 0.2)};
+		color: ${theme.colors.light(theme.colors.info)};
+	`,
 );
 
 const RentedBadge = styled(
 	Component,
-	({ colors }) => `
-	${BADGE_BASE}
-	background-color: ${colors.blackish(colors.orange)};
-	color: ${colors.light(colors.orange)};
-`,
+	theme => `
+		${badge(theme)}
+		background-color: ${theme.colors.alpha(theme.colors.orange, 0.2)};
+		color: ${theme.colors.light(theme.colors.orange)};
+	`,
 );
 
 export const TenureBadge = (tenure, appendTo) =>
@@ -345,73 +271,32 @@ export class ActionHeader extends Component {
 	};
 
 	build() {
-		this._title = new SectionHeader({ appendTo: this });
+		this._title = new SectionLabel({ appendTo: this });
 	}
 }
-
-export const StatusBadge = styled(
-	Component,
-	() => `
-	display: inline-block;
-	padding: 2px 8px;
-	border-radius: 20px;
-	font-size: 11px;
-	font-weight: 600;
-`,
-);
 
 export const SquareBadge = styled(
 	Component,
-	() => `
-	display: inline-block;
-	padding: 1px 5px;
-	border-radius: 3px;
-	font-size: 10px;
-	font-weight: 600;
-	flex-shrink: 0;
-`,
+	({ radius }) => `
+		display: inline-block;
+		padding: 1px 5px;
+		border-radius: ${radius.sm};
+		font-size: 10px;
+		font-weight: 600;
+		flex-shrink: 0;
+	`,
 );
 
-// ── Form primitives ───────────────────────────────────────────────────────────
-
-const _FormLabelBase = styled(
+// A caption over a field in a hand-built form, in SectionLabel's small uppercase voice
+export const FormLabel = styled(
 	Component,
-	() => `
-	display: block;
-	font-size: 11px;
-	text-transform: uppercase;
-	letter-spacing: .06em;
-	color: rgba(255,255,255,0.4);
-	margin-top: 12px;
-	margin-bottom: 4px;
-`,
-);
-
-export class FormLabel extends _FormLabelBase {
-	constructor(options = {}, ...children) {
-		super({ tag: 'label', ...options }, ...children);
-	}
-}
-
-const fieldStyles = `
-	display: block;
-	width: 100%;
-	box-sizing: border-box;
-	background: rgba(255,255,255,0.07);
-	border: 1px solid rgba(255,255,255,0.12);
-	border-radius: 4px;
-	color: #fff;
-	font-size: 14px;
-	padding: 8px 10px;
-	font-family: inherit;
-`;
-
-export const FormInput = styled(Input, () => fieldStyles);
-
-export const FormSelect = styled(
-	Select,
-	() => `
-	${fieldStyles}
-	cursor: pointer;
-`,
+	({ colors, space }) => `
+		display: block;
+		margin: ${space.md} 0 ${space.xs};
+		font-size: 0.75em;
+		letter-spacing: 0.08em;
+		text-transform: uppercase;
+		color: ${colors.muted};
+	`,
+	{ tag: 'label' },
 );

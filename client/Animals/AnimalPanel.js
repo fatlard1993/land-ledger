@@ -1,4 +1,6 @@
-import { Button, Component, Dialog, Elem, formatDate } from '@vanilla-bean/components';
+import { Button, Card, Component, Dialog, Elem, formatDate, styled, theme } from '@vanilla-bean/components';
+
+import { ActionHeader } from '../Layout';
 
 import { getHealthRecords, getBreedingRecords } from '../api/animals';
 import { animalLabel, ageLabel, STATUS_COLORS, speciesMeta } from './constants';
@@ -7,6 +9,102 @@ import HealthRecordDialog from './HealthRecordDialog';
 import BreedingDialog from './BreedingDialog';
 
 const TODAY = new Date().toISOString().slice(0, 10);
+
+const { colors } = theme;
+
+const BREEDING_STATUS_COLORS = {
+	pending: colors.light(colors.warning),
+	confirmed: colors.light(colors.success),
+	delivered: colors.light(colors.info),
+	failed: colors.gray,
+};
+
+const PresenceChip = styled(
+	Component,
+	({ colors, radius }) => `
+		align-items: center;
+		gap: 6px;
+		margin-bottom: 12px;
+		padding: 4px 10px;
+		border: 1px solid ${colors.alpha(colors.warning, 0.35)};
+		border-radius: ${radius.pill};
+		background: ${colors.alpha(colors.warning, 0.15)};
+		font-size: 11px;
+		font-weight: 600;
+		color: ${colors.light(colors.warning)};
+		white-space: nowrap;
+	`,
+);
+
+const SummaryCell = styled(
+	Component,
+	({ colors }) => `
+		& .label {
+			font-size: 10px;
+			letter-spacing: 0.06em;
+			text-transform: uppercase;
+			color: ${colors.gray};
+		}
+
+		& .value {
+			margin-top: 2px;
+			font-size: 13px;
+			font-weight: 600;
+			color: ${colors.muted};
+		}
+	`,
+);
+
+// A health or breeding record: its marker, then what it was and when
+const RecordRow = styled(
+	Component,
+	({ colors }) => `
+		display: flex;
+		align-items: flex-start;
+		gap: 8px;
+		padding: 6px 0;
+		border-bottom: 1px solid ${colors.border};
+		cursor: pointer;
+
+		& .marker {
+			flex-shrink: 0;
+			margin-top: 1px;
+			font-size: 14px;
+		}
+
+		& .info {
+			flex: 1;
+			min-width: 0;
+		}
+
+		& .title {
+			font-size: 13px;
+			font-weight: 500;
+			color: ${colors.white};
+		}
+
+		& .meta {
+			margin-top: 1px;
+			font-size: 11px;
+			color: ${colors.gray};
+		}
+
+		& .flag {
+			margin-top: 2px;
+			font-size: 11px;
+			font-weight: 600;
+		}
+	`,
+);
+
+const Empty = styled(
+	Component,
+	({ colors }) => `
+		padding: 5px 0 12px;
+		font-size: 12px;
+		color: ${colors.gray};
+	`,
+);
 
 export default class AnimalPanel extends Dialog {
 	constructor(options = {}) {
@@ -25,6 +123,7 @@ export default class AnimalPanel extends Dialog {
 		this._presenceHandler = null;
 
 		this._watchAnimal();
+		this.addCleanup('presence', () => this._clearWatch());
 		this._render();
 	}
 
@@ -72,33 +171,11 @@ export default class AnimalPanel extends Dialog {
 		}
 	}
 
-	close() {
-		this._clearWatch();
-		super.close();
-	}
-
 	async _render() {
 		this.body.empty();
 
 		// Presence indicator — rebuilt after each body.empty(), updated in place by _updatePresenceBar
-		this._presenceBar = new Elem({
-			tag: 'div',
-			appendTo: this.body,
-			style: {
-				display: 'none',
-				alignItems: 'center',
-				gap: '6px',
-				fontSize: '11px',
-				padding: '4px 10px',
-				borderRadius: '10px',
-				background: 'rgba(232,196,42,0.15)',
-				border: '1px solid rgba(232,196,42,0.35)',
-				color: '#e8c42a',
-				fontWeight: '600',
-				marginBottom: '12px',
-				whiteSpace: 'nowrap',
-			},
-		});
+		this._presenceBar = new PresenceChip({ appendTo: this.body, style: { display: 'none' } });
 
 		this._updatePresenceBar();
 
@@ -115,34 +192,22 @@ export default class AnimalPanel extends Dialog {
 			.filter(r => r.damId === a.id)
 			.sort((x, y) => new Date(y.breedingDate) - new Date(x.breedingDate));
 		const isFemale = a.sex === 'female' || !a.sex;
-		const statusColor = STATUS_COLORS[a.status] || '#4caf50';
+		const statusColor = STATUS_COLORS[a.status] || STATUS_COLORS.active;
 
 		// ── Animal summary ───────────────────────────────────────────────────────
-		const summary = new Component({
+		const summary = new Card({
 			appendTo: this.body,
-			style: {
-				display: 'grid',
-				gridTemplateColumns: '1fr 1fr 1fr',
-				gap: '8px',
-				marginBottom: '14px',
-				padding: '10px',
-				background: 'rgba(255,255,255,0.04)',
-				borderRadius: '8px',
-			},
+			style: { display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px', marginBottom: '14px' },
 		});
 
-		const summaryRow = (label, value, color = 'rgba(255,255,255,0.7)') => {
-			const cell = new Component({ appendTo: summary });
+		const summaryRow = (label, value, color) => {
+			const cell = new SummaryCell({ appendTo: summary });
+			new Elem({ tag: 'div', appendTo: cell, addClass: 'label', textContent: label });
 			new Elem({
 				tag: 'div',
 				appendTo: cell,
-				style: { fontSize: '10px', textTransform: 'uppercase', letterSpacing: '.06em', color: 'rgba(255,255,255,0.3)' },
-				textContent: label,
-			});
-			new Elem({
-				tag: 'div',
-				appendTo: cell,
-				style: { fontSize: '13px', color, fontWeight: '600', marginTop: '2px' },
+				addClass: 'value',
+				style: color ? { color } : {},
 				textContent: value || '—',
 			});
 		};
@@ -162,8 +227,8 @@ export default class AnimalPanel extends Dialog {
 		});
 		new Button({
 			appendTo: editRow,
+			icon: 'pen',
 			textContent: 'Edit animal',
-			style: { fontSize: '12px', padding: '4px 12px' },
 			onPointerPress: () =>
 				new AnimalDialog({
 					animal: this._animal,
@@ -180,20 +245,11 @@ export default class AnimalPanel extends Dialog {
 		});
 
 		// ── Health records ───────────────────────────────────────────────────────
-		const header1 = new Component({
-			appendTo: this.body,
-			style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' },
-		});
-		new Elem({
-			tag: 'div',
-			appendTo: header1,
-			style: { fontSize: '12px', textTransform: 'uppercase', letterSpacing: '.07em', color: 'rgba(255,255,255,0.35)' },
-			textContent: 'Health Records',
-		});
+		const header1 = new ActionHeader({ appendTo: this.body, title: 'Health Records' });
 		new Button({
 			appendTo: header1,
-			textContent: '+ Add',
-			style: { fontSize: '11px', padding: '2px 8px' },
+			icon: 'plus',
+			textContent: 'Add',
 			onPointerPress: () =>
 				new HealthRecordDialog({
 					animal: a,
@@ -202,59 +258,29 @@ export default class AnimalPanel extends Dialog {
 		});
 
 		if (!health.length) {
-			new Elem({
-				tag: 'div',
-				appendTo: this.body,
-				style: { fontSize: '12px', color: 'rgba(255,255,255,0.25)', padding: '5px 0 12px' },
-				textContent: 'No records yet',
-			});
+			new Empty({ appendTo: this.body, textContent: 'No records yet' });
 		} else {
 			const healthList = new Component({ appendTo: this.body, style: { marginBottom: '14px' } });
 
 			for (const r of health) {
 				const isWithdrawal = r.withdrawalDate && r.withdrawalDate > TODAY;
-				const row = new Component({
-					appendTo: healthList,
-					style: {
-						display: 'flex',
-						gap: '8px',
-						padding: '6px 0',
-						borderBottom: '1px solid rgba(255,255,255,0.06)',
-						cursor: 'pointer',
-						alignItems: 'flex-start',
-					},
-				});
+				const row = new RecordRow({ appendTo: healthList });
 
 				const icon = { vaccination: '💉', treatment: '💊', observation: '👁️', injury: '🩹' }[r.type] || '🏥';
-				new Elem({
-					tag: 'span',
-					appendTo: row,
-					style: { flexShrink: '0', fontSize: '14px', marginTop: '1px' },
-					textContent: icon,
-				});
+				new Elem({ tag: 'span', appendTo: row, addClass: 'marker', textContent: icon });
 
-				const info = new Component({ appendTo: row, style: { flex: '1', minWidth: '0' } });
-				new Elem({
-					tag: 'div',
-					appendTo: info,
-					style: { fontSize: '13px', color: '#fff', fontWeight: '500' },
-					textContent: r.drug || r.type || 'Record',
-				});
+				const info = new Component({ appendTo: row, addClass: 'info' });
+				new Elem({ tag: 'div', appendTo: info, addClass: 'title', textContent: r.drug || r.type || 'Record' });
 
 				const meta = [formatDate(r.date) || '—', r.dose, r.route].filter(Boolean).join(' · ');
-				if (meta)
-					new Elem({
-						tag: 'div',
-						appendTo: info,
-						style: { fontSize: '11px', color: 'rgba(255,255,255,0.4)', marginTop: '1px' },
-						textContent: meta,
-					});
+				if (meta) new Elem({ tag: 'div', appendTo: info, addClass: 'meta', textContent: meta });
 
 				if (isWithdrawal) {
 					new Elem({
 						tag: 'div',
 						appendTo: info,
-						style: { fontSize: '11px', color: '#e8c42a', fontWeight: '600', marginTop: '2px' },
+						addClass: 'flag',
+						style: { color: colors.light(colors.warning) },
 						textContent: `⚠ Withdrawal until ${r.withdrawalDate}`,
 					});
 				}
@@ -273,25 +299,11 @@ export default class AnimalPanel extends Dialog {
 
 		// ── Breeding records (females only) ──────────────────────────────────────
 		if (isFemale) {
-			const header2 = new Component({
-				appendTo: this.body,
-				style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' },
-			});
-			new Elem({
-				tag: 'div',
-				appendTo: header2,
-				style: {
-					fontSize: '12px',
-					textTransform: 'uppercase',
-					letterSpacing: '.07em',
-					color: 'rgba(255,255,255,0.35)',
-				},
-				textContent: 'Breeding Records',
-			});
+			const header2 = new ActionHeader({ appendTo: this.body, title: 'Breeding Records' });
 			new Button({
 				appendTo: header2,
-				textContent: '+ Add',
-				style: { fontSize: '11px', padding: '2px 8px' },
+				icon: 'plus',
+				textContent: 'Add',
 				onPointerPress: () =>
 					new BreedingDialog({
 						dam: a,
@@ -300,38 +312,17 @@ export default class AnimalPanel extends Dialog {
 			});
 
 			if (!breeding.length) {
-				new Elem({
-					tag: 'div',
-					appendTo: this.body,
-					style: { fontSize: '12px', color: 'rgba(255,255,255,0.25)', padding: '5px 0 12px' },
-					textContent: 'No breeding records',
-				});
+				new Empty({ appendTo: this.body, textContent: 'No breeding records' });
 			} else {
 				for (const r of breeding) {
 					const upcoming =
 						r.expectedDueDate && r.expectedDueDate > TODAY && r.status !== 'delivered' && r.status !== 'failed';
-					const statusColors = { pending: '#e8c42a', confirmed: '#4caf50', delivered: '#4a90d9', failed: '#888' };
-					const row = new Component({
-						appendTo: this.body,
-						style: {
-							display: 'flex',
-							gap: '8px',
-							padding: '6px 0',
-							borderBottom: '1px solid rgba(255,255,255,0.06)',
-							cursor: 'pointer',
-							alignItems: 'flex-start',
-						},
-					});
+					const row = new RecordRow({ appendTo: this.body });
 
-					new Elem({
-						tag: 'span',
-						appendTo: row,
-						style: { flexShrink: '0', fontSize: '14px', marginTop: '1px' },
-						textContent: '🐣',
-					});
+					new Elem({ tag: 'span', appendTo: row, addClass: 'marker', textContent: '🐣' });
 
-					const info = new Component({ appendTo: row, style: { flex: '1', minWidth: '0' } });
-					const statusColor = statusColors[r.status] || '#888';
+					const info = new Component({ appendTo: row, addClass: 'info' });
+					const statusColor = BREEDING_STATUS_COLORS[r.status] || colors.gray;
 					const statusLabel =
 						{ pending: 'Pending', confirmed: 'Confirmed', delivered: 'Delivered', failed: 'Failed' }[r.status] ||
 						r.status;
@@ -339,7 +330,8 @@ export default class AnimalPanel extends Dialog {
 					new Elem({
 						tag: 'div',
 						appendTo: info,
-						style: { fontSize: '13px', color: statusColor, fontWeight: '600' },
+						addClass: 'title',
+						style: { color: statusColor, fontWeight: '600' },
 						textContent: `${statusLabel} — bred ${formatDate(r.breedingDate) || '—'}`,
 					});
 
@@ -348,20 +340,15 @@ export default class AnimalPanel extends Dialog {
 					if (upcoming) parts.push(`due ${r.expectedDueDate}`);
 					if (r.actualBirthDate) parts.push(`born ${formatDate(r.actualBirthDate) || '—'}`);
 					if (r.litterSize) parts.push(`${r.litterSize} born, ${r.offspringSurvived ?? r.litterSize} survived`);
-					if (parts.length)
-						new Elem({
-							tag: 'div',
-							appendTo: info,
-							style: { fontSize: '11px', color: 'rgba(255,255,255,0.4)', marginTop: '1px' },
-							textContent: parts.join(' · '),
-						});
+					if (parts.length) new Elem({ tag: 'div', appendTo: info, addClass: 'meta', textContent: parts.join(' · ') });
 
 					if (upcoming) {
 						const daysLeft = Math.ceil((new Date(r.expectedDueDate) - new Date()) / 86_400_000);
 						new Elem({
 							tag: 'div',
 							appendTo: info,
-							style: { fontSize: '11px', color: '#4caf50', fontWeight: '600', marginTop: '2px' },
+							addClass: 'flag',
+							style: { color: colors.light(colors.success) },
 							textContent: `📅 Due in ${daysLeft} day${daysLeft !== 1 ? 's' : ''}`,
 						});
 					}

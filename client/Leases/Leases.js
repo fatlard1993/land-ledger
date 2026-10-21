@@ -1,4 +1,15 @@
-import { Button, Component, Elem, EmptyState, Icon, formatDate } from '@vanilla-bean/components';
+import {
+	Button,
+	Component,
+	Elem,
+	EmptyState,
+	formatDate,
+	Icon,
+	SectionLabel,
+	styled,
+	theme,
+	Toolbar,
+} from '@vanilla-bean/components';
 
 import AsyncView from '../AsyncView';
 
@@ -14,9 +25,34 @@ import {
 	deleteLoan,
 } from '../api';
 import context from '../context';
-import { PageView, PageToolbar, PageTitle, Card, SectionHeader } from '../Layout';
+import { PageView, RecordCard } from '../Layout';
 
 import LeaseDialog, { rateLabel } from './LeaseDialog';
+
+const { colors } = theme;
+
+const TitleRow = styled(
+	Component,
+	() => `
+		display: flex;
+		justify-content: space-between;
+		gap: 8px;
+		margin-bottom: 4px;
+	`,
+);
+
+const EntityName = styled(
+	Component,
+	({ colors }) => `
+		min-width: 0;
+		overflow: hidden;
+		font-size: 12px;
+		color: ${colors.muted};
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	`,
+	{ tag: 'span' },
+);
 
 const daysUntil = dateStr => {
 	if (!dateStr) return null;
@@ -28,16 +64,15 @@ const entityIcon = type => ({ field: '📋', building: '🏚️', equipment: '�
 
 export default class Leases extends AsyncView {
 	_buildView() {
-		this.toolbar = new PageToolbar({ appendTo: this });
-		new PageTitle({ appendTo: this.toolbar, textContent: 'Leases' });
+		this.toolbar = new Toolbar({ appendTo: this, variant: 'bar', heading: 'Leases', gap: 8 });
 
 		const addButtons = new Component({ appendTo: this.toolbar, style: { display: 'flex', gap: '6px' } });
 
 		new Button({
 			appendTo: addButtons,
-			textContent: '📤 I pay',
+			icon: 'arrow-trend-down',
+			textContent: 'I pay',
 			title: 'Add lease I pay',
-			style: { fontSize: '12px', padding: '5px 10px' },
 			onPointerPress: () =>
 				new LeaseDialog({
 					role: 'tenant',
@@ -61,9 +96,9 @@ export default class Leases extends AsyncView {
 
 		new Button({
 			appendTo: addButtons,
-			textContent: '📥 I receive',
+			icon: 'arrow-trend-up',
+			textContent: 'I receive',
 			title: 'Add income lease',
-			style: { fontSize: '12px', padding: '5px 10px' },
 			onPointerPress: () =>
 				new LeaseDialog({
 					role: 'lessor',
@@ -75,9 +110,9 @@ export default class Leases extends AsyncView {
 
 		new Button({
 			appendTo: addButtons,
-			textContent: '🏦 Loan',
+			icon: 'building-columns',
+			textContent: 'Loan',
 			title: 'Add loan / mortgage',
-			style: { fontSize: '12px', padding: '5px 10px' },
 			onPointerPress: () =>
 				new LeaseDialog({
 					role: 'loan',
@@ -140,17 +175,17 @@ export default class Leases extends AsyncView {
 		const loanList = allLoans.sort((a, b) => (a.lender || '').localeCompare(b.lender || ''));
 
 		if (outgoing.length) {
-			new SectionHeader({ appendTo: this.content, textContent: '📤 Leases I Pay' });
+			new SectionLabel({ appendTo: this.content, textContent: 'Leases I Pay' });
 			for (const lease of outgoing) this._renderCard(lease, 'tenant', false);
 		}
 
 		if (incoming.length) {
-			new SectionHeader({ appendTo: this.content, textContent: '📥 Income Leases' });
+			new SectionLabel({ appendTo: this.content, textContent: 'Income Leases' });
 			for (const lease of incoming) this._renderCard(lease, 'lessor', false);
 		}
 
 		if (loanList.length) {
-			new SectionHeader({ appendTo: this.content, textContent: '🏦 Loans & Mortgages' });
+			new SectionLabel({ appendTo: this.content, textContent: 'Loans & Mortgages' });
 			for (const loan of loanList) this._renderCard(loan, 'loan', true);
 		}
 	}
@@ -162,14 +197,14 @@ export default class Leases extends AsyncView {
 		const days = daysUntil(lease.renewalDate);
 		let urgentColor;
 		if (days !== null && days <= 30) {
-			urgentColor = '#e05252';
+			urgentColor = colors.light(colors.danger);
 		} else if (days !== null && days <= 90) {
-			urgentColor = '#e8832a';
+			urgentColor = colors.light(colors.orange);
 		} else {
 			urgentColor = null;
 		}
 
-		const card = new Card({
+		const card = new RecordCard({
 			appendTo: this.content,
 			onPointerPress: () =>
 				new LeaseDialog({
@@ -202,11 +237,7 @@ export default class Leases extends AsyncView {
 				}),
 		});
 
-		const titleRow = new Elem({
-			tag: 'div',
-			appendTo: card,
-			style: { display: 'flex', justifyContent: 'space-between', marginBottom: '4px' },
-		});
+		const titleRow = new TitleRow({ appendTo: card });
 		let primaryName;
 		if (isLoan) {
 			primaryName = lease.lender || 'Unknown Lender';
@@ -221,12 +252,7 @@ export default class Leases extends AsyncView {
 		const entityName = lease.entityName || field?.name;
 
 		if (entityName) {
-			new Elem({
-				tag: 'span',
-				appendTo: titleRow,
-				style: { fontSize: '12px', color: 'var(--color-medium)' },
-				textContent: `${entityIcon(lease.entityType || 'field')} ${entityName}`,
-			});
+			new EntityName({ appendTo: titleRow, textContent: `${entityIcon(lease.entityType || 'field')} ${entityName}` });
 		}
 
 		const meta = new Elem({ tag: 'div', appendTo: card, addClass: 'card-meta' });
@@ -235,11 +261,11 @@ export default class Leases extends AsyncView {
 		if (rate) {
 			let rateColor;
 			if (isLessor) {
-				rateColor = '#4caf50';
+				rateColor = colors.light(colors.success);
 			} else if (isLoan) {
-				rateColor = '#e8832a';
+				rateColor = colors.light(colors.orange);
 			} else {
-				rateColor = 'var(--color-medium)';
+				rateColor = colors.muted;
 			}
 			new Elem({
 				tag: 'span',
@@ -254,20 +280,19 @@ export default class Leases extends AsyncView {
 				new Elem({
 					tag: 'span',
 					appendTo: meta,
-					style: { color: 'rgba(255,255,255,0.3)' },
+					style: { color: colors.gray },
 					textContent: `#${lease.loanNumber}`,
 				});
 			if (lease.maturityDate)
 				new Elem({ tag: 'span', appendTo: meta, textContent: `Matures ${formatDate(lease.maturityDate)}` });
-			if (lease.escrow)
-				new Elem({ tag: 'span', appendTo: meta, style: { color: 'rgba(255,255,255,0.35)' }, textContent: 'Escrow' });
+			if (lease.escrow) new Elem({ tag: 'span', appendTo: meta, style: { color: colors.gray }, textContent: 'Escrow' });
 		} else {
 			if (lease.endDate) new Elem({ tag: 'span', appendTo: meta, textContent: `Ends ${formatDate(lease.endDate)}` });
 			if (lease.paymentTerms || lease.paymentDates)
 				new Elem({
 					tag: 'span',
 					appendTo: meta,
-					style: { color: 'rgba(255,255,255,0.3)' },
+					style: { color: colors.gray },
 					textContent: lease.paymentTerms || lease.paymentDates,
 				});
 

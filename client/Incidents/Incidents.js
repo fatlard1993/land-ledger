@@ -1,18 +1,59 @@
-import { Elem, EmptyState, formatDate } from '@vanilla-bean/components';
+import { Component, Elem, EmptyState, formatDate, SectionLabel, styled, Toolbar } from '@vanilla-bean/components';
 
 import AsyncView from '../AsyncView';
 
 import { getIncidents, updateIncident, deleteIncident } from '../api';
 import context from '../context';
-import { PageView, PageToolbar, PageTitle, Card, SectionHeader } from '../Layout';
+import { PageView, RecordCard } from '../Layout';
 import IncidentDialog, { incidentEmoji, severityMeta } from './IncidentDialog';
+
+const TitleRow = styled(
+	Component,
+	() => `
+		display: flex;
+		justify-content: space-between;
+		align-items: flex-start;
+		gap: 8px;
+		margin-bottom: 4px;
+	`,
+);
+
+const Severity = styled(
+	Component,
+	() => `
+		flex-shrink: 0;
+		font-size: 11px;
+		font-weight: 600;
+	`,
+	{ tag: 'span' },
+);
+
+const Description = styled(
+	Component,
+	({ colors }) => `
+		margin-top: 4px;
+		overflow: hidden;
+		font-size: 12px;
+		color: ${colors.gray};
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	`,
+);
+
+const Loss = styled(
+	Component,
+	({ colors }) => `
+		margin-top: 2px;
+		font-size: 12px;
+		color: ${colors.light(colors.orange)};
+	`,
+);
 
 const entityIcon = type => ({ field: '📋', building: '🏚️', equipment: '🚜' })[type] || '📋';
 
 export default class Incidents extends AsyncView {
 	_buildView() {
-		this.toolbar = new PageToolbar({ appendTo: this });
-		new PageTitle({ appendTo: this.toolbar, textContent: 'Incidents' });
+		this.toolbar = new Toolbar({ appendTo: this, variant: 'bar', heading: 'Incidents', gap: 8, wrap: false });
 
 		this.content = new PageView({ appendTo: this });
 	}
@@ -46,12 +87,12 @@ export default class Incidents extends AsyncView {
 		const resolved = all.filter(i => i.resolved);
 
 		if (open.length) {
-			new SectionHeader({ appendTo: this.content, textContent: '🔴 Open' });
+			new SectionLabel({ appendTo: this.content, textContent: 'Open' });
 			for (const incident of open) this._renderCard(incident);
 		}
 
 		if (resolved.length) {
-			new SectionHeader({ appendTo: this.content, textContent: '✅ Resolved' });
+			new SectionLabel({ appendTo: this.content, textContent: 'Resolved' });
 			for (const incident of resolved) this._renderCard(incident);
 		}
 	}
@@ -59,7 +100,7 @@ export default class Incidents extends AsyncView {
 	_renderCard(incident) {
 		const severity = severityMeta(incident.severity);
 
-		const card = new Card({
+		const card = new RecordCard({
 			appendTo: this.content,
 			onPointerPress: () =>
 				new IncidentDialog({
@@ -86,11 +127,7 @@ export default class Incidents extends AsyncView {
 				}),
 		});
 
-		const titleRow = new Elem({
-			tag: 'div',
-			appendTo: card,
-			style: { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '4px' },
-		});
+		const titleRow = new TitleRow({ appendTo: card });
 
 		new Elem({
 			tag: 'div',
@@ -99,12 +136,7 @@ export default class Incidents extends AsyncView {
 			textContent: `${incidentEmoji(incident.type)} ${incident.type || 'Incident'}`,
 		});
 
-		new Elem({
-			tag: 'span',
-			appendTo: titleRow,
-			style: { fontSize: '11px', color: severity.color, fontWeight: '600', flexShrink: '0', marginLeft: '8px' },
-			textContent: severity.label,
-		});
+		new Severity({ appendTo: titleRow, style: { color: severity.color }, textContent: severity.label });
 
 		const meta = new Elem({ tag: 'div', appendTo: card, addClass: 'card-meta' });
 
@@ -119,28 +151,11 @@ export default class Incidents extends AsyncView {
 		if (incident.date) new Elem({ tag: 'span', appendTo: meta, textContent: formatDate(incident.date) });
 
 		if (incident.description) {
-			new Elem({
-				tag: 'div',
-				appendTo: card,
-				style: {
-					fontSize: '12px',
-					color: 'rgba(255,255,255,0.45)',
-					marginTop: '4px',
-					overflow: 'hidden',
-					textOverflow: 'ellipsis',
-					whiteSpace: 'nowrap',
-				},
-				textContent: incident.description,
-			});
+			new Description({ appendTo: card, textContent: incident.description });
 		}
 
 		if (incident.estimatedLoss) {
-			new Elem({
-				tag: 'div',
-				appendTo: card,
-				style: { fontSize: '12px', color: '#e8932a', marginTop: '2px' },
-				textContent: `Est. loss: $${Number(incident.estimatedLoss).toLocaleString()}`,
-			});
+			new Loss({ appendTo: card, textContent: `Est. loss: $${Number(incident.estimatedLoss).toLocaleString()}` });
 		}
 	}
 }

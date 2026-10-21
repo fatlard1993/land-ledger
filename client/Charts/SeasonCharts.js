@@ -1,5 +1,5 @@
 import { Chart, registerables } from 'chart.js';
-import { Component, Elem, styled } from '@vanilla-bean/components';
+import { Card, Component, Elem, SectionLabel, styled, theme } from '@vanilla-bean/components';
 
 import {
 	soilDataByField,
@@ -14,27 +14,32 @@ Chart.register(...registerables);
 
 const isPreSeason = p => p.timing !== 'post-harvest' && p.timing !== 'fall';
 
+const { colors } = theme;
+
+// Chart.js draws on a canvas and reads its colors as strings
+const css = color => color.toRgbString();
+
 const CHART_OPTS = {
-	color: 'rgba(255,255,255,0.7)',
+	color: css(colors.muted),
 	scales: {
 		x: {
-			ticks: { color: 'rgba(255,255,255,0.5)', font: { size: 11 } },
-			grid: { color: 'rgba(255,255,255,0.06)' },
-			border: { color: 'rgba(255,255,255,0.1)' },
+			ticks: { color: css(colors.gray), font: { size: 11 } },
+			grid: { color: css(colors.alpha(colors.white, 0.06)) },
+			border: { color: css(colors.border) },
 		},
 		y: {
-			ticks: { color: 'rgba(255,255,255,0.5)', font: { size: 11 } },
-			grid: { color: 'rgba(255,255,255,0.06)' },
-			border: { color: 'rgba(255,255,255,0.1)' },
+			ticks: { color: css(colors.gray), font: { size: 11 } },
+			grid: { color: css(colors.alpha(colors.white, 0.06)) },
+			border: { color: css(colors.border) },
 		},
 	},
 	plugins: {
-		legend: { labels: { color: 'rgba(255,255,255,0.7)', font: { size: 11 }, boxWidth: 12, padding: 10 } },
+		legend: { labels: { color: css(colors.muted), font: { size: 11 }, boxWidth: 12, padding: 10 } },
 		tooltip: {
-			backgroundColor: 'rgba(20,20,20,0.95)',
-			titleColor: '#fff',
-			bodyColor: 'rgba(255,255,255,0.7)',
-			borderColor: 'rgba(255,255,255,0.15)',
+			backgroundColor: css(colors.alpha(colors.black, 0.95)),
+			titleColor: css(colors.white),
+			bodyColor: css(colors.muted),
+			borderColor: css(colors.border),
 			borderWidth: 1,
 		},
 	},
@@ -42,24 +47,11 @@ const CHART_OPTS = {
 	animation: { duration: 300 },
 };
 
-const ChartWrap = styled(
-	Component,
-	({ colors }) => `
-		background: ${colors.darker(colors.gray)};
-		border: 1px solid ${colors.dark(colors.gray)};
-		border-radius: 8px;
-		padding: 12px;
-		margin-bottom: 12px;
+const AXIS_TITLE = { color: css(colors.gray), font: { size: 10 } };
 
-		& .chart-title {
-			font-size: 11px;
-			text-transform: uppercase;
-			letter-spacing: 0.07em;
-			color: rgba(255,255,255,0.4);
-			margin-bottom: 8px;
-		}
-	`,
-);
+const ChartWrap = styled(Card, () => 'margin-bottom: 12px;');
+
+const ChartTitle = styled(SectionLabel, () => 'margin: 0 0 8px;');
 
 const makeCanvas = (appendTo, height = 200) => {
 	const wrap = new Elem({ tag: 'div', appendTo, style: { position: 'relative', height: `${height}px` } });
@@ -97,7 +89,7 @@ export default class SeasonCharts extends Component {
 			new Elem({
 				tag: 'p',
 				appendTo: this,
-				style: { fontSize: '12px', color: 'rgba(255,255,255,0.3)', textAlign: 'center', padding: '12px 0' },
+				style: { fontSize: '12px', color: colors.gray, textAlign: 'center', padding: '12px 0' },
 				textContent: 'Need data from at least 2 seasons to show trends',
 			});
 
@@ -169,7 +161,7 @@ export default class SeasonCharts extends Component {
 	) {
 		const wrap = new ChartWrap({ appendTo: this });
 
-		new Elem({ tag: 'div', appendTo: wrap, addClass: 'chart-title', textContent: title });
+		new ChartTitle({ appendTo: wrap, textContent: title });
 
 		const canvas = makeCanvas(wrap, fieldFilter ? 220 : 200);
 		const datasets = [];
@@ -204,8 +196,8 @@ export default class SeasonCharts extends Component {
 					datasets.push({
 						label: `Post-harvest ${singleLabel}`,
 						data: postData,
-						borderColor: '#4caf50',
-						backgroundColor: '#4caf5022',
+						borderColor: css(colors.success),
+						backgroundColor: css(colors.alpha(colors.success, 0.13)),
 						borderDash: [4, 3],
 						tension: 0.3,
 						pointRadius: 5,
@@ -238,7 +230,7 @@ export default class SeasonCharts extends Component {
 					...CHART_OPTS.scales,
 					y: {
 						...CHART_OPTS.scales.y,
-						title: { display: true, text: yLabel, color: 'rgba(255,255,255,0.4)', font: { size: 10 } },
+						title: { display: true, text: yLabel, ...AXIS_TITLE },
 						...(beginAtZero && { beginAtZero: true }),
 					},
 				},
@@ -266,12 +258,7 @@ export default class SeasonCharts extends Component {
 		const wrap = new ChartWrap({ appendTo: this });
 		const roleLabel = r => (r === 'treatment' ? 'Treatment' : 'Control');
 
-		new Elem({
-			tag: 'div',
-			appendTo: wrap,
-			addClass: 'chart-title',
-			textContent: `Trial Comparison — ${treatmentField.trialGroup}`,
-		});
+		new ChartTitle({ appendTo: wrap, textContent: `Trial Comparison — ${treatmentField.trialGroup}` });
 
 		const renderMetric = (title, yAxisLabel, extractFn) => {
 			const tData = years.map(y => {
@@ -290,7 +277,7 @@ export default class SeasonCharts extends Component {
 			new Elem({
 				tag: 'div',
 				appendTo: wrap,
-				style: { fontSize: '11px', color: 'rgba(255,255,255,0.35)', marginBottom: '4px', marginTop: '8px' },
+				style: { fontSize: '11px', color: colors.gray, marginBottom: '4px', marginTop: '8px' },
 				textContent: title,
 			});
 
@@ -301,8 +288,8 @@ export default class SeasonCharts extends Component {
 				datasets.push({
 					label: `${roleLabel(treatmentField.trialRole)} — ${treatmentField.name}`,
 					data: tData,
-					borderColor: '#4caf50',
-					backgroundColor: '#4caf5022',
+					borderColor: css(colors.success),
+					backgroundColor: css(colors.alpha(colors.success, 0.13)),
 					tension: 0.3,
 					pointRadius: 5,
 					fill: false,
@@ -313,8 +300,8 @@ export default class SeasonCharts extends Component {
 				datasets.push({
 					label: `${roleLabel(controlField.trialRole)} — ${controlField.name}`,
 					data: cData,
-					borderColor: '#9e9e9e',
-					backgroundColor: '#9e9e9e22',
+					borderColor: css(colors.gray),
+					backgroundColor: css(colors.alpha(colors.gray, 0.13)),
 					borderDash: [5, 4],
 					tension: 0.3,
 					pointRadius: 5,
@@ -331,7 +318,7 @@ export default class SeasonCharts extends Component {
 						...CHART_OPTS.scales,
 						y: {
 							...CHART_OPTS.scales.y,
-							title: { display: true, text: yAxisLabel, color: 'rgba(255,255,255,0.4)', font: { size: 10 } },
+							title: { display: true, text: yAxisLabel, ...AXIS_TITLE },
 						},
 					},
 				},
@@ -347,7 +334,7 @@ export default class SeasonCharts extends Component {
 	_renderYieldChart(fieldIds, yieldData, fields, years, practices, fieldFilter) {
 		const wrap = new ChartWrap({ appendTo: this });
 
-		new Elem({ tag: 'div', appendTo: wrap, addClass: 'chart-title', textContent: 'Yield per acre over time' });
+		new ChartTitle({ appendTo: wrap, textContent: 'Yield per acre over time' });
 
 		const canvas = makeCanvas(wrap, fieldFilter ? 220 : 200);
 		const datasets = [];
@@ -402,7 +389,7 @@ export default class SeasonCharts extends Component {
 					...CHART_OPTS.scales,
 					y: {
 						...CHART_OPTS.scales.y,
-						title: { display: true, text: 'bu/ac (or equiv)', color: 'rgba(255,255,255,0.4)', font: { size: 10 } },
+						title: { display: true, text: 'bu/ac (or equiv)', ...AXIS_TITLE },
 						beginAtZero: false,
 					},
 				},
@@ -419,7 +406,7 @@ export default class SeasonCharts extends Component {
 
 		const wrap = new ChartWrap({ appendTo: this });
 
-		new Elem({ tag: 'div', appendTo: wrap, addClass: 'chart-title', textContent: 'Input cost vs. revenue ($/ac)' });
+		new ChartTitle({ appendTo: wrap, textContent: 'Input cost vs. revenue ($/ac)' });
 
 		const canvas = makeCanvas(wrap, 220);
 
@@ -432,8 +419,8 @@ export default class SeasonCharts extends Component {
 			datasets.push({
 				label: 'Input cost',
 				data: inputCosts,
-				backgroundColor: '#e8c42a55',
-				borderColor: '#e8c42a',
+				backgroundColor: css(colors.alpha(colors.warning, 0.33)),
+				borderColor: css(colors.warning),
 				borderWidth: 2,
 				type: 'bar',
 			});
@@ -441,8 +428,8 @@ export default class SeasonCharts extends Component {
 			datasets.push({
 				label: 'Revenue',
 				data: revenues,
-				backgroundColor: '#4caf5055',
-				borderColor: '#4caf50',
+				backgroundColor: css(colors.alpha(colors.success, 0.33)),
+				borderColor: css(colors.success),
 				borderWidth: 2,
 				type: 'bar',
 			});
@@ -463,7 +450,7 @@ export default class SeasonCharts extends Component {
 			datasets.push({
 				label: 'Net P/L',
 				data: net,
-				borderColor: '#fff',
+				borderColor: css(colors.white),
 				backgroundColor: 'transparent',
 				borderWidth: 1.5,
 				tension: 0.3,
@@ -486,7 +473,7 @@ export default class SeasonCharts extends Component {
 					...CHART_OPTS.scales,
 					y: {
 						...CHART_OPTS.scales.y,
-						title: { display: true, text: '$/ac', color: 'rgba(255,255,255,0.4)', font: { size: 10 } },
+						title: { display: true, text: '$/ac', ...AXIS_TITLE },
 					},
 				},
 			},

@@ -1,18 +1,62 @@
-import { Elem, EmptyState, formatDate } from '@vanilla-bean/components';
+import {
+	Component,
+	Elem,
+	EmptyState,
+	formatDate,
+	SectionLabel,
+	styled,
+	theme,
+	Toolbar,
+} from '@vanilla-bean/components';
 
 import AsyncView from '../AsyncView';
 
 import { getMaintenance, getEquipment, updateMaintenance, deleteMaintenance } from '../api';
 import context from '../context';
-import { PageView, PageToolbar, PageTitle, Card, SectionHeader } from '../Layout';
+import { PageView, RecordCard } from '../Layout';
 import MaintenanceDialog, { WORK_TYPES } from '../Equipment/MaintenanceDialog';
+
+const { colors } = theme;
+
+const TitleRow = styled(
+	Component,
+	() => `
+		display: flex;
+		justify-content: space-between;
+		align-items: flex-start;
+		gap: 8px;
+		margin-bottom: 4px;
+	`,
+);
+
+const Cost = styled(
+	Component,
+	({ colors }) => `
+		flex-shrink: 0;
+		font-size: 13px;
+		font-weight: 600;
+		color: ${colors.light(colors.orange)};
+	`,
+	{ tag: 'span' },
+);
+
+const Parts = styled(
+	Component,
+	({ colors }) => `
+		margin-top: 4px;
+		overflow: hidden;
+		font-size: 12px;
+		color: ${colors.gray};
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	`,
+);
 
 const workTypeMeta = value => WORK_TYPES.find(w => w.value === value) || WORK_TYPES[0];
 
 export default class Maintenance extends AsyncView {
 	_buildView() {
-		this.toolbar = new PageToolbar({ appendTo: this });
-		new PageTitle({ appendTo: this.toolbar, textContent: 'Maintenance History' });
+		this.toolbar = new Toolbar({ appendTo: this, variant: 'bar', heading: 'Maintenance History', gap: 8, wrap: false });
 
 		this.content = new PageView({ appendTo: this });
 	}
@@ -55,7 +99,7 @@ export default class Maintenance extends AsyncView {
 		}
 
 		for (const [year, records] of byYear) {
-			new SectionHeader({ appendTo: this.content, textContent: String(year) });
+			new SectionLabel({ appendTo: this.content, textContent: String(year) });
 
 			for (const rec of records) this._renderCard(rec);
 		}
@@ -66,7 +110,7 @@ export default class Maintenance extends AsyncView {
 		const equipment = this._equipment?.body?.[rec.equipmentId];
 		const equipmentName = equipment?.name || `Equipment (deleted)`;
 
-		const card = new Card({
+		const card = new RecordCard({
 			appendTo: this.content,
 			onPointerPress: () =>
 				new MaintenanceDialog({
@@ -94,11 +138,7 @@ export default class Maintenance extends AsyncView {
 				}),
 		});
 
-		const titleRow = new Elem({
-			tag: 'div',
-			appendTo: card,
-			style: { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '4px' },
-		});
+		const titleRow = new TitleRow({ appendTo: card });
 
 		new Elem({
 			tag: 'div',
@@ -108,12 +148,7 @@ export default class Maintenance extends AsyncView {
 		});
 
 		if (rec.cost) {
-			new Elem({
-				tag: 'span',
-				appendTo: titleRow,
-				style: { fontSize: '13px', color: '#e8832a', fontWeight: '600', flexShrink: '0', marginLeft: '8px' },
-				textContent: `$${Number(rec.cost).toLocaleString()}`,
-			});
+			new Cost({ appendTo: titleRow, textContent: `$${Number(rec.cost).toLocaleString()}` });
 		}
 
 		const meta = new Elem({ tag: 'div', appendTo: card, addClass: 'card-meta' });
@@ -121,10 +156,7 @@ export default class Maintenance extends AsyncView {
 		new Elem({
 			tag: 'span',
 			appendTo: meta,
-			style: {
-				color: equipment ? 'var(--color-medium)' : 'rgba(255,255,255,0.25)',
-				fontStyle: equipment ? '' : 'italic',
-			},
+			style: equipment ? {} : { color: colors.gray, fontStyle: 'italic' },
 			textContent: `🚜 ${equipmentName}`,
 		});
 
@@ -132,19 +164,7 @@ export default class Maintenance extends AsyncView {
 		if (rec.usageAtService) new Elem({ tag: 'span', appendTo: meta, textContent: String(rec.usageAtService) });
 
 		if (rec.parts) {
-			new Elem({
-				tag: 'div',
-				appendTo: card,
-				style: {
-					fontSize: '12px',
-					color: 'rgba(255,255,255,0.4)',
-					marginTop: '4px',
-					overflow: 'hidden',
-					textOverflow: 'ellipsis',
-					whiteSpace: 'nowrap',
-				},
-				textContent: rec.parts,
-			});
+			new Parts({ appendTo: card, textContent: rec.parts });
 		}
 	}
 }

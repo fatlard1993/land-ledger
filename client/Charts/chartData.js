@@ -1,8 +1,22 @@
 // Derive chart data from Events (not Seasons)
 
+import { theme } from '@vanilla-bean/components';
+
 import parseDetails from '../utils/parseDetails';
 
-export const FIELD_COLORS = ['#4a90d9', '#4caf50', '#e8c42a', '#e05252', '#7b68ee', '#00bcd4', '#ff7043', '#ab47bc'];
+const { colors } = theme;
+
+// One line per field, as hex: the charts add a two-digit alpha suffix for their fills
+export const FIELD_COLORS = [
+	colors.blue,
+	colors.green,
+	colors.yellow,
+	colors.red,
+	colors.light(colors.purple),
+	colors.teal,
+	colors.orange,
+	colors.pink,
+].map(color => color.toHexString());
 
 // Returns { fieldId: [{year, timing, organicMatter, soilRespiration, pH, brayP, potassium, cec, nitrate}] }
 export const soilDataByField = events => {

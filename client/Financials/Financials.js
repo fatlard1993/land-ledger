@@ -1,4 +1,14 @@
-import { Elem, Component, styled } from '@vanilla-bean/components';
+import {
+	Card,
+	Component,
+	Elem,
+	EmptyState,
+	SectionLabel,
+	Select,
+	styled,
+	theme,
+	Toolbar,
+} from '@vanilla-bean/components';
 
 import AsyncView from '../AsyncView';
 
@@ -18,20 +28,9 @@ import {
 import { annualAmount, FREQUENCIES } from '../Budget/BudgetItemDialog';
 import parseDetails from '../utils/parseDetails';
 import { formatDollar } from '../utils/format';
-import { PageView, PageToolbar, PageTitle } from '../Layout';
+import { PageView } from '../Layout';
 import { toSqm, convertArea } from '../geo';
 import { economicsByField } from '../Charts/chartData';
-
-const Card = styled(
-	Component,
-	({ colors }) => `
-	background: ${colors.darker(colors.gray)};
-	border: 1px solid ${colors.dark(colors.gray)};
-	border-radius: 8px;
-	padding: 14px 16px;
-	margin-bottom: 10px;
-`,
-);
 
 const formatMoney = n => {
 	const abs = Math.abs(n);
@@ -40,43 +39,156 @@ const formatMoney = n => {
 	return n < 0 ? `-${str}` : str;
 };
 
+const { colors } = theme;
+
+// Gains read green, losses red, nothing at all quiet
+const signColor = n => {
+	if (n > 0) return colors.light(colors.success);
+	if (n < 0) return colors.light(colors.danger);
+
+	return colors.gray;
+};
+
+const CardLabel = styled(SectionLabel, () => 'margin: 0 0 10px;');
+
+const BarRow = styled(
+	Component,
+	() => `
+		display: flex;
+		align-items: center;
+		gap: 8px;
+		margin-bottom: 6px;
+	`,
+);
+
+const BarLabel = styled(
+	Component,
+	({ colors }) => `
+		flex: 0 1 160px;
+		min-width: 0;
+		overflow: hidden;
+		font-size: 12px;
+		color: ${colors.muted};
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	`,
+	{ tag: 'span' },
+);
+
+const Track = styled(
+	Component,
+	({ colors }) => `
+		flex: 1;
+		height: 6px;
+		overflow: hidden;
+		border-radius: 3px;
+		background: ${colors.alpha(colors.white, 0.05)};
+
+		&.thin {
+			flex: none;
+			height: 5px;
+			border-radius: 2px;
+		}
+
+		& > div {
+			height: 100%;
+			border-radius: inherit;
+			transition: width 0.3s;
+		}
+	`,
+);
+
+const Amount = styled(
+	Component,
+	() => `
+		flex-shrink: 0;
+		width: 52px;
+		font-size: 12px;
+		text-align: right;
+	`,
+	{ tag: 'span' },
+);
+
+// A label and its amount, at either end of a line
+const AmountRow = styled(
+	Component,
+	({ colors }) => `
+		display: flex;
+		justify-content: space-between;
+		gap: 8px;
+		padding: 2px 0;
+		font-size: 12px;
+
+		& > :first-child {
+			color: ${colors.gray};
+		}
+	`,
+);
+
+const Note = styled(
+	Component,
+	({ colors }) => `
+		margin-top: 8px;
+		font-size: 10px;
+		color: ${colors.gray};
+	`,
+);
+
+// Tables wider than a phone scroll inside their card instead of widening the page
+const TableScroll = styled(
+	Component,
+	() => `
+		overflow-x: auto;
+
+		& > * {
+			min-width: 460px;
+		}
+	`,
+);
+
+const GridRow = styled(
+	Component,
+	({ colors }) => `
+		display: grid;
+		align-items: center;
+		gap: 6px;
+		padding: 7px 0;
+		border-bottom: 1px solid ${colors.border};
+
+		&.head {
+			padding: 2px 0 6px;
+			font-size: 10px;
+			letter-spacing: 0.06em;
+			text-transform: uppercase;
+			color: ${colors.gray};
+		}
+	`,
+);
+
+const RowName = styled(
+	Component,
+	({ colors }) => `
+		overflow: hidden;
+		font-size: 13px;
+		font-weight: 600;
+		color: ${colors.white};
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	`,
+);
+
 const Bar = ({ appendTo, label, amount, total, color }) => {
 	const pct = total > 0 ? Math.max(2, (amount / total) * 100) : 0;
-	const row = new Component({
-		appendTo,
-		style: { display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' },
-	});
+	const row = new BarRow({ appendTo });
 
-	new Elem({
-		tag: 'span',
-		appendTo: row,
-		style: {
-			fontSize: '12px',
-			color: 'rgba(255,255,255,0.65)',
-			width: '160px',
-			flexShrink: '0',
-			overflow: 'hidden',
-			textOverflow: 'ellipsis',
-			whiteSpace: 'nowrap',
-		},
-		textContent: label,
-	});
+	new BarLabel({ appendTo: row, textContent: label });
 
-	const track = new Elem({
-		tag: 'div',
-		appendTo: row,
-		style: { flex: '1', height: '6px', background: 'rgba(255,255,255,0.07)', borderRadius: '3px', overflow: 'hidden' },
-	});
+	const track = new Track({ appendTo: row });
 
-	new Elem({
-		tag: 'div',
-		appendTo: track,
-		style: { width: `${pct}%`, height: '100%', background: color, borderRadius: '3px', transition: 'width 0.3s' },
-	});
-	new Elem({
-		tag: 'span',
+	new Elem({ tag: 'div', appendTo: track, style: { width: `${pct}%`, background: color } });
+	new Amount({
 		appendTo: row,
-		style: { fontSize: '12px', color, fontWeight: '600', width: '52px', textAlign: 'right', flexShrink: '0' },
+		style: { color: colors.light(color), fontWeight: '600' },
 		textContent: formatMoney(amount),
 	});
 };
@@ -85,32 +197,14 @@ const YEAR = new Date().getFullYear();
 
 export default class Financials extends AsyncView {
 	_buildView() {
-		this.toolbar = new PageToolbar({ appendTo: this });
-		new PageTitle({ appendTo: this.toolbar, textContent: 'Financials' });
+		this.toolbar = new Toolbar({ appendTo: this, variant: 'bar', heading: 'Financials', gap: 8, wrap: false });
 
-		// Year selector
-		const yearSelect = new Elem({
-			tag: 'select',
+		const yearSelect = new Select({
 			appendTo: this.toolbar,
-			style: {
-				background: 'transparent',
-				border: '1px solid rgba(255,255,255,0.2)',
-				borderRadius: '4px',
-				color: '#fff',
-				fontSize: '13px',
-				padding: '4px 8px',
-				cursor: 'pointer',
-				fontFamily: 'inherit',
-			},
+			options: [YEAR, YEAR - 1, YEAR - 2].map(y => ({ label: String(y), value: String(y) })),
+			value: String(YEAR),
+			style: { width: 'auto' },
 		});
-
-		[YEAR, YEAR - 1, YEAR - 2].forEach(y => {
-			const o = document.createElement('option');
-			o.value = y;
-			o.textContent = y;
-			yearSelect.elem.append(o);
-		});
-		yearSelect.elem.value = YEAR;
 
 		this.content = new PageView({ appendTo: this });
 		this._year = YEAR;
@@ -261,20 +355,10 @@ export default class Financials extends AsyncView {
 				style: { display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '8px' },
 			});
 
-			new Elem({
-				tag: 'div',
-				appendTo: nwHeader,
-				style: {
-					fontSize: '11px',
-					textTransform: 'uppercase',
-					letterSpacing: '.07em',
-					color: 'rgba(255,255,255,0.35)',
-				},
-				textContent: 'Net Worth Snapshot',
-			});
+			new CardLabel({ appendTo: nwHeader, style: { margin: '0' }, textContent: 'Net Worth Snapshot' });
 
 			const nw = inventoryValue + appraisedAssets + equipmentAppraisedValue - outstandingLoans;
-			const nwColor = nw >= 0 ? '#4caf50' : '#e05252';
+			const nwColor = nw >= 0 ? colors.light(colors.success) : colors.light(colors.danger);
 
 			new Elem({
 				tag: 'div',
@@ -284,54 +368,33 @@ export default class Financials extends AsyncView {
 			});
 
 			const nwRows = [
-				inventoryValue > 0 ? ['📦 Supplies inventory', inventoryValue, '#4caf50'] : null,
-				equipmentAppraisedValue > 0 ? ['🚜 Equipment (appraised)', equipmentAppraisedValue, '#4caf50'] : null,
-				appraisedAssets > 0 ? ['🏠 Property (appraised)', appraisedAssets, '#4caf50'] : null,
-				outstandingLoans > 0 ? ['🏦 Outstanding loans', -outstandingLoans, '#e05252'] : null,
+				inventoryValue > 0 ? ['📦 Supplies inventory', inventoryValue] : null,
+				equipmentAppraisedValue > 0 ? ['🚜 Equipment (appraised)', equipmentAppraisedValue] : null,
+				appraisedAssets > 0 ? ['🏠 Property (appraised)', appraisedAssets] : null,
+				outstandingLoans > 0 ? ['🏦 Outstanding loans', -outstandingLoans] : null,
 			].filter(Boolean);
 
-			for (const [label, amount, color] of nwRows) {
-				const row = new Component({
-					appendTo: nwCard,
-					style: { display: 'flex', justifyContent: 'space-between', fontSize: '12px', padding: '2px 0' },
-				});
+			for (const [label, amount] of nwRows) {
+				const row = new AmountRow({ appendTo: nwCard });
 
-				new Elem({ tag: 'span', appendTo: row, style: { color: 'rgba(255,255,255,0.5)' }, textContent: label });
-				new Elem({ tag: 'span', appendTo: row, style: { color } }).elem.textContent =
+				new Elem({ tag: 'span', appendTo: row, textContent: label });
+				new Elem({ tag: 'span', appendTo: row, style: { color: signColor(amount) } }).elem.textContent =
 					`${amount >= 0 ? '+' : ''}${formatDollar(Math.abs(amount))}`;
 			}
 
 			// Per-loan equity breakdown
 			if (loanEquity.length) {
-				new Elem({
-					tag: 'div',
+				new SectionLabel({
 					appendTo: nwCard,
-					style: {
-						marginTop: '8px',
-						paddingTop: '8px',
-						borderTop: '1px solid rgba(255,255,255,0.08)',
-						fontSize: '10px',
-						textTransform: 'uppercase',
-						letterSpacing: '.06em',
-						color: 'rgba(255,255,255,0.25)',
-						marginBottom: '4px',
-					},
+					style: { margin: '8px 0 4px', paddingTop: '8px', borderTop: `1px solid ${colors.border}` },
 					textContent: 'Equity by Asset',
 				});
 
 				for (const l of loanEquity) {
-					const eqColor = l.equity >= 0 ? '#4caf50' : '#e05252';
-					const row = new Component({
-						appendTo: nwCard,
-						style: { display: 'flex', justifyContent: 'space-between', fontSize: '12px', padding: '2px 0' },
-					});
+					const eqColor = l.equity >= 0 ? colors.light(colors.success) : colors.light(colors.danger);
+					const row = new AmountRow({ appendTo: nwCard });
 
-					new Elem({
-						tag: 'span',
-						appendTo: row,
-						style: { color: 'rgba(255,255,255,0.5)' },
-						textContent: `${l.name} (${l.ltv}% LTV)`,
-					});
+					new Elem({ tag: 'span', appendTo: row, textContent: `${l.name} (${l.ltv}% LTV)` });
 					new Elem({ tag: 'span', appendTo: row, style: { color: eqColor, fontWeight: '600' } }).elem.textContent =
 						`${formatDollar(l.equity)} equity`;
 				}
@@ -342,12 +405,7 @@ export default class Financials extends AsyncView {
 		this._renderBudgetCard(yr, lastMonth, MONTHS);
 
 		if (totalRevenue === 0 && totalExpenses === 0) {
-			new Elem({
-				tag: 'div',
-				appendTo: this.content,
-				style: { fontSize: '13px', color: 'rgba(255,255,255,0.35)', textAlign: 'center', padding: '24px 0' },
-				textContent: `No transactions recorded for ${yr}`,
-			});
+			new EmptyState({ appendTo: this.content, icon: 'sack-dollar', title: `No transactions recorded for ${yr}` });
 
 			return;
 		}
@@ -359,10 +417,9 @@ export default class Financials extends AsyncView {
 			style: { display: 'flex', justifyContent: 'space-between', marginBottom: '8px' },
 		});
 
-		new Elem({
-			tag: 'div',
+		new CardLabel({
 			appendTo: monthHeader,
-			style: { fontSize: '11px', textTransform: 'uppercase', letterSpacing: '.07em', color: 'rgba(255,255,255,0.35)' },
+			style: { margin: '0' },
 			textContent: `Monthly — ${yr}${isThisYear ? ` (through ${MONTHS[lastMonth]})` : ''}`,
 		});
 
@@ -374,7 +431,7 @@ export default class Financials extends AsyncView {
 			new Elem({
 				tag: 'div',
 				appendTo: monthCard,
-				style: { fontSize: '12px', color: 'rgba(255,255,255,0.25)' },
+				style: { fontSize: '12px', color: colors.gray },
 				textContent: 'No recorded transactions yet',
 			});
 		} else {
@@ -389,7 +446,7 @@ export default class Financials extends AsyncView {
 				new Elem({
 					tag: 'span',
 					appendTo: mRow,
-					style: { fontSize: '11px', color: 'rgba(255,255,255,0.35)', width: '26px', flexShrink: '0' },
+					style: { fontSize: '11px', color: colors.gray, width: '26px', flexShrink: '0' },
 					textContent: m.name,
 				});
 
@@ -399,53 +456,30 @@ export default class Financials extends AsyncView {
 				});
 
 				if (m.income) {
-					const incTrack = new Elem({
-						tag: 'div',
-						appendTo: barArea,
-						style: { height: '5px', background: 'rgba(255,255,255,0.07)', borderRadius: '2px', overflow: 'hidden' },
-					});
+					const incTrack = new Track({ appendTo: barArea, addClass: 'thin' });
 
 					new Elem({
 						tag: 'div',
 						appendTo: incTrack,
-						style: {
-							width: `${(m.income / maxVal) * 100}%`,
-							height: '100%',
-							background: '#4caf50',
-							borderRadius: '2px',
-						},
+						style: { width: `${(m.income / maxVal) * 100}%`, background: colors.success },
 					});
 				}
 
 				if (m.expense) {
-					const expTrack = new Elem({
-						tag: 'div',
-						appendTo: barArea,
-						style: { height: '5px', background: 'rgba(255,255,255,0.07)', borderRadius: '2px', overflow: 'hidden' },
-					});
+					const expTrack = new Track({ appendTo: barArea, addClass: 'thin' });
 
 					new Elem({
 						tag: 'div',
 						appendTo: expTrack,
-						style: {
-							width: `${(m.expense / maxVal) * 100}%`,
-							height: '100%',
-							background: '#e8c42a',
-							borderRadius: '2px',
-						},
+						style: { width: `${(m.expense / maxVal) * 100}%`, background: colors.warning },
 					});
 				}
 
 				const net = m.income - m.expense;
-				let netColor;
-				if (net > 0) netColor = '#4caf50';
-				else if (net < 0) netColor = '#e05252';
-				else netColor = 'rgba(255,255,255,0.3)';
 
-				new Elem({
-					tag: 'span',
+				new Amount({
 					appendTo: mRow,
-					style: { fontSize: '11px', color: netColor, width: '52px', textAlign: 'right', flexShrink: '0' },
+					style: { fontSize: '11px', color: signColor(net) },
 					textContent: net !== 0 ? formatMoney(net) : '—',
 				});
 			}
@@ -454,8 +488,8 @@ export default class Financials extends AsyncView {
 			const legend = new Component({ appendTo: monthCard, style: { display: 'flex', gap: '12px', marginTop: '6px' } });
 
 			[
-				['#4caf50', 'Income'],
-				['#e8c42a', 'Expense'],
+				[colors.success, 'Income'],
+				[colors.warning, 'Expense'],
 			].forEach(([color, label]) => {
 				const item = new Component({ appendTo: legend, style: { display: 'flex', alignItems: 'center', gap: '4px' } });
 
@@ -467,7 +501,7 @@ export default class Financials extends AsyncView {
 				new Elem({
 					tag: 'span',
 					appendTo: item,
-					style: { fontSize: '10px', color: 'rgba(255,255,255,0.3)' },
+					style: { fontSize: '10px', color: colors.gray },
 					textContent: label,
 				});
 			});
@@ -477,18 +511,7 @@ export default class Financials extends AsyncView {
 		if (totalRevenue > 0) {
 			const incCard = new Card({ appendTo: this.content });
 
-			new Elem({
-				tag: 'div',
-				appendTo: incCard,
-				style: {
-					fontSize: '11px',
-					textTransform: 'uppercase',
-					letterSpacing: '.07em',
-					color: 'rgba(255,255,255,0.35)',
-					marginBottom: '10px',
-				},
-				textContent: 'Income Sources',
-			});
+			new CardLabel({ appendTo: incCard, textContent: 'Income Sources' });
 
 			// Tally recorded revenue by type + harvest events
 			const incByType = new Map();
@@ -514,25 +537,14 @@ export default class Financials extends AsyncView {
 				.filter(s => s.amount > 0)
 				.sort((a, b) => b.amount - a.amount);
 
-			for (const s of incSources) Bar({ appendTo: incCard, ...s, total: totalRevenue, color: '#4caf50' });
+			for (const s of incSources) Bar({ appendTo: incCard, ...s, total: totalRevenue, color: colors.success });
 		}
 
 		// ── Expense breakdown ─────────────────────────────────────────────────────
 		if (totalExpenses > 0) {
 			const expCard = new Card({ appendTo: this.content });
 
-			new Elem({
-				tag: 'div',
-				appendTo: expCard,
-				style: {
-					fontSize: '11px',
-					textTransform: 'uppercase',
-					letterSpacing: '.07em',
-					color: 'rgba(255,255,255,0.35)',
-					marginBottom: '10px',
-				},
-				textContent: 'Where It Went',
-			});
+			new CardLabel({ appendTo: expCard, textContent: 'Where It Went' });
 
 			const expByType = new Map();
 
@@ -582,7 +594,7 @@ export default class Financials extends AsyncView {
 				.map(([k, v]) => ({ label: k, amount: v }))
 				.sort((a, b) => b.amount - a.amount);
 
-			for (const s of expSources) Bar({ appendTo: expCard, ...s, total: totalExpenses, color: '#e8c42a' });
+			for (const s of expSources) Bar({ appendTo: expCard, ...s, total: totalExpenses, color: colors.warning });
 		}
 
 		// ── Cross-field comparison ────────────────────────────────────────────────
@@ -622,75 +634,33 @@ export default class Financials extends AsyncView {
 
 			const fieldCard = new Card({ appendTo: this.content });
 
-			new Elem({
-				tag: 'div',
-				appendTo: fieldCard,
-				style: {
-					fontSize: '11px',
-					textTransform: 'uppercase',
-					letterSpacing: '.07em',
-					color: 'rgba(255,255,255,0.35)',
-					marginBottom: '10px',
-				},
-				textContent: `Fields — ${yr}`,
-			});
+			new CardLabel({ appendTo: fieldCard, textContent: `Fields — ${yr}` });
+
+			const table = new Component({ appendTo: new TableScroll({ appendTo: fieldCard }) });
+			const fieldColumns = { gridTemplateColumns: '1fr 70px 70px 70px 80px 60px' };
 
 			// Column header
-			const header = new Component({
-				appendTo: fieldCard,
-				style: {
-					display: 'grid',
-					gridTemplateColumns: '1fr 70px 70px 70px 80px 60px',
-					gap: '6px',
-					padding: '2px 0 6px',
-					borderBottom: '1px solid rgba(255,255,255,0.08)',
-				},
-			});
+			const header = new GridRow({ appendTo: table, addClass: 'head', style: fieldColumns });
 
 			for (const t of ['Field', 'Revenue', 'Costs', 'Rent', 'Net', '/Acre']) {
 				new Elem({
 					tag: 'div',
 					appendTo: header,
-					style: {
-						fontSize: '10px',
-						textTransform: 'uppercase',
-						letterSpacing: '.06em',
-						color: 'rgba(255,255,255,0.3)',
-						textAlign: t === 'Field' ? 'left' : 'right',
-					},
+					style: { textAlign: t === 'Field' ? 'left' : 'right' },
 					textContent: t,
 				});
 			}
 
 			for (const { field, revenue, costs, rent, net, netPrior, perAcre } of fieldRows) {
-				const row = new Component({
-					appendTo: fieldCard,
-					style: {
-						display: 'grid',
-						gridTemplateColumns: '1fr 70px 70px 70px 80px 60px',
-						gap: '6px',
-						padding: '7px 0',
-						borderBottom: '1px solid rgba(255,255,255,0.05)',
-						alignItems: 'center',
-					},
-				});
+				const row = new GridRow({ appendTo: table, style: fieldColumns });
 
-				const nameWrap = new Component({ appendTo: row });
-				new Elem({
-					tag: 'div',
-					appendTo: nameWrap,
-					style: { fontSize: '13px', fontWeight: '600', color: '#fff' },
-					textContent: field.name || 'Field',
-				});
+				const nameWrap = new Component({ appendTo: row, style: { minWidth: '0' } });
+				new RowName({ appendTo: nameWrap, textContent: field.name || 'Field' });
 
 				// YoY trend indicator
 				if (netPrior !== null) {
 					const delta = net - netPrior;
 					const pct = netPrior !== 0 ? ((delta / Math.abs(netPrior)) * 100).toFixed(0) : null;
-					let color;
-					if (delta > 0) color = '#4caf50';
-					else if (delta < 0) color = '#e05252';
-					else color = 'rgba(255,255,255,0.3)';
 					let arrow;
 					if (delta > 0) arrow = '▲';
 					else if (delta < 0) arrow = '▼';
@@ -700,17 +670,17 @@ export default class Financials extends AsyncView {
 					new Elem({
 						tag: 'div',
 						appendTo: nameWrap,
-						style: { fontSize: '10px', color },
+						style: { fontSize: '10px', color: signColor(delta) },
 						textContent: `vs ${yr - 1}: ${label}`,
 					});
 				}
 
-				const money = (v, emptyColor = 'rgba(255,255,255,0.25)') => {
+				const money = v => {
 					const s = v ? formatMoney(v) : '—';
 					let c;
-					if (v > 0) c = 'rgba(255,255,255,0.6)';
-					else if (v < 0) c = '#e8c42a';
-					else c = emptyColor;
+					if (v > 0) c = colors.muted;
+					else if (v < 0) c = colors.light(colors.warning);
+					else c = colors.gray;
 					return { textContent: s, style: { fontSize: '12px', color: c, textAlign: 'right' } };
 				};
 
@@ -718,10 +688,8 @@ export default class Financials extends AsyncView {
 				new Elem({ tag: 'div', appendTo: row, ...money(costs) });
 				new Elem({ tag: 'div', appendTo: row, ...money(rent) });
 
-				let netColor;
-				if (net > 0) netColor = '#4caf50';
-				else if (net < 0) netColor = '#e05252';
-				else netColor = 'rgba(255,255,255,0.3)';
+				const netColor = signColor(net);
+
 				new Elem({
 					tag: 'div',
 					appendTo: row,
@@ -773,30 +741,11 @@ export default class Financials extends AsyncView {
 
 		const matCard = new Card({ appendTo: this.content });
 
-		new Elem({
-			tag: 'div',
-			appendTo: matCard,
-			style: {
-				fontSize: '11px',
-				textTransform: 'uppercase',
-				letterSpacing: '.07em',
-				color: 'rgba(255,255,255,0.35)',
-				marginBottom: '10px',
-			},
-			textContent: 'Season Comparison — Net P/L by Field',
-		});
+		new CardLabel({ appendTo: matCard, textContent: 'Season Comparison — Net P/L by Field' });
 
-		const cols = `150px ${years.map(() => '1fr').join(' ')}`;
-		const header = new Component({
-			appendTo: matCard,
-			style: {
-				display: 'grid',
-				gridTemplateColumns: cols,
-				gap: '4px',
-				paddingBottom: '6px',
-				borderBottom: '1px solid rgba(255,255,255,0.08)',
-			},
-		});
+		const columns = { gridTemplateColumns: `150px ${years.map(() => '1fr').join(' ')}`, gap: '4px' };
+		const table = new Component({ appendTo: new TableScroll({ appendTo: matCard }) });
+		const header = new GridRow({ appendTo: table, addClass: 'head', style: columns });
 
 		new Elem({ tag: 'div', appendTo: header }); // empty corner
 
@@ -804,7 +753,7 @@ export default class Financials extends AsyncView {
 			new Elem({
 				tag: 'div',
 				appendTo: header,
-				style: { fontSize: '11px', color: 'rgba(255,255,255,0.35)', textAlign: 'right', fontWeight: '600' },
+				style: { fontSize: '11px', textAlign: 'right', fontWeight: '600' },
 				textContent: String(y),
 			});
 		}
@@ -813,31 +762,9 @@ export default class Financials extends AsyncView {
 			const ac = this._acreageFor(field.id);
 			const rent = rentByField[field.id] || 0;
 			const fData = econByField[field.id] || [];
-			const row = new Component({
-				appendTo: matCard,
-				style: {
-					display: 'grid',
-					gridTemplateColumns: cols,
-					gap: '4px',
-					padding: '6px 0',
-					borderBottom: '1px solid rgba(255,255,255,0.05)',
-					alignItems: 'center',
-				},
-			});
+			const row = new GridRow({ appendTo: table, style: { ...columns, padding: '6px 0' } });
 
-			new Elem({
-				tag: 'div',
-				appendTo: row,
-				style: {
-					fontSize: '12px',
-					fontWeight: '600',
-					color: '#fff',
-					overflow: 'hidden',
-					textOverflow: 'ellipsis',
-					whiteSpace: 'nowrap',
-				},
-				textContent: field.name || 'Field',
-			});
+			new RowName({ appendTo: row, style: { fontSize: '12px' }, textContent: field.name || 'Field' });
 
 			for (const y of years) {
 				const d = fData.find(r => r.year === y);
@@ -848,13 +775,9 @@ export default class Financials extends AsyncView {
 					continue;
 				}
 
-				let color;
-				if (net > 0) color = '#4caf50';
-				else if (net < 0) color = '#e05252';
-				else color = 'rgba(255,255,255,0.3)';
 				let bg;
-				if (net > 0) bg = 'rgba(76,175,80,0.1)';
-				else if (net < 0) bg = 'rgba(224,82,82,0.1)';
+				if (net > 0) bg = colors.alpha(colors.success, 0.1);
+				else if (net < 0) bg = colors.alpha(colors.danger, 0.1);
 				else bg = 'transparent';
 
 				new Elem({
@@ -864,7 +787,7 @@ export default class Financials extends AsyncView {
 						textAlign: 'right',
 						fontSize: '12px',
 						fontWeight: '600',
-						color,
+						color: signColor(net),
 						background: bg,
 						borderRadius: '4px',
 						padding: '2px 4px',
@@ -874,10 +797,8 @@ export default class Financials extends AsyncView {
 			}
 		}
 
-		new Elem({
-			tag: 'div',
+		new Note({
 			appendTo: matCard,
-			style: { fontSize: '10px', color: 'rgba(255,255,255,0.2)', marginTop: '8px' },
 			textContent: 'Net = harvest revenue − field costs − cash rent. Costs are per-acre rates × field acreage.',
 		});
 	}
@@ -895,18 +816,7 @@ export default class Financials extends AsyncView {
 
 		const budgetCard = new Card({ appendTo: this.content });
 
-		new Elem({
-			tag: 'div',
-			appendTo: budgetCard,
-			style: {
-				fontSize: '11px',
-				textTransform: 'uppercase',
-				letterSpacing: '.07em',
-				color: 'rgba(255,255,255,0.35)',
-				marginBottom: '10px',
-			},
-			textContent: `Recurring Budget — ${yr}`,
-		});
+		new CardLabel({ appendTo: budgetCard, textContent: `Recurring Budget — ${yr}` });
 
 		const incItems = activeItems.filter(b => b.type === 'income');
 		const expItems = activeItems.filter(b => b.type === 'expense');
@@ -923,18 +833,18 @@ export default class Financials extends AsyncView {
 			new Elem({
 				tag: 'span',
 				appendTo: budgetRow,
-				style: { fontSize: '12px', color: '#4caf50' },
+				style: { fontSize: '12px', color: colors.light(colors.success) },
 				textContent: `Expected income: ${formatDollar(budgetInc)}/yr`,
 			});
 		if (budgetExp)
 			new Elem({
 				tag: 'span',
 				appendTo: budgetRow,
-				style: { fontSize: '12px', color: '#e8c42a' },
+				style: { fontSize: '12px', color: colors.light(colors.warning) },
 				textContent: `Expected expenses: ${formatDollar(budgetExp)}/yr`,
 			});
 
-		const netColor = budgetNet >= 0 ? '#4caf50' : '#e05252';
+		const netColor = budgetNet >= 0 ? colors.light(colors.success) : colors.light(colors.danger);
 
 		new Elem({
 			tag: 'span',
@@ -945,33 +855,19 @@ export default class Financials extends AsyncView {
 
 		// Line items
 		for (const { items, color, label } of [
-			{ items: incItems, color: '#4caf50', label: 'Income' },
-			{ items: expItems, color: '#e8c42a', label: 'Expenses' },
+			{ items: incItems, color: colors.light(colors.success), label: 'Income' },
+			{ items: expItems, color: colors.light(colors.warning), label: 'Expenses' },
 		]) {
 			if (!items.length) continue;
 
-			new Elem({
-				tag: 'div',
-				appendTo: budgetCard,
-				style: {
-					fontSize: '10px',
-					textTransform: 'uppercase',
-					letterSpacing: '.06em',
-					color: 'rgba(255,255,255,0.25)',
-					padding: '8px 0 2px',
-				},
-				textContent: label,
-			});
+			new SectionLabel({ appendTo: budgetCard, style: { margin: '8px 0 2px' }, textContent: label });
 
 			for (const b of items.sort((a, z) => annualAmount(z) - annualAmount(a))) {
 				const freq = FREQUENCIES.find(f => f.value === b.frequency);
-				const row = new Component({
-					appendTo: budgetCard,
-					style: { display: 'flex', justifyContent: 'space-between', padding: '3px 0', fontSize: '12px' },
-				});
+				const row = new AmountRow({ appendTo: budgetCard, style: { padding: '3px 0' } });
 				const nameText = b.entityName ? `${b.name} (${b.entityName})` : b.name;
 
-				new Elem({ tag: 'span', appendTo: row, style: { color: 'rgba(255,255,255,0.6)' }, textContent: nameText });
+				new Elem({ tag: 'span', appendTo: row, style: { color: colors.muted }, textContent: nameText });
 				new Elem({ tag: 'span', appendTo: row, style: { color } }).elem.textContent =
 					`${formatDollar(b.amount)}/${freq?.label?.toLowerCase() || b.frequency}`;
 			}

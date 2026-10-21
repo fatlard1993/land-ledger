@@ -1,20 +1,21 @@
-import { Button, EmptyState, Icon, Table, formatDate } from '@vanilla-bean/components';
+import { Button, EmptyState, formatDate, Icon, Table, theme, Toolbar } from '@vanilla-bean/components';
 
 import AsyncView from '../AsyncView';
 
 import { getApplicationLogs, getFields } from '../api';
-import { PageView, PageToolbar, PageTitle } from '../Layout';
+import { PageView } from '../Layout';
 import context from '../context';
 import ExportDialog from '../Export/ExportDialog';
 
 import ApplicationLogDialog, { CATEGORIES } from './ApplicationLogDialog';
 
+const { colors } = theme;
+
 const catMeta = val => CATEGORIES.find(c => c.value === val) || CATEGORIES.at(-1);
 
 export default class ApplicationLogs extends AsyncView {
 	_buildView() {
-		this.toolbar = new PageToolbar({ appendTo: this });
-		new PageTitle({ appendTo: this.toolbar, textContent: 'Applications' });
+		this.toolbar = new Toolbar({ appendTo: this, variant: 'bar', heading: 'Applications', gap: 8, wrap: false });
 
 		new Button({
 			appendTo: this.toolbar,
@@ -103,7 +104,7 @@ export default class ApplicationLogs extends AsyncView {
 				sort: true,
 				dataColumn: ({ rowData }) => ({
 					...onEdit(rowData),
-					style: { fontWeight: '600', color: '#fff' },
+					style: { fontWeight: '600', color: colors.white },
 					title: rowData.epaRegNumber ? `EPA ${rowData.epaRegNumber}` : undefined,
 				}),
 			},
@@ -124,7 +125,7 @@ export default class ApplicationLogs extends AsyncView {
 			appendTo: this.content,
 			columns,
 			data,
-			styles: () => `
+			styles: ({ colors }) => `
 				width: 100%;
 				border-collapse: collapse;
 
@@ -132,21 +133,21 @@ export default class ApplicationLogs extends AsyncView {
 					font-size: 10px;
 					text-transform: uppercase;
 					letter-spacing: .06em;
-					color: rgba(255,255,255,0.3);
+					color: ${colors.gray};
 					padding: 4px 0 6px;
-					border-bottom: 1px solid rgba(255,255,255,0.08);
+					border-bottom: 1px solid ${colors.border};
 					text-align: left;
 					font-weight: 500;
 				}
 				td {
 					padding: 8px 0;
-					border-bottom: 1px solid rgba(255,255,255,0.06);
+					border-bottom: 1px solid ${colors.border};
 					vertical-align: middle;
 					font-size: 12px;
-					color: rgba(255,255,255,0.7);
+					color: ${colors.muted};
 					cursor: pointer;
 				}
-				tr:hover td { background: rgba(255,255,255,0.02); }
+				tr:hover td { background: ${colors.alpha(colors.white, 0.03)}; }
 			`,
 		});
 	}

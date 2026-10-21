@@ -1,16 +1,30 @@
-import { Button, Component, Elem, EmptyState, Icon, formatDate, styled } from '@vanilla-bean/components';
+import {
+	Button,
+	Component,
+	Elem,
+	EmptyState,
+	Icon,
+	formatDate,
+	Select,
+	styled,
+	Tabs,
+	theme,
+	Toolbar,
+} from '@vanilla-bean/components';
 
 import AsyncView from '../AsyncView';
 
 import { getEvents, getFields, createEvent, updateEvent, deleteEvent, getWeather, getCountyYield } from '../api';
 import { centroidFromGeometry } from '../geo';
-import { PageView, PageToolbar, PageTitle } from '../Layout';
+import { PageView } from '../Layout';
 import context from '../context';
 import SeasonCharts from '../Charts/SeasonCharts';
 
 import TabularImportDialog from '../Import/TabularImportDialog';
 import ExportDialog from '../Export/ExportDialog';
 import EventDialog, { categoryMeta, eventEmoji } from './EventDialog';
+
+const { colors } = theme;
 
 const CURRENT_YEAR = new Date().getFullYear();
 
@@ -21,12 +35,12 @@ const EventRow = styled(
 		align-items: flex-start;
 		gap: 10px;
 		padding: 8px 0;
-		border-bottom: 1px solid ${colors.dark(colors.gray)};
+		border-bottom: 1px solid ${colors.border};
 		cursor: pointer;
 		transition: background 0.1s;
 
 		&:hover {
-			background: rgba(255,255,255,0.03);
+			background: ${colors.alpha(colors.white, 0.05)};
 		}
 
 		& .event-dot {
@@ -49,15 +63,19 @@ const EventRow = styled(
 		& .event-name {
 			font-size: 14px;
 			font-weight: 600;
-			color: #fff;
+			color: ${colors.white};
 			white-space: nowrap;
 			overflow: hidden;
 			text-overflow: ellipsis;
 		}
 
+		& .event-name.planned {
+			color: ${colors.muted};
+		}
+
 		& .event-meta {
 			font-size: 12px;
-			color: rgba(255,255,255,0.45);
+			color: ${colors.gray};
 			margin-top: 1px;
 			display: flex;
 			gap: 8px;
@@ -66,28 +84,123 @@ const EventRow = styled(
 	`,
 );
 
-styled(
+const SeasonHeader = styled(
 	Component,
 	({ colors }) => `
-		padding: 6px 8px;
+		display: flex;
+		flex-wrap: wrap;
+		align-items: baseline;
+		gap: 4px 10px;
+		padding: 14px 0 4px;
+		color: ${colors.gray};
+
+		& > .season {
+			font-size: 12px;
+			letter-spacing: 0.08em;
+			text-transform: uppercase;
+		}
+
+		& > .note {
+			font-size: 11px;
+		}
+	`,
+);
+
+const FilterBar = styled(
+	Component,
+	() => `
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: 6px;
+		margin-bottom: 8px;
+
+		& > select {
+			flex: 1;
+			width: auto;
+			min-width: 0;
+		}
+	`,
+);
+
+// A field-by-season grid that scrolls sideways inside itself on a narrow screen
+const YieldTable = styled(
+	Component,
+	({ colors }) => `
+		width: 100%;
+		border-collapse: collapse;
 		font-size: 12px;
-		border-right: 1px solid ${colors.dark(colors.gray)};
-		text-align: center;
-		vertical-align: top;
+
+		& th {
+			padding: 6px 8px;
+			color: ${colors.gray};
+			font-weight: 600;
+			border-bottom: 2px solid ${colors.border};
+			text-align: center;
+			white-space: nowrap;
+		}
+
+		& th:first-child {
+			text-align: left;
+		}
+
+		& td {
+			padding: 6px 8px;
+			border-bottom: 1px solid ${colors.border};
+			text-align: center;
+			vertical-align: top;
+		}
+
+		& td.field {
+			text-align: left;
+			white-space: nowrap;
+			font-weight: 600;
+		}
+
+		& .acres, & .crop {
+			font-size: 10px;
+			font-weight: 400;
+			color: ${colors.gray};
+		}
 
 		& .yield {
-			color: #fff;
+			color: ${colors.white};
 			font-weight: 600;
+		}
+
+		& .crop-only {
+			font-size: 11px;
+			color: ${colors.muted};
 		}
 
 		& .badges {
 			display: flex;
-			gap: 3px;
-			justify-content: center;
-			margin-top: 3px;
 			flex-wrap: wrap;
+			justify-content: center;
+			gap: 3px;
+			margin-top: 3px;
+			font-size: 12px;
+			cursor: default;
+		}
+
+		& td.empty {
+			cursor: pointer;
+			color: ${colors.alpha(colors.white, 0.2)};
+			font-size: 10px;
 		}
 	`,
+	{ tag: 'table' },
+);
+
+const Footnote = styled(
+	Component,
+	({ colors }) => `
+		margin-top: 12px;
+		font-size: 11px;
+		line-height: 1.6;
+		color: ${colors.gray};
+	`,
+	{ tag: 'p' },
 );
 
 export default class Timeline extends AsyncView {
@@ -95,24 +208,17 @@ export default class Timeline extends AsyncView {
 	_fieldFilter = null;
 
 	_buildView() {
-		this.toolbar = new PageToolbar({ appendTo: this });
+		this.toolbar = new Toolbar({ appendTo: this, variant: 'bar', heading: 'Timeline', gap: 8, wrap: false });
 
-		this._titleElem = new PageTitle({ appendTo: this.toolbar, textContent: 'Timeline' });
-
-		const viewToggle = new Component({ appendTo: this.toolbar, style: { display: 'flex', gap: '4px' } });
-
-		this._timelineBtn = new Button({
-			appendTo: viewToggle,
-			textContent: 'Log',
-			style: { fontSize: '12px', padding: '4px 10px' },
-			onPointerPress: () => this._switchView('timeline'),
-		});
-
-		this._insightsBtn = new Button({
-			appendTo: viewToggle,
-			textContent: 'Insights',
-			style: { fontSize: '12px', padding: '4px 10px' },
-			onPointerPress: () => this._switchView('insights'),
+		this._viewTabs = new Tabs({
+			appendTo: this.toolbar,
+			variant: 'segmented',
+			tabs: [
+				{ id: 'timeline', label: 'Log' },
+				{ id: 'insights', label: 'Insights' },
+			],
+			selected: this._view,
+			onChange: view => this._switchView(view),
 		});
 
 		new Button({
@@ -174,7 +280,7 @@ export default class Timeline extends AsyncView {
 			context.timelineFieldFilter = null;
 			const filterField = this.fields?.body?.[this._fieldFilter];
 
-			if (filterField) this._titleElem.elem.textContent = filterField.name;
+			if (filterField) this.toolbar.options.heading = filterField.name;
 		}
 
 		this._switchView('timeline');
@@ -182,8 +288,7 @@ export default class Timeline extends AsyncView {
 
 	_switchView(view) {
 		this._view = view;
-		this._timelineBtn.elem.style.background = view === 'timeline' ? 'rgba(255,255,255,0.15)' : '';
-		this._insightsBtn.elem.style.background = view === 'insights' ? 'rgba(255,255,255,0.15)' : '';
+		this._viewTabs.options.selected = view;
 		this._renderCurrent();
 	}
 
@@ -197,26 +302,9 @@ export default class Timeline extends AsyncView {
 
 		if (!fieldList.length) return;
 
-		const bar = new Component({
-			appendTo: this.content,
-			style: { display: 'flex', gap: '6px', marginBottom: '8px', alignItems: 'center', flexWrap: 'wrap' },
-		});
+		const bar = new FilterBar({ appendTo: this.content });
 
-		const filterSelect = new Elem({
-			tag: 'select',
-			appendTo: bar,
-			style: {
-				background: 'rgba(255,255,255,0.07)',
-				border: '1px solid rgba(255,255,255,0.12)',
-				borderRadius: '4px',
-				color: '#fff',
-				fontSize: '13px',
-				padding: '5px 8px',
-				fontFamily: 'inherit',
-				cursor: 'pointer',
-				flex: '1',
-			},
-		});
+		const filterSelect = new Select({ appendTo: bar });
 
 		const allOpt = document.createElement('option');
 
@@ -238,18 +326,19 @@ export default class Timeline extends AsyncView {
 			this._fieldFilter = filterSelect.elem.value || null;
 			const selectedField = this.fields?.body?.[this._fieldFilter];
 
-			this._titleElem.elem.textContent = selectedField ? selectedField.name : 'Timeline';
+			this.toolbar.options.heading = selectedField ? selectedField.name : 'Timeline';
 			this._renderTimeline();
 		});
 
 		if (this._fieldFilter) {
 			new Button({
 				appendTo: bar,
-				textContent: '✕ Clear',
-				style: { fontSize: '12px', padding: '4px 8px' },
+				variant: 'flat',
+				icon: 'xmark',
+				textContent: 'Clear',
 				onPointerPress: () => {
 					this._fieldFilter = null;
-					this._titleElem.elem.textContent = 'Timeline';
+					this.toolbar.options.heading = 'Timeline';
 					this._renderTimeline();
 				},
 			});
@@ -287,31 +376,13 @@ export default class Timeline extends AsyncView {
 			const season = event.season || new Date(event.date).getFullYear() || CURRENT_YEAR;
 
 			if (season !== lastSeason) {
-				const seasonHeader = new Component({
-					appendTo: this.content,
-					style: { display: 'flex', alignItems: 'baseline', gap: '10px', padding: '14px 0 4px' },
-				});
+				const seasonHeader = new SeasonHeader({ appendTo: this.content });
 
-				new Elem({
-					tag: 'span',
-					appendTo: seasonHeader,
-					style: {
-						fontSize: '12px',
-						textTransform: 'uppercase',
-						letterSpacing: '0.08em',
-						color: 'rgba(255,255,255,0.35)',
-					},
-					textContent: String(season),
-				});
+				new Elem({ tag: 'span', appendTo: seasonHeader, addClass: 'season', textContent: String(season) });
 
 				// Weather + county benchmark — only when filtering by a specific field
 				if (field?.geometry && season <= CURRENT_YEAR) {
-					const weatherSlot = new Elem({
-						tag: 'span',
-						appendTo: seasonHeader,
-						style: { fontSize: '11px', color: 'rgba(255,255,255,0.25)' },
-						textContent: '…',
-					});
+					const weatherSlot = new Elem({ tag: 'span', appendTo: seasonHeader, addClass: 'note', textContent: '…' });
 
 					this._loadSeasonWeather(season, field, weatherSlot);
 
@@ -324,11 +395,7 @@ export default class Timeline extends AsyncView {
 					);
 
 					if (field.state && field.county && harvestEvents.length) {
-						const benchmarkSlot = new Elem({
-							tag: 'span',
-							appendTo: seasonHeader,
-							style: { fontSize: '11px', color: 'rgba(255,255,255,0.25)' },
-						});
+						const benchmarkSlot = new Elem({ tag: 'span', appendTo: seasonHeader, addClass: 'note' });
 						this._loadSeasonBenchmark(season, field, harvestEvents, benchmarkSlot);
 					}
 				}
@@ -437,17 +504,17 @@ export default class Timeline extends AsyncView {
 			const delta = ((farmYield - countyAvg) / countyAvg) * 100;
 			const sign = delta >= 0 ? '+' : '';
 			let color;
-			if (delta >= 5) color = '#4caf50';
-			else if (delta <= -5) color = '#e05252';
-			else color = 'rgba(255,255,255,0.6)';
+			if (delta >= 5) color = colors.light(colors.success);
+			else if (delta <= -5) color = colors.light(colors.danger);
+			else color = colors.muted;
 			const text = `County avg ${countyAvg.toFixed(1)} ${unit}  ·  ${sign}${delta.toFixed(0)}% vs avg`;
 
 			slot.elem.textContent = text;
-			slot.elem.style.color = color;
+			slot.elem.style.color = `${color}`;
 		} else {
 			// No farm yield recorded — show county average as reference only
 			slot.elem.textContent = `County avg: ${countyAvg.toFixed(1)} ${unit}`;
-			slot.elem.style.color = 'rgba(255,255,255,0.35)';
+			slot.elem.style.color = `${colors.gray}`;
 		}
 	}
 
@@ -464,8 +531,8 @@ export default class Timeline extends AsyncView {
 
 		const dot = new Elem({ tag: 'div', appendTo: row, addClass: 'event-dot' });
 
-		dot.elem.style.background = `${meta.color}22`;
-		dot.elem.style.border = `1px solid ${meta.color}55`;
+		dot.elem.style.background = `${colors.alpha(meta.color, 0.13)}`;
+		dot.elem.style.border = `1px solid ${colors.alpha(meta.color, 0.33)}`;
 		dot.elem.textContent = eventEmoji(event);
 
 		const main = new Elem({ tag: 'div', appendTo: row, addClass: 'event-main' });
@@ -474,7 +541,7 @@ export default class Timeline extends AsyncView {
 		const nameText = (isFuture ? '~ ' : '') + (event.name || meta.label);
 		const nameEl = new Elem({ tag: 'div', appendTo: main, addClass: 'event-name', textContent: nameText });
 
-		if (isFuture) nameEl.elem.style.color = 'rgba(255,255,255,0.65)';
+		if (isFuture) nameEl.addClass('planned');
 
 		const metaEl = new Elem({ tag: 'div', appendTo: main, addClass: 'event-meta' });
 
@@ -493,29 +560,28 @@ export default class Timeline extends AsyncView {
 				new Elem({
 					tag: 'span',
 					appendTo: metaEl,
-					style: { color: '#c8a84b' },
+					style: { color: colors.light(colors.yellow) },
 					textContent: `${d.quantity} ${d.unit}`,
 				});
 			if (d.revenue)
 				new Elem({
 					tag: 'span',
 					appendTo: metaEl,
-					style: { color: '#4caf50' },
+					style: { color: colors.light(colors.success) },
 					textContent: `$${Number(d.revenue).toFixed(0)}`,
 				});
 		} else if (event.category === 'crop') {
 			if (d.species)
 				new Elem({ tag: 'span', appendTo: metaEl, textContent: d.variety ? `${d.species} — ${d.variety}` : d.species });
-			if (d.seedingRate)
+			if (d.seedingRate) new Elem({ tag: 'span', appendTo: metaEl, textContent: d.seedingRate });
+		} else if (event.category === 'livestock') {
+			if (d.headCount)
 				new Elem({
 					tag: 'span',
 					appendTo: metaEl,
-					style: { color: 'rgba(255,255,255,0.4)' },
-					textContent: d.seedingRate,
+					style: { color: colors.light(colors.orange) },
+					textContent: `${d.headCount} hd`,
 				});
-		} else if (event.category === 'livestock') {
-			if (d.headCount)
-				new Elem({ tag: 'span', appendTo: metaEl, style: { color: '#a0522d' }, textContent: `${d.headCount} hd` });
 			if (d.entryWeight) new Elem({ tag: 'span', appendTo: metaEl, textContent: `${d.entryWeight} lbs/hd` });
 		} else if (event.category === 'cover_crop') {
 			const mixLabel =
@@ -526,14 +592,14 @@ export default class Timeline extends AsyncView {
 			if (mixLabel) new Elem({ tag: 'span', appendTo: metaEl, textContent: mixLabel });
 
 			if (d.terminationMethod)
-				new Elem({
-					tag: 'span',
-					appendTo: metaEl,
-					style: { color: 'rgba(255,255,255,0.3)' },
-					textContent: `→ ${d.terminationMethod.replace(/_/g, ' ')}`,
-				});
+				new Elem({ tag: 'span', appendTo: metaEl, textContent: `→ ${d.terminationMethod.replace(/_/g, ' ')}` });
 		} else if (event.category === 'soil_test' && d.organicMatter) {
-			new Elem({ tag: 'span', appendTo: metaEl, style: { color: '#4caf50' }, textContent: `OM ${d.organicMatter}%` });
+			new Elem({
+				tag: 'span',
+				appendTo: metaEl,
+				style: { color: colors.light(colors.green) },
+				textContent: `OM ${d.organicMatter}%`,
+			});
 			if (d.pH) new Elem({ tag: 'span', appendTo: metaEl, textContent: `pH ${d.pH}` });
 		} else if (event.category === 'input' && d.product) {
 			new Elem({ tag: 'span', appendTo: metaEl, textContent: `${d.product}${d.rate ? ` @ ${d.rate}` : ''}` });
@@ -579,69 +645,34 @@ export default class Timeline extends AsyncView {
 			style: { overflowX: 'auto', marginTop: '8px' },
 		});
 
-		const table = new Elem({ tag: 'table', appendTo: tableWrap });
-
-		table.elem.style.cssText = 'width:100%;border-collapse:collapse;font-size:12px;';
+		const table = new YieldTable({ appendTo: tableWrap });
 
 		// Header row
 		const thead = new Elem({ tag: 'thead', appendTo: table });
 		const headerRow = new Elem({ tag: 'tr', appendTo: thead });
 
-		new Elem({
-			tag: 'th',
-			appendTo: headerRow,
-			style: {
-				textAlign: 'left',
-				padding: '6px 8px',
-				color: 'rgba(255,255,255,0.45)',
-				fontWeight: '600',
-				borderBottom: '2px solid rgba(255,255,255,0.1)',
-				whiteSpace: 'nowrap',
-			},
-			textContent: 'Field',
-		});
+		new Elem({ tag: 'th', appendTo: headerRow, textContent: 'Field' });
 
-		for (const season of seasons) {
-			new Elem({
-				tag: 'th',
-				appendTo: headerRow,
-				style: {
-					padding: '6px 8px',
-					color: 'rgba(255,255,255,0.45)',
-					fontWeight: '600',
-					borderBottom: '2px solid rgba(255,255,255,0.1)',
-					textAlign: 'center',
-					whiteSpace: 'nowrap',
-				},
-				textContent: String(season),
-			});
-		}
+		for (const season of seasons) new Elem({ tag: 'th', appendTo: headerRow, textContent: String(season) });
 
 		const tbody = new Elem({ tag: 'tbody', appendTo: table });
 
 		for (const field of fieldList) {
 			const row = new Elem({ tag: 'tr', appendTo: tbody });
 
-			const nameCell = new Elem({ tag: 'td', appendTo: row });
-
-			nameCell.elem.style.cssText =
-				'padding:6px 8px;border-bottom:1px solid rgba(255,255,255,0.07);white-space:nowrap;font-weight:600;';
-			nameCell.elem.textContent = field.name || 'Unnamed';
+			const nameCell = new Elem({ tag: 'td', appendTo: row, addClass: 'field', textContent: field.name || 'Unnamed' });
 
 			if (field.acreage) {
 				new Elem({
 					tag: 'div',
 					appendTo: nameCell,
-					style: { fontSize: '10px', color: 'rgba(255,255,255,0.35)', fontWeight: '400' },
+					addClass: 'acres',
 					textContent: `${Number(field.acreage).toFixed(0)} ac`,
 				});
 			}
 
 			for (const season of seasons) {
 				const cell = new Elem({ tag: 'td', appendTo: row });
-
-				cell.elem.style.cssText =
-					'padding:6px 8px;border-bottom:1px solid rgba(255,255,255,0.07);text-align:center;vertical-align:top;';
 
 				const seasonEvents = allEvents.filter(e => e.fieldId === field.id && e.season === season);
 
@@ -657,39 +688,34 @@ export default class Timeline extends AsyncView {
 						new Elem({
 							tag: 'div',
 							appendTo: cell,
-							style: { color: '#fff', fontWeight: '600' },
+							addClass: 'yield',
 							textContent: `${details.yieldPerAcre} ${details.yieldUnit || 'bu'}`,
 						});
 
 						new Elem({
 							tag: 'div',
 							appendTo: cell,
-							style: { fontSize: '10px', color: 'rgba(255,255,255,0.4)' },
+							addClass: 'crop',
 							textContent: details.species || cropEvent.name,
 						});
 					} else {
 						new Elem({
 							tag: 'div',
 							appendTo: cell,
-							style: { fontSize: '11px', color: 'rgba(255,255,255,0.6)' },
+							addClass: 'crop-only',
 							textContent: this._parseDetails(cropEvent.details).species || cropEvent.name,
 						});
 					}
 				}
 
 				if (hasLivestock || hasCoverCrop || soilTest) {
-					const badges = new Elem({
-						tag: 'div',
-						appendTo: cell,
-						style: { display: 'flex', gap: '3px', justifyContent: 'center', marginTop: '3px', flexWrap: 'wrap' },
-					});
+					const badges = new Elem({ tag: 'div', appendTo: cell, addClass: 'badges' });
 
 					if (hasLivestock) {
 						new Elem({
 							tag: 'span',
 							appendTo: badges,
 							attributes: { title: 'Livestock' },
-							style: { fontSize: '12px', cursor: 'default' },
 							textContent: '🐄',
 						});
 					}
@@ -699,7 +725,6 @@ export default class Timeline extends AsyncView {
 							tag: 'span',
 							appendTo: badges,
 							attributes: { title: 'Cover crop' },
-							style: { fontSize: '12px', cursor: 'default' },
 							textContent: '🌱',
 						});
 					}
@@ -711,14 +736,13 @@ export default class Timeline extends AsyncView {
 							tag: 'span',
 							appendTo: badges,
 							attributes: { title: `Soil test${d.organicMatter ? ` — OM ${d.organicMatter}%` : ''}` },
-							style: { fontSize: '12px', cursor: 'default' },
 							textContent: '🔬',
 						});
 					}
 				}
 
 				if (!seasonEvents.length) {
-					cell.elem.style.cssText += 'cursor:pointer;color:rgba(255,255,255,0.18);font-size:10px;';
+					cell.addClass('empty');
 					cell.elem.title = `Log event for ${field.name} — ${season}`;
 					cell.elem.textContent = '+ add';
 					cell.onPointerPress(() => this._openEventDialog(null, field.id));
@@ -726,10 +750,8 @@ export default class Timeline extends AsyncView {
 			}
 		}
 
-		new Elem({
-			tag: 'p',
+		new Footnote({
 			appendTo: this.content,
-			style: { fontSize: '11px', color: 'rgba(255,255,255,0.3)', marginTop: '12px', lineHeight: '1.6' },
 			textContent:
 				'Fields with 🐄 and 🌱 alongside yield data show whether regenerative practices correlate with yield changes over time.',
 		});

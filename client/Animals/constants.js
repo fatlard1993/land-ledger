@@ -1,4 +1,6 @@
-import { Component } from '@vanilla-bean/components';
+import { Component, theme } from '@vanilla-bean/components';
+
+const { colors } = theme;
 
 export const SPECIES = [
 	{ value: 'cattle', label: 'Cattle', icon: '🐄', gestation: 283 },
@@ -43,9 +45,10 @@ export const formGrid = (parent, cols) =>
 
 export const formCol = parent => new Component({ appendTo: parent });
 
+// Text colors for an animal's status on the dark ground
 export const STATUS_COLORS = {
-	active: '#4caf50',
-	deceased: '#888',
-	sold: '#4a90d9',
-	transferred: '#e8c42a',
+	active: colors.light(colors.success),
+	deceased: colors.gray,
+	sold: colors.light(colors.info),
+	transferred: colors.light(colors.warning),
 };

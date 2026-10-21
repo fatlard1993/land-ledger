@@ -1,4 +1,15 @@
-import { Button, Component, Elem, EmptyState, Icon, styled } from '@vanilla-bean/components';
+import {
+	Button,
+	Card,
+	Component,
+	Elem,
+	EmptyState,
+	Icon,
+	SectionLabel,
+	styled,
+	theme,
+	Toolbar,
+} from '@vanilla-bean/components';
 
 import AsyncView from '../AsyncView';
 
@@ -7,20 +18,18 @@ import context from '../context';
 import { toSqm, convertArea, formatArea } from '../geo';
 import parseDetails from '../utils/parseDetails';
 import { eventEmoji, categoryMeta } from '../Timeline/EventDialog';
-import { PageView, PageToolbar, PageTitle, Card, SectionHeader } from '../Layout';
+import { PageView, RecordCard } from '../Layout';
 import SeasonCharts from '../Charts/SeasonCharts';
 
 import ExportDialog from '../Export/ExportDialog';
 import FieldDialog from './FieldDialog';
 
+const { colors } = theme;
+
 const SummaryBar = styled(
-	Component,
+	Card,
 	({ colors }) => `
-		background: ${colors.darker(colors.gray)};
-		border: 1px solid ${colors.dark(colors.gray)};
-		border-radius: 8px;
 		padding: 12px 16px;
-		margin-bottom: 10px;
 
 		& .stat-value {
 			font-size: 28px;
@@ -39,11 +48,220 @@ const SummaryBar = styled(
 
 		& .stat-sub {
 			font-size: 11px;
-			color: rgba(255,255,255,0.3);
+			color: ${colors.gray};
 			margin-top: 6px;
 		}
 	`,
 );
+
+// A field's key facts across the top of its detail: value over a small caption
+const Stats = styled(
+	Component,
+	({ colors }) => `
+		display: flex;
+		flex-wrap: wrap;
+		gap: 12px;
+		padding: 4px 0 12px;
+		border-bottom: 1px solid ${colors.border};
+		margin-bottom: 12px;
+
+		& .stat-value {
+			font-size: 14px;
+			font-weight: 600;
+			color: ${colors.muted};
+		}
+
+		& .stat-label {
+			font-size: 10px;
+			text-transform: uppercase;
+			letter-spacing: 0.06em;
+			color: ${colors.gray};
+		}
+	`,
+);
+
+const HistoryRow = styled(
+	Component,
+	({ colors }) => `
+		display: flex;
+		align-items: center;
+		gap: 8px;
+		padding: 4px 0;
+		border-bottom: 1px solid ${colors.border};
+		font-size: 13px;
+
+		& > .emoji {
+			flex-shrink: 0;
+			font-size: 14px;
+		}
+
+		& > .name {
+			flex: 1;
+			min-width: 0;
+			color: ${colors.white};
+		}
+
+		& > .meta, & > .date {
+			font-size: 11px;
+			color: ${colors.gray};
+		}
+
+		& > .date {
+			flex-shrink: 0;
+		}
+	`,
+);
+
+// This season's crops, cover and stock, grouped by kind
+const UseSummary = styled(
+	Card,
+	({ colors }) => `
+		padding: 8px 12px;
+		font-size: 12px;
+
+		& .use-title, & .use-group {
+			font-size: 10px;
+			text-transform: uppercase;
+			letter-spacing: 0.07em;
+			color: ${colors.gray};
+		}
+
+		& .use-title {
+			margin-bottom: 6px;
+		}
+
+		& .use-row {
+			display: flex;
+			align-items: baseline;
+			gap: 12px;
+			margin-bottom: 3px;
+		}
+
+		& .use-group {
+			flex-shrink: 0;
+			min-width: 36px;
+		}
+
+		& .use-items {
+			display: flex;
+			flex-wrap: wrap;
+			gap: 10px;
+			color: ${colors.white};
+		}
+	`,
+);
+
+const LeaseWarning = styled(
+	Component,
+	({ colors, radius }) => `
+		display: flex;
+		flex-direction: column;
+		gap: 4px;
+		padding: 8px 12px;
+		border: 1px solid ${colors.alpha(colors.orange, 0.35)};
+		border-radius: ${radius.md};
+		background: ${colors.alpha(colors.orange, 0.12)};
+		font-size: 13px;
+
+		& > .warning-title {
+			margin-bottom: 2px;
+			font-size: 11px;
+			text-transform: uppercase;
+			letter-spacing: 0.07em;
+			color: ${colors.light(colors.orange)};
+		}
+	`,
+);
+
+const CardTitleRow = styled(
+	Component,
+	({ colors, radius }) => `
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 8px;
+		margin-bottom: 4px;
+
+		& > .card-title {
+			min-width: 0;
+			overflow: hidden;
+			text-overflow: ellipsis;
+			white-space: nowrap;
+		}
+
+		& > .facts {
+			display: flex;
+			align-items: center;
+			gap: 6px;
+			flex-shrink: 0;
+		}
+
+		& .acres {
+			font-size: 13px;
+			font-weight: 600;
+			color: ${colors.white};
+		}
+
+		& .rented {
+			padding: 1px 5px;
+			border-radius: ${radius.sm};
+			background: ${colors.alpha(colors.orange, 0.15)};
+			font-size: 10px;
+			color: ${colors.light(colors.orange)};
+		}
+	`,
+);
+
+// Current uses on a field's card; a fenced field draws them inside a ruled box captioned on its edge
+const UseBlock = styled(
+	Component,
+	({ colors, radius }) => `
+		position: relative;
+		margin-top: 6px;
+
+		&.fenced {
+			padding: 5px 8px;
+			border: 1px solid ${colors.alpha(colors.white, 0.18)};
+			border-radius: ${radius.sm};
+		}
+
+		& > .fence-label {
+			position: absolute;
+			top: -8px;
+			left: 8px;
+			padding: 0 4px;
+			/* Solid, so the border doesn't run through it: the page under a card's 5% white */
+			background: ${colors.black.mix(colors.white, 5)};
+			font-size: 9px;
+			text-transform: uppercase;
+			letter-spacing: 0.06em;
+			color: ${colors.gray};
+		}
+
+		& > .empty {
+			padding: 1px 0;
+			font-size: 12px;
+			font-style: italic;
+			color: ${colors.gray};
+		}
+
+		& > .use {
+			padding: 1px 0;
+			overflow: hidden;
+			font-size: 13px;
+			text-overflow: ellipsis;
+			white-space: nowrap;
+		}
+	`,
+);
+
+const USE_COLORS = {
+	livestock: colors.light(colors.orange),
+	crop: colors.light(colors.yellow),
+	cover_crop: colors.light(colors.green),
+};
+
+const renewalColor = days => (days <= 30 ? colors.light(colors.danger) : colors.light(colors.orange));
 
 const daysUntil = dateStr => {
 	if (!dateStr) return null;
@@ -55,8 +273,23 @@ export default class Fields extends AsyncView {
 	_selectedField = null;
 
 	_buildView() {
-		this.toolbar = new PageToolbar({ appendTo: this });
-		new PageTitle({ appendTo: this.toolbar, textContent: 'Fields' });
+		this.toolbar = new Toolbar({ appendTo: this, variant: 'bar', gap: 8, wrap: false });
+		this.content = new PageView({ appendTo: this });
+	}
+
+	// A fresh heading each time: emptying the bar takes the old one with it
+	_resetToolbar(heading) {
+		this.toolbar.empty();
+		this.toolbar.options.heading = null;
+		this.toolbar.options.heading = heading;
+	}
+
+	_renderListToolbar() {
+		if (this._toolbarMode === 'list') return;
+
+		this._toolbarMode = 'list';
+		this._resetToolbar('Fields');
+
 		new Button({
 			appendTo: this.toolbar,
 			append: new Icon({ icon: 'file-export' }),
@@ -81,8 +314,6 @@ export default class Fields extends AsyncView {
 					},
 				}),
 		});
-
-		this.content = new PageView({ appendTo: this });
 	}
 
 	_datasources() {
@@ -91,34 +322,21 @@ export default class Fields extends AsyncView {
 
 	_onData() {
 		context.hasLeases = Object.keys(this.leases?.body || {}).length > 0;
-		this._renderList();
+
+		const open = this._selectedField && this.fields?.body?.[this._selectedField.id];
+
+		if (open) {
+			this._selectedField = open;
+			this._renderDetail();
+		} else {
+			this._selectedField = null;
+			this._renderList();
+		}
 	}
 
 	_renderList() {
 		this.content.empty();
-		// Restore toolbar when returning from detail view
-		if (this.toolbar.elem.children.length === 0 || !this.toolbar.elem.querySelector('.page-title')) {
-			this.toolbar.empty();
-			new PageTitle({ appendTo: this.toolbar, textContent: 'Fields' });
-			new Button({
-				appendTo: this.toolbar,
-				append: new Icon({ icon: 'plus' }),
-				title: 'Add field',
-				onPointerPress: () =>
-					new FieldDialog({
-						onSave: async data => {
-							const result = await createField({ body: data });
-
-							if (result?.status === 'error') return result;
-
-							if (result?.body && this.fields?.body) {
-								this.fields.body[result.body.id] = result.body;
-								this._renderList();
-							}
-						},
-					}),
-			});
-		}
+		this._renderListToolbar();
 
 		const fieldList = Object.values(this.fields?.body || {}).sort((a, b) => (a.name || '').localeCompare(b.name || ''));
 
@@ -141,25 +359,24 @@ export default class Fields extends AsyncView {
 
 	_renderDetail() {
 		this.content.empty();
-		this.toolbar.empty();
 
 		const field = this._selectedField;
 		const fieldEvents = Object.values(this.events?.body || {}).filter(e => e.fieldId === field.id);
 
-		// Toolbar: back + field name + edit
-		const backBtn = new Button({
+		this._toolbarMode = 'detail';
+		this._resetToolbar(field.name || 'Field');
+
+		new Button({
 			appendTo: this.toolbar,
-			textContent: '← Back',
-			style: { fontSize: '13px', padding: '4px 10px' },
+			addClass: 'start',
+			variant: 'flat',
+			icon: 'arrow-left',
+			textContent: 'Back',
 			onPointerPress: () => {
 				this._selectedField = null;
 				this._renderList();
 			},
 		});
-
-		void backBtn;
-
-		new PageTitle({ appendTo: this.toolbar, textContent: field.name || 'Field' });
 
 		new Button({
 			appendTo: this.toolbar,
@@ -192,41 +409,21 @@ export default class Fields extends AsyncView {
 		});
 
 		// Key stats
-		const stats = new Component({
-			appendTo: this.content,
-			style: {
-				display: 'flex',
-				gap: '12px',
-				flexWrap: 'wrap',
-				padding: '4px 0 12px',
-				borderBottom: '1px solid rgba(255,255,255,0.07)',
-				marginBottom: '12px',
-			},
-		});
+		const stats = new Stats({ appendTo: this.content });
 
-		const addStat = (label, value, color = 'rgba(255,255,255,0.7)') => {
+		const addStat = (label, value, color) => {
 			if (!value) return;
 			const s = new Component({ appendTo: stats });
 
-			new Elem({ tag: 'div', appendTo: s, style: { fontSize: '14px', fontWeight: '600', color }, textContent: value });
-			new Elem({
-				tag: 'div',
-				appendTo: s,
-				style: {
-					fontSize: '10px',
-					textTransform: 'uppercase',
-					letterSpacing: '.06em',
-					color: 'rgba(255,255,255,0.35)',
-				},
-				textContent: label,
-			});
+			new Elem({ tag: 'div', appendTo: s, addClass: 'stat-value', style: color && { color }, textContent: value });
+			new Elem({ tag: 'div', appendTo: s, addClass: 'stat-label', textContent: label });
 		};
 
 		addStat('Acreage', field.acreage ? formatArea(field.acreage, field.acreageUnit || 'ac') : null);
 		const tenureLabel = field.tenure === 'rent' ? 'Rented' : null;
 		addStat('Tenure', field.tenure === 'own' ? 'Owned' : tenureLabel);
 		addStat('Location', [field.county, field.state].filter(Boolean).join(', ') || null);
-		if (field.status) addStat('Status', field.status.replace(/_/g, ' '), '#e8c42a');
+		if (field.status) addStat('Status', field.status.replace(/_/g, ' '), colors.light(colors.warning));
 
 		// Charts — requires ≥1 season of data
 		const years = new Set(
@@ -234,7 +431,7 @@ export default class Fields extends AsyncView {
 		);
 
 		if (years.size >= 1) {
-			new SectionHeader({ appendTo: this.content, textContent: 'Trends' });
+			new SectionLabel({ appendTo: this.content, textContent: 'Trends' });
 			new SeasonCharts({
 				appendTo: this.content,
 				events: fieldEvents,
@@ -255,48 +452,22 @@ export default class Fields extends AsyncView {
 		}
 
 		if (byYear.size) {
-			new SectionHeader({ appendTo: this.content, textContent: 'History' });
+			new SectionLabel({ appendTo: this.content, textContent: 'History' });
 
 			for (const yr of [...byYear.keys()].sort((a, b) => b - a)) {
 				const yearEvents = byYear.get(yr).sort((a, b) => new Date(b.date) - new Date(a.date));
 
-				new Elem({
-					tag: 'div',
-					appendTo: this.content,
-					style: {
-						fontSize: '11px',
-						textTransform: 'uppercase',
-						letterSpacing: '.06em',
-						color: 'rgba(255,255,255,0.3)',
-						padding: '8px 0 4px',
-					},
-					textContent: String(yr),
-				});
+				new SectionLabel({ appendTo: this.content, level: 4, textContent: String(yr) });
 
 				for (const event of yearEvents) {
 					const details = parseDetails(event.details);
-					const row = new Component({
-						appendTo: this.content,
-						style: {
-							display: 'flex',
-							alignItems: 'center',
-							gap: '8px',
-							padding: '4px 0',
-							borderBottom: '1px solid rgba(255,255,255,0.06)',
-							fontSize: '13px',
-						},
-					});
+					const row = new HistoryRow({ appendTo: this.content });
 
+					new Elem({ tag: 'span', appendTo: row, addClass: 'emoji', textContent: eventEmoji(event) });
 					new Elem({
 						tag: 'span',
 						appendTo: row,
-						style: { fontSize: '14px', flexShrink: '0' },
-						textContent: eventEmoji(event),
-					});
-					new Elem({
-						tag: 'span',
-						appendTo: row,
-						style: { flex: '1', color: 'rgba(255,255,255,0.8)' },
+						addClass: 'name',
 						textContent: event.name || categoryMeta(event.category)?.label?.replace(/^[^\s]+\s/, '') || event.category,
 					});
 
@@ -311,14 +482,14 @@ export default class Fields extends AsyncView {
 						new Elem({
 							tag: 'span',
 							appendTo: row,
-							style: { fontSize: '11px', color: 'rgba(255,255,255,0.4)' },
+							addClass: 'meta',
 							textContent: meta.join(' · '),
 						});
 					if (event.date)
 						new Elem({
 							tag: 'span',
 							appendTo: row,
-							style: { fontSize: '11px', color: 'rgba(255,255,255,0.3)', flexShrink: '0' },
+							addClass: 'date',
 							textContent: new Date(event.date).toLocaleDateString(),
 						});
 				}
@@ -416,30 +587,9 @@ export default class Fields extends AsyncView {
 		}
 
 		if (useMap.size) {
-			const useBar = new Component({
-				appendTo: this.content,
-				style: {
-					background: 'rgba(255,255,255,0.03)',
-					border: '1px solid rgba(255,255,255,0.08)',
-					borderRadius: '6px',
-					padding: '8px 12px',
-					marginBottom: '8px',
-					fontSize: '12px',
-				},
-			});
+			const useBar = new UseSummary({ appendTo: this.content });
 
-			new Elem({
-				tag: 'div',
-				appendTo: useBar,
-				style: {
-					fontSize: '10px',
-					textTransform: 'uppercase',
-					letterSpacing: '.07em',
-					color: 'rgba(255,255,255,0.35)',
-					marginBottom: '6px',
-				},
-				textContent: `${CURRENT_YEAR} — current use`,
-			});
+			new Elem({ tag: 'div', appendTo: useBar, addClass: 'use-title', textContent: `${CURRENT_YEAR} — current use` });
 
 			const groups = [
 				{ cat: 'crop', label: 'Crops' },
@@ -454,37 +604,17 @@ export default class Fields extends AsyncView {
 
 				if (!items.length) continue;
 
-				const row = new Component({
-					appendTo: useBar,
-					style: { display: 'flex', alignItems: 'baseline', gap: '12px', marginBottom: '3px' },
-				});
+				const row = new Component({ appendTo: useBar, addClass: 'use-row' });
 
-				new Elem({
-					tag: 'span',
-					appendTo: row,
-					style: {
-						fontSize: '10px',
-						textTransform: 'uppercase',
-						letterSpacing: '.06em',
-						color: 'rgba(255,255,255,0.3)',
-						minWidth: '36px',
-						flexShrink: '0',
-					},
-					textContent: groupLabel,
-				});
+				new Elem({ tag: 'span', appendTo: row, addClass: 'use-group', textContent: groupLabel });
 
-				const itemsRow = new Component({ appendTo: row, style: { display: 'flex', flexWrap: 'wrap', gap: '10px' } });
+				const itemsRow = new Component({ appendTo: row, addClass: 'use-items' });
 
 				for (const [label, { sqm, head, category }] of items) {
 					const livestockMetric = head > 0 ? String(head) : 'active';
 					const metric = category === 'livestock' ? livestockMetric : `${convertArea(sqm, 'ac').toFixed(1)} ac`;
 
-					new Elem({
-						tag: 'span',
-						appendTo: itemsRow,
-						style: { color: 'rgba(255,255,255,0.75)' },
-						textContent: `${label}  ${metric}`,
-					});
+					new Elem({ tag: 'span', appendTo: itemsRow, textContent: `${label}  ${metric}` });
 				}
 			}
 		}
@@ -497,42 +627,21 @@ export default class Fields extends AsyncView {
 			.sort((a, b) => a.days - b.days);
 
 		if (urgentLeases.length) {
-			const warn = new Component({
-				appendTo: this.content,
-				style: {
-					background: 'rgba(232,131,42,0.12)',
-					border: '1px solid rgba(232,131,42,0.3)',
-					borderRadius: '6px',
-					padding: '8px 12px',
-					marginBottom: '10px',
-					fontSize: '13px',
-					display: 'flex',
-					flexDirection: 'column',
-					gap: '4px',
-				},
-			});
+			const warn = new LeaseWarning({ appendTo: this.content });
 
 			new Elem({
 				tag: 'div',
 				appendTo: warn,
-				style: {
-					fontSize: '11px',
-					textTransform: 'uppercase',
-					letterSpacing: '.07em',
-					color: 'rgba(232,131,42,0.8)',
-					marginBottom: '2px',
-				},
+				addClass: 'warning-title',
 				textContent: `${urgentLeases.length} lease renewal${urgentLeases.length !== 1 ? 's' : ''} coming up`,
 			});
 
 			for (const { lease, days } of urgentLeases.slice(0, 3)) {
 				const field = this.fields?.body?.[lease.entityId];
-				const color = days <= 30 ? '#e05252' : '#e8832a';
-
 				new Elem({
 					tag: 'div',
 					appendTo: warn,
-					style: { color },
+					style: { color: renewalColor(days) },
 					textContent: `${field?.name || 'Unknown field'} — ${days <= 0 ? 'past due' : `${days} days`} (${lease.landlordName || 'landlord'})`,
 				});
 			}
@@ -540,7 +649,7 @@ export default class Fields extends AsyncView {
 	}
 
 	_renderFieldCard(field) {
-		const card = new Card({
+		const card = new RecordCard({
 			appendTo: this.content,
 			onPointerPress: () => {
 				this._selectedField = field;
@@ -548,39 +657,25 @@ export default class Fields extends AsyncView {
 			},
 		});
 
-		const titleRow = new Elem({
-			tag: 'div',
-			appendTo: card,
-			style: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '4px' },
-		});
+		const titleRow = new CardTitleRow({ appendTo: card });
 
 		new Elem({ tag: 'div', appendTo: titleRow, addClass: 'card-title', textContent: field.name || 'Unnamed Field' });
 
 		// Acreage as the prominent right-side number — tenure shown only as a tiny muted badge
-		const rightMeta = new Elem({
-			tag: 'div',
-			appendTo: titleRow,
-			style: { display: 'flex', alignItems: 'center', gap: '6px', flexShrink: '0' },
-		});
+		const rightMeta = new Elem({ tag: 'div', appendTo: titleRow, addClass: 'facts' });
 
 		if (field.acreage)
 			new Elem({
 				tag: 'span',
 				appendTo: rightMeta,
-				style: { fontSize: '13px', fontWeight: '600', color: 'rgba(255,255,255,0.8)' },
+				addClass: 'acres',
 				textContent: formatArea(field.acreage, field.acreageUnit || 'ac'),
 			});
 		if (field.tenure === 'rent')
 			new Elem({
 				tag: 'span',
 				appendTo: rightMeta,
-				style: {
-					fontSize: '10px',
-					padding: '1px 5px',
-					borderRadius: '3px',
-					background: 'rgba(232,131,42,0.15)',
-					color: 'rgba(232,131,42,0.7)',
-				},
+				addClass: 'rented',
 				textContent: 'rented',
 			});
 
@@ -608,41 +703,11 @@ export default class Fields extends AsyncView {
 
 		// Current use — dedicated block, not inline in meta; always shown for fenced fields
 		if (activeUses.length || field.fencing) {
-			const USE_COLORS = { livestock: '#a0522d', crop: '#e8c42a', cover_crop: '#4caf50' };
-
 			// Fenced: wrap use block in a box to represent the fence boundary
-			const useWrap = new Elem({
-				tag: 'div',
-				appendTo: card,
-				style: field.fencing
-					? {
-							marginTop: '6px',
-							border: '1px solid rgba(255,255,255,0.18)',
-							borderRadius: '4px',
-							padding: '5px 8px',
-							position: 'relative',
-						}
-					: {
-							marginTop: '6px',
-						},
-			});
+			const useWrap = new UseBlock({ appendTo: card, addClass: field.fencing ? 'fenced' : [] });
 
 			if (field.fencing) {
-				const fenceLabel = new Elem({
-					tag: 'span',
-					appendTo: useWrap,
-					style: {
-						position: 'absolute',
-						top: '-8px',
-						left: '8px',
-						background: 'var(--color-darker-gray, #1a1a1a)',
-						fontSize: '9px',
-						textTransform: 'uppercase',
-						letterSpacing: '.06em',
-						color: 'rgba(255,255,255,0.3)',
-						padding: '0 4px',
-					},
-				});
+				const fenceLabel = new Elem({ tag: 'span', appendTo: useWrap, addClass: 'fence-label' });
 
 				fenceLabel.elem.textContent = '⊞ fenced';
 			}
@@ -651,7 +716,7 @@ export default class Fields extends AsyncView {
 				new Elem({
 					tag: 'div',
 					appendTo: useWrap,
-					style: { fontSize: '12px', color: 'rgba(255,255,255,0.25)', fontStyle: 'italic', padding: '1px 0' },
+					addClass: 'empty',
 					textContent: 'Empty',
 				});
 			}
@@ -664,14 +729,8 @@ export default class Fields extends AsyncView {
 				new Elem({
 					tag: 'div',
 					appendTo: useWrap,
-					style: {
-						fontSize: '13px',
-						color: USE_COLORS[event.category] || 'rgba(255,255,255,0.7)',
-						padding: '1px 0',
-						whiteSpace: 'nowrap',
-						overflow: 'hidden',
-						textOverflow: 'ellipsis',
-					},
+					addClass: 'use',
+					style: { color: USE_COLORS[event.category] || colors.muted },
 					textContent: `${eventEmoji(event)} ${label}`,
 				});
 			}
@@ -687,7 +746,7 @@ export default class Fields extends AsyncView {
 				new Elem({
 					tag: 'div',
 					appendTo: card,
-					style: { fontSize: '11px', color: days <= 30 ? '#e05252' : '#e8832a', marginTop: '4px' },
+					style: { fontSize: '11px', color: renewalColor(days), marginTop: '4px' },
 					textContent: days <= 0 ? 'Lease renewal past due' : `Lease renewal in ${days} days`,
 				});
 			}
