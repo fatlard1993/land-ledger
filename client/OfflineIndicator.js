@@ -1,8 +1,10 @@
-import { Component, styled } from '@vanilla-bean/components';
+import { Button, Component, styled, theme } from '@vanilla-bean/components';
+
+const { colors } = theme;
 
 const IndicatorBar = styled(
 	Component,
-	() => `
+	({ colors }) => `
 	position: fixed;
 	top: 0;
 	left: 0;
@@ -14,7 +16,7 @@ const IndicatorBar = styled(
 	padding: 6px 12px;
 	user-select: none;
 	letter-spacing: .02em;
-	color: #fff;
+	color: ${colors.white};
 	transition: background 0.3s;
 	display: none;
 
@@ -51,7 +53,7 @@ export function mountOfflineIndicator() {
 			? `Offline — ${pendingCount} pending change${pendingCount !== 1 ? 's' : ''} will sync when reconnected`
 			: 'Offline — viewing cached data  ·  changes cannot be saved';
 
-		show(msg, '#b45309');
+		show(msg, colors.dark(colors.orange));
 	};
 
 	const onOnline = () => {
@@ -70,7 +72,7 @@ export function mountOfflineIndicator() {
 	// so unsaved form state is never silently destroyed.
 	window.addEventListener('land-ledger:queue-flushed', ({ detail: { synced } }) => {
 		bar.elem.innerHTML = '';
-		bar.elem.style.background = '#15803d';
+		bar.elem.style.background = `${colors.dark(colors.green)}`;
 		bar.elem.style.display = 'flex';
 		bar.elem.style.alignItems = 'center';
 		bar.elem.style.justifyContent = 'center';
@@ -80,12 +82,12 @@ export function mountOfflineIndicator() {
 		msg.textContent = `Synced ${synced} change${synced !== 1 ? 's' : ''} — refresh to see updates`;
 		bar.elem.appendChild(msg);
 
-		const btn = document.createElement('button');
-		btn.textContent = 'Refresh';
-		btn.style.cssText =
-			'background:rgba(255,255,255,0.2);border:none;color:#fff;padding:2px 10px;border-radius:10px;cursor:pointer;font-size:12px;';
-		btn.onclick = () => window.location.reload();
-		bar.elem.appendChild(btn);
+		new Button({
+			appendTo: bar,
+			variant: 'chip',
+			textContent: 'Refresh',
+			onPointerPress: () => window.location.reload(),
+		});
 
 		bar.addClass('visible');
 	});
@@ -95,12 +97,12 @@ export function mountOfflineIndicator() {
 		pendingCount = pending ?? 0;
 
 		if (syncing) {
-			show(`Syncing ${pending} change${pending !== 1 ? 's' : ''}…`, '#1d4ed8');
+			show(`Syncing ${pending} change${pending !== 1 ? 's' : ''}…`, colors.dark(colors.blue));
 			return;
 		}
 
 		if (synced != null && synced > 0) {
-			show(`Synced ${synced} change${synced !== 1 ? 's' : ''}`, '#15803d');
+			show(`Synced ${synced} change${synced !== 1 ? 's' : ''}`, colors.dark(colors.green));
 			hide(2000);
 			return;
 		}

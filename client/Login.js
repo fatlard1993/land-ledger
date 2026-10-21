@@ -1,80 +1,87 @@
 // Full-screen login overlay — shown when auth is enabled and the user has no session.
 // Single passkey field; no username. First matching account wins.
-import { Component, Elem, styled } from '@vanilla-bean/components';
+import { Button, Card, Component, Icon, Input, styled } from '@vanilla-bean/components';
 
 const LoginOverlay = styled(
 	Component,
-	() => `
-	position: fixed;
-	inset: 0;
-	z-index: 99999;
-	background: #0d0d0d;
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	font-family: inherit;
-`,
+	({ colors }) => `
+		position: fixed;
+		inset: 0;
+		z-index: 99999;
+		background: ${colors.black};
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		font-family: inherit;
+	`,
 );
 
 const LoginCard = styled(
-	Component,
-	() => `
-	width: min(340px, 90vw);
-	padding: 32px;
-	background: rgba(255, 255, 255, 0.04);
-	border: 1px solid rgba(255, 255, 255, 0.1);
-	border-radius: 12px;
-	display: flex;
-	flex-direction: column;
-	gap: 20px;
-`,
+	Card,
+	({ space }) => `
+		width: min(340px, 90vw);
+		padding: ${space.xl};
+		display: flex;
+		flex-direction: column;
+		gap: 20px;
+	`,
 );
 
-const LoginInput = styled(
+const Masthead = styled(
 	Component,
-	() => `
-	display: block;
-	width: 100%;
-	box-sizing: border-box;
-	background: rgba(255, 255, 255, 0.07);
-	border: 1px solid rgba(255, 255, 255, 0.12);
-	border-radius: 6px;
-	color: #fff;
-	font-size: 16px;
-	padding: 12px 14px;
-	font-family: inherit;
-	text-align: center;
-	letter-spacing: .15em;
-	outline: none;
-	transition: border-color 0.15s;
+	({ colors }) => `
+		text-align: center;
 
-	&:focus {
-		border-color: rgba(255, 255, 255, 0.3);
-	}
-`,
-	{ tag: 'input' },
+		& .logo {
+			margin-bottom: 8px;
+			font-size: 36px;
+			color: ${colors.light(colors.green)};
+		}
+
+		& .name {
+			font-size: 18px;
+			font-weight: 700;
+			color: ${colors.white};
+		}
+
+		& .hint {
+			margin-top: 4px;
+			font-size: 12px;
+			color: ${colors.gray};
+		}
+	`,
+);
+
+// A passkey is typed blind, so it gets room and a centered, spaced line
+const PasskeyInput = styled(
+	Input,
+	() => `
+		padding: 12px 14px;
+		font-size: 16px;
+		text-align: center;
+		letter-spacing: 0.15em;
+	`,
+);
+
+const ErrorLine = styled(
+	Component,
+	({ colors }) => `
+		min-height: 16px;
+		font-size: 12px;
+		text-align: center;
+		color: ${colors.light(colors.danger)};
+	`,
 );
 
 const LoginButton = styled(
-	Component,
-	() => `
-	width: 100%;
-	padding: 11px;
-	border-radius: 6px;
-	border: none;
-	background: #2d6a2d;
-	color: #fff;
-	font-size: 14px;
-	font-weight: 600;
-	cursor: pointer;
-	font-family: inherit;
-	transition: background 0.15s;
-
-	&:hover {
-		background: #3a8a3a;
-	}
-`,
-	{ tag: 'button' },
+	Button,
+	({ colors }) => `
+		width: 100%;
+		padding: 11px;
+		background-color: ${colors.dark(colors.green)};
+		font-size: 14px;
+		font-weight: 600;
+	`,
 );
 
 export function mountLoginScreen(onSuccess) {
@@ -82,33 +89,25 @@ export function mountLoginScreen(onSuccess) {
 
 	const card = new LoginCard({ appendTo: overlay });
 
-	new Elem({
+	new Masthead({
 		appendTo: card,
-		style: { textAlign: 'center' },
-		innerHTML: `
-			<div style="font-size:36px;margin-bottom:8px">🌾</div>
-			<div style="font-size:18px;font-weight:700;color:#fff;letter-spacing:-.01em">Land Ledger</div>
-			<div style="font-size:12px;color:rgba(255,255,255,0.35);margin-top:4px">Enter your passkey to continue</div>
-		`,
+		append: [
+			new Icon({ addClass: 'logo', icon: 'wheat-awn' }),
+			new Component({ addClass: 'name', textContent: 'Land Ledger' }),
+			new Component({ addClass: 'hint', textContent: 'Enter your passkey to continue' }),
+		],
 	});
 
-	const input = new LoginInput({
+	const input = new PasskeyInput({
 		appendTo: card,
 		type: 'password',
 		placeholder: 'Passkey',
 		autocomplete: 'current-password',
 	});
 
-	const errorElem = new Elem({
-		appendTo: card,
-		style: { fontSize: '12px', color: '#e05252', textAlign: 'center', minHeight: '16px' },
-	});
+	const errorElem = new ErrorLine({ appendTo: card });
 
-	const btn = new LoginButton({
-		appendTo: card,
-		type: 'button',
-		textContent: 'Continue',
-	});
+	const btn = new LoginButton({ appendTo: card, textContent: 'Continue' });
 
 	const attempt = async () => {
 		const passkey = input.elem.value;

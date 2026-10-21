@@ -1,5 +1,7 @@
-import { Component, Elem, styled, Button } from '@vanilla-bean/components';
+import { Button, Card, Component, Elem, styled, theme } from '@vanilla-bean/components';
 import { centroidFromGeometry } from './geo';
+
+const { colors } = theme;
 
 const DISMISSED_KEY = 'land-ledger-weather-dismissed';
 const TODAY = new Date().toISOString().slice(0, 10);
@@ -13,14 +15,14 @@ const evaluate = (date, day) => {
 		alerts.push({
 			type: 'hard_freeze',
 			icon: '❄️',
-			color: '#7c3aed',
+			color: colors.purple,
 			label: `Hard Freeze — low ${Math.round(day.tempMin)}°F`,
 		});
 	} else if (day.tempMin != null && day.tempMin <= 36) {
 		alerts.push({
 			type: 'frost',
 			icon: '🌡️',
-			color: '#b45309',
+			color: colors.orange,
 			label: `Frost Warning — low ${Math.round(day.tempMin)}°F`,
 		});
 	}
@@ -29,13 +31,13 @@ const evaluate = (date, day) => {
 		alerts.push({
 			type: 'rain',
 			icon: '🌧️',
-			color: '#1d4ed8',
+			color: colors.blue,
 			label: `Heavy Rain — ${day.precipitation.toFixed(2)}" forecast`,
 		});
 	}
 
 	if (day.windMax != null && day.windMax >= 25) {
-		alerts.push({ type: 'wind', icon: '💨', color: '#374151', label: `High Wind — ${Math.round(day.windMax)} mph` });
+		alerts.push({ type: 'wind', icon: '💨', color: colors.gray, label: `High Wind — ${Math.round(day.windMax)} mph` });
 	}
 
 	return alerts.map(a => ({
@@ -146,21 +148,27 @@ const AlertContainer = styled(
 `,
 );
 
+// Floats over the map, so it's opaque where a Card on the page is translucent
 const AlertCard = styled(
-	Component,
-	() => `
-	pointer-events: auto;
-	display: flex;
-	align-items: center;
-	gap: 8px;
-	background: rgba(17, 24, 39, 0.95);
-	border-radius: 6px;
-	padding: 8px 10px;
-	font-size: 12px;
-	color: #fff;
-	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
-	transition: opacity 0.2s;
-`,
+	Card,
+	({ colors }) => `
+		pointer-events: auto;
+		display: flex;
+		align-items: center;
+		gap: 8px;
+		background-color: ${colors.alpha(colors.black, 0.95)};
+		padding: 8px 10px;
+		font-size: 12px;
+		color: ${colors.white};
+		box-shadow: 0 2px 8px ${colors.alpha(colors.vantablack, 0.4)};
+		transition: opacity 0.2s;
+
+		& .when {
+			margin-top: 1px;
+			font-size: 11px;
+			color: ${colors.gray};
+		}
+	`,
 );
 
 // ── Render ────────────────────────────────────────────────────────────────────
@@ -172,10 +180,7 @@ function render(alerts) {
 }
 
 function addAlertCard(container, alert) {
-	const card = new AlertCard({
-		appendTo: container,
-		style: { borderLeft: `3px solid ${alert.color}` },
-	});
+	const card = new AlertCard({ appendTo: container, accent: alert.color });
 
 	new Elem({
 		tag: 'span',
@@ -199,27 +204,19 @@ function addAlertCard(container, alert) {
 	new Elem({
 		tag: 'div',
 		appendTo: body,
-		style: { fontSize: '11px', color: 'rgba(255,255,255,0.5)', marginTop: '1px' },
+		addClass: 'when',
 		textContent: alert.dayLabel,
 	});
 
 	new Button({
 		appendTo: card,
-		textContent: '×',
+		variant: 'flat',
+		icon: 'xmark',
 		title: 'Dismiss',
-		style: {
-			background: 'none',
-			border: 'none',
-			color: 'rgba(255,255,255,0.4)',
-			fontSize: '16px',
-			cursor: 'pointer',
-			padding: '0 2px',
-			flexShrink: '0',
-			lineHeight: '1',
-		},
+		style: { flexShrink: '0' },
 		onPointerPress: () => {
 			dismiss(alert.key);
-			card.options.style = { borderLeft: `3px solid ${alert.color}`, opacity: '0' };
+			card.options.style = { opacity: '0' };
 			setTimeout(() => card.destroy(), 200);
 		},
 	});

@@ -1,32 +1,27 @@
-import { Component, Elem } from '@vanilla-bean/components';
+import { Elem, Icon } from '@vanilla-bean/components';
 
 import { BottomNav, NavItem } from './Layout';
 import context from './context';
 import { logout } from './api/auth';
 
 const BASE_ITEMS = [
-	{ path: '/', icon: '🗺️', label: 'Map' },
-	{ path: '/Fields', icon: '📋', label: 'Fields' },
-	{ path: '/Todo', icon: '✅', label: 'To Do' },
-	{ path: '/Timeline', icon: '📅', label: 'Timeline' },
+	{ path: '/', icon: 'map-location-dot', label: 'Map' },
+	{ path: '/Fields', icon: 'wheat-awn', label: 'Fields' },
+	{ path: '/Todo', icon: 'list-check', label: 'To Do' },
+	{ path: '/Timeline', icon: 'calendar-days', label: 'Timeline' },
 ];
 
-const LEASES_ITEM = { path: '/Leases', icon: '📝', label: 'Leases' };
-const SUPPLIES_ITEM = { path: '/Supplies', icon: '📦', label: 'Supplies' };
-const FINANCIALS_ITEM = { path: '/Financials', icon: '💵', label: 'Financials' };
-const INCIDENTS_ITEM = { path: '/Incidents', icon: '⚠️', label: 'Incidents' };
-const MAINTENANCE_ITEM = { path: '/Maintenance', icon: '🔧', label: 'Maintenance' };
-const FEEDING_ITEM = { path: '/Feeding', icon: '🐄', label: 'Feeding' };
-const APPLICATIONS_ITEM = { path: '/Applications', icon: '🧪', label: 'Applications' };
-const ANIMALS_ITEM = { path: '/Animals', icon: '🐾', label: 'Animals' };
+const LEASES_ITEM = { path: '/Leases', icon: 'file-signature', label: 'Leases' };
+const SUPPLIES_ITEM = { path: '/Supplies', icon: 'boxes-stacked', label: 'Supplies' };
+const FINANCIALS_ITEM = { path: '/Financials', icon: 'sack-dollar', label: 'Financials' };
+const INCIDENTS_ITEM = { path: '/Incidents', icon: 'triangle-exclamation', label: 'Incidents' };
+const MAINTENANCE_ITEM = { path: '/Maintenance', icon: 'wrench', label: 'Maintenance' };
+const FEEDING_ITEM = { path: '/Feeding', icon: 'cow', label: 'Feeding' };
+const APPLICATIONS_ITEM = { path: '/Applications', icon: 'flask', label: 'Applications' };
+const ANIMALS_ITEM = { path: '/Animals', icon: 'paw', label: 'Animals' };
 
-export default class Nav extends Component {
-	constructor(options = {}) {
-		super(options);
-	}
-
+export default class Nav extends BottomNav {
 	build() {
-		this.nav = new BottomNav({ appendTo: this });
 		this._itemMap = new Map();
 
 		this._buildItems();
@@ -59,7 +54,7 @@ export default class Nav extends Component {
 	}
 
 	_buildItems() {
-		this.nav.empty();
+		this.empty();
 		this._itemMap.clear();
 
 		const user = context.currentUser;
@@ -91,13 +86,13 @@ export default class Nav extends Component {
 
 		for (const { path, icon, label } of items) {
 			const item = new NavItem({
-				appendTo: this.nav,
+				appendTo: this,
 				onPointerPress: () => {
 					window.location.hash = path === '/' ? '' : path;
 				},
 			});
 
-			new Elem({ tag: 'span', appendTo: item, addClass: 'nav-icon', textContent: icon });
+			new Icon({ appendTo: item, addClass: 'nav-icon', icon });
 			new Elem({ tag: 'span', appendTo: item, addClass: 'nav-label', textContent: label });
 
 			this._itemMap.set(path, item);
@@ -106,7 +101,7 @@ export default class Nav extends Component {
 		// Admin controls — only visible when auth is enabled and user is admin
 		if (isAdmin) {
 			const adminItem = new NavItem({
-				appendTo: this.nav,
+				appendTo: this,
 				title: 'Manage accounts & auth',
 				onPointerPress: async () => {
 					const { default: AccountsDialog } = await import('./Admin/AccountsDialog.js');
@@ -115,14 +110,14 @@ export default class Nav extends Component {
 				},
 			});
 
-			new Elem({ tag: 'span', appendTo: adminItem, addClass: 'nav-icon', textContent: '👤' });
+			new Icon({ appendTo: adminItem, addClass: 'nav-icon', icon: 'user-gear' });
 			new Elem({ tag: 'span', appendTo: adminItem, addClass: 'nav-label', textContent: 'Admin' });
 		}
 
 		// Logout — visible whenever auth is enabled and user is logged in
 		if (user) {
 			const logoutItem = new NavItem({
-				appendTo: this.nav,
+				appendTo: this,
 				title: `Signed in as ${user.name} — tap to sign out`,
 				onPointerPress: async () => {
 					await logout();
@@ -130,7 +125,7 @@ export default class Nav extends Component {
 				},
 			});
 
-			new Elem({ tag: 'span', appendTo: logoutItem, addClass: 'nav-icon', textContent: '🔓' });
+			new Icon({ appendTo: logoutItem, addClass: 'nav-icon', icon: 'right-from-bracket' });
 			new Elem({ tag: 'span', appendTo: logoutItem, addClass: 'nav-label', textContent: 'Sign out' });
 		}
 	}
