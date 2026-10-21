@@ -1,30 +1,84 @@
 // Shared style constants and helpers used across Map layers.
 
+import { theme } from '@vanilla-bean/components';
+
+const { colors } = theme;
+
+// Leaflet draws paths with CSS color strings
+const hex = color => color.toHexString();
+
+const owned = hex(colors.light(colors.info));
+const rented = hex(colors.light(colors.orange));
+const muted = hex(colors.gray);
+
 export const TENURE_COLORS = {
-	own: { color: '#4a90d9', fillColor: '#4a90d9', fillOpacity: 0.18 },
-	rent: { color: '#e8832a', fillColor: '#e8832a', fillOpacity: 0.18 },
+	own: { color: owned, fillColor: owned, fillOpacity: 0.18 },
+	rent: { color: rented, fillColor: rented, fillOpacity: 0.18 },
 };
 
 // Unified status color palette — used for all entity types on the map
 export const STATUS_STYLES = {
-	needs_maintenance: { color: '#e8832a', fillColor: '#e8832a', fillOpacity: 0.25, opacity: 0.9, label: '🔩' },
-	needs_service: { color: '#e8c42a', fillColor: '#e8c42a', fillOpacity: 0.2, opacity: 0.85, label: '🔧' },
-	out_of_service: { color: '#777', fillColor: '#888', fillOpacity: 0.08, opacity: 0.45, label: '⚠️' },
-	fallow: { color: '#5a7a3a', fillColor: '#5a7a3a', fillOpacity: 0.12, opacity: 0.6, label: '😴' },
-	abandoned: { color: '#8b4513', fillColor: '#8b4513', fillOpacity: 0.1, opacity: 0.5, label: '🏚️' },
-	closed: { color: '#777', fillColor: '#888', fillOpacity: 0.08, opacity: 0.45, dashArray: '3,3', label: '🚫' },
-	disputed: { color: '#9c6de8', fillColor: '#9c6de8', fillOpacity: 0.15, opacity: 0.8, label: '⚖️' },
-	encumbered: { color: '#e8c42a', fillColor: '#e8c42a', fillOpacity: 0.1, opacity: 0.7, label: '🔒' },
-	destroyed: { color: '#8b1a1a', fillColor: '#8b1a1a', fillOpacity: 0.1, opacity: 0.55, dashArray: '4,3', label: '☠️' },
+	needs_maintenance: {
+		color: hex(colors.orange),
+		fillColor: hex(colors.orange),
+		fillOpacity: 0.25,
+		opacity: 0.9,
+		label: '🔩',
+	},
+	needs_service: {
+		color: hex(colors.warning),
+		fillColor: hex(colors.warning),
+		fillOpacity: 0.2,
+		opacity: 0.85,
+		label: '🔧',
+	},
+	out_of_service: { color: muted, fillColor: muted, fillOpacity: 0.08, opacity: 0.45, label: '⚠️' },
+	fallow: {
+		color: hex(colors.dark(colors.green)),
+		fillColor: hex(colors.dark(colors.green)),
+		fillOpacity: 0.12,
+		opacity: 0.6,
+		label: '😴',
+	},
+	abandoned: {
+		color: hex(colors.darker(colors.orange)),
+		fillColor: hex(colors.darker(colors.orange)),
+		fillOpacity: 0.1,
+		opacity: 0.5,
+		label: '🏚️',
+	},
+	closed: { color: muted, fillColor: muted, fillOpacity: 0.08, opacity: 0.45, dashArray: '3,3', label: '🚫' },
+	disputed: {
+		color: hex(colors.light(colors.purple)),
+		fillColor: hex(colors.light(colors.purple)),
+		fillOpacity: 0.15,
+		opacity: 0.8,
+		label: '⚖️',
+	},
+	encumbered: {
+		color: hex(colors.warning),
+		fillColor: hex(colors.warning),
+		fillOpacity: 0.1,
+		opacity: 0.7,
+		label: '🔒',
+	},
+	destroyed: {
+		color: hex(colors.darkest(colors.red)),
+		fillColor: hex(colors.darkest(colors.red)),
+		fillOpacity: 0.1,
+		opacity: 0.55,
+		dashArray: '4,3',
+		label: '☠️',
+	},
 };
 
 export const statusStyle = status => STATUS_STYLES[status] || null;
 
 export const USE_FILLS = {
-	livestock: { fillColor: '#a0522d', fillOpacity: 0.45 },
-	crop: { fillColor: '#e8c42a', fillOpacity: 0.35 },
-	cover_crop: { fillColor: '#4caf50', fillOpacity: 0.4 },
-	fallow: { fillColor: '#9e9e9e', fillOpacity: 0.2 },
+	livestock: { fillColor: hex(colors.dark(colors.orange)), fillOpacity: 0.45 },
+	crop: { fillColor: hex(colors.yellow), fillOpacity: 0.35 },
+	cover_crop: { fillColor: hex(colors.green), fillOpacity: 0.4 },
+	fallow: { fillColor: muted, fillOpacity: 0.2 },
 };
 
 export const USE_ICONS = {
@@ -40,7 +94,7 @@ export const USE_ICONS = {
 export const CURRENT_YEAR = new Date().getFullYear();
 
 export const PARCEL_STYLE = {
-	color: '#ff9500',
+	color: hex(colors.light(colors.orange)),
 	fillOpacity: 0,
 	weight: 8, // wide enough to tap on mobile; pointer-events: stroke keeps interior clickable
 	dashArray: '10, 6',
@@ -49,16 +103,16 @@ export const PARCEL_STYLE = {
 };
 
 export const BUILDING_STYLE = {
-	color: '#c8a882',
-	fillColor: '#c8a882',
+	color: hex(colors.lighter(colors.orange)),
+	fillColor: hex(colors.lighter(colors.orange)),
 	fillOpacity: 0.5,
 	weight: 2,
 	opacity: 0.9,
 };
 
 export const REFERENCE_STYLE = {
-	color: '#00bcd4',
-	fillColor: '#00bcd4',
+	color: hex(colors.light(colors.teal)),
+	fillColor: hex(colors.light(colors.teal)),
 	fillOpacity: 0.04,
 	weight: 1.5,
 	dashArray: '6,4',

@@ -1,4 +1,4 @@
-import { Button, Component, Elem, formatDate } from '@vanilla-bean/components';
+import { Button, Icon, formatDate, theme } from '@vanilla-bean/components';
 
 import { ActionHeader } from '../Layout';
 import { formatDollar } from '../utils/format';
@@ -14,6 +14,19 @@ import {
 	updateEquipment,
 } from '../api';
 import { scheduleStatus } from '../utils/maintenanceUtils';
+import {
+	EmptyNote,
+	HeaderActions,
+	HeaderButton,
+	PanelRow,
+	RowAside,
+	RowMain,
+	RowMeta,
+	RowTitle,
+	SubLabel,
+} from './panelParts';
+
+const { colors } = theme;
 
 export async function renderMaintenanceSection(equipment, maintenance, schedules, { refresh, appendTo }) {
 	const item = equipment;
@@ -23,15 +36,12 @@ export async function renderMaintenanceSection(equipment, maintenance, schedules
 
 	// Section header with buttons
 	const maintenanceHeader = new ActionHeader({ appendTo, title: 'Maintenance' });
-	const maintenanceButtons = new Component({
-		appendTo: maintenanceHeader,
-		style: { display: 'flex', gap: '6px', marginTop: '10px' },
-	});
+	const maintenanceButtons = new HeaderActions({ appendTo: maintenanceHeader });
 
-	new Button({
+	new HeaderButton({
 		appendTo: maintenanceButtons,
-		textContent: '+ Log Work',
-		style: { fontSize: '12px', padding: '4px 10px' },
+		icon: 'plus',
+		textContent: 'Log Work',
 		onPointerPress: () =>
 			new MaintenanceDialog({
 				equipment: item,
@@ -52,10 +62,10 @@ export async function renderMaintenanceSection(equipment, maintenance, schedules
 			}),
 	});
 
-	new Button({
+	new HeaderButton({
 		appendTo: maintenanceButtons,
-		textContent: '+ Schedule',
-		style: { fontSize: '12px', padding: '4px 10px' },
+		icon: 'plus',
+		textContent: 'Schedule',
 		onPointerPress: () =>
 			new MaintenanceScheduleDialog({
 				equipment: item,
@@ -71,18 +81,7 @@ export async function renderMaintenanceSection(equipment, maintenance, schedules
 
 	// Schedules section
 	if (schedules.length) {
-		new Elem({
-			tag: 'div',
-			appendTo,
-			style: {
-				fontSize: '11px',
-				textTransform: 'uppercase',
-				letterSpacing: '.06em',
-				color: 'rgba(255,255,255,0.3)',
-				padding: '8px 0 4px',
-			},
-			textContent: 'Schedules',
-		});
+		new SubLabel({ appendTo, textContent: 'Schedules' });
 
 		for (const schedule of schedules.sort((a, b) => (a.name || '').localeCompare(b.name || ''))) {
 			const { status, label } = scheduleStatus(schedule, currentUsage, item.usageUnit, today) ?? {
@@ -90,53 +89,27 @@ export async function renderMaintenanceSection(equipment, maintenance, schedules
 				label: 'Not yet serviced',
 			};
 			let statusColor;
-			if (status === 'overdue') statusColor = '#e05252';
-			else if (status === 'due_soon') statusColor = '#e8c42a';
-			else statusColor = '#4caf50';
+			if (status === 'overdue') statusColor = colors.danger;
+			else if (status === 'due_soon') statusColor = colors.warning;
+			else statusColor = colors.success;
 
-			let statusIcon;
-			if (status === 'overdue') statusIcon = '🔴';
-			else if (status === 'due_soon') statusIcon = '🟡';
-			else statusIcon = '🟢';
+			const row = new PanelRow({ appendTo });
 
-			const row = new Component({
-				appendTo,
-				style: {
-					display: 'flex',
-					alignItems: 'flex-start',
-					gap: '8px',
-					padding: '6px 0',
-					borderBottom: '1px solid rgba(255,255,255,0.06)',
-				},
-			});
-
-			new Elem({
-				tag: 'span',
+			new Icon({
 				appendTo: row,
-				style: { fontSize: '13px', flexShrink: '0', marginTop: '1px' },
-				textContent: statusIcon,
+				icon: 'circle',
+				style: { flexShrink: '0', marginTop: '3px', fontSize: '10px', color: statusColor },
 			});
 
-			const scheduleInfo = new Component({ appendTo: row, style: { flex: '1', minWidth: '0', cursor: 'pointer' } });
+			const scheduleInfo = new RowMain({ appendTo: row, style: { cursor: 'pointer' } });
 
-			new Elem({
-				tag: 'div',
-				appendTo: scheduleInfo,
-				style: { fontSize: '13px', color: '#fff', fontWeight: '500' },
-				textContent: schedule.name,
-			});
-			new Elem({
-				tag: 'div',
-				appendTo: scheduleInfo,
-				style: { fontSize: '11px', color: statusColor },
-				textContent: label,
-			});
+			new RowTitle({ appendTo: scheduleInfo, style: { fontWeight: '500' }, textContent: schedule.name });
+			new RowMeta({ appendTo: scheduleInfo, style: { color: colors.light(statusColor) }, textContent: label });
 
 			if (schedule.procedure) {
-				new Elem({
-					tag: 'div',
+				new RowMeta({
 					appendTo: scheduleInfo,
-					style: { fontSize: '11px', color: 'rgba(255,255,255,0.35)', marginTop: '2px', whiteSpace: 'pre-wrap' },
+					style: { marginTop: '2px', whiteSpace: 'pre-wrap' },
 					textContent: schedule.procedure,
 				});
 			}
@@ -147,15 +120,10 @@ export async function renderMaintenanceSection(equipment, maintenance, schedules
 			// Edit schedule button
 			new Button({
 				appendTo: row,
-				textContent: '✏️',
+				variant: 'flat',
+				icon: 'pen',
 				title: 'Edit schedule',
-				style: {
-					fontSize: '12px',
-					padding: '2px 6px',
-					background: 'transparent',
-					border: '1px solid rgba(255,255,255,0.1)',
-					flexShrink: '0',
-				},
+				style: { flexShrink: '0' },
 				onPointerPress: () =>
 					new MaintenanceScheduleDialog({
 						schedule: schedule,
@@ -209,43 +177,16 @@ export async function renderMaintenanceSection(equipment, maintenance, schedules
 	};
 
 	// History
-	new Elem({
-		tag: 'div',
-		appendTo,
-		style: {
-			fontSize: '11px',
-			textTransform: 'uppercase',
-			letterSpacing: '.06em',
-			color: 'rgba(255,255,255,0.3)',
-			padding: '8px 0 4px',
-		},
-		textContent: records.length ? 'History' : 'No maintenance records yet',
-	});
+	new SubLabel({ appendTo, textContent: records.length ? 'History' : 'No maintenance records yet' });
 
 	for (const rec of records.slice(0, 8)) {
-		const row = new Component({
-			appendTo,
-			style: {
-				display: 'flex',
-				justifyContent: 'space-between',
-				alignItems: 'flex-start',
-				padding: '5px 0',
-				borderBottom: '1px solid rgba(255,255,255,0.06)',
-				cursor: 'pointer',
-			},
-		});
-
-		const left = new Component({ appendTo: row, style: { flex: '1', minWidth: '0' } });
+		const row = new PanelRow({ appendTo, addClass: 'interactive' });
+		const left = new RowMain({ appendTo: row });
 
 		const wtIcons = { maintenance: '🔩', repair: '🔧', enhancement: '⬆️' };
 		const wtLabel = wtIcons[rec.workType] ? `${wtIcons[rec.workType]} ` : '';
 
-		new Elem({
-			tag: 'div',
-			appendTo: left,
-			style: { fontSize: '13px', color: '#fff' },
-			textContent: `${wtLabel}${rec.type || 'Service Record'}`,
-		});
+		new RowTitle({ appendTo: left, textContent: `${wtLabel}${rec.type || 'Service Record'}` });
 
 		const meta = [];
 
@@ -253,33 +194,15 @@ export async function renderMaintenanceSection(equipment, maintenance, schedules
 			meta.push(`${Number(rec.usageAtService).toLocaleString()}${item.usageUnit ? ' ' + item.usageUnit : ''}`);
 		if (rec.cost) meta.push(`${formatDollar(rec.cost)}`);
 		if (rec.parts) meta.push(rec.parts);
-		if (meta.length)
-			new Elem({
-				tag: 'div',
-				appendTo: left,
-				style: { fontSize: '11px', color: 'rgba(255,255,255,0.4)' },
-				textContent: meta.join(' · '),
-			});
+		if (meta.length) new RowMeta({ appendTo: left, textContent: meta.join(' · ') });
 		if (rec.procedure)
-			new Elem({
-				tag: 'div',
+			new RowMeta({
 				appendTo: left,
-				style: { fontSize: '11px', color: 'rgba(255,255,255,0.3)', fontStyle: 'italic', marginTop: '2px' },
+				style: { fontStyle: 'italic', marginTop: '2px' },
 				textContent: rec.procedure.slice(0, 80) + (rec.procedure.length > 80 ? '…' : ''),
 			});
 
-		new Elem({
-			tag: 'div',
-			appendTo: row,
-			style: {
-				fontSize: '11px',
-				color: 'rgba(255,255,255,0.35)',
-				whiteSpace: 'nowrap',
-				paddingLeft: '8px',
-				marginTop: '2px',
-			},
-			textContent: formatDate(rec.date) || '—',
-		});
+		new RowAside({ appendTo: row, textContent: formatDate(rec.date) || '—' });
 
 		row.onPointerPress(
 			() =>
@@ -305,12 +228,7 @@ export async function renderMaintenanceSection(equipment, maintenance, schedules
 	}
 
 	if (records.length > 8) {
-		new Elem({
-			tag: 'div',
-			appendTo,
-			style: { fontSize: '11px', color: 'rgba(255,255,255,0.3)', padding: '4px 0' },
-			textContent: `+${records.length - 8} older records`,
-		});
+		new EmptyNote({ appendTo, style: { fontSize: '11px' }, textContent: `+${records.length - 8} older records` });
 	}
 }
 

@@ -1,10 +1,37 @@
-import { Elem, Dialog, Button } from '@vanilla-bean/components';
+import { Button, Component, Dialog, Input, Select, styled, theme } from '@vanilla-bean/components';
 
 import { formatDollar } from '../utils/format';
 import { makePropertiesEditor } from '../utils/PropertiesEditor';
 import { createRevenue, updateSupply, getSupplies } from '../api';
 import { salePriceForSupply } from '../Supplies/SupplyDialog';
-import { FormLabel, FormInput } from '../Layout';
+import { FormLabel } from '../Layout';
+import { SubLabel } from './panelParts';
+
+const { colors } = theme;
+
+const DialogNote = styled(
+	Component,
+	({ colors }) => `
+		margin: 0 0 4px;
+		font-size: 13px;
+		color: ${colors.gray};
+	`,
+	{ tag: 'p' },
+);
+
+const Preview = styled(
+	Component,
+	({ colors }) => `
+		min-height: 16px;
+		margin-top: 6px;
+		font-size: 12px;
+		color: ${colors.light(colors.success)};
+	`,
+);
+
+// An inventory line's controls, a size down from the dialog's own fields
+const LineInput = styled(Input, () => 'padding: 6px 8px; font-size: 13px; text-align: center;');
+const LineSelect = styled(Select, () => 'padding: 6px 8px; font-size: 13px;');
 
 export function openSellDialog(entityType, entity, onComplete, hide) {
 	const entityLabel = entity.name || entityType;
@@ -16,7 +43,7 @@ export function openSellDialog(entityType, entity, onComplete, hide) {
 		onButtonPress: async ({ button }) => {
 			if (button === 'Record Sale & Remove') {
 				if (!priceEl.elem.value) {
-					priceEl.elem.style.border = '1px solid #e05252';
+					priceEl.elem.style.border = `1px solid ${colors.danger}`;
 					return;
 				}
 
@@ -44,25 +71,23 @@ export function openSellDialog(entityType, entity, onComplete, hide) {
 		},
 	});
 
-	new Elem({
-		tag: 'p',
+	new DialogNote({
 		appendTo: dialog.body,
-		style: { fontSize: '13px', color: 'rgba(255,255,255,0.45)', margin: '0 0 4px' },
 		textContent: `Records a sale income entry and removes ${entityLabel} from the map. All historical records (events, leases, maintenance, etc.) are retained.`,
 	});
 
 	new FormLabel({ appendTo: dialog.body, textContent: 'Sale Price ($)' });
-	const priceEl = new FormInput({ appendTo: dialog.body, type: 'number', step: '1', placeholder: '0.00', min: '0' });
+	const priceEl = new Input({ appendTo: dialog.body, type: 'number', step: '1', placeholder: '0.00', min: '0' });
 
 	new FormLabel({ appendTo: dialog.body, textContent: 'Sale Date' });
-	const dateEl = new FormInput({ appendTo: dialog.body, type: 'date' });
+	const dateEl = new Input({ appendTo: dialog.body, type: 'date' });
 	dateEl.elem.value = new Date().toISOString().slice(0, 10);
 
 	new FormLabel({ appendTo: dialog.body, textContent: 'Buyer (optional)' });
-	const buyerEl = new FormInput({ appendTo: dialog.body, placeholder: 'Buyer name or business' });
+	const buyerEl = new Input({ appendTo: dialog.body, placeholder: 'Buyer name or business' });
 
 	new FormLabel({ appendTo: dialog.body, textContent: 'Notes (optional)' });
-	const notesEl = new FormInput({ appendTo: dialog.body, placeholder: 'Terms, conditions, etc.' });
+	const notesEl = new Input({ appendTo: dialog.body, placeholder: 'Terms, conditions, etc.' });
 
 	priceEl.elem.focus();
 }
@@ -111,7 +136,7 @@ export function openRevenueDialog(entityType, entity, existingRecord, onSave, on
 
 	// Type
 	new FormLabel({ appendTo: dialog.body, textContent: 'Income Type' });
-	const typeEl = new FormInput({
+	const typeEl = new Input({
 		appendTo: dialog.body,
 		placeholder: 'e.g. Barn rental, Airbnb, Event hosting',
 		suggestions: INCOME_TYPES,
@@ -119,66 +144,52 @@ export function openRevenueDialog(entityType, entity, existingRecord, onSave, on
 	});
 
 	// Amount + Date
-	const row = new Elem({
-		tag: 'div',
+	const row = new Component({
 		appendTo: dialog.body,
 		style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' },
 	});
 
 	new FormLabel({ appendTo: row, textContent: 'Amount ($)' });
-	const amountEl = new FormInput({ appendTo: row, type: 'number', step: '0.01', placeholder: '0.00' });
+	const amountEl = new Input({ appendTo: row, type: 'number', step: '0.01', placeholder: '0.00' });
 	amountEl.elem.value = rec.amount || '';
 
 	new FormLabel({ appendTo: row, textContent: 'Date' });
-	const dateEl = new FormInput({ appendTo: row, type: 'date' });
+	const dateEl = new Input({ appendTo: row, type: 'date' });
 	dateEl.elem.value = rec.date || new Date().toISOString().slice(0, 10);
 
 	new FormLabel({ appendTo: dialog.body, textContent: 'Description' });
-	const descEl = new FormInput({ appendTo: dialog.body, placeholder: 'What was the space used for?' });
+	const descEl = new Input({ appendTo: dialog.body, placeholder: 'What was the space used for?' });
 	descEl.elem.value = rec.description || '';
 
 	const { collect: collectProps } = makePropertiesEditor(dialog.body, rec.properties || {});
 
 	// Optional: sell from operation inventory
 	if (!existingRecord) {
-		const divider = new Elem({
-			tag: 'div',
+		const divider = new Component({
 			appendTo: dialog.body,
-			style: { borderTop: '1px solid rgba(255,255,255,0.1)', marginTop: '14px', paddingTop: '12px' },
+			style: { borderTop: `1px solid ${colors.border}`, marginTop: '14px', paddingTop: '12px' },
 		});
 
-		const inventoryHeaderRow = new Elem({
-			tag: 'div',
+		const inventoryHeaderRow = new Component({
 			appendTo: divider,
-			style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' },
+			style: {
+				display: 'flex',
+				justifyContent: 'space-between',
+				alignItems: 'center',
+				gap: '8px',
+				marginBottom: '8px',
+			},
 		});
 
-		new Elem({
-			tag: 'div',
+		new SubLabel({
 			appendTo: inventoryHeaderRow,
-			style: { fontSize: '11px', textTransform: 'uppercase', letterSpacing: '.06em', color: 'rgba(255,255,255,0.3)' },
-			textContent: '📦 Deduct from inventory (optional)',
+			style: { margin: '0' },
+			textContent: 'Deduct from inventory (optional)',
 		});
 
-		const linesContainer = new Elem({ tag: 'div', appendTo: divider });
+		const linesContainer = new Component({ appendTo: divider });
 
-		const totalPreview = new Elem({
-			tag: 'div',
-			appendTo: divider,
-			style: { fontSize: '12px', color: '#4caf50', marginTop: '6px', minHeight: '16px' },
-		});
-
-		const INP_S = {
-			width: '100%',
-			boxSizing: 'border-box',
-			background: 'rgba(255,255,255,0.07)',
-			border: '1px solid rgba(255,255,255,0.12)',
-			borderRadius: '4px',
-			color: '#fff',
-			fontSize: '13px',
-			padding: '6px 8px',
-			fontFamily: 'inherit',
-		};
+		const totalPreview = new Preview({ appendTo: divider });
 
 		// lineItems: [{ supplyId, qty, unitPrice }]
 		const lineItems = [];
@@ -228,8 +239,7 @@ export function openRevenueDialog(entityType, entity, existingRecord, onSave, on
 
 			lineItems.push(lineData);
 
-			const lineRow = new Elem({
-				tag: 'div',
+			const lineRow = new Component({
 				appendTo: linesContainer,
 				style: {
 					display: 'grid',
@@ -240,33 +250,24 @@ export function openRevenueDialog(entityType, entity, existingRecord, onSave, on
 				},
 			});
 
-			const select = new Elem({
-				tag: 'select',
-				appendTo: lineRow,
-				style: { ...INP_S, cursor: 'pointer', appearance: 'auto', webkitAppearance: 'auto' },
-			});
+			const select = new LineSelect({ appendTo: lineRow });
 
 			buildSupplyOptions(select.elem, '');
 
-			const qtyI = new Elem({ tag: 'input', appendTo: lineRow, style: { ...INP_S, textAlign: 'center' } });
+			const qtyI = new LineInput({ appendTo: lineRow });
 
 			Object.assign(qtyI.elem, { type: 'number', step: '0.1', min: '0.01', placeholder: 'Qty' });
 
-			const priceI = new Elem({ tag: 'input', appendTo: lineRow, style: { ...INP_S, textAlign: 'center' } });
+			const priceI = new LineInput({ appendTo: lineRow });
 
 			Object.assign(priceI.elem, { type: 'number', step: '0.01', placeholder: '$/unit' });
 
 			new Button({
 				appendTo: lineRow,
-				textContent: '✕',
-				style: {
-					background: 'none',
-					border: 'none',
-					color: 'rgba(255,255,255,0.3)',
-					cursor: 'pointer',
-					fontSize: '13px',
-					padding: '2px 4px',
-				},
+				variant: 'flat',
+				icon: 'xmark',
+				title: 'Remove item',
+				style: { width: '28px', color: colors.gray },
 				onPointerPress: () => {
 					const idx = lineItems.indexOf(lineData);
 
@@ -301,17 +302,10 @@ export function openRevenueDialog(entityType, entity, existingRecord, onSave, on
 
 		new Button({
 			appendTo: inventoryHeaderRow,
-			textContent: '+ Add item',
-			style: {
-				fontSize: '11px',
-				padding: '2px 8px',
-				borderRadius: '4px',
-				cursor: 'pointer',
-				border: '1px solid rgba(255,255,255,0.15)',
-				background: 'rgba(255,255,255,0.05)',
-				color: 'rgba(255,255,255,0.5)',
-				fontFamily: 'inherit',
-			},
+			variant: 'chip',
+			icon: 'plus',
+			textContent: 'Add item',
+			style: { flexShrink: '0' },
 			onPointerPress: () => {
 				// Rebuild options in case supplies loaded after initial click
 				linesContainer.elem.querySelectorAll('select').forEach(s => buildSupplyOptions(s, s.value));
@@ -331,7 +325,7 @@ export function openInventorySaleDialog(supply, building, refresh) {
 
 	const dialog = new Dialog({
 		size: 'large',
-		header: `🛒 Sell — ${supply.name}`,
+		header: `Sell — ${supply.name}`,
 		buttons: ['Record Sale', 'Cancel'],
 		onButtonPress: async ({ button }) => {
 			if (button === 'Record Sale') {
@@ -370,22 +364,20 @@ export function openInventorySaleDialog(supply, building, refresh) {
 	});
 
 	// On-hand indicator
-	new Elem({
-		tag: 'div',
+	new DialogNote({
 		appendTo: dialog.body,
-		style: { fontSize: '12px', color: 'rgba(255,255,255,0.4)', marginBottom: '8px' },
+		style: { fontSize: '12px', marginBottom: '8px' },
 		textContent: `${onHand} ${supply.unit || 'units'} currently on hand`,
 	});
 
 	// Qty + Price + Date grid
-	const grid = new Elem({
-		tag: 'div',
+	const grid = new Component({
 		appendTo: dialog.body,
 		style: { display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px' },
 	});
 
 	new FormLabel({ appendTo: grid, textContent: `Qty (max ${onHand})` });
-	const qtyEl = new FormInput({
+	const qtyEl = new Input({
 		appendTo: grid,
 		type: 'number',
 		step: '0.1',
@@ -395,7 +387,7 @@ export function openInventorySaleDialog(supply, building, refresh) {
 	});
 
 	new FormLabel({ appendTo: grid, textContent: `Price / ${supply.unit || 'unit'} ($)` });
-	const priceEl = new FormInput({
+	const priceEl = new Input({
 		appendTo: grid,
 		type: 'number',
 		step: '0.01',
@@ -404,14 +396,13 @@ export function openInventorySaleDialog(supply, building, refresh) {
 	if (costPerUnit) priceEl.elem.value = costPerUnit.toFixed(2);
 
 	new FormLabel({ appendTo: grid, textContent: 'Date' });
-	const dateEl = new FormInput({ appendTo: grid, type: 'date' });
+	const dateEl = new Input({ appendTo: grid, type: 'date' });
 	dateEl.elem.value = new Date().toISOString().slice(0, 10);
 
 	// Live revenue preview
-	const preview = new Elem({
-		tag: 'div',
+	const preview = new Preview({
 		appendTo: dialog.body,
-		style: { fontSize: '13px', color: '#4caf50', marginTop: '10px', minHeight: '18px' },
+		style: { fontSize: '13px', marginTop: '10px', minHeight: '18px' },
 	});
 
 	const update = () => {
@@ -426,5 +417,5 @@ export function openInventorySaleDialog(supply, building, refresh) {
 
 	// Notes
 	new FormLabel({ appendTo: dialog.body, textContent: 'Buyer / Notes' });
-	const notesEl = new FormInput({ appendTo: dialog.body, placeholder: 'Optional — buyer name, payment method…' });
+	const notesEl = new Input({ appendTo: dialog.body, placeholder: 'Optional — buyer name, payment method…' });
 }

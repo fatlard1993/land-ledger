@@ -1,7 +1,98 @@
-import { Component, Elem } from '@vanilla-bean/components';
+import { Component, styled } from '@vanilla-bean/components';
 
 import { getWeather } from '../api';
 import { centroidFromGeometry } from '../geo';
+
+const Strip = styled(
+	Component,
+	() => `
+		display: grid;
+		gap: 3px;
+		margin-bottom: 12px;
+	`,
+);
+
+// A day's tint says what to watch for: a hard freeze, a frost, or heavy rain
+const DayCard = styled(
+	Component,
+	({ colors, radius }) => `
+		padding: 5px 2px;
+		border: 1px solid transparent;
+		border-radius: ${radius.md};
+		background: ${colors.alpha(colors.white, 0.04)};
+		text-align: center;
+
+		&.today {
+			background: ${colors.alpha(colors.white, 0.08)};
+			border-color: ${colors.border};
+		}
+
+		&.freeze {
+			background: ${colors.alpha(colors.purple, 0.15)};
+			border-color: ${colors.alpha(colors.light(colors.purple), 0.4)};
+		}
+
+		&.frost {
+			background: ${colors.alpha(colors.orange, 0.1)};
+			border-color: ${colors.alpha(colors.orange, 0.35)};
+		}
+
+		&.rain {
+			background: ${colors.alpha(colors.blue, 0.12)};
+		}
+	`,
+);
+
+const DayLabel = styled(
+	Component,
+	({ colors }) => `
+		font-size: 9px;
+		letter-spacing: 0.04em;
+		text-transform: uppercase;
+		color: ${colors.gray};
+	`,
+);
+
+const High = styled(
+	Component,
+	({ colors }) => `
+		font-size: 12px;
+		font-weight: 600;
+		color: ${colors.white};
+	`,
+);
+
+const Low = styled(
+	Component,
+	({ colors }) => `
+		font-size: 11px;
+		color: ${colors.gray};
+
+		.freeze > & {
+			font-weight: 600;
+			color: ${colors.light(colors.purple)};
+		}
+
+		.frost > & {
+			font-weight: 600;
+			color: ${colors.light(colors.orange)};
+		}
+	`,
+);
+
+const Rain = styled(
+	Component,
+	({ colors }) => `
+		margin-top: 1px;
+		font-size: 9px;
+		color: ${colors.light(colors.blue)};
+
+		.rain > & {
+			font-weight: 600;
+			color: ${colors.lighter(colors.blue)};
+		}
+	`,
+);
 
 // WMO weather interpretation code → display emoji
 export function weatherIcon(code, precipitation) {
@@ -47,15 +138,7 @@ export async function renderWeatherStrip(field, container) {
 
 	const days = Object.entries(data).sort(([a], [b]) => a.localeCompare(b));
 
-	const wrap = new Component({
-		appendTo: container,
-		style: {
-			display: 'grid',
-			gridTemplateColumns: `repeat(${days.length}, 1fr)`,
-			gap: '3px',
-			marginBottom: '12px',
-		},
-	});
+	const wrap = new Strip({ appendTo: container, style: { gridTemplateColumns: `repeat(${days.length}, 1fr)` } });
 
 	for (const [date, day] of days) {
 		const isToday = date === startStr;
@@ -66,80 +149,30 @@ export async function renderWeatherStrip(field, container) {
 		const isFrost = day.tempMin != null && day.tempMin <= 36 && !isHardFreeze;
 		const isHeavyRain = (day.precipitation ?? 0) >= 0.75;
 
-		let lowColor;
-		if (isHardFreeze) lowColor = '#a855f7';
-		else if (isFrost) lowColor = '#f97316';
-		else lowColor = 'rgba(255,255,255,0.4)';
+		let alert = null;
+		if (isHardFreeze) alert = 'freeze';
+		else if (isFrost) alert = 'frost';
+		else if (isHeavyRain) alert = 'rain';
 
-		let alertBg;
-		if (isHardFreeze) alertBg = 'rgba(168,85,247,0.12)';
-		else if (isFrost) alertBg = 'rgba(249,115,22,0.10)';
-		else if (isHeavyRain) alertBg = 'rgba(29,78,216,0.12)';
-		else alertBg = null;
+		const card = new DayCard({ appendTo: wrap });
 
-		const cardBg = alertBg ?? (isToday ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.04)');
+		card.toggleClass('today', isToday);
+		if (alert) card.addClass(alert);
 
-		let borderColor;
-		if (isHardFreeze) borderColor = 'rgba(168,85,247,0.4)';
-		else if (isFrost) borderColor = 'rgba(249,115,22,0.35)';
-		else if (isToday) borderColor = 'rgba(255,255,255,0.14)';
-		else borderColor = 'transparent';
+		new DayLabel({ appendTo: card, textContent: dayLabel });
 
-		const card = new Component({
-			appendTo: wrap,
-			style: {
-				background: cardBg,
-				border: `1px solid ${borderColor}`,
-				borderRadius: '6px',
-				padding: '5px 2px',
-				textAlign: 'center',
-			},
-		});
-
-		new Elem({
-			tag: 'div',
-			appendTo: card,
-			style: { fontSize: '9px', textTransform: 'uppercase', letterSpacing: '.04em', color: 'rgba(255,255,255,0.4)' },
-			textContent: dayLabel,
-		});
-
-		new Elem({
-			tag: 'div',
+		new Component({
 			appendTo: card,
 			style: { fontSize: '16px', lineHeight: '1.4' },
 			textContent: weatherIcon(day.weatherCode, day.precipitation ?? 0),
 		});
 
-		if (day.tempMax != null) {
-			new Elem({
-				tag: 'div',
-				appendTo: card,
-				style: { fontSize: '12px', fontWeight: '600', color: '#fff' },
-				textContent: `${Math.round(day.tempMax)}°`,
-			});
-		}
+		if (day.tempMax != null) new High({ appendTo: card, textContent: `${Math.round(day.tempMax)}°` });
 
-		if (day.tempMin != null) {
-			new Elem({
-				tag: 'div',
-				appendTo: card,
-				style: { fontSize: '11px', color: lowColor, fontWeight: isHardFreeze || isFrost ? '600' : '400' },
-				textContent: `${Math.round(day.tempMin)}°`,
-			});
-		}
+		if (day.tempMin != null) new Low({ appendTo: card, textContent: `${Math.round(day.tempMin)}°` });
 
 		if (day.precipitation != null && day.precipitation >= 0.01) {
-			new Elem({
-				tag: 'div',
-				appendTo: card,
-				style: {
-					fontSize: '9px',
-					color: isHeavyRain ? '#60a5fa' : '#5bc0eb',
-					marginTop: '1px',
-					fontWeight: isHeavyRain ? '600' : '400',
-				},
-				textContent: `${day.precipitation.toFixed(2)}"`,
-			});
+			new Rain({ appendTo: card, textContent: `${day.precipitation.toFixed(2)}"` });
 		}
 	}
 }

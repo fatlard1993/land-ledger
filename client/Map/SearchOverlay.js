@@ -1,7 +1,9 @@
 import L from 'leaflet';
-import { Notify, debounce } from '@vanilla-bean/components';
+import { Button, Icon, Notify, debounce, theme } from '@vanilla-bean/components';
 
 import { searchLocation } from '../api';
+
+const { colors } = theme;
 
 // Builds the search input + results dropdown and appends it to `container`
 // (should be the MapWrap element, a sibling of the Leaflet container).
@@ -36,17 +38,17 @@ export function buildSearchOverlay(container, map) {
 	Object.assign(inputWrap.style, {
 		display: 'flex',
 		alignItems: 'center',
-		background: 'rgba(30,30,30,0.92)',
+		background: `${colors.alpha(colors.black, 0.95)}`,
 		borderRadius: '6px',
-		border: '1px solid rgba(255,255,255,0.12)',
-		boxShadow: '0 2px 8px rgba(0,0,0,0.4)',
+		border: `1px solid ${colors.border}`,
+		boxShadow: `0 2px 8px ${colors.alpha(colors.vantablack, 0.4)}`,
 		overflow: 'hidden',
 	});
 
-	const icon = document.createElement('span');
-
-	icon.textContent = '🔍';
-	Object.assign(icon.style, { padding: '0 8px', fontSize: '14px', flexShrink: '0' });
+	const icon = new Icon({
+		icon: 'magnifying-glass',
+		style: { padding: '0 4px 0 10px', color: colors.gray, flexShrink: '0' },
+	}).elem;
 
 	const input = document.createElement('input');
 
@@ -56,38 +58,23 @@ export function buildSearchOverlay(container, map) {
 		background: 'transparent',
 		border: 'none',
 		outline: 'none',
-		color: '#fff',
+		color: `${colors.white}`,
 		fontSize: '14px',
 		padding: '9px 4px',
 		minWidth: '0',
 	});
 
-	const clearBtn = document.createElement('button');
+	const clearBtn = new Button({ variant: 'flat', icon: 'xmark', title: 'Clear search' }).elem;
 
-	clearBtn.textContent = '✕';
-	Object.assign(clearBtn.style, {
-		background: 'none',
-		border: 'none',
-		color: 'rgba(255,255,255,0.5)',
-		cursor: 'pointer',
-		padding: '0 10px',
-		fontSize: '14px',
-		display: 'none',
-		flexShrink: '0',
-	});
+	Object.assign(clearBtn.style, { display: 'none', flexShrink: '0', color: `${colors.gray}` });
 
-	const locateBtn = document.createElement('button');
+	const locateBtn = new Button({ variant: 'flat', icon: 'location-crosshairs', title: 'Go to my location' }).elem;
 
-	locateBtn.title = 'Go to my location';
-	locateBtn.textContent = '📍';
 	Object.assign(locateBtn.style, {
-		background: 'none',
-		border: 'none',
-		cursor: 'pointer',
-		padding: '0 10px',
-		fontSize: '16px',
 		flexShrink: '0',
-		borderLeft: '1px solid rgba(255,255,255,0.12)',
+		width: '38px',
+		borderRadius: '0',
+		borderLeft: `1px solid ${colors.border}`,
 	});
 
 	locateBtn.addEventListener('click', () => locateMe(map));
@@ -97,9 +84,9 @@ export function buildSearchOverlay(container, map) {
 	const dropdown = document.createElement('div');
 
 	Object.assign(dropdown.style, {
-		background: 'rgba(30,30,30,0.96)',
+		background: `${colors.alpha(colors.black, 0.95)}`,
 		borderRadius: '0 0 6px 6px',
-		border: '1px solid rgba(255,255,255,0.12)',
+		border: `1px solid ${colors.border}`,
 		borderTop: 'none',
 		display: 'none',
 		maxHeight: '240px',
@@ -115,7 +102,7 @@ export function buildSearchOverlay(container, map) {
 
 	const setSelected = idx => {
 		getItems().forEach((el, i) => {
-			el.style.background = i === idx ? 'rgba(255,255,255,0.1)' : '';
+			el.style.background = i === idx ? `${colors.alpha(colors.white, 0.1)}` : '';
 		});
 		selectedIndex = idx;
 	};
@@ -151,7 +138,7 @@ export function buildSearchOverlay(container, map) {
 				const empty = document.createElement('div');
 
 				empty.textContent = 'No results';
-				Object.assign(empty.style, { padding: '10px 12px', color: 'rgba(255,255,255,0.4)', fontSize: '13px' });
+				Object.assign(empty.style, { padding: '10px 12px', color: `${colors.gray}`, fontSize: '13px' });
 				dropdown.append(empty);
 			} else {
 				results.forEach((r, i) => {
@@ -165,13 +152,13 @@ export function buildSearchOverlay(container, map) {
 
 					// Use textContent — place names from OSM can contain HTML characters.
 					const primaryDiv = document.createElement('div');
-					primaryDiv.style.cssText = 'font-size:13px;color:#fff';
+					primaryDiv.style.cssText = `font-size:13px;color:${colors.white}`;
 					primaryDiv.textContent = primary;
 					item.append(primaryDiv);
 
 					if (secondary) {
 						const secondaryDiv = document.createElement('div');
-						secondaryDiv.style.cssText = 'font-size:11px;color:rgba(255,255,255,0.5);margin-top:1px';
+						secondaryDiv.style.cssText = `font-size:11px;color:${colors.gray};margin-top:1px`;
 						secondaryDiv.textContent = secondary;
 						item.append(secondaryDiv);
 					}
@@ -179,7 +166,7 @@ export function buildSearchOverlay(container, map) {
 					Object.assign(item.style, {
 						padding: '8px 12px',
 						cursor: 'pointer',
-						borderBottom: '1px solid rgba(255,255,255,0.06)',
+						borderBottom: `1px solid ${colors.border}`,
 					});
 
 					item.addEventListener('mouseenter', () => setSelected(i));

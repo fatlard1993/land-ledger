@@ -1,6 +1,6 @@
-import { Button, Component, Elem, formatDate } from '@vanilla-bean/components';
+import { Component, formatDate, theme } from '@vanilla-bean/components';
 
-import { ActionHeader, SectionHeader } from '../Layout';
+import { ActionHeader } from '../Layout';
 import { formatDollar } from '../utils/format';
 import SupplyDialog, { detectSupplyEmoji } from '../Supplies/SupplyDialog';
 import BudgetItemDialog, { annualAmount, FREQUENCIES } from '../Budget/BudgetItemDialog';
@@ -19,6 +19,20 @@ import {
 	deleteRevenue,
 } from '../api';
 import { openRevenueDialog } from './EntityRevenue';
+import {
+	EmptyNote,
+	HeaderActions,
+	HeaderButton,
+	PanelRow,
+	RowAside,
+	RowGlyph,
+	RowMain,
+	RowMeta,
+	RowTitle,
+	SubLabel,
+} from './panelParts';
+
+const { colors } = theme;
 
 export async function renderBuildingInventory(building, refresh, appendTo) {
 	const data = await getSupplies();
@@ -28,10 +42,11 @@ export async function renderBuildingInventory(building, refresh, appendTo) {
 
 	const header = new ActionHeader({ appendTo, title: 'Inventory' });
 
-	new Button({
+	new HeaderButton({
 		appendTo: header,
-		textContent: '+ Add',
-		style: { fontSize: '12px', padding: '4px 10px', marginTop: '10px' },
+		icon: 'plus',
+		textContent: 'Add',
+		style: { marginTop: '10px' },
 		onPointerPress: () =>
 			new SupplyDialog({
 				buildingId: building.id,
@@ -46,42 +61,22 @@ export async function renderBuildingInventory(building, refresh, appendTo) {
 	});
 
 	if (!supplies.length) {
-		new Elem({
-			tag: 'div',
-			appendTo,
-			style: { fontSize: '12px', color: 'rgba(255,255,255,0.25)', padding: '4px 0 8px' },
-			textContent: 'No inventory items',
-		});
+		new EmptyNote({ appendTo, textContent: 'No inventory items' });
 		return;
 	}
 
 	for (const s of supplies) {
 		const emoji = detectSupplyEmoji(s.category, s.emoji);
-		const row = new Component({
-			appendTo,
-			style: {
-				display: 'flex',
-				alignItems: 'center',
-				gap: '8px',
-				padding: '5px 0',
-				borderBottom: '1px solid rgba(255,255,255,0.06)',
-				cursor: 'pointer',
-			},
-		});
+		const row = new PanelRow({ appendTo, addClass: 'interactive', style: { alignItems: 'center' } });
 
-		new Elem({ tag: 'span', appendTo: row, style: { fontSize: '14px', flexShrink: '0' }, textContent: emoji });
+		new RowGlyph({ appendTo: row, style: { marginTop: '0' }, textContent: emoji });
 
-		const info = new Component({ appendTo: row, style: { flex: '1', minWidth: '0' } });
+		const info = new RowMain({ appendTo: row });
 
-		new Elem({ tag: 'div', appendTo: info, style: { fontSize: '13px', color: '#fff' }, textContent: s.name });
+		new RowTitle({ appendTo: info, textContent: s.name });
 
 		if (s.currentStock != null && s.currentStock !== '') {
-			new Elem({
-				tag: 'div',
-				appendTo: info,
-				style: { fontSize: '11px', color: 'rgba(255,255,255,0.4)' },
-				textContent: `${s.currentStock} ${s.unit || ''}`.trim(),
-			});
+			new RowMeta({ appendTo: info, textContent: `${s.currentStock} ${s.unit || ''}`.trim() });
 		}
 
 		row.onPointerPress(
@@ -140,30 +135,21 @@ export async function renderEntityRevenue(entityType, entity, refresh, appendTo)
 		.filter(r => r.date?.startsWith(String(new Date().getFullYear())))
 		.reduce((s, r) => s + (Number(r.amount) || 0), 0);
 
-	const header = new Component({
-		appendTo,
-		style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center' },
-	});
-
-	new SectionHeader({ appendTo: header, textContent: '💰 Income' });
-
-	const hRight = new Component({
-		appendTo: header,
-		style: { display: 'flex', alignItems: 'center', gap: '10px', marginTop: '10px' },
-	});
+	const header = new ActionHeader({ appendTo, title: 'Income' });
+	const hRight = new HeaderActions({ appendTo: header, style: { gap: '10px' } });
 
 	if (totalYTD > 0)
-		new Elem({
+		new Component({
 			tag: 'span',
 			appendTo: hRight,
-			style: { fontSize: '12px', color: '#4caf50' },
+			style: { fontSize: '12px', color: colors.light(colors.success) },
 			textContent: `${formatDollar(totalYTD)} YTD`,
 		});
 
-	new Button({
+	new HeaderButton({
 		appendTo: hRight,
-		textContent: '+ Record',
-		style: { fontSize: '11px', padding: '3px 8px' },
+		icon: 'plus',
+		textContent: 'Record',
 		onPointerPress: () =>
 			openRevenueDialog(
 				entityType,
@@ -179,58 +165,25 @@ export async function renderEntityRevenue(entityType, entity, refresh, appendTo)
 	});
 
 	if (!entries.length) {
-		new Elem({
-			tag: 'div',
-			appendTo,
-			style: { fontSize: '12px', color: 'rgba(255,255,255,0.25)', padding: '4px 0 8px' },
-			textContent: 'No income recorded',
-		});
+		new EmptyNote({ appendTo, textContent: 'No income recorded' });
 		return;
 	}
 
 	for (const rec of entries.slice(0, 8)) {
-		const row = new Component({
-			appendTo,
-			style: {
-				display: 'flex',
-				justifyContent: 'space-between',
-				alignItems: 'flex-start',
-				padding: '5px 0',
-				borderBottom: '1px solid rgba(255,255,255,0.06)',
-				cursor: 'pointer',
-			},
-		});
+		const row = new PanelRow({ appendTo, addClass: 'interactive' });
+		const left = new RowMain({ appendTo: row });
 
-		const left = new Component({ appendTo: row, style: { flex: '1', minWidth: '0' } });
+		new RowTitle({ appendTo: left, textContent: rec.type || 'Income' });
+		if (rec.description) new RowMeta({ appendTo: left, textContent: rec.description });
 
-		new Elem({
-			tag: 'div',
-			appendTo: left,
-			style: { fontSize: '13px', color: '#fff' },
-			textContent: rec.type || 'Income',
-		});
-		if (rec.description)
-			new Elem({
-				tag: 'div',
-				appendTo: left,
-				style: { fontSize: '11px', color: 'rgba(255,255,255,0.4)' },
-				textContent: rec.description,
-			});
+		const right = new RowAside({ appendTo: row, style: { marginTop: '0' } });
 
-		const right = new Component({ appendTo: row, style: { textAlign: 'right', flexShrink: '0', paddingLeft: '10px' } });
-
-		new Elem({
-			tag: 'div',
+		new RowTitle({
 			appendTo: right,
-			style: { fontSize: '13px', color: '#4caf50', fontWeight: '600' },
+			style: { color: colors.light(colors.success), fontWeight: '600' },
 			textContent: `${formatDollar(rec.amount)}`,
 		});
-		new Elem({
-			tag: 'div',
-			appendTo: right,
-			style: { fontSize: '11px', color: 'rgba(255,255,255,0.3)' },
-			textContent: formatDate(rec.date) || '—',
-		});
+		new Component({ appendTo: right, textContent: formatDate(rec.date) || '—' });
 
 		row.onPointerPress(() =>
 			openRevenueDialog(
@@ -266,32 +219,28 @@ export async function renderBudgetItems(entityType, entity, refresh, appendTo) {
 	const totalInc = incItems.reduce((s, i) => s + annualAmount(i), 0);
 	const totalExp = expItems.reduce((s, i) => s + annualAmount(i), 0);
 
-	const header = new ActionHeader({ appendTo, title: '📋 Budget' });
-
-	const hRight = new Component({
-		appendTo: header,
-		style: { display: 'flex', alignItems: 'center', gap: '8px', marginTop: '10px' },
-	});
+	const header = new ActionHeader({ appendTo, title: 'Budget' });
+	const hRight = new HeaderActions({ appendTo: header, style: { gap: '8px' } });
 
 	if (totalInc > 0)
-		new Elem({
+		new Component({
 			tag: 'span',
 			appendTo: hRight,
-			style: { fontSize: '11px', color: '#4caf50' },
+			style: { fontSize: '11px', color: colors.light(colors.success) },
 			textContent: `+${formatDollar(totalInc)}/yr`,
 		});
 	if (totalExp > 0)
-		new Elem({
+		new Component({
 			tag: 'span',
 			appendTo: hRight,
-			style: { fontSize: '11px', color: '#e8c42a' },
+			style: { fontSize: '11px', color: colors.light(colors.warning) },
 			textContent: `-${formatDollar(totalExp)}/yr`,
 		});
 
-	new Button({
+	new HeaderButton({
 		appendTo: hRight,
-		textContent: '+ Add',
-		style: { fontSize: '11px', padding: '3px 8px' },
+		icon: 'plus',
+		textContent: 'Add',
 		onPointerPress: () =>
 			new BudgetItemDialog({
 				entityType,
@@ -307,73 +256,36 @@ export async function renderBudgetItems(entityType, entity, refresh, appendTo) {
 	});
 
 	if (!entityItems.length) {
-		new Elem({
-			tag: 'div',
-			appendTo,
-			style: { fontSize: '12px', color: 'rgba(255,255,255,0.25)', padding: '4px 0 8px' },
-			textContent: 'No recurring budget items',
-		});
+		new EmptyNote({ appendTo, textContent: 'No recurring budget items' });
 		return;
 	}
 
 	for (const section of [
-		{ items: incItems, color: '#4caf50', label: 'Income' },
-		{ items: expItems, color: '#e8c42a', label: 'Expenses' },
+		{ items: incItems, color: colors.light(colors.success), label: 'Income' },
+		{ items: expItems, color: colors.light(colors.warning), label: 'Expenses' },
 	]) {
 		if (!section.items.length) continue;
 
-		new Elem({
-			tag: 'div',
-			appendTo,
-			style: {
-				fontSize: '10px',
-				textTransform: 'uppercase',
-				letterSpacing: '.06em',
-				color: 'rgba(255,255,255,0.25)',
-				padding: '6px 0 2px',
-			},
-			textContent: section.label,
-		});
+		new SubLabel({ appendTo, textContent: section.label });
 
 		for (const bi of section.items) {
 			const freq = FREQUENCIES.find(f => f.value === bi.frequency);
-			const row = new Component({
-				appendTo,
-				style: {
-					display: 'flex',
-					justifyContent: 'space-between',
-					alignItems: 'flex-start',
-					padding: '5px 0',
-					borderBottom: '1px solid rgba(255,255,255,0.06)',
-					cursor: 'pointer',
-				},
-			});
-			const left = new Component({ appendTo: row, style: { flex: '1', minWidth: '0' } });
+			const row = new PanelRow({ appendTo, addClass: 'interactive' });
+			const left = new RowMain({ appendTo: row });
 
-			new Elem({ tag: 'div', appendTo: left, style: { fontSize: '13px', color: '#fff' }, textContent: bi.name });
-			if (bi.category)
-				new Elem({
-					tag: 'div',
-					appendTo: left,
-					style: { fontSize: '11px', color: 'rgba(255,255,255,0.35)' },
-					textContent: bi.category,
-				});
+			new RowTitle({ appendTo: left, textContent: bi.name });
+			if (bi.category) new RowMeta({ appendTo: left, textContent: bi.category });
 
-			const right = new Component({
-				appendTo: row,
-				style: { textAlign: 'right', flexShrink: '0', paddingLeft: '8px' },
-			});
+			const right = new RowAside({ appendTo: row, style: { marginTop: '0' } });
 
-			new Elem({
-				tag: 'div',
+			new RowTitle({
 				appendTo: right,
-				style: { fontSize: '13px', color: section.color, fontWeight: '600' },
+				style: { color: section.color, fontWeight: '600' },
 				textContent: `${formatDollar(bi.amount)}/${freq?.label?.toLowerCase() || bi.frequency}`,
 			});
-			new Elem({
-				tag: 'div',
+			new Component({
 				appendTo: right,
-				style: { fontSize: '10px', color: 'rgba(255,255,255,0.25)' },
+				style: { fontSize: '10px' },
 				textContent: `${formatDollar(annualAmount(bi))}/yr`,
 			});
 

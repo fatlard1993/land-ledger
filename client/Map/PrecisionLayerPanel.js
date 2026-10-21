@@ -1,7 +1,11 @@
-import { Component, Elem, Button } from '@vanilla-bean/components';
+import { Button, Component, theme } from '@vanilla-bean/components';
+import { ActionHeader } from '../Layout';
 import { getPrecisionLayers, getPrecisionLayerPoints, deletePrecisionLayer } from '../api/precisionLayers';
 import PrecisionLayerImport from './PrecisionLayerImport';
 import PrecisionAnalysisDialog from './PrecisionAnalysisDialog';
+import { EmptyNote, HeaderButton, PanelRow, RowGlyph, RowMain, RowMeta, RowTitle, SubLabel } from './panelParts';
+
+const { colors } = theme;
 
 const TYPE_LABELS = { yield: 'Yield map', 'as-applied': 'As-applied', 'soil-ec': 'Soil EC', other: 'Data layer' };
 const TYPE_ICONS = { yield: '🌾', 'as-applied': '🌱', 'soil-ec': '⚡', other: '📡' };
@@ -10,7 +14,8 @@ const formatNum = (n, d = 1) => (n != null ? Number(n).toFixed(d) : '—');
 
 // ── Color scale ────────────────────────────────────────────────────────────────
 // Maps a normalized [0,1] value to a green→yellow→red color.
-// High values (yield) are green; low values are red.
+// High values (yield) are green; low values are red. A continuous heat scale over the map rather than the theme's
+// palette: its full-saturation hues are what make zones legible on aerial imagery.
 
 export function valueToColor(value, min, max) {
 	const t = max > min ? (value - min) / (max - min) : 0.5;
@@ -49,21 +54,13 @@ export async function renderPrecisionLayersSection(field, container, callbacks =
 	const layers = field ? all.filter(l => l.fieldId === field.id) : all;
 
 	// Section header
-	const header = new Component({
-		appendTo: container,
-		style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '14px' },
-	});
-	new Elem({
-		tag: 'div',
-		appendTo: header,
-		style: { fontSize: '12px', textTransform: 'uppercase', letterSpacing: '.07em', color: 'rgba(255,255,255,0.35)' },
-		textContent: 'Data Layers',
-	});
+	const header = new ActionHeader({ appendTo: container, title: 'Data Layers' });
 
-	new Button({
+	new HeaderButton({
 		appendTo: header,
-		textContent: '+ Import',
-		style: { fontSize: '11px', padding: '2px 8px' },
+		icon: 'plus',
+		textContent: 'Import',
+		style: { marginTop: '10px' },
 		onPointerPress: () =>
 			new PrecisionLayerImport({
 				presetFieldId: field?.id,
@@ -74,47 +71,20 @@ export async function renderPrecisionLayersSection(field, container, callbacks =
 	});
 
 	if (!layers.length) {
-		new Elem({
-			tag: 'div',
-			appendTo: container,
-			style: { fontSize: '12px', color: 'rgba(255,255,255,0.25)', padding: '5px 0 8px' },
-			textContent: 'No layers — import a yield map or as-applied file',
-		});
+		new EmptyNote({ appendTo: container, textContent: 'No layers — import a yield map or as-applied file' });
 		return;
 	}
 
 	for (const layer of layers.sort((a, b) => (b.season || 0) - (a.season || 0))) {
-		const row = new Component({
-			appendTo: container,
-			style: {
-				display: 'flex',
-				alignItems: 'flex-start',
-				gap: '8px',
-				padding: '7px 0',
-				borderBottom: '1px solid rgba(255,255,255,0.06)',
-			},
-		});
+		const row = new PanelRow({ appendTo: container });
 
-		new Elem({
-			tag: 'span',
-			appendTo: row,
-			style: { fontSize: '15px', flexShrink: '0', marginTop: '1px' },
-			textContent: TYPE_ICONS[layer.type] ?? '📡',
-		});
+		new RowGlyph({ appendTo: row, textContent: TYPE_ICONS[layer.type] ?? '📡' });
 
-		const info = new Component({ appendTo: row, style: { flex: '1', minWidth: '0' } });
+		const info = new RowMain({ appendTo: row });
 
-		new Elem({
-			tag: 'div',
+		new RowTitle({
 			appendTo: info,
-			style: {
-				fontSize: '13px',
-				fontWeight: '500',
-				color: '#fff',
-				overflow: 'hidden',
-				textOverflow: 'ellipsis',
-				whiteSpace: 'nowrap',
-			},
+			style: { fontWeight: '500', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' },
 			textContent: layer.label || `${TYPE_LABELS[layer.type] ?? 'Layer'} ${layer.season ?? ''}`,
 		});
 
@@ -127,30 +97,18 @@ export async function renderPrecisionLayersSection(field, container, callbacks =
 				s.count ? `${s.count.toLocaleString()} pts` : null,
 			].filter(Boolean);
 
-			new Elem({
-				tag: 'div',
-				appendTo: info,
-				style: { fontSize: '11px', color: 'rgba(255,255,255,0.4)', marginTop: '2px' },
-				textContent: statParts.join('  ·  '),
-			});
+			new RowMeta({ appendTo: info, style: { marginTop: '2px' }, textContent: statParts.join('  ·  ') });
 
 			// Min / max color legend strip
 			if (s.min != null && s.max != null) {
-				const legend = new Elem({
-					tag: 'div',
+				const legend = new RowMeta({
 					appendTo: info,
-					style: { display: 'flex', alignItems: 'center', gap: '5px', marginTop: '3px' },
+					style: { display: 'flex', alignItems: 'center', gap: '5px', marginTop: '3px', fontSize: '10px' },
 				});
 
-				new Elem({
-					tag: 'span',
-					appendTo: legend,
-					style: { fontSize: '10px', color: 'rgba(255,255,255,0.3)', whiteSpace: 'nowrap' },
-					textContent: formatNum(s.min),
-				});
+				new Component({ tag: 'span', appendTo: legend, textContent: formatNum(s.min) });
 
-				new Elem({
-					tag: 'div',
+				new Component({
 					appendTo: legend,
 					style: {
 						flex: '1',
@@ -160,12 +118,7 @@ export async function renderPrecisionLayersSection(field, container, callbacks =
 					},
 				});
 
-				new Elem({
-					tag: 'span',
-					appendTo: legend,
-					style: { fontSize: '10px', color: 'rgba(255,255,255,0.3)', whiteSpace: 'nowrap' },
-					textContent: formatNum(s.max),
-				});
+				new Component({ tag: 'span', appendTo: legend, textContent: formatNum(s.max) });
 			}
 		}
 
@@ -175,11 +128,10 @@ export async function renderPrecisionLayersSection(field, container, callbacks =
 			style: { display: 'flex', flexDirection: 'column', gap: '4px', flexShrink: '0' },
 		});
 
-		new Button({
+		new HeaderButton({
 			appendTo: buttons,
 			textContent: 'Show',
 			title: 'Display on map',
-			style: { fontSize: '11px', padding: '2px 8px' },
 			onPointerPress: async () => {
 				// Points live in a separate file — load only when the user taps Show
 				const points = layer.points ?? (await getPrecisionLayerPoints(layer.id));
@@ -187,11 +139,12 @@ export async function renderPrecisionLayersSection(field, container, callbacks =
 			},
 		});
 
-		new Button({
+		new HeaderButton({
 			appendTo: buttons,
-			textContent: '✕',
+			variant: 'flat',
+			icon: 'xmark',
 			title: 'Delete layer',
-			style: { fontSize: '11px', padding: '2px 6px', color: '#e05252' },
+			style: { color: colors.light(colors.danger) },
 			onPointerPress: async () => {
 				await deletePrecisionLayer(layer.id);
 				callbacks.onRefresh?.();
@@ -212,19 +165,7 @@ export async function renderPrecisionLayersSection(field, container, callbacks =
 	const analyzeSeasons = Object.keys(bySeasonYield).filter(s => bySeasonApplied[s]);
 
 	if (analyzeSeasons.length) {
-		new Elem({
-			tag: 'div',
-			appendTo: container,
-			style: {
-				fontSize: '11px',
-				textTransform: 'uppercase',
-				letterSpacing: '.07em',
-				color: 'rgba(255,255,255,0.35)',
-				marginTop: '10px',
-				marginBottom: '4px',
-			},
-			textContent: 'Analysis',
-		});
+		new SubLabel({ appendTo: container, textContent: 'Analysis' });
 
 		for (const season of analyzeSeasons) {
 			const yieldL = bySeasonYield[season];
@@ -233,15 +174,15 @@ export async function renderPrecisionLayersSection(field, container, callbacks =
 			new Button({
 				appendTo: container,
 				textContent: `${season} — Rate vs Yield correlation`,
+				variant: 'flat',
+				icon: 'chart-line',
 				style: {
 					width: '100%',
-					fontSize: '12px',
-					padding: '6px 10px',
 					marginBottom: '4px',
 					textAlign: 'left',
-					background: 'rgba(74,144,217,0.1)',
-					border: '1px solid rgba(74,144,217,0.3)',
-					color: '#4a90d9',
+					fontSize: '12px',
+					backgroundColor: colors.alpha(colors.info, 0.1),
+					color: colors.light(colors.info),
 				},
 				onPointerPress: () =>
 					new PrecisionAnalysisDialog({

@@ -1,22 +1,56 @@
-import { Button, Component, Dialog, Elem, Input, Notify, styled } from '@vanilla-bean/components';
+import {
+	Button,
+	Component,
+	Dialog,
+	Elem,
+	EmptyState,
+	Icon,
+	Input,
+	Notify,
+	Select,
+	styled,
+} from '@vanilla-bean/components';
 import { getFields } from '../api';
 import { previewPrecisionFile, importPrecisionLayer } from '../api/precisionLayers';
-import { FormLabel, FormInput, FormSelect } from '../Layout';
+import { FormLabel } from '../Layout';
+import { FigureTable } from './panelParts';
 
 const DropZone = styled(
 	Component,
-	() => `
-		border: 2px dashed rgba(255,255,255,0.2);
-		border-radius: 8px;
+	({ colors, radius }) => `
+		border: 2px dashed ${colors.alpha(colors.white, 0.2)};
+		border-radius: ${radius.lg};
 		padding: 28px 16px;
 		text-align: center;
 		cursor: pointer;
-		color: rgba(255,255,255,0.4);
+		color: ${colors.gray};
 		transition: border-color 0.15s;
 
-		&.drag-over {
-			border-color: rgba(74,144,217,0.6);
+		& .drop-icon {
+			margin-bottom: 6px;
+			font-size: 28px;
 		}
+
+		& .drop-title {
+			font-size: 14px;
+		}
+
+		& .drop-hint {
+			margin-top: 4px;
+			font-size: 11px;
+		}
+
+		&.drag-over {
+			border-color: ${colors.alpha(colors.info, 0.6)};
+		}
+	`,
+);
+
+const Note = styled(
+	Component,
+	({ colors }) => `
+		font-size: 13px;
+		color: ${colors.gray};
 	`,
 );
 
@@ -35,17 +69,22 @@ export default class PrecisionLayerImport extends Dialog {
 	_renderUpload() {
 		this.body.empty();
 
-		new Elem({
+		new Note({
 			tag: 'p',
 			appendTo: this.body,
-			style: { fontSize: '13px', color: 'rgba(255,255,255,0.5)', margin: '0 0 10px' },
+			style: { margin: '0 0 10px' },
 			textContent:
 				'Import yield maps and as-applied maps from combine or planter monitors. Accepts CSV (with Lat/Lon columns) or GeoJSON with Point features.',
 		});
 
 		const dropZone = new DropZone({ appendTo: this.body });
-		dropZone.elem.innerHTML =
-			'<div style="font-size:28px;margin-bottom:6px">📡</div><div style="font-size:14px">Drop CSV or GeoJSON file here, or tap to browse</div><div style="font-size:11px;margin-top:4px">.csv &nbsp;·&nbsp; .json &nbsp;·&nbsp; .geojson</div>';
+		new Icon({ appendTo: dropZone, addClass: 'drop-icon', icon: 'file-import' });
+		new Component({
+			appendTo: dropZone,
+			addClass: 'drop-title',
+			textContent: 'Drop CSV or GeoJSON file here, or tap to browse',
+		});
+		new Component({ appendTo: dropZone, addClass: 'drop-hint', textContent: '.csv  ·  .json  ·  .geojson' });
 
 		new Input({
 			type: 'file',
@@ -59,12 +98,7 @@ export default class PrecisionLayerImport extends Dialog {
 
 	async _loadFile(file) {
 		this.body.empty();
-		new Elem({
-			tag: 'div',
-			appendTo: this.body,
-			style: { padding: '24px 0', textAlign: 'center', color: 'rgba(255,255,255,0.4)', fontSize: '13px' },
-			textContent: `Parsing ${file.name}…`,
-		});
+		new EmptyState({ appendTo: this.body, loading: true, message: `Parsing ${file.name}…` });
 
 		let preview;
 		try {
@@ -81,10 +115,9 @@ export default class PrecisionLayerImport extends Dialog {
 	async _renderConfig(file, preview) {
 		this.body.empty();
 
-		new Elem({
-			tag: 'div',
+		new Note({
 			appendTo: this.body,
-			style: { fontSize: '13px', color: 'rgba(255,255,255,0.5)', marginBottom: '12px' },
+			style: { marginBottom: '12px' },
 			textContent: `${file.name}  ·  ${preview.rowCount ?? '?'} rows  ·  ${preview.columns.length} columns`,
 		});
 
@@ -92,7 +125,7 @@ export default class PrecisionLayerImport extends Dialog {
 
 		// Value column
 		new FormLabel({ appendTo: body, textContent: 'Data value column *' });
-		const valueSelect = new FormSelect({ appendTo: body });
+		const valueSelect = new Select({ appendTo: body });
 		for (const { value: v, label: l } of preview.columns.map(c => ({ value: c, label: c }))) {
 			const o = document.createElement('option');
 			o.value = v;
@@ -106,29 +139,24 @@ export default class PrecisionLayerImport extends Dialog {
 		if (valueGuess) valueSelect.elem.value = valueGuess;
 
 		new FormLabel({ appendTo: body, textContent: 'Value unit (e.g. bu/ac, seeds/ac)' });
-		const unitInput = new FormInput({ appendTo: body });
+		const unitInput = new Input({ appendTo: body });
 		unitInput.elem.type = 'text';
 		unitInput.elem.placeholder = 'bu/ac';
 
 		// Sample preview table
 		if (preview.sample?.length) {
 			new FormLabel({ appendTo: body, textContent: 'Preview (first 3 rows)' });
-			const table = new Elem({ tag: 'table', appendTo: body });
-			table.elem.style.cssText = 'width:100%;font-size:11px;border-collapse:collapse;margin-top:4px;';
+			const table = new FigureTable({ appendTo: body, style: { marginTop: '4px', fontSize: '11px' } });
 			const thead = new Elem({ tag: 'thead', appendTo: table });
 			const hRow = new Elem({ tag: 'tr', appendTo: thead });
 			for (const col of preview.columns.slice(0, 6)) {
-				const th = new Elem({ tag: 'th', appendTo: hRow, textContent: col });
-				th.elem.style.cssText =
-					'text-align:left;padding:4px 6px;color:rgba(255,255,255,0.4);border-bottom:1px solid rgba(255,255,255,0.08);';
+				new Elem({ tag: 'th', appendTo: hRow, textContent: col });
 			}
 			const tbody = new Elem({ tag: 'tbody', appendTo: table });
 			for (const row of preview.sample) {
 				const tr = new Elem({ tag: 'tr', appendTo: tbody });
 				for (const col of preview.columns.slice(0, 6)) {
-					const td = new Elem({ tag: 'td', appendTo: tr, textContent: String(row[col] ?? '').slice(0, 20) });
-					td.elem.style.cssText =
-						'padding:3px 6px;color:rgba(255,255,255,0.6);border-bottom:1px solid rgba(255,255,255,0.05);';
+					new Elem({ tag: 'td', appendTo: tr, textContent: String(row[col] ?? '').slice(0, 20) });
 				}
 			}
 		}
@@ -142,7 +170,7 @@ export default class PrecisionLayerImport extends Dialog {
 		const c2 = new Component({ appendTo: row1 });
 
 		new FormLabel({ appendTo: c1, textContent: 'Layer type' });
-		const typeSelect = new FormSelect({ appendTo: c1 });
+		const typeSelect = new Select({ appendTo: c1 });
 		for (const { value: v, label: l } of [
 			{ value: 'yield', label: 'Yield map' },
 			{ value: 'as-applied', label: 'As-applied map' },
@@ -157,12 +185,12 @@ export default class PrecisionLayerImport extends Dialog {
 		typeSelect.elem.value = 'yield';
 
 		new FormLabel({ appendTo: c2, textContent: 'Season' });
-		const seasonInput = new FormInput({ appendTo: c2 });
+		const seasonInput = new Input({ appendTo: c2 });
 		seasonInput.elem.type = 'number';
 		seasonInput.elem.value = new Date().getFullYear();
 
 		new FormLabel({ appendTo: body, textContent: 'Field (optional — link to a specific field)' });
-		const fieldSelect = new FormSelect({ appendTo: body });
+		const fieldSelect = new Select({ appendTo: body });
 		const notLinkedOpt = document.createElement('option');
 		notLinkedOpt.value = '';
 		notLinkedOpt.textContent = '— not linked —';
@@ -172,16 +200,14 @@ export default class PrecisionLayerImport extends Dialog {
 				Object.values(d?.body || {})
 					.sort((a, b) => (a.name || '').localeCompare(b.name || ''))
 					.forEach(f => {
-						const o = new Option(f.name || 'Unnamed', f.id);
-						o.style.background = '#1a1a1a';
-						fieldSelect.elem.append(o);
+						fieldSelect.elem.append(new Option(f.name || 'Unnamed', f.id));
 					});
 				if (this.options.presetFieldId) fieldSelect.elem.value = this.options.presetFieldId;
 			})
 			.catch(() => {});
 
 		new FormLabel({ appendTo: body, textContent: 'Crop (optional)' });
-		const cropInput = new FormInput({ appendTo: body });
+		const cropInput = new Input({ appendTo: body });
 		cropInput.elem.type = 'text';
 		cropInput.elem.placeholder = 'e.g. Corn, Winter Wheat';
 
@@ -229,7 +255,9 @@ export default class PrecisionLayerImport extends Dialog {
 
 		new Button({
 			appendTo: body,
-			textContent: '← Choose different file',
+			variant: 'flat',
+			icon: 'arrow-left',
+			textContent: 'Choose different file',
 			style: { width: '100%', marginTop: '6px', fontSize: '12px' },
 			onPointerPress: () => this._renderUpload(),
 		});

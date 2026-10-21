@@ -1,4 +1,4 @@
-import { Button, Component, Elem, formatDate } from '@vanilla-bean/components';
+import { formatDate, theme } from '@vanilla-bean/components';
 
 import { ActionHeader, SquareBadge } from '../Layout';
 import { formatDollar } from '../utils/format';
@@ -13,6 +13,9 @@ import {
 	updateBuilding,
 	updateEvent,
 } from '../api';
+import { EmptyNote, HeaderButton, PanelRow, RowAside, RowGlyph, RowMain, RowMeta, RowTitle } from './panelParts';
+
+const { colors } = theme;
 
 export async function renderIncidents(entityType, entity, refresh, appendTo, { livestockEvents = [] } = {}) {
 	const data = await getIncidents();
@@ -29,10 +32,11 @@ export async function renderIncidents(entityType, entity, refresh, appendTo, { l
 		else if (entityType === 'building') await updateBuilding(entity.id, { body: { status, _v: entity._v } });
 	};
 
-	new Button({
+	new HeaderButton({
 		appendTo: header,
-		textContent: '⚠️ Report',
-		style: { fontSize: '12px', padding: '4px 10px', marginTop: '10px' },
+		icon: 'triangle-exclamation',
+		textContent: 'Report',
+		style: { marginTop: '10px' },
 		onPointerPress: () =>
 			new IncidentDialog({
 				entityType,
@@ -51,12 +55,7 @@ export async function renderIncidents(entityType, entity, refresh, appendTo, { l
 	});
 
 	if (!records.length) {
-		new Elem({
-			tag: 'div',
-			appendTo,
-			style: { fontSize: '12px', color: 'rgba(255,255,255,0.25)', padding: '4px 0 8px' },
-			textContent: 'No incidents recorded',
-		});
+		new EmptyNote({ appendTo, textContent: 'No incidents recorded' });
 		return;
 	}
 
@@ -64,47 +63,36 @@ export async function renderIncidents(entityType, entity, refresh, appendTo, { l
 		const sm = severityMeta(rec.severity);
 		const open = !rec.resolved;
 
-		const row = new Component({
-			appendTo,
-			style: {
-				display: 'flex',
-				alignItems: 'flex-start',
-				gap: '8px',
-				padding: '6px 0',
-				borderBottom: '1px solid rgba(255,255,255,0.06)',
-				cursor: 'pointer',
-			},
-		});
+		const row = new PanelRow({ appendTo, addClass: 'interactive' });
 
-		new Elem({
-			tag: 'span',
-			appendTo: row,
-			style: { fontSize: '14px', flexShrink: '0', marginTop: '1px', opacity: open ? '1' : '0.4' },
-			textContent: incidentEmoji(rec.type),
-		});
+		new RowGlyph({ appendTo: row, style: { opacity: open ? '1' : '0.4' }, textContent: incidentEmoji(rec.type) });
 
-		const info = new Component({ appendTo: row, style: { flex: '1', minWidth: '0' } });
+		const info = new RowMain({ appendTo: row });
 
-		const titleRow = new Component({
+		const titleRow = new RowTitle({
 			appendTo: info,
 			style: { display: 'flex', gap: '6px', alignItems: 'center', flexWrap: 'wrap' },
 		});
 
-		new Elem({
+		new RowTitle({
 			tag: 'span',
 			appendTo: titleRow,
 			style: {
-				fontSize: '13px',
-				color: open ? '#fff' : 'rgba(255,255,255,0.45)',
+				color: open ? colors.white : colors.gray,
 				fontWeight: '500',
 				textDecoration: rec.resolved ? 'line-through' : 'none',
 			},
 			textContent: rec.type || 'Incident',
 		});
+		// Tinted by mixing, since a severity's color may come as CSS text or a theme color
 		new SquareBadge({
 			appendTo: titleRow,
 			textContent: sm.label,
-			style: { color: sm.color, background: `${sm.color}22`, border: `1px solid ${sm.color}44` },
+			style: {
+				color: `${sm.color}`,
+				background: `color-mix(in hsl, ${sm.color} 13%, transparent)`,
+				border: `1px solid color-mix(in hsl, ${sm.color} 27%, transparent)`,
+			},
 		});
 
 		const meta = [];
@@ -130,26 +118,9 @@ export async function renderIncidents(entityType, entity, refresh, appendTo, { l
 		if (rec.estimatedLoss) meta.push(`${formatDollar(rec.estimatedLoss)} loss`);
 		if (rec.insuranceClaim) meta.push(`Claim: ${rec.insuranceClaim}`);
 		if (rec.resolved) meta.push('✓ Resolved');
-		if (meta.length)
-			new Elem({
-				tag: 'div',
-				appendTo: info,
-				style: { fontSize: '11px', color: 'rgba(255,255,255,0.4)', marginTop: '2px' },
-				textContent: meta.join(' · '),
-			});
+		if (meta.length) new RowMeta({ appendTo: info, style: { marginTop: '2px' }, textContent: meta.join(' · ') });
 
-		new Elem({
-			tag: 'div',
-			appendTo: row,
-			style: {
-				fontSize: '11px',
-				color: 'rgba(255,255,255,0.3)',
-				whiteSpace: 'nowrap',
-				paddingLeft: '6px',
-				marginTop: '2px',
-			},
-			textContent: formatDate(rec.date) || '—',
-		});
+		new RowAside({ appendTo: row, textContent: formatDate(rec.date) || '—' });
 
 		row.onPointerPress(
 			() =>

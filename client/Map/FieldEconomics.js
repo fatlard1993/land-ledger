@@ -1,8 +1,20 @@
-import { Component, Elem } from '@vanilla-bean/components';
+import { Component, Elem, SectionLabel, styled, theme } from '@vanilla-bean/components';
 
-import { SectionHeader, DetailRow } from '../Layout';
+import { DetailRow } from '../Layout';
 import parseDetails from '../utils/parseDetails';
 import { formatDollar } from '../utils/format';
+
+const { colors } = theme;
+
+const Insight = styled(
+	Component,
+	({ colors }) => `
+		padding: 3px 0;
+		border-bottom: 1px solid ${colors.border};
+		font-size: 11px;
+		color: ${colors.muted};
+	`,
+);
 
 // Renders the Economics and Derived Insights sections into `container`.
 // Shows cost breakdown (seed, inputs, tillage, soil tests), revenue, net P/L,
@@ -45,22 +57,24 @@ export function renderEconomics(field, events, container) {
 
 	if (!totalCost && !totalRevenue) return;
 
-	new SectionHeader({ appendTo: container, textContent: `Economics — ${year}` });
+	new SectionLabel({ appendTo: container, textContent: `Economics — ${year}` });
 
 	const formatNum = n => formatDollar(n).replace('$', '');
 	const perAc = v => (acreage ? ` ($${formatNum(v / acreage)}/ac)` : '');
 	const rows = [];
 
-	if (seedCost) rows.push(['🌱 Seed', `$${formatNum(seedCost)}${perAc(seedCost)}`, '#e8c42a']);
-	if (inputCost) rows.push(['🧪 Inputs', `$${formatNum(inputCost)}${perAc(inputCost)}`, '#e8c42a']);
-	if (tillageCost) rows.push(['🚜 Tillage', `$${formatNum(tillageCost)}${perAc(tillageCost)}`, '#e8c42a']);
-	if (soilTestCost) rows.push(['🔬 Soil Tests', `$${formatNum(soilTestCost)}`, '#e8c42a']);
-	if (totalCost) rows.push(['Total Costs', `$${formatNum(totalCost)}${perAc(totalCost)}`, '#e0852a']);
-	if (totalRevenue) rows.push(['Revenue', `$${formatNum(totalRevenue)}${perAc(totalRevenue)}`, '#4caf50']);
+	if (seedCost) rows.push(['🌱 Seed', `$${formatNum(seedCost)}${perAc(seedCost)}`, colors.light(colors.warning)]);
+	if (inputCost) rows.push(['🧪 Inputs', `$${formatNum(inputCost)}${perAc(inputCost)}`, colors.light(colors.warning)]);
+	if (tillageCost)
+		rows.push(['🚜 Tillage', `$${formatNum(tillageCost)}${perAc(tillageCost)}`, colors.light(colors.warning)]);
+	if (soilTestCost) rows.push(['🔬 Soil Tests', `$${formatNum(soilTestCost)}`, colors.light(colors.warning)]);
+	if (totalCost) rows.push(['Total Costs', `$${formatNum(totalCost)}${perAc(totalCost)}`, colors.light(colors.orange)]);
+	if (totalRevenue)
+		rows.push(['Revenue', `$${formatNum(totalRevenue)}${perAc(totalRevenue)}`, colors.light(colors.success)]);
 
 	if (totalCost && totalRevenue) {
 		const net = totalRevenue - totalCost;
-		const color = net >= 0 ? '#4caf50' : '#e05252';
+		const color = net >= 0 ? colors.light(colors.success) : colors.light(colors.danger);
 		rows.push(['Net P/L', `${net >= 0 ? '+' : '-'}$${formatNum(Math.abs(net))}${perAc(Math.abs(net))}`, color]);
 	}
 
@@ -121,7 +135,7 @@ export function renderEconomics(field, events, container) {
 			if (nValue > 0) insights.push(`Est. N credit: ${nCredit} lbs/ac = $${nValue.toFixed(2)}/ac @ $0.60/lb N`);
 
 			if (totalCC > 0 && nValue > 0) {
-				const roiColor = roi >= 0 ? '#4caf50' : '#e05252';
+				const roiColor = roi >= 0 ? colors.light(colors.success) : colors.light(colors.danger);
 				const coverRow = new DetailRow({ appendTo: container });
 				new Elem({ tag: 'span', appendTo: coverRow, addClass: 'label', textContent: '🌿 CC ROI' });
 				new Elem({
@@ -160,18 +174,10 @@ export function renderEconomics(field, events, container) {
 
 	if (!insights.length) return;
 
-	new SectionHeader({ appendTo: container, textContent: 'Derived Insights' });
+	new SectionLabel({ appendTo: container, textContent: 'Derived Insights' });
 
 	for (const insight of insights) {
-		const row = new Component({
-			appendTo: container,
-			style: {
-				fontSize: '11px',
-				color: 'rgba(255,255,255,0.55)',
-				padding: '3px 0',
-				borderBottom: '1px solid rgba(255,255,255,0.05)',
-			},
-		});
+		const row = new Insight({ appendTo: container });
 		new Elem({ tag: 'span', appendTo: row, textContent: insight });
 	}
 }

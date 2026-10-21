@@ -1,6 +1,9 @@
 import L from 'leaflet';
+import { theme } from '@vanilla-bean/components';
 import { statusStyle } from './mapStyles.js';
 import { pathColor, feetToWeight } from './PathDialog';
+
+const { colors } = theme;
 
 export class PathLayer {
 	constructor(map, layer) {
@@ -23,7 +26,7 @@ export class PathLayer {
 			// Two-layer road casing effect: dark outline + lighter fill
 			const casingLayer = L.geoJSON(path.geometry, {
 				style: {
-					color: 'rgba(0,0,0,0.4)',
+					color: colors.alpha(colors.vantablack, 0.4).toRgbString(),
 					weight: weight + 2,
 					opacity: ps ? ps.opacity * 0.7 : 0.6,
 					lineCap: 'round',

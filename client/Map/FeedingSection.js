@@ -1,4 +1,4 @@
-import { Button, Component, Dialog, Elem, formatDate } from '@vanilla-bean/components';
+import { Button, Component, Dialog, formatDate, Input, theme } from '@vanilla-bean/components';
 
 import {
 	getFeedingSchedules,
@@ -11,8 +11,21 @@ import {
 } from '../api';
 import { frequencyLabel, frequencyInterval } from '../Livestock/FeedingScheduleDialog';
 import FeedingScheduleDialog from '../Livestock/FeedingScheduleDialog';
-import { SectionHeader, FormLabel, FormInput } from '../Layout';
+import { ActionHeader, FormLabel } from '../Layout';
 import { daysAgoLabel } from '../utils/dates';
+import {
+	EmptyNote,
+	HeaderActions,
+	HeaderButton,
+	PanelRow,
+	RowGlyph,
+	RowMain,
+	RowMeta,
+	RowTitle,
+	SubLabel,
+} from './panelParts';
+
+const { colors } = theme;
 
 const feedIcon = ft => {
 	if (/hay|straw|forage/i.test(ft)) return '🌾';
@@ -27,7 +40,7 @@ const feedIcon = ft => {
 export function openTreatDialog(field, totalHead, refresh) {
 	const dialog = new Dialog({
 		size: 'large',
-		header: '🍬 Log Treat / Extra Feeding',
+		header: 'Log Treat / Extra Feeding',
 		buttons: ['Log', 'Cancel'],
 		onButtonPress: async ({ button }) => {
 			if (button === 'Log' && feedTypeEl.elem.value) {
@@ -64,32 +77,31 @@ export function openTreatDialog(field, totalHead, refresh) {
 	];
 
 	new FormLabel({ appendTo: dialog.body, textContent: 'What they got' });
-	const feedTypeEl = new FormInput({
+	const feedTypeEl = new Input({
 		appendTo: dialog.body,
 		type: 'text',
 		placeholder: 'e.g. Hay, Range cake, Apple slices',
 		suggestions: feedSuggestions,
 	});
 
-	const rowEl = new Elem({
-		tag: 'div',
+	const rowEl = new Component({
 		style: { display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px' },
 		appendTo: dialog.body,
 	});
 
 	new FormLabel({ appendTo: rowEl, textContent: 'Amount' });
-	const amountEl = new FormInput({ appendTo: rowEl, type: 'number', step: '0.1', placeholder: 'e.g. 2' });
+	const amountEl = new Input({ appendTo: rowEl, type: 'number', step: '0.1', placeholder: 'e.g. 2' });
 
 	new FormLabel({ appendTo: rowEl, textContent: 'Unit' });
-	const unitEl = new FormInput({ appendTo: rowEl, type: 'text', placeholder: 'lbs/hd, bales…' });
+	const unitEl = new Input({ appendTo: rowEl, type: 'text', placeholder: 'lbs/hd, bales…' });
 	unitEl.elem.value = 'lbs/hd';
 
 	new FormLabel({ appendTo: rowEl, textContent: 'Date' });
-	const dateEl = new FormInput({ appendTo: rowEl, type: 'date' });
+	const dateEl = new Input({ appendTo: rowEl, type: 'date' });
 	dateEl.elem.value = new Date().toISOString().slice(0, 10);
 
 	new FormLabel({ appendTo: dialog.body, textContent: 'Notes' });
-	const notesEl = new FormInput({ appendTo: dialog.body, type: 'text', placeholder: 'Optional — why, weather, etc.' });
+	const notesEl = new Input({ appendTo: dialog.body, type: 'text', placeholder: 'Optional — why, weather, etc.' });
 }
 
 export async function renderFeedingSection(field, livestockEvents, refresh, container) {
@@ -115,19 +127,13 @@ export async function renderFeedingSection(field, livestockEvents, refresh, cont
 	}, 0);
 
 	// Section header with action buttons
-	const header = new Component({
-		appendTo: container,
-		style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center' },
-	});
+	const header = new ActionHeader({ appendTo: container, title: 'Feeding' });
+	const headerButtons = new HeaderActions({ appendTo: header });
 
-	new SectionHeader({ appendTo: header, textContent: '🐄 Feeding' });
-
-	const headerButtons = new Component({ appendTo: header, style: { display: 'flex', gap: '5px', marginTop: '10px' } });
-
-	new Button({
+	new HeaderButton({
 		appendTo: headerButtons,
-		textContent: '+ Schedule',
-		style: { fontSize: '11px', padding: '3px 8px' },
+		icon: 'plus',
+		textContent: 'Schedule',
 		onPointerPress: () =>
 			new FeedingScheduleDialog({
 				fieldId: field.id,
@@ -141,11 +147,11 @@ export async function renderFeedingSection(field, livestockEvents, refresh, cont
 			}),
 	});
 
-	new Button({
+	new HeaderButton({
 		appendTo: headerButtons,
-		textContent: '🍬 Treat',
+		icon: 'candy-cane',
+		textContent: 'Treat',
 		title: 'Log a one-time out-of-schedule feeding',
-		style: { fontSize: '11px', padding: '3px 8px' },
 		onPointerPress: () => openTreatDialog(field, totalHead, refresh),
 	});
 
@@ -159,85 +165,42 @@ export async function renderFeedingSection(field, livestockEvents, refresh, cont
 	};
 
 	if (!schedules.length) {
-		new Elem({
-			tag: 'div',
-			appendTo: container,
-			style: { fontSize: '12px', color: 'rgba(255,255,255,0.25)', padding: '4px 0' },
-			textContent: 'No schedules — tap + Schedule to add',
-		});
+		new EmptyNote({ appendTo: container, textContent: 'No schedules — tap + Schedule to add' });
 	} else {
 		for (const schedule of schedules) {
 			const supply = schedule.supplyId ? supplies[schedule.supplyId] : null;
 			const due = isDue(schedule);
 			const lastLog = logs.find(l => l.scheduleId === schedule.id);
 
-			const row = new Component({
-				appendTo: container,
-				style: {
-					display: 'flex',
-					alignItems: 'flex-start',
-					gap: '8px',
-					padding: '7px 0',
-					borderBottom: '1px solid rgba(255,255,255,0.06)',
-				},
-			});
+			const row = new PanelRow({ appendTo: container });
 
-			new Elem({
-				tag: 'span',
-				appendTo: row,
-				style: { fontSize: '15px', flexShrink: '0', marginTop: '1px' },
-				textContent: feedIcon(schedule.feedType),
-			});
+			new RowGlyph({ appendTo: row, textContent: feedIcon(schedule.feedType) });
 
-			const info = new Component({ appendTo: row, style: { flex: '1', minWidth: '0' } });
+			const info = new RowMain({ appendTo: row });
 
-			new Elem({
-				tag: 'div',
-				appendTo: info,
-				style: { fontSize: '13px', color: '#fff', fontWeight: '500' },
-				textContent: schedule.feedType || 'Feed',
-			});
+			new RowTitle({ appendTo: info, style: { fontWeight: '500' }, textContent: schedule.feedType || 'Feed' });
 
 			const meta = [];
 			if (schedule.amountPerHead) meta.push(`${schedule.amountPerHead} ${schedule.amountUnit || 'lbs/hd'}`);
 			if (schedule.frequency) meta.push(frequencyLabel(schedule.frequency));
 			if (supply) meta.push(`📦 ${supply.name}`);
-			if (meta.length)
-				new Elem({
-					tag: 'div',
-					appendTo: info,
-					style: { fontSize: '11px', color: 'rgba(255,255,255,0.45)' },
-					textContent: meta.join(' · '),
-				});
+			if (meta.length) new RowMeta({ appendTo: info, textContent: meta.join(' · ') });
 
 			if (lastLog) {
-				new Elem({
-					tag: 'div',
+				new RowMeta({
 					appendTo: info,
-					style: { fontSize: '11px', color: due ? '#e8c42a' : 'rgba(255,255,255,0.3)' },
+					style: due ? { color: colors.light(colors.warning) } : {},
 					textContent: `Last: ${daysAgoLabel(lastLog.date)}${due ? ' · due' : ''}`,
 				});
 			} else {
-				new Elem({
-					tag: 'div',
-					appendTo: info,
-					style: { fontSize: '11px', color: '#e8c42a' },
-					textContent: 'Never recorded',
-				});
+				new RowMeta({ appendTo: info, style: { color: colors.light(colors.warning) }, textContent: 'Never recorded' });
 			}
 
 			new Button({
 				appendTo: row,
-				textContent: '✓',
+				icon: 'check',
 				title: 'Mark as fed',
-				style: {
-					fontSize: '14px',
-					padding: '4px 8px',
-					flexShrink: '0',
-					background: 'rgba(76,175,80,0.15)',
-					border: '1px solid rgba(76,175,80,0.45)',
-					color: '#4caf50',
-				},
+				style: { flexShrink: '0', backgroundColor: colors.dark(colors.success) },
 				onPointerPress: async () => {
 					await createFeedingLog({
 						body: {
@@ -284,65 +247,39 @@ export async function renderFeedingSection(field, livestockEvents, refresh, cont
 
 	if (!recentLogs.length) return;
 
-	new Elem({
-		tag: 'div',
-		appendTo: container,
-		style: {
-			fontSize: '10px',
-			textTransform: 'uppercase',
-			letterSpacing: '.06em',
-			color: 'rgba(255,255,255,0.25)',
-			padding: '8px 0 3px',
-		},
-		textContent: 'Recent',
-	});
+	new SubLabel({ appendTo: container, textContent: 'Recent' });
 
 	for (const log of recentLogs) {
-		const row = new Component({
+		const row = new RowMeta({
 			appendTo: container,
-			style: {
-				display: 'flex',
-				gap: '7px',
-				fontSize: '11px',
-				padding: '3px 0',
-				color: 'rgba(255,255,255,0.5)',
-				alignItems: 'center',
-			},
+			style: { display: 'flex', gap: '7px', padding: '3px 0', color: colors.muted, alignItems: 'center' },
 		});
 
-		new Elem({
+		new Component({
 			tag: 'span',
 			appendTo: row,
 			style: { flexShrink: '0' },
 			textContent: log.type === 'treat' ? '🍬' : '✓',
 		});
-		new Elem({
+		new Component({
 			tag: 'span',
 			appendTo: row,
-			style: { flex: '1' },
+			style: { flex: '1', minWidth: '0' },
 			textContent: `${log.feedType || 'Feed'}${log.amountPerHead ? ` · ${log.amountPerHead} ${log.amountUnit || ''}` : ''}`,
 		});
-		new Elem({
+		new Component({
 			tag: 'span',
 			appendTo: row,
-			style: { flexShrink: '0', color: 'rgba(255,255,255,0.25)' },
+			style: { flexShrink: '0', color: colors.gray },
 			textContent: formatDate(log.date) || '—',
 		});
 
 		new Button({
-			textContent: '×',
+			variant: 'flat',
+			icon: 'xmark',
 			title: 'Delete this log entry',
 			appendTo: row,
-			style: {
-				background: 'none',
-				border: 'none',
-				color: 'rgba(255,255,255,0.2)',
-				fontSize: '14px',
-				cursor: 'pointer',
-				padding: '0 2px',
-				flexShrink: '0',
-				lineHeight: '1',
-			},
+			style: { flexShrink: '0', width: '22px', height: '22px', color: colors.gray },
 			onPointerPress: async () => {
 				await deleteFeedingLog(log.id);
 				refresh();

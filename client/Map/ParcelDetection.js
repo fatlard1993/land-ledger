@@ -1,13 +1,15 @@
 import L from 'leaflet';
 import { union as turfUnion } from '@turf/union';
 import { dissolve as turfDissolve } from '@turf/dissolve';
-import { Notify } from '@vanilla-bean/components';
+import { Notify, theme } from '@vanilla-bean/components';
 
 import { getParcelBoundaries, createParcel } from '../api';
 import { geodesicAcreage } from '../geo';
 import { PARCEL_STYLE } from './mapStyles.js';
 import ParcelDialog from './ParcelDialog';
 import ParcelImportDialog from './ParcelImportDialog';
+
+const { colors } = theme;
 
 /**
  * Factory that creates the parcel-detection subsystem.
@@ -96,12 +98,12 @@ export function createParcelDetection({
 
 			let count = 0;
 
-			const UNSELECTED = { ...PARCEL_STYLE, opacity: 0.55, color: '#ffb84d' };
+			const UNSELECTED = { ...PARCEL_STYLE, opacity: 0.55, color: colors.lighter(colors.orange).toHexString() };
 			const SELECTED = {
 				...PARCEL_STYLE,
 				opacity: 1,
-				color: '#ff9500',
-				fillColor: '#ff9500',
+				color: colors.light(colors.orange).toHexString(),
+				fillColor: colors.light(colors.orange).toHexString(),
 				fillOpacity: 0.2,
 				weight: 3,
 			};
@@ -166,7 +168,7 @@ export function createParcelDetection({
 			onCancel: () => {
 				// deselect all
 				for (const [, layer] of detectedSelection) {
-					layer.setStyle({ ...PARCEL_STYLE, opacity: 0.55, color: '#ffb84d' });
+					layer.setStyle({ ...PARCEL_STYLE, opacity: 0.55, color: colors.lighter(colors.orange).toHexString() });
 				}
 
 				detectedSelection.clear();

@@ -1,24 +1,8 @@
-import { Button, Component, Dialog, Elem, Input } from '@vanilla-bean/components';
-import { styled } from '@vanilla-bean/components';
+import { Button, Card, Component, Dialog, Elem, Icon, Input, theme } from '@vanilla-bean/components';
 
-const DropZone = styled(
-	Component,
-	({ colors }) => `
-		border: 2px dashed ${colors.gray};
-		border-radius: 8px;
-		padding: 28px 16px;
-		text-align: center;
-		cursor: pointer;
-		color: ${colors.gray};
-		transition: border-color 0.15s, color 0.15s;
-		margin: 8px 0;
+import { DropZone, Lead, PreviewList } from './dialogParts';
 
-		&.drag-over {
-			border-color: #ff9500;
-			color: #ff9500;
-		}
-	`,
-);
+const { colors } = theme;
 
 export default class ParcelImportDialog extends Dialog {
 	constructor(options = {}) {
@@ -32,31 +16,19 @@ export default class ParcelImportDialog extends Dialog {
 
 		this._pendingFeatures = [];
 
-		new Elem({
-			tag: 'p',
-			appendTo: this.body,
-			style: { fontSize: '13px', color: 'rgba(255,255,255,0.5)', margin: '0 0 8px' },
-			textContent: 'Import parcel/property line data from your county GIS portal.',
-		});
+		new Lead({ appendTo: this.body, textContent: 'Import parcel/property line data from your county GIS portal.' });
 
 		// Guidance
-		const guide = new Component({
+		const guide = new Card({
 			appendTo: this.body,
-			style: {
-				background: 'rgba(255,149,0,0.08)',
-				border: '1px solid rgba(255,149,0,0.25)',
-				borderRadius: '6px',
-				padding: '10px 12px',
-				marginBottom: '12px',
-				fontSize: '12px',
-				color: 'rgba(255,255,255,0.6)',
-			},
+			accent: colors.orange,
+			style: { marginBottom: '12px', fontSize: '12px', color: colors.muted },
 		});
 
 		new Elem({
 			tag: 'div',
 			appendTo: guide,
-			style: { fontWeight: '600', color: '#ffb84d', marginBottom: '4px' },
+			style: { fontWeight: '600', color: colors.light(colors.orange), marginBottom: '4px' },
 			textContent: "Finding your county's parcel data:",
 		});
 		new Elem({ tag: 'div', appendTo: guide, textContent: '1. Search "[county name] GIS open data parcels"' });
@@ -71,13 +43,8 @@ export default class ParcelImportDialog extends Dialog {
 
 		const dropZone = new DropZone({ appendTo: this.body });
 
-		new Elem({ tag: 'div', appendTo: dropZone, style: { fontSize: '28px', marginBottom: '6px' }, textContent: '📐' });
-		new Elem({
-			tag: 'div',
-			appendTo: dropZone,
-			style: { fontSize: '14px' },
-			textContent: 'Drop county parcel GeoJSON here or tap to browse',
-		});
+		new Icon({ appendTo: dropZone, addClass: 'drop-icon', icon: 'file-import' });
+		new Elem({ tag: 'div', appendTo: dropZone, textContent: 'Drop county parcel GeoJSON here or tap to browse' });
 
 		new Input({
 			type: 'file',
@@ -110,7 +77,7 @@ export default class ParcelImportDialog extends Dialog {
 				new Elem({
 					tag: 'p',
 					appendTo: this._preview,
-					style: { color: '#e05252', fontSize: '13px' },
+					style: { color: colors.light(colors.danger), fontSize: '13px' },
 					textContent: 'No polygon features found in this file.',
 				});
 				return;
@@ -123,7 +90,7 @@ export default class ParcelImportDialog extends Dialog {
 			new Elem({
 				tag: 'p',
 				appendTo: this._preview,
-				style: { color: '#e05252', fontSize: '13px' },
+				style: { color: colors.light(colors.danger), fontSize: '13px' },
 				textContent: 'Could not read file — make sure it is valid GeoJSON.',
 			});
 		}
@@ -139,37 +106,18 @@ export default class ParcelImportDialog extends Dialog {
 			textContent: `Found ${features.length} polygon${features.length !== 1 ? 's' : ''} — they will be saved as property lines:`,
 		});
 
-		const list = new Component({
-			appendTo: this._preview,
-			style: {
-				maxHeight: '160px',
-				overflowY: 'auto',
-				border: '1px solid rgba(255,255,255,0.1)',
-				borderRadius: '6px',
-				marginBottom: '10px',
-			},
-		});
+		const list = new PreviewList({ appendTo: this._preview, style: { maxHeight: '160px' } });
 
 		for (const [i, f] of features.slice(0, 20).entries()) {
 			const p = f.properties || {};
 			const name =
 				p.name || p.NAME || p.OWNER || p.OWNER_NAME || p.APN || p.PARCEL_ID || p.PARCELID || `Parcel ${i + 1}`;
 
-			new Elem({
-				tag: 'div',
-				appendTo: list,
-				style: { padding: '5px 10px', borderBottom: '1px solid rgba(255,255,255,0.07)', fontSize: '12px' },
-				textContent: `📐 ${name}`,
-			});
+			new Elem({ tag: 'div', appendTo: list, textContent: `📐 ${name}` });
 		}
 
 		if (features.length > 20) {
-			new Elem({
-				tag: 'div',
-				appendTo: list,
-				style: { padding: '5px 10px', fontSize: '11px', color: 'rgba(255,255,255,0.4)' },
-				textContent: `… and ${features.length - 20} more`,
-			});
+			new Elem({ tag: 'div', appendTo: list, addClass: 'more', textContent: `… and ${features.length - 20} more` });
 		}
 
 		new Button({

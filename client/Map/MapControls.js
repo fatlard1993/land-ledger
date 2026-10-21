@@ -1,5 +1,19 @@
 import L from 'leaflet';
-import { Notify, Dialog, Elem } from '@vanilla-bean/components';
+import { Dialog, Elem, Icon, Input, Notify, theme } from '@vanilla-bean/components';
+
+const { colors } = theme;
+
+// A button in a Leaflet bar, drawn like the bar's own zoom buttons
+const barButton = (parent, { icon, title }) => {
+	const btn = L.DomUtil.create('a', '', parent);
+
+	btn.href = '#';
+	if (title) btn.title = title;
+	btn.style.cssText = 'font-size:14px;line-height:30px;display:block;width:30px;text-align:center;cursor:pointer;';
+	new Icon({ appendTo: btn, icon });
+
+	return btn;
+};
 
 // ── Draw mode toggle (top-left) ────────────────────────────────────────────────
 // Returns { update } where update() repaints button highlights to match the
@@ -13,46 +27,22 @@ export function createDrawModeToggle(map, { getDrawMode, onSetMode }) {
 	toggle.onAdd = () => {
 		const wrap = L.DomUtil.create('div', 'leaflet-bar leaflet-control');
 
-		const fieldBtn = L.DomUtil.create('a', '', wrap);
-		const buildingBtn = L.DomUtil.create('a', '', wrap);
-		const equipBtn = L.DomUtil.create('a', '', wrap);
-		const parcelBtn = L.DomUtil.create('a', '', wrap);
-		const pathBtn = L.DomUtil.create('a', '', wrap);
-
-		const baseStyle = 'font-size:16px;line-height:30px;display:block;width:30px;text-align:center;cursor:pointer;';
-
-		fieldBtn.href = '#';
-		fieldBtn.title = 'Draw field polygon';
-		fieldBtn.textContent = '🌾';
-		fieldBtn.style.cssText = baseStyle;
-
-		buildingBtn.href = '#';
-		buildingBtn.title = 'Draw building footprint';
-		buildingBtn.textContent = '🏚️';
-		buildingBtn.style.cssText = baseStyle;
-
-		equipBtn.href = '#';
-		equipBtn.title = 'Place equipment (click to pin location)';
-		equipBtn.textContent = '🚜';
-		equipBtn.style.cssText = baseStyle;
-
-		parcelBtn.href = '#';
-		parcelBtn.title = 'Draw property line (no fill — legal parcel boundary)';
-		parcelBtn.textContent = '📐';
-		parcelBtn.style.cssText = baseStyle;
-
-		pathBtn.href = '#';
-		pathBtn.title = 'Draw path / road (line — set width in dialog)';
-		pathBtn.textContent = '🛤️';
-		pathBtn.style.cssText = baseStyle;
+		const fieldBtn = barButton(wrap, { icon: 'wheat-awn', title: 'Draw field polygon' });
+		const buildingBtn = barButton(wrap, { icon: 'warehouse', title: 'Draw building footprint' });
+		const equipBtn = barButton(wrap, { icon: 'tractor', title: 'Place equipment (click to pin location)' });
+		const parcelBtn = barButton(wrap, {
+			icon: 'ruler-combined',
+			title: 'Draw property line (no fill — legal parcel boundary)',
+		});
+		const pathBtn = barButton(wrap, { icon: 'road', title: 'Draw path / road (line — set width in dialog)' });
 
 		updateButtons = () => {
 			const mode = getDrawMode();
-			fieldBtn.style.background = mode === 'field' ? 'rgba(0,0,0,0.08)' : '';
-			buildingBtn.style.background = mode === 'building' ? 'rgba(200,168,130,0.35)' : '';
-			equipBtn.style.background = mode === 'equipment' ? 'rgba(74,144,217,0.25)' : '';
-			parcelBtn.style.background = mode === 'parcel' ? 'rgba(255,149,0,0.25)' : '';
-			pathBtn.style.background = mode === 'path' ? 'rgba(139,105,20,0.3)' : '';
+			fieldBtn.style.background = mode === 'field' ? `${colors.alpha(colors.green, 0.3)}` : '';
+			buildingBtn.style.background = mode === 'building' ? `${colors.alpha(colors.lighter(colors.orange), 0.35)}` : '';
+			equipBtn.style.background = mode === 'equipment' ? `${colors.alpha(colors.info, 0.3)}` : '';
+			parcelBtn.style.background = mode === 'parcel' ? `${colors.alpha(colors.orange, 0.3)}` : '';
+			pathBtn.style.background = mode === 'path' ? `${colors.alpha(colors.dark(colors.yellow), 0.35)}` : '';
 		};
 
 		updateButtons();
@@ -119,15 +109,12 @@ export function createMapControls(
 		const div = L.DomUtil.create('div', 'leaflet-bar leaflet-control');
 
 		// ── Satellite imagery toggle ─────────────────────────────────────────────
-		const satelliteBtn = L.DomUtil.create('a', '', div);
-		satelliteBtn.href = '#';
-		satelliteBtn.textContent = '🛰️';
-		satelliteBtn.style.cssText = 'font-size:16px;line-height:30px;display:block;width:30px;text-align:center;';
+		const satelliteBtn = barButton(div, { icon: 'satellite' });
 
 		const SAT_MODES = [
 			{ label: 'off', title: 'Satellite: off — click for Esri', bg: '' },
-			{ label: 'esri', title: 'Esri World Imagery — click for USDA NAIP', bg: '#4a90d9' },
-			{ label: 'naip', title: 'USDA NAIP (US Agriculture, 1m) — click to turn off', bg: '#e8832a' },
+			{ label: 'esri', title: 'Esri World Imagery — click for USDA NAIP', bg: `${colors.info}` },
+			{ label: 'naip', title: 'USDA NAIP (US Agriculture, 1m) — click to turn off', bg: `${colors.orange}` },
 		];
 
 		let satMode = 0;
@@ -136,6 +123,7 @@ export function createMapControls(
 			const mode = SAT_MODES[satMode];
 			satelliteBtn.title = mode.title;
 			satelliteBtn.style.background = mode.bg;
+			satelliteBtn.style.color = mode.bg ? `${colors.superWhite}` : '';
 			[satelliteLayer, naipLayer].forEach(l => {
 				if (map.hasLayer(l)) map.removeLayer(l);
 			});
@@ -150,19 +138,17 @@ export function createMapControls(
 		});
 
 		// ── CLU reference overlay ────────────────────────────────────────────────
-		refBtn = L.DomUtil.create('a', '', div);
-		refBtn.href = '#';
-		refBtn.title =
-			'Show field outlines — zoom in to county level, then click any outline to use as a starting boundary';
-		refBtn.textContent = '⬡';
-		refBtn.style.cssText =
-			'font-size:18px;line-height:30px;display:block;width:30px;text-align:center;font-weight:700;color:#00bcd4;';
+		refBtn = barButton(div, {
+			icon: 'draw-polygon',
+			title: 'Show field outlines — zoom in to county level, then click any outline to use as a starting boundary',
+		});
+		refBtn.style.color = `${colors.dark(colors.teal)}`;
 
 		L.DomEvent.on(refBtn, 'click', e => {
 			L.DomEvent.preventDefault(e);
 			const next = !getRefVisible();
 			setRefVisible(next);
-			refBtn.style.background = next ? 'rgba(0,188,212,0.2)' : '';
+			refBtn.style.background = next ? `${colors.alpha(colors.teal, 0.3)}` : '';
 
 			if (next) {
 				referenceLayer.addTo(map);
@@ -178,11 +164,7 @@ export function createMapControls(
 		});
 
 		// ── GeoJSON import ───────────────────────────────────────────────────────
-		const importBtn = L.DomUtil.create('a', '', div);
-		importBtn.href = '#';
-		importBtn.title = 'Import fields from GeoJSON file';
-		importBtn.textContent = '📂';
-		importBtn.style.cssText = 'font-size:16px;line-height:30px;display:block;width:30px;text-align:center;';
+		const importBtn = barButton(div, { icon: 'folder-open', title: 'Import fields from GeoJSON file' });
 
 		L.DomEvent.on(importBtn, 'click', e => {
 			L.DomEvent.preventDefault(e);
@@ -190,19 +172,17 @@ export function createMapControls(
 		});
 
 		// ── Parcel detection ─────────────────────────────────────────────────────
-		detectParcelBtn = L.DomUtil.create('a', '', div);
-		detectParcelBtn.href = '#';
-		detectParcelBtn.title =
-			'Detect property lines from public data (OSM + county ArcGIS if configured) — zoom in first';
-		detectParcelBtn.textContent = '📐';
-		detectParcelBtn.style.cssText = 'font-size:16px;line-height:30px;display:block;width:30px;text-align:center;';
+		detectParcelBtn = barButton(div, {
+			icon: 'magnifying-glass-location',
+			title: 'Detect property lines from public data (OSM + county ArcGIS if configured) — zoom in first',
+		});
 
 		let detectActive = false;
 
 		L.DomEvent.on(detectParcelBtn, 'click', async e => {
 			L.DomEvent.preventDefault(e);
 			detectActive = !detectActive;
-			detectParcelBtn.style.background = detectActive ? 'rgba(255,149,0,0.25)' : '';
+			detectParcelBtn.style.background = detectActive ? `${colors.alpha(colors.orange, 0.3)}` : '';
 
 			const layer = getDetectedParcelLayer();
 
@@ -216,11 +196,7 @@ export function createMapControls(
 		});
 
 		// ── Parcel data source settings ──────────────────────────────────────────
-		const settingsBtn = L.DomUtil.create('a', '', div);
-		settingsBtn.href = '#';
-		settingsBtn.title = 'Configure parcel data source';
-		settingsBtn.textContent = '⚙️';
-		settingsBtn.style.cssText = 'font-size:15px;line-height:30px;display:block;width:30px;text-align:center;';
+		const settingsBtn = barButton(div, { icon: 'gear', title: 'Configure parcel data source' });
 
 		L.DomEvent.on(settingsBtn, 'click', async e => {
 			L.DomEvent.preventDefault(e);
@@ -237,7 +213,9 @@ export function createMapControls(
 						await updateAppSettings({ parcelServiceUrl: url });
 						new Notify({
 							type: 'success',
-							textContent: url ? 'Parcel service saved — click 📐 to detect' : 'Parcel service cleared',
+							textContent: url
+								? 'Parcel service saved — use the property-line search button to detect'
+								: 'Parcel service cleared',
 							timeout: 3000,
 						});
 					}
@@ -248,28 +226,16 @@ export function createMapControls(
 			new Elem({
 				tag: 'p',
 				appendTo: dialog.body,
-				style: { fontSize: '13px', color: 'rgba(255,255,255,0.5)', margin: '0 0 8px' },
+				style: { fontSize: '13px', color: colors.gray, margin: '0 0 8px' },
 				textContent:
-					"Paste your county's ArcGIS FeatureServer layer URL. The 📐 button will query it for parcels in your map view.",
+					"Paste your county's ArcGIS FeatureServer layer URL. The property-line search button will query it for parcels in your map view.",
 			});
 
-			const input = new Elem({
-				tag: 'input',
+			const input = new Input({
 				appendTo: dialog.body,
-				attributes: { type: 'url', placeholder: 'https://services3.arcgis.com/.../FeatureServer/19' },
-				style: {
-					display: 'block',
-					width: '100%',
-					background: 'rgba(255,255,255,0.07)',
-					border: '1px solid rgba(255,255,255,0.12)',
-					borderRadius: '4px',
-					color: '#fff',
-					fontSize: '14px',
-					padding: '8px 10px',
-					boxSizing: 'border-box',
-					fontFamily: 'inherit',
-					marginBottom: '8px',
-				},
+				type: 'url',
+				placeholder: 'https://services3.arcgis.com/.../FeatureServer/19',
+				style: { marginBottom: '8px' },
 			});
 
 			input.elem.value = current.parcelServiceUrl || '';
@@ -277,18 +243,17 @@ export function createMapControls(
 			new Elem({
 				tag: 'p',
 				appendTo: dialog.body,
-				style: { fontSize: '11px', color: 'rgba(255,255,255,0.35)', margin: '0' },
+				style: { fontSize: '11px', color: colors.gray, margin: '0' },
 				textContent:
 					'Whitman County, WA: https://services3.arcgis.com/eoLFybJXLOtInQXJ/arcgis/rest/services/Parcel_Data___TaxSifter_Map_WFL1/FeatureServer/19',
 			});
 		});
 
 		// ── Parcel file import ───────────────────────────────────────────────────
-		const parcelImportBtn = L.DomUtil.create('a', '', div);
-		parcelImportBtn.href = '#';
-		parcelImportBtn.title = 'Import property lines from county GIS file (GeoJSON)';
-		parcelImportBtn.textContent = '🗂️';
-		parcelImportBtn.style.cssText = 'font-size:16px;line-height:30px;display:block;width:30px;text-align:center;';
+		const parcelImportBtn = barButton(div, {
+			icon: 'file-import',
+			title: 'Import property lines from county GIS file (GeoJSON)',
+		});
 
 		L.DomEvent.on(parcelImportBtn, 'click', e => {
 			L.DomEvent.preventDefault(e);

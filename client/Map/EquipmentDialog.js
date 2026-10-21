@@ -1,6 +1,7 @@
-import { FormDialog, Elem, Select } from '@vanilla-bean/components';
+import { FormDialog, Select } from '@vanilla-bean/components';
 import { makePropertiesEditor } from '../utils/PropertiesEditor';
 import { keepOpenIfFailed } from '../utils/keepOpenIfFailed';
+import { checkboxRow, emojiField } from './dialogParts';
 
 const COMMON_TYPES = [
 	'Tractor',
@@ -168,47 +169,8 @@ export default class EquipmentDialog extends FormDialog {
 			...withoutCallbacks(options),
 		});
 
-		// Emoji row — above form, same pattern as EventDialog
-		const emojiRow = new Elem({
-			tag: 'div',
-			appendTo: this.intro,
-			style: { display: 'flex', alignItems: 'center', gap: '8px', margin: '8px 0' },
-		});
-
-		const emojiInput = new Elem({
-			tag: 'input',
-			attributes: { type: 'text', maxlength: '4', title: 'Tap to change emoji — auto-detected from type' },
-			style: {
-				background: 'rgba(255,255,255,0.07)',
-				border: '1px solid rgba(255,255,255,0.12)',
-				borderRadius: '4px',
-				color: '#fff',
-				fontSize: '22px',
-				padding: '4px',
-				width: '52px',
-				textAlign: 'center',
-				flexShrink: '0',
-				fontFamily: 'inherit',
-				boxSizing: 'border-box',
-			},
-			appendTo: emojiRow,
-		});
-
-		emojiInput.elem.value = item.emoji || equipmentEmoji(item.type || '');
-
-		const emojiHint = new Elem({
-			tag: 'span',
-			textContent: 'Auto-detected · tap to change',
-			style: { fontSize: '11px', color: 'rgba(255,255,255,0.3)' },
-			appendTo: emojiRow,
-		});
-
-		emojiInput.elem.addEventListener('input', () => {
-			emojiInput.elem.dataset.manual = emojiInput.elem.value ? '1' : '';
-			emojiHint.elem.textContent = emojiInput.elem.value
-				? 'Custom · clear to auto-detect'
-				: 'Auto-detected · tap to change';
-		});
+		// Emoji row
+		const emojiInput = emojiField(this.intro, item.emoji || equipmentEmoji(item.type || ''));
 
 		this._getEmoji = () => {
 			const auto = equipmentEmoji(this.form.options.data.type || '');
@@ -221,28 +183,6 @@ export default class EquipmentDialog extends FormDialog {
 		this._collectProps = collectProps;
 
 		// Show label toggle
-		const _cbUniqueId = `lbl-${Math.random().toString(36).slice(2)}`;
-
-		const labelRow = new Elem({
-			tag: 'div',
-			style: { display: 'flex', alignItems: 'center', gap: '8px', marginTop: '12px' },
-			appendTo: this.body,
-		});
-
-		this._showLabelEl = new Elem({
-			tag: 'input',
-			attributes: { type: 'checkbox', id: _cbUniqueId },
-			style: { accentColor: '#4a90d9' },
-			appendTo: labelRow,
-		});
-		this._showLabelEl.elem.checked = item.showLabel !== false;
-
-		new Elem({
-			tag: 'label',
-			textContent: 'Show name label on map',
-			attributes: { for: _cbUniqueId },
-			style: { fontSize: '13px', color: 'rgba(255,255,255,0.6)', cursor: 'pointer', userSelect: 'none' },
-			appendTo: labelRow,
-		});
+		this._showLabelEl = checkboxRow(this.body, { label: 'Show name label on map', checked: item.showLabel !== false });
 	}
 }

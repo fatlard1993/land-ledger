@@ -1,6 +1,10 @@
 import L from 'leaflet';
+import { theme } from '@vanilla-bean/components';
+
 import { equipmentEmoji } from './EquipmentDialog';
 import { feetToWeight } from './PathDialog';
+
+const { colors } = theme;
 
 export class EquipmentLayer {
 	constructor(map, layer) {
@@ -82,32 +86,32 @@ export class EquipmentLayer {
 	}
 
 	_markerHTML(item, selected, _leases) {
-		const TENURE_DOT = { own: '#4a90d9', lease: '#e8832a' };
+		const TENURE_DOT = { own: colors.info, lease: colors.orange };
 		const emoji = equipmentEmoji(item.type, item.emoji);
 		const ss = this._statusStyle(item);
-		const baseColor = TENURE_DOT[item.tenure] || '#888';
+		const baseColor = TENURE_DOT[item.tenure] || colors.gray;
 		const color = ss?.colorOverride || baseColor;
 		const opacity = ss?.opacityOverride ?? 1;
 		const d = this._dotSize(item);
 		const fontSize = Math.round(d * 0.5);
 
 		if (selected) {
-			return `<div style="width:${d}px;height:${d}px;border-radius:50%;background:${color};border:3px solid #fff;display:flex;align-items:center;justify-content:center;font-size:${fontSize}px;box-shadow:0 0 0 2px ${color},0 0 12px rgba(255,255,255,0.6);opacity:${opacity}">${emoji}</div>`;
+			return `<div style="width:${d}px;height:${d}px;border-radius:50%;background:${color};border:3px solid ${colors.superWhite};display:flex;align-items:center;justify-content:center;font-size:${fontSize}px;box-shadow:0 0 0 2px ${color},0 0 12px ${colors.alpha(colors.superWhite, 0.6)};opacity:${opacity}">${emoji}</div>`;
 		}
 
-		return `<div style="width:${d}px;height:${d}px;border-radius:50%;background:${color};border:2px solid rgba(255,255,255,0.55);display:flex;align-items:center;justify-content:center;font-size:${fontSize}px;opacity:${opacity}">${emoji}</div>`;
+		return `<div style="width:${d}px;height:${d}px;border-radius:50%;background:${color};border:2px solid ${colors.alpha(colors.superWhite, 0.55)};display:flex;align-items:center;justify-content:center;font-size:${fontSize}px;opacity:${opacity}">${emoji}</div>`;
 	}
 
 	_statusStyle(item) {
 		switch (item.status) {
 			case 'needs_maintenance':
-				return { colorOverride: '#e8832a', opacityOverride: 0.9, overlay: '🔩' };
+				return { colorOverride: colors.orange, opacityOverride: 0.9, overlay: '🔩' };
 			case 'needs_service':
-				return { colorOverride: '#e8c42a', opacityOverride: 0.85, overlay: '🔧' };
+				return { colorOverride: colors.warning, opacityOverride: 0.85, overlay: '🔧' };
 			case 'out_of_service':
-				return { colorOverride: '#888', opacityOverride: 0.5, overlay: '⊘' };
+				return { colorOverride: colors.gray, opacityOverride: 0.5, overlay: '⊘' };
 			case 'destroyed':
-				return { colorOverride: '#c62828', opacityOverride: 0.7, overlay: '☠️' };
+				return { colorOverride: colors.dark(colors.danger), opacityOverride: 0.7, overlay: '☠️' };
 			default:
 				return null;
 		}
@@ -117,11 +121,11 @@ export class EquipmentLayer {
 		const leaseArr = Object.values(leases);
 		const hasIncome = leaseArr.some(l => l.role === 'lessor' && l.entityId === entityId);
 
-		if (hasIncome) return '#4caf50'; // green — receiving rent
+		if (hasIncome) return `${colors.light(colors.success)}`; // receiving rent
 
 		const hasTenant = leaseArr.some(l => (!l.role || l.role === 'tenant') && l.entityId === entityId);
 
-		if (hasTenant || tenure === 'lease') return '#e05252'; // red — paying rent
+		if (hasTenant || tenure === 'lease') return `${colors.light(colors.danger)}`; // paying rent
 
 		return null; // owned — no indicator
 	}

@@ -1,7 +1,9 @@
-import { Elem, FormDialog, Button } from '@vanilla-bean/components';
+import { Button, Elem, FormDialog, Input, Select } from '@vanilla-bean/components';
 import { keepOpenIfFailed } from '../utils/keepOpenIfFailed';
 import { makePropertiesEditor } from '../utils/PropertiesEditor';
+import { Caption, checkboxRow, emojiField } from './dialogParts';
 
+// Stored on each path as its color, so these stay the literal values saved records hold
 export const PATH_COLORS = [
 	{ value: '#8B6914', label: '🟤 Dirt' },
 	{ value: '#9E9E9E', label: '⬜ Gravel' },
@@ -33,7 +35,7 @@ export const detectPathEmoji = (type, stored) => {
 	return '🛤️';
 };
 
-export const pathColor = path => path.color || '#8B6914';
+export const pathColor = path => path.color || PATH_COLORS[0].value;
 
 export const feetToWeight = (widthFt, zoom = 17) => {
 	const ft = Number(widthFt) || 6;
@@ -41,19 +43,6 @@ export const feetToWeight = (widthFt, zoom = 17) => {
 	const scale = Math.pow(2, zoom - 17);
 
 	return Math.max(1.5, Math.min(40, ft * (1 / 3) * scale));
-};
-
-const BASE_INPUT = {
-	display: 'block',
-	width: '100%',
-	background: 'rgba(255,255,255,0.07)',
-	border: '1px solid rgba(255,255,255,0.12)',
-	borderRadius: '4px',
-	color: '#fff',
-	fontSize: '16px',
-	padding: '8px 10px',
-	boxSizing: 'border-box',
-	fontFamily: 'inherit',
 };
 
 const withoutCallbacks = ({ onSave: _onSave, onDelete: _onDelete, ...options }) => options;
@@ -78,45 +67,10 @@ export default class PathDialog extends FormDialog {
 
 		const path = options.path || {};
 
-		this._selectedColor = path.color || '#8B6914';
+		this._selectedColor = pathColor(path);
 
 		// Emoji row
-		const emojiRow = new Elem({
-			tag: 'div',
-			appendTo: this.body,
-			style: { display: 'flex', alignItems: 'center', gap: '8px', margin: '8px 0' },
-		});
-
-		const emojiInput = new Elem({
-			tag: 'input',
-			appendTo: emojiRow,
-			style: {
-				...BASE_INPUT,
-				width: '52px',
-				textAlign: 'center',
-				fontSize: '22px',
-				padding: '4px',
-				flexShrink: '0',
-				display: 'block',
-			},
-			attributes: { type: 'text', maxlength: '4', title: 'Tap to change emoji — auto-detected from type' },
-		});
-
-		emojiInput.elem.value = path.emoji || detectPathEmoji(path.type || '');
-
-		const emojiHint = new Elem({
-			tag: 'span',
-			appendTo: emojiRow,
-			style: { fontSize: '11px', color: 'rgba(255,255,255,0.3)' },
-			textContent: 'Auto-detected · tap to change',
-		});
-
-		emojiInput.elem.addEventListener('input', () => {
-			emojiInput.elem.dataset.manual = emojiInput.elem.value ? '1' : '';
-			emojiHint.elem.textContent = emojiInput.elem.value
-				? 'Custom · clear to auto-detect'
-				: 'Auto-detected · tap to change';
-		});
+		const emojiInput = emojiField(this.body, path.emoji || detectPathEmoji(path.type || ''));
 
 		this._getEmoji = () => {
 			const auto = detectPathEmoji(this._typeEl?.elem.value || '');
@@ -125,29 +79,17 @@ export default class PathDialog extends FormDialog {
 		};
 
 		// Name
-		const lbl = s =>
-			new Elem({
-				tag: 'label',
-				appendTo: this.body,
-				textContent: s,
-				style: { display: 'block', fontSize: '13px', color: 'rgba(255,255,255,0.6)', margin: '10px 0 4px' },
-			});
+		const lbl = s => new Caption({ appendTo: this.body, textContent: s });
 
 		lbl('Name');
-		this._nameEl = new Elem({
-			tag: 'input',
-			appendTo: this.body,
-			style: BASE_INPUT,
-			attributes: { type: 'text', placeholder: 'e.g. North Lane, Driveway' },
-		});
+		this._nameEl = new Input({ appendTo: this.body, type: 'text', placeholder: 'e.g. North Lane, Driveway' });
 		this._nameEl.elem.value = path.name || '';
 
 		lbl('Type');
-		this._typeEl = new Elem({
-			tag: 'input',
+		this._typeEl = new Input({
 			appendTo: this.body,
-			style: BASE_INPUT,
-			attributes: { type: 'text', placeholder: 'e.g. Driveway, Farm road, Trail, Creek road' },
+			type: 'text',
+			placeholder: 'e.g. Driveway, Farm road, Trail, Creek road',
 		});
 		this._typeEl.elem.value = path.type || '';
 		this._typeEl.elem.addEventListener('input', () => {
@@ -155,11 +97,11 @@ export default class PathDialog extends FormDialog {
 		});
 
 		lbl('Width (feet)');
-		this._widthEl = new Elem({
-			tag: 'input',
+		this._widthEl = new Input({
 			appendTo: this.body,
-			style: BASE_INPUT,
-			attributes: { type: 'number', step: '1', min: '1', placeholder: '10' },
+			type: 'number',
+			placeholder: '10',
+			attributes: { step: '1', min: '1' },
 		});
 		this._widthEl.elem.value = path.widthFt || '10';
 
@@ -176,22 +118,14 @@ export default class PathDialog extends FormDialog {
 			new Button({
 				textContent: label,
 				appendTo: colorRow,
+				variant: 'chip',
+				...(value === this._selectedColor && { addClass: 'active' }),
 				attributes: { type: 'button' },
-				style: {
-					background: value === this._selectedColor ? `${value}44` : 'transparent',
-					border: `2px solid ${value}`,
-					borderRadius: '6px',
-					color: '#fff',
-					cursor: 'pointer',
-					fontSize: '11px',
-					padding: '5px 4px',
-				},
+				style: { borderColor: value, fontSize: '11px' },
 				onPointerPress: ({ elem }) => {
 					this._selectedColor = value;
-					Array.from(colorRow.elem.children).forEach(b => {
-						b.style.background = 'transparent';
-					});
-					elem.style.background = `${value}44`;
+					Array.from(colorRow.elem.children).forEach(b => b.classList.remove('active'));
+					elem.classList.add('active');
 				},
 			});
 		}
@@ -201,49 +135,21 @@ export default class PathDialog extends FormDialog {
 
 		// Status
 		lbl('Status');
-		this._statusSelect = new Elem({
-			tag: 'select',
+		this._statusSelect = new Select({
 			appendTo: this.body,
-			style: { ...BASE_INPUT, cursor: 'pointer', appearance: 'auto', webkitAppearance: 'auto' },
+			options: [
+				{ value: '', label: '✓ Active' },
+				{ value: 'needs_maintenance', label: '🔩 Needs maintenance' },
+				{ value: 'needs_service', label: '🔧 Needs service' },
+				{ value: 'out_of_service', label: '⚠️ Out of service' },
+				{ value: 'closed', label: '🚫 Closed' },
+				{ value: 'destroyed', label: '☠️ Destroyed' },
+			],
+			value: path.status || '',
 		});
-		[
-			{ value: '', label: '✓ Active' },
-			{ value: 'needs_maintenance', label: '🔩 Needs maintenance' },
-			{ value: 'needs_service', label: '🔧 Needs service' },
-			{ value: 'out_of_service', label: '⚠️ Out of service' },
-			{ value: 'closed', label: '🚫 Closed' },
-			{ value: 'destroyed', label: '☠️ Destroyed' },
-		].forEach(({ value, label }) => {
-			const o = document.createElement('option');
-			o.value = value;
-			o.textContent = label;
-			this._statusSelect.elem.append(o);
-		});
-		this._statusSelect.elem.value = path.status || '';
 
 		// Show label toggle — off by default for paths
-		const labelRow = new Elem({
-			tag: 'div',
-			appendTo: this.body,
-			style: { display: 'flex', alignItems: 'center', gap: '8px', marginTop: '12px' },
-		});
-
-		this._showLabelEl = new Elem({
-			tag: 'input',
-			appendTo: labelRow,
-			attributes: { type: 'checkbox' },
-			style: { accentColor: '#4a90d9' },
-		});
-		this._showLabelEl.elem.checked = path.showLabel === true;
-
-		new Elem({
-			tag: 'label',
-			appendTo: labelRow,
-			textContent: 'Show name label on map',
-			style: { fontSize: '13px', color: 'rgba(255,255,255,0.6)', cursor: 'pointer', userSelect: 'none' },
-		}).elem.addEventListener('click', () => {
-			this._showLabelEl.elem.checked = !this._showLabelEl.elem.checked;
-		});
+		this._showLabelEl = checkboxRow(this.body, { label: 'Show name label on map', checked: path.showLabel === true });
 
 		this._collect = () => {
 			const data = {

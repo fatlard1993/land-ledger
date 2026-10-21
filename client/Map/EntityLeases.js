@@ -1,8 +1,10 @@
-import { Component, Elem } from '@vanilla-bean/components';
+import { SectionLabel, theme } from '@vanilla-bean/components';
 
-import { SectionHeader } from '../Layout';
 import LeaseDialog, { rateLabel } from '../Leases/LeaseDialog';
 import { getLeases, getLoans, updateLease, deleteLease, updateLoan, deleteLoan } from '../api';
+import { PanelRow, RowMain, RowMeta, RowTitle } from './panelParts';
+
+const { colors } = theme;
 
 export async function renderLeasesToggle(entityType, entity, refresh, appendTo) {
 	const [leasesData, loansData] = await Promise.all([getLeases(), getLoans()]);
@@ -24,7 +26,7 @@ export async function renderLeases(entityType, entity, refresh, appendTo) {
 			.map(l => ({ ...l, _isLoan: true })),
 	].sort((a, b) => new Date(a.startDate || 0) - new Date(b.startDate || 0));
 
-	new SectionHeader({ appendTo, textContent: 'Leases & Loans' });
+	new SectionLabel({ appendTo, textContent: 'Leases & Loans' });
 
 	if (!leases.length) return;
 
@@ -35,28 +37,12 @@ export async function renderLeases(entityType, entity, refresh, appendTo) {
 		const counterparty = isLoan ? lease.lender || 'Lender' : lessorCounterparty;
 		const rate = rateLabel(lease);
 
-		const row = new Component({
-			appendTo,
-			style: {
-				display: 'flex',
-				justifyContent: 'space-between',
-				alignItems: 'flex-start',
-				padding: '6px 0',
-				borderBottom: '1px solid rgba(255,255,255,0.06)',
-				cursor: 'pointer',
-			},
-		});
-
-		const left = new Component({ appendTo: row, style: { flex: '1' } });
+		const row = new PanelRow({ appendTo, addClass: 'interactive' });
+		const left = new RowMain({ appendTo: row });
 
 		const lessorIcon = isLessor ? '📥' : '📤';
 		const roleIcon = isLoan ? '🏦' : lessorIcon;
-		new Elem({
-			tag: 'div',
-			appendTo: left,
-			style: { fontSize: '13px', color: '#fff' },
-			textContent: `${roleIcon} ${counterparty}`,
-		});
+		new RowTitle({ appendTo: left, textContent: `${roleIcon} ${counterparty}` });
 
 		const meta = [];
 
@@ -69,10 +55,9 @@ export async function renderLeases(entityType, entity, refresh, appendTo) {
 			if (lease.endDate) meta.push(`→ ${new Date(lease.endDate).toLocaleDateString()}`);
 		}
 		if (meta.length)
-			new Elem({
-				tag: 'div',
+			new RowMeta({
 				appendTo: left,
-				style: { fontSize: '11px', color: isLessor ? '#4caf50' : 'rgba(255,255,255,0.4)' },
+				style: isLessor ? { color: colors.light(colors.success) } : {},
 				textContent: meta.join(' · '),
 			});
 

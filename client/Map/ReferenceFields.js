@@ -38,10 +38,7 @@ export async function loadReferenceFields({ map, referenceLayer, fields, refBtn,
 
 	setLoading(true);
 
-	if (refBtn) {
-		refBtn.textContent = '⟳';
-		refBtn.style.animation = 'spin 1s linear infinite';
-	}
+	refBtn?.firstElementChild?.classList.add('icon-animation-spin');
 
 	const bounds = map.getBounds();
 
@@ -108,10 +105,7 @@ export async function loadReferenceFields({ map, referenceLayer, fields, refBtn,
 	} finally {
 		setLoading(false);
 
-		if (refBtn) {
-			refBtn.textContent = '⬡';
-			refBtn.style.animation = '';
-		}
+		refBtn?.firstElementChild?.classList.remove('icon-animation-spin');
 	}
 }
 

@@ -2,6 +2,10 @@
 // Physics functions (nudgeLabels, clusterByOverlap) are pure — no DOM, no Leaflet.
 // renderClusters requires Leaflet and is called from MapView._updateLabels.
 
+import { theme } from '@vanilla-bean/components';
+
+const { colors } = theme;
+
 // Iteratively nudges overlapping labels away from each other while keeping
 // each label within maxNudge pixels of its anchor point.
 export function nudgeLabels(points, maxNudge = 40, iterations = 10) {
@@ -113,13 +117,13 @@ export function renderClusters(
 	for (const cluster of clusters) {
 		if (cluster.length === 1) {
 			const p = cluster[0];
-			const bgDark = p.dark ? '40,25,10' : '0,0,0';
-			const bg = p.parcel ? '80,50,0' : bgDark;
-			const borderStyle = p.parcel ? 'border:1px solid rgba(255,149,0,0.6);' : '';
+			const bgDark = p.dark ? colors.blackish(colors.orange) : colors.vantablack;
+			const bg = colors.alpha(p.parcel ? colors.darkest(colors.orange) : bgDark, 0.78);
+			const borderStyle = p.parcel ? `border:1px solid ${colors.alpha(colors.orange, 0.6)};` : '';
 			const isSelected = p.entityKey && p.entityKey === selectedEntityKey;
 			const selectedStyle = isSelected
-				? 'background:rgba(255,255,255,0.95);color:#111;font-weight:700;font-size:12px;box-shadow:0 0 0 2px rgba(255,255,255,0.9),0 2px 8px rgba(0,0,0,0.5);opacity:1;'
-				: `background:rgba(${bg},0.78);${borderStyle}color:${p.parcel ? '#ffb84d' : '#fff'};opacity:${p.opacity};`;
+				? `background:${colors.alpha(colors.superWhite, 0.95)};color:${colors.black};font-weight:700;font-size:12px;box-shadow:0 0 0 2px ${colors.alpha(colors.superWhite, 0.9)},0 2px 8px ${colors.alpha(colors.vantablack, 0.5)};opacity:1;`
+				: `background:${bg};${borderStyle}color:${p.parcel ? colors.light(colors.orange) : colors.superWhite};opacity:${p.opacity};`;
 
 			const dollarPrefix =
 				p.dollarColor && !isSelected
@@ -155,7 +159,7 @@ export function renderClusters(
 			L.marker([avgLat, avgLng], {
 				icon: L.divIcon({
 					className: '',
-					html: `<div style="background:rgba(0,0,0,0.82);color:#fff;width:26px;height:26px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;transform:translate(-50%,-50%);border:2px solid rgba(255,255,255,0.3);cursor:pointer">${cluster.length}</div>`,
+					html: `<div style="background:${colors.alpha(colors.vantablack, 0.82)};color:${colors.superWhite};width:26px;height:26px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;transform:translate(-50%,-50%);border:2px solid ${colors.alpha(colors.white, 0.3)};cursor:pointer">${cluster.length}</div>`,
 					iconSize: null,
 					iconAnchor: [0, 0],
 				}),

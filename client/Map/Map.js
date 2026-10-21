@@ -1,6 +1,6 @@
 import L from 'leaflet';
 import '@geoman-io/leaflet-geoman-free';
-import { Notify } from '@vanilla-bean/components';
+import { Notify, theme } from '@vanilla-bean/components';
 
 import AsyncView from '../AsyncView';
 
@@ -55,6 +55,8 @@ import { editPathGeometry } from './PathEditing.js';
 import { createParcelDetection } from './ParcelDetection.js';
 import { loadReferenceFields, adoptReferenceField } from './ReferenceFields.js';
 import { createDrawModeToggle, createMapControls } from './MapControls.js';
+
+const { colors } = theme;
 
 export default class MapView extends AsyncView {
 	_loadOnConnect = true;
@@ -388,11 +390,23 @@ export default class MapView extends AsyncView {
 
 				if (path?.geometry) {
 					const zoom = this.map.getZoom();
-					const RING = { color: '#fff', fillOpacity: 0, weight: 4, opacity: 0.55, dashArray: null, interactive: false };
+					const RING = {
+						color: colors.superWhite.toHexString(),
+						fillOpacity: 0,
+						weight: 4,
+						opacity: 0.55,
+						dashArray: null,
+						interactive: false,
+					};
 
 					this._selectionLayer.clearLayers();
 					L.geoJSON(path.geometry, {
-						style: { ...RING, weight: feetToWeight(path.widthFt, zoom) + 4, color: '#fff', opacity: 0.5 },
+						style: {
+							...RING,
+							weight: feetToWeight(path.widthFt, zoom) + 4,
+							color: colors.superWhite.toHexString(),
+							opacity: 0.5,
+						},
 					}).addTo(this._selectionLayer);
 				}
 			}
@@ -710,14 +724,26 @@ export default class MapView extends AsyncView {
 		this._selectedEntityKey = entity?.id ? `${type}:${entity.id}` : null;
 		this._updateLabels();
 
-		const RING = { color: '#fff', fillOpacity: 0, weight: 4, opacity: 0.55, dashArray: null, interactive: false };
+		const RING = {
+			color: colors.superWhite.toHexString(),
+			fillOpacity: 0,
+			weight: 4,
+			opacity: 0.55,
+			dashArray: null,
+			interactive: false,
+		};
 
 		if ((type === 'field' || type === 'building' || type === 'parcel') && entity.geometry) {
 			L.geoJSON(entity.geometry, { style: RING }).addTo(this._selectionLayer);
 		} else if (type === 'path' && entity.geometry) {
 			const zoom = this.map?.getZoom() || 17;
 			L.geoJSON(entity.geometry, {
-				style: { ...RING, weight: feetToWeight(entity.widthFt, zoom) + 4, color: '#fff', opacity: 0.5 },
+				style: {
+					...RING,
+					weight: feetToWeight(entity.widthFt, zoom) + 4,
+					color: colors.superWhite.toHexString(),
+					opacity: 0.5,
+				},
 			}).addTo(this._selectionLayer);
 		} else if (type === 'equipment' && entity.id) {
 			// Update the marker HTML directly — avoids the off-center circleMarker issue

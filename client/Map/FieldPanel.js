@@ -1,4 +1,4 @@
-import { Component, Elem, Button, Icon, Dialog } from '@vanilla-bean/components';
+import { Button, Component, Dialog, Elem, SectionLabel, styled, theme } from '@vanilla-bean/components';
 
 import { geodesicAreaSqm, convertArea, formatArea, AREA_UNITS } from '../geo';
 import parseDetails from '../utils/parseDetails';
@@ -7,7 +7,7 @@ import { formatDollar } from '../utils/format';
 
 import { getEvents, updateEvent, getMaintenance, getMaintenanceSchedules, updateEquipment } from '../api';
 import { categoryMeta, eventEmoji } from '../Timeline/EventDialog';
-import { FieldPanel as StyledPanel, PanelHandle, SectionHeader, DetailRow, TenureBadge } from '../Layout';
+import { ActionHeader, FieldPanel as StyledPanel, DetailRow, FormLabel, TenureBadge } from '../Layout';
 import context from '../context';
 import EventDialog from '../Timeline/EventDialog';
 import SeasonCharts from '../Charts/SeasonCharts';
@@ -25,30 +25,323 @@ import { renderIncidents } from './EntityIncidents';
 import { renderBuildingInventory, renderEntityRevenue, renderBudgetItems } from './BuildingSection';
 import { openSellDialog } from './EntityRevenue';
 
-const INPUT_STYLE = {
-	display: 'block',
-	width: '100%',
-	background: 'rgba(255,255,255,0.07)',
-	border: '1px solid rgba(255,255,255,0.12)',
-	borderRadius: '4px',
-	color: '#fff',
-	fontSize: '16px',
-	padding: '8px 10px',
-	boxSizing: 'border-box',
-	marginTop: '4px',
-	fontFamily: 'inherit',
-	appearance: 'none',
-	webkitAppearance: 'none',
-};
+const { colors } = theme;
 
-const LABEL_STYLE = {
-	display: 'block',
-	fontSize: '11px',
-	textTransform: 'uppercase',
-	letterSpacing: '0.08em',
-	color: 'rgba(255,255,255,0.45)',
-	marginTop: '10px',
-};
+// At 16px a phone's browser doesn't zoom the page in when the field takes focus
+const FIELD_STYLE = { fontSize: '16px' };
+
+const PanelHeader = styled(
+	Component,
+	({ space }) => `
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		margin-bottom: ${space.sm};
+	`,
+);
+
+const PanelTitle = styled(
+	Component,
+	({ space }) => `
+		flex: 1;
+		min-width: 0;
+		margin-right: ${space.sm};
+		overflow: hidden;
+		font-size: 18px;
+		font-weight: 700;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	`,
+	{ tag: 'span' },
+);
+
+const Presence = styled(
+	Component,
+	({ colors, radius }) => `
+		display: none;
+		flex-shrink: 0;
+		align-items: center;
+		margin-right: 6px;
+		padding: 1px 7px;
+		border: 1px solid ${colors.alpha(colors.warning, 0.35)};
+		border-radius: ${radius.pill};
+		background: ${colors.alpha(colors.warning, 0.15)};
+		color: ${colors.light(colors.warning)};
+		font-size: 10px;
+		font-weight: 600;
+		white-space: nowrap;
+	`,
+	{ tag: 'span' },
+);
+
+const StaleBanner = styled(
+	Component,
+	({ colors, radius, space }) => `
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: ${space.sm};
+		margin-bottom: ${space.sm};
+		padding: 7px 10px;
+		border: 1px solid ${colors.alpha(colors.warning, 0.4)};
+		border-radius: ${radius.sm};
+		background: ${colors.alpha(colors.warning, 0.15)};
+		color: ${colors.light(colors.warning)};
+		font-size: 12px;
+
+		& > button {
+			flex-shrink: 0;
+		}
+	`,
+);
+
+// Secondary facts beside the badge under the title
+const Meta = styled(
+	Component,
+	({ colors }) => `
+		font-size: 13px;
+		color: ${colors.muted};
+	`,
+	{ tag: 'span' },
+);
+
+const MetaFaint = styled(
+	Component,
+	({ colors }) => `
+		font-size: 12px;
+		color: ${colors.gray};
+	`,
+	{ tag: 'span' },
+);
+
+const OwnershipPill = styled(
+	Component,
+	({ colors, radius }) => `
+		padding: 2px 7px;
+		border-radius: ${radius.sm};
+		font-size: 12px;
+		background: ${colors.alpha(colors.orange, 0.15)};
+		color: ${colors.light(colors.orange)};
+
+		&.own {
+			background: ${colors.alpha(colors.info, 0.15)};
+			color: ${colors.light(colors.info)};
+		}
+	`,
+	{ tag: 'span' },
+);
+
+const SectionActions = styled(
+	Component,
+	() => `
+		display: flex;
+		gap: 6px;
+		margin-top: 10px;
+	`,
+);
+
+const EmptyNote = styled(
+	Component,
+	({ colors }) => `
+		padding: 5px 0 8px;
+		font-size: 12px;
+		color: ${colors.gray};
+	`,
+);
+
+const ActivityRow = styled(
+	Component,
+	({ colors, space }) => `
+		display: flex;
+		align-items: flex-start;
+		gap: ${space.sm};
+		padding: 4px 0;
+		border-bottom: 1px solid ${colors.border};
+		font-size: 12px;
+		cursor: pointer;
+
+		& .glyph {
+			flex-shrink: 0;
+			font-size: 14px;
+		}
+
+		& .info {
+			flex: 1;
+			min-width: 0;
+		}
+
+		& .name {
+			color: ${colors.white};
+		}
+
+		& .meta {
+			font-size: 11px;
+			color: ${colors.gray};
+		}
+	`,
+);
+
+// One event of this season: its category glyph, name and date, then a line of its details
+const EventBlock = styled(
+	Component,
+	({ colors }) => `
+		padding: 7px 0;
+		border-bottom: 1px solid ${colors.border};
+
+		& .title {
+			display: flex;
+			align-items: center;
+			gap: 7px;
+		}
+
+		& .glyph {
+			font-size: 15px;
+		}
+
+		& .name {
+			flex: 1;
+			min-width: 0;
+			font-size: 14px;
+			font-weight: 500;
+			color: ${colors.white};
+		}
+
+		& .date {
+			font-size: 11px;
+			color: ${colors.gray};
+		}
+
+		& .details {
+			margin-top: 2px;
+			padding-left: 22px;
+			font-size: 11px;
+			color: ${colors.muted};
+		}
+	`,
+);
+
+const HistoryRow = styled(
+	Component,
+	({ colors }) => `
+		display: flex;
+		align-items: baseline;
+		gap: 6px;
+		padding: 4px 0;
+		border-bottom: 1px solid ${colors.border};
+		font-size: 12px;
+
+		& .year {
+			flex-shrink: 0;
+			width: 34px;
+			color: ${colors.gray};
+		}
+
+		& .tokens {
+			flex: 1;
+			color: ${colors.muted};
+		}
+	`,
+);
+
+const EmojiRow = styled(
+	Component,
+	({ colors, space }) => `
+		display: flex;
+		align-items: center;
+		gap: ${space.sm};
+		margin: 4px 0 8px;
+
+		& > input {
+			flex-shrink: 0;
+			width: 52px;
+			padding: 4px;
+			font-size: 22px;
+			text-align: center;
+		}
+
+		& > span {
+			font-size: 11px;
+			color: ${colors.gray};
+		}
+	`,
+);
+
+// A number with its unit beside it, drawn as one field
+const AreaField = styled(
+	Component,
+	({ colors, radius }) => `
+		display: flex;
+		align-items: center;
+		overflow: hidden;
+		border: 1px solid ${colors.alpha(colors.white, 0.15)};
+		border-radius: ${radius.sm};
+		background: ${colors.alpha(colors.white, 0.06)};
+
+		&:focus-within {
+			border-color: ${colors.light(colors.blue)};
+			box-shadow: 0 0 0 2px ${colors.alpha(colors.blue, 0.35)};
+		}
+
+		& > input,
+		& > input:focus {
+			flex: 1;
+			min-width: 0;
+			border: none;
+			background: transparent;
+			box-shadow: none;
+		}
+
+		& > select,
+		& > select:focus {
+			flex-shrink: 0;
+			width: 54px;
+			padding: 7px 4px;
+			border: none;
+			border-left: 1px solid ${colors.border};
+			border-radius: 0;
+			background: transparent;
+			box-shadow: none;
+			font-size: 13px;
+			cursor: pointer;
+		}
+
+		& > button {
+			flex-shrink: 0;
+			border-left: 1px solid ${colors.border};
+			border-radius: 0;
+		}
+	`,
+);
+
+const LabelToggle = styled(
+	Component,
+	({ colors, space }) => `
+		display: flex;
+		align-items: center;
+		gap: ${space.sm};
+		margin-top: 10px;
+
+		& label {
+			font-size: 13px;
+			color: ${colors.muted};
+			cursor: pointer;
+			user-select: none;
+		}
+	`,
+);
+
+const FormButtons = styled(
+	Component,
+	({ space }) => `
+		display: flex;
+		gap: ${space.sm};
+		margin-top: ${space.lg};
+
+		& > button {
+			flex: 1;
+		}
+	`,
+);
 
 const FIELD_STATUSES = [
 	{ value: '', label: '✓ Active' },
@@ -163,20 +456,15 @@ export default class FieldPanel extends Component {
 
 	_mkLabelToggle(defaultOn = true) {
 		const uniqueId = `lbl-toggle-${Math.random().toString(36).slice(2)}`;
-		const row = new Component({
-			appendTo: this._content,
-			style: { display: 'flex', alignItems: 'center', gap: '8px', marginTop: '10px' },
-		});
+		const row = new LabelToggle({ appendTo: this._content });
 		const cb = new Elem({ tag: 'input', appendTo: row, attributes: { id: uniqueId } });
 
 		cb.elem.type = 'checkbox';
 		cb.elem.checked = defaultOn;
-		cb.elem.style.accentColor = '#4a90d9';
 
 		const label = new Elem({ tag: 'label', appendTo: row, textContent: 'Show name label on map' });
 
 		label.elem.htmlFor = uniqueId;
-		label.setStyle({ fontSize: '13px', color: 'rgba(255,255,255,0.6)', cursor: 'pointer', userSelect: 'none' });
 
 		return cb.elem;
 	}
@@ -196,7 +484,7 @@ export default class FieldPanel extends Component {
 
 			s.id = 'field-panel-outer-style';
 			s.textContent = `
-				@media (min-width: 768px) {
+				@media ${theme.media.wide} {
 					.field-panel-outer { flex-shrink: 0; width: 0; overflow: hidden; transition: width 0.3s ease; }
 					.field-panel-outer.open { width: 340px; }
 				}
@@ -206,76 +494,46 @@ export default class FieldPanel extends Component {
 
 		this.panel = new StyledPanel({ appendTo: this });
 
-		new PanelHandle({ appendTo: this.panel });
-
 		this._initDragToClose();
 
-		const header = new Component({
-			appendTo: this.panel,
-			style: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' },
-		});
+		const header = new PanelHeader({ appendTo: this.panel });
 
-		this._titleElem = new Elem({
-			tag: 'span',
-			appendTo: header,
-			style: {
-				fontSize: '18px',
-				fontWeight: '700',
-				flex: '1',
-				marginRight: '8px',
-				overflow: 'hidden',
-				textOverflow: 'ellipsis',
-				whiteSpace: 'nowrap',
-			},
-		});
-
-		this._presenceIndicator = new Elem({
-			tag: 'span',
-			appendTo: header,
-			style: {
-				display: 'none',
-				fontSize: '10px',
-				padding: '1px 7px',
-				borderRadius: '10px',
-				background: 'rgba(232,196,42,0.15)',
-				border: '1px solid rgba(232,196,42,0.35)',
-				color: '#e8c42a',
-				fontWeight: '600',
-				flexShrink: '0',
-				marginRight: '6px',
-				alignItems: 'center',
-				whiteSpace: 'nowrap',
-			},
-		});
+		this._titleElem = new PanelTitle({ appendTo: header });
+		this._presenceIndicator = new Presence({ appendTo: header });
 
 		this._actions = new Component({ appendTo: header, style: { display: 'flex', gap: '6px', flexShrink: '0' } });
 
-		this._editBtn = new Button({ appendTo: this._actions, append: new Icon({ icon: 'pen' }), title: 'Edit details' });
+		this._editBtn = new Button({ appendTo: this._actions, variant: 'flat', icon: 'pen', title: 'Edit details' });
 		this._editBoundaryBtn = new Button({
 			appendTo: this._actions,
-			append: new Icon({ icon: 'draw-polygon' }),
+			variant: 'flat',
+			icon: 'draw-polygon',
 			title: 'Edit boundary',
 		});
 		this._moveBtn = new Button({
 			appendTo: this._actions,
-			append: new Icon({ icon: 'location-crosshairs' }),
+			variant: 'flat',
+			icon: 'location-crosshairs',
 			title: 'Move to new position',
 		});
 		this._sellBtn = new Button({
 			appendTo: this._actions,
-			append: new Icon({ icon: 'tag' }),
+			variant: 'flat',
+			icon: 'tag',
 			title: 'Record sale of this asset',
-			style: { color: '#4caf50' },
+			style: { color: colors.light(colors.success) },
 		});
 		this._deleteBtn = new Button({
 			appendTo: this._actions,
-			append: new Icon({ icon: 'trash' }),
+			variant: 'flat',
+			icon: 'trash',
 			title: 'Delete field',
-			style: { color: '#e05252' },
+			style: { color: colors.light(colors.danger) },
 		});
 		new Button({
 			appendTo: this._actions,
-			append: new Icon({ icon: 'xmark' }),
+			variant: 'flat',
+			icon: 'xmark',
 			title: 'Close',
 			onPointerPress: () => this.hide(),
 		});
@@ -363,38 +621,14 @@ export default class FieldPanel extends Component {
 			if (e.detail.collection !== collection || e.detail.id !== id) return;
 			if (this._staleBanner) return;
 
-			this._staleBanner = new Elem({
-				tag: 'div',
-				style: {
-					background: 'rgba(232,196,42,0.15)',
-					border: '1px solid rgba(232,196,42,0.4)',
-					borderRadius: '4px',
-					padding: '7px 10px',
-					fontSize: '12px',
-					color: '#e8c42a',
-					display: 'flex',
-					alignItems: 'center',
-					justifyContent: 'space-between',
-					gap: '8px',
-					marginBottom: '8px',
-				},
-			});
+			this._staleBanner = new StaleBanner();
 
 			new Elem({ tag: 'span', appendTo: this._staleBanner, textContent: 'This record was updated on another device.' });
 
 			new Button({
 				appendTo: this._staleBanner,
+				variant: 'chip',
 				textContent: 'Refresh',
-				style: {
-					background: 'rgba(232,196,42,0.2)',
-					border: '1px solid rgba(232,196,42,0.5)',
-					color: '#e8c42a',
-					fontSize: '11px',
-					padding: '2px 8px',
-					borderRadius: '3px',
-					cursor: 'pointer',
-					flexShrink: '0',
-				},
 				onPointerPress: () => location.reload(),
 			});
 
@@ -475,23 +709,19 @@ export default class FieldPanel extends Component {
 
 		this._metaElem.empty();
 		if (p.type)
-			new Elem({
-				tag: 'span',
+			new Meta({
 				appendTo: this._metaElem,
-				style: { fontSize: '13px', color: 'rgba(255,255,255,0.65)' },
 				textContent: p.type,
 			});
 		if (p.widthFt)
-			new Elem({
-				tag: 'span',
+			new MetaFaint({
 				appendTo: this._metaElem,
-				style: { fontSize: '12px', color: 'rgba(255,255,255,0.45)' },
 				textContent: `${p.widthFt} ft wide`,
 			});
 
 		this._content.empty();
 
-		new SectionHeader({ appendTo: this._content, textContent: 'Path / Road' });
+		new SectionLabel({ appendTo: this._content, textContent: 'Path / Road' });
 
 		const PATH_STATUS_LABELS = {
 			needs_maintenance: '🔩 Needs maintenance',
@@ -533,26 +763,14 @@ export default class FieldPanel extends Component {
 		this._content.empty();
 
 		// Emoji row
-		const emojiRow = new Component({
-			appendTo: this._content,
-			style: { display: 'flex', alignItems: 'center', gap: '8px', margin: '4px 0 8px' },
-		});
+		const emojiRow = new EmojiRow({ appendTo: this._content });
 		const emojiInput = new Elem({ tag: 'input', appendTo: emojiRow });
 
 		Object.assign(emojiInput.elem, { type: 'text', maxLength: 4, value: p.emoji || detectPathEmoji(p.type || '') });
-		emojiInput.setStyle({
-			...INPUT_STYLE,
-			width: '52px',
-			textAlign: 'center',
-			fontSize: '22px',
-			padding: '4px',
-			flexShrink: '0',
-		});
 		emojiInput.elem.title = 'Tap to change emoji';
 
 		const emojiHint = new Elem({ tag: 'span', appendTo: emojiRow });
 
-		emojiHint.setStyle({ fontSize: '11px', color: 'rgba(255,255,255,0.3)' });
 		emojiHint.elem.textContent = 'Auto-detected · tap to change';
 
 		emojiInput.elem.addEventListener('input', () => {
@@ -568,10 +786,10 @@ export default class FieldPanel extends Component {
 			{ key: 'type', label: 'Type', placeholder: 'e.g. Driveway, Farm road, Trail' },
 			{ key: 'widthFt', label: 'Width (feet)', placeholder: '10', type: 'number' },
 		]) {
-			new Elem({ tag: 'label', appendTo: this._content, style: LABEL_STYLE, textContent: label });
+			new FormLabel({ appendTo: this._content, textContent: label });
 			const input = new Elem({ tag: 'input', appendTo: this._content });
 			Object.assign(input.elem, { type: type || 'text', placeholder: placeholder || '', value: p[key] || '' });
-			Object.assign(input.elem.style, INPUT_STYLE);
+			input.setStyle(FIELD_STYLE);
 			getters[key] = () => input.elem.value;
 			// Auto-update emoji when type changes
 			if (key === 'type')
@@ -581,9 +799,9 @@ export default class FieldPanel extends Component {
 		}
 
 		// Color picker
-		new Elem({ tag: 'label', appendTo: this._content, style: LABEL_STYLE, textContent: 'Surface / Color' });
+		new FormLabel({ appendTo: this._content, textContent: 'Surface / Color' });
 
-		let selectedColor = p.color || '#8B6914';
+		let selectedColor = p.color || PATH_COLORS[0].value;
 		const colorGrid = new Component({
 			appendTo: this._content,
 			style: {
@@ -595,16 +813,17 @@ export default class FieldPanel extends Component {
 			},
 		});
 
+		// The swatches are the path's own stored hex colors; the selected one is tinted with an alpha suffix
+		const tint = value => `${value}44`;
+
 		for (const { value, label } of PATH_COLORS) {
 			const btn = new Button({
 				appendTo: colorGrid,
 				textContent: label,
 				style: {
-					background: value === selectedColor ? `${value}44` : 'transparent',
+					background: value === selectedColor ? tint(value) : 'transparent',
 					border: `2px solid ${value}`,
-					borderRadius: '6px',
-					color: '#fff',
-					cursor: 'pointer',
+					color: colors.white,
 					fontSize: '11px',
 					padding: '5px 4px',
 				},
@@ -613,16 +832,16 @@ export default class FieldPanel extends Component {
 					Array.from(colorGrid.elem.children).forEach(b => {
 						b.style.background = 'transparent';
 					});
-					btn.elem.style.background = `${value}44`;
+					btn.elem.style.background = tint(value);
 				},
 			});
 			btn.elem.type = 'button';
 		}
 
-		new Elem({ tag: 'label', appendTo: this._content, style: LABEL_STYLE, textContent: 'Status' });
+		new FormLabel({ appendTo: this._content, textContent: 'Status' });
 		const pathStatusSelect = new Elem({ tag: 'select', appendTo: this._content });
 
-		pathStatusSelect.setStyle({ ...INPUT_STYLE, cursor: 'pointer', appearance: 'auto', webkitAppearance: 'auto' });
+		pathStatusSelect.setStyle(FIELD_STYLE);
 		[
 			{ value: '', label: '✓ Active' },
 			{ value: 'needs_maintenance', label: '🔩 Needs maintenance' },
@@ -642,15 +861,11 @@ export default class FieldPanel extends Component {
 
 		const { collect: collectPathProps } = makePropertiesEditor(this._content, p.properties || {});
 
-		const buttons = new Component({
-			appendTo: this._content,
-			style: { display: 'flex', gap: '8px', marginTop: '16px' },
-		});
+		const buttons = new FormButtons({ appendTo: this._content });
 
 		new Button({
 			appendTo: buttons,
 			textContent: 'Save',
-			style: { flex: '1' },
 			onPointerPress: async () => {
 				const data = Object.fromEntries(Object.entries(getters).map(([k, g]) => [k, g()]));
 				const autoEmoji = detectPathEmoji(data.type || '');
@@ -671,7 +886,7 @@ export default class FieldPanel extends Component {
 		new Button({
 			appendTo: buttons,
 			textContent: 'Cancel',
-			style: { flex: '1' },
+			variant: 'flat',
 			onPointerPress: () => this._renderPathView(),
 		});
 	}
@@ -714,16 +929,14 @@ export default class FieldPanel extends Component {
 
 		this._metaElem.empty();
 		if (p.acreage)
-			new Elem({
-				tag: 'span',
+			new Meta({
 				appendTo: this._metaElem,
-				style: { fontSize: '13px', color: 'rgba(255,255,255,0.65)' },
 				textContent: formatArea(p.acreage, p.acreageUnit || 'ac'),
 			});
 
 		this._content.empty();
 
-		new SectionHeader({ appendTo: this._content, textContent: 'Property Line' });
+		new SectionLabel({ appendTo: this._content, textContent: 'Property Line' });
 
 		const PARCEL_STATUS_LABELS = {
 			needs_maintenance: '🔩 Needs maintenance',
@@ -775,12 +988,12 @@ export default class FieldPanel extends Component {
 				],
 			},
 		]) {
-			new Elem({ tag: 'label', appendTo: this._content, style: LABEL_STYLE, textContent: label });
+			new FormLabel({ appendTo: this._content, textContent: label });
 
 			if (options) {
 				const select = new Elem({ tag: 'select', appendTo: this._content });
 
-				select.setStyle({ ...INPUT_STYLE, cursor: 'pointer', appearance: 'auto', webkitAppearance: 'auto' });
+				select.setStyle(FIELD_STYLE);
 				options.forEach(({ value, label: optionLabel }) => {
 					const o = document.createElement('option');
 					o.value = value;
@@ -793,27 +1006,15 @@ export default class FieldPanel extends Component {
 				const input = new Elem({ tag: 'input', appendTo: this._content });
 
 				Object.assign(input.elem, { type: 'text', placeholder: placeholder || '', value: p[key] || '' });
-				Object.assign(input.elem.style, INPUT_STYLE);
+				input.setStyle(FIELD_STYLE);
 				getters[key] = () => input.elem.value;
 			}
 		}
 
 		// Area row — same pattern as field inline edit
-		new Elem({ tag: 'label', appendTo: this._content, style: LABEL_STYLE, textContent: 'Area' });
+		new FormLabel({ appendTo: this._content, textContent: 'Area' });
 
-		const areaRow = new Elem({
-			tag: 'div',
-			appendTo: this._content,
-			style: {
-				display: 'flex',
-				alignItems: 'center',
-				background: 'rgba(255,255,255,0.07)',
-				border: '1px solid rgba(255,255,255,0.12)',
-				borderRadius: '4px',
-				overflow: 'hidden',
-				marginTop: '4px',
-			},
-		});
+		const areaRow = new AreaField({ appendTo: this._content });
 
 		const currentUnit = p.acreageUnit || 'ac';
 		const sqm = p.geometry ? geodesicAreaSqm(p.geometry) : null;
@@ -829,35 +1030,14 @@ export default class FieldPanel extends Component {
 			placeholder: 'Size',
 			value: defaultArea ? Number(defaultArea).toFixed(unitMeta.decimals) : '',
 		});
-		Object.assign(areaInput.elem.style, {
-			...INPUT_STYLE,
-			border: 'none',
-			background: 'transparent',
-			flex: '1',
-			marginTop: '0',
-		});
+		areaInput.setStyle(FIELD_STYLE);
 
 		const unitSelect = new Elem({ tag: 'select', appendTo: areaRow });
-
-		unitSelect.setStyle({
-			background: 'transparent',
-			border: 'none',
-			borderLeft: '1px solid rgba(255,255,255,0.12)',
-			color: '#fff',
-			cursor: 'pointer',
-			fontSize: '13px',
-			padding: '7px 4px',
-			fontFamily: 'inherit',
-			flexShrink: '0',
-			outline: 'none',
-			width: '54px',
-		});
 
 		for (const { value: unitValue, label } of AREA_UNITS) {
 			const opt = document.createElement('option');
 			opt.value = unitValue;
 			opt.textContent = label;
-			opt.style.background = '#1a1a1a';
 			unitSelect.elem.append(opt);
 		}
 
@@ -871,15 +1051,9 @@ export default class FieldPanel extends Component {
 		if (sqm) {
 			new Button({
 				appendTo: areaRow,
-				textContent: '↺',
+				variant: 'flat',
+				icon: 'arrows-rotate',
 				title: 'Calculate from boundary',
-				style: {
-					borderRadius: '0',
-					borderLeft: '1px solid rgba(255,255,255,0.12)',
-					padding: '7px 9px',
-					fontSize: '13px',
-					flexShrink: '0',
-				},
 				onPointerPress: () => {
 					const meta = AREA_UNITS.find(u => u.value === unitSelect.elem.value) || AREA_UNITS[1];
 					areaInput.elem.value = convertArea(sqm, unitSelect.elem.value).toFixed(meta.decimals);
@@ -898,15 +1072,11 @@ export default class FieldPanel extends Component {
 
 		getters['properties'] = collectParcelProps;
 
-		const buttons = new Component({
-			appendTo: this._content,
-			style: { display: 'flex', gap: '8px', marginTop: '16px' },
-		});
+		const buttons = new FormButtons({ appendTo: this._content });
 
 		new Button({
 			appendTo: buttons,
 			textContent: 'Save',
-			style: { flex: '1' },
 			onPointerPress: async () => {
 				const data = Object.fromEntries(Object.entries(getters).map(([k, g]) => [k, g()]));
 				const updated = await callbacks.onSave?.(data);
@@ -917,7 +1087,7 @@ export default class FieldPanel extends Component {
 		new Button({
 			appendTo: buttons,
 			textContent: 'Cancel',
-			style: { flex: '1' },
+			variant: 'flat',
 			onPointerPress: () => this._renderParcelView(),
 		});
 	}
@@ -961,16 +1131,14 @@ export default class FieldPanel extends Component {
 
 		this._metaElem.empty();
 		if (b.type)
-			new Elem({
-				tag: 'span',
+			new Meta({
 				appendTo: this._metaElem,
-				style: { fontSize: '13px', color: 'rgba(255,255,255,0.65)' },
 				textContent: b.type,
 			});
 
 		this._content.empty();
 
-		new SectionHeader({ appendTo: this._content, textContent: 'Building' });
+		new SectionLabel({ appendTo: this._content, textContent: 'Building' });
 
 		if (b.type) {
 			const row = new DetailRow({ appendTo: this._content });
@@ -995,19 +1163,14 @@ export default class FieldPanel extends Component {
 			.filter(e => e.fieldId === building.id)
 			.sort((a, b) => new Date(b.date) - new Date(a.date));
 
-		const header = new Component({
-			appendTo: this._content,
-			style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center' },
-		});
-
-		new SectionHeader({ appendTo: header, textContent: 'Activity' });
-
-		const actButtons = new Component({ appendTo: header, style: { display: 'flex', gap: '6px', marginTop: '10px' } });
+		const header = new ActionHeader({ appendTo: this._content, title: 'Activity' });
+		const actButtons = new SectionActions({ appendTo: header });
 
 		new Button({
 			appendTo: actButtons,
-			textContent: '+ Event',
-			style: { fontSize: '11px', padding: '2px 8px' },
+			variant: 'chip',
+			icon: 'plus',
+			textContent: 'Event',
 			onPointerPress: () =>
 				new EventDialog({
 					fieldId: building.id,
@@ -1024,8 +1187,10 @@ export default class FieldPanel extends Component {
 		if (events.length) {
 			new Button({
 				appendTo: actButtons,
-				textContent: 'All →',
-				style: { fontSize: '11px', padding: '2px 6px' },
+				variant: 'chip',
+				icon: 'calendar-days',
+				textContent: 'All',
+				title: 'Open in Timeline',
 				onPointerPress: () => {
 					context.timelineFieldFilter = building.id;
 					window.location.hash = '/Timeline';
@@ -1035,10 +1200,8 @@ export default class FieldPanel extends Component {
 		}
 
 		if (!events.length) {
-			new Elem({
-				tag: 'div',
+			new EmptyNote({
 				appendTo: this._content,
-				style: { fontSize: '12px', color: 'rgba(255,255,255,0.3)', padding: '5px 0 8px' },
 				textContent: 'No activity recorded',
 			});
 			return;
@@ -1049,27 +1212,16 @@ export default class FieldPanel extends Component {
 			const emoji = eventEmoji(event);
 			const meta = categoryMeta(event.category);
 
-			const row = new Component({
-				appendTo: this._content,
-				style: {
-					display: 'flex',
-					gap: '8px',
-					fontSize: '12px',
-					padding: '4px 0',
-					borderBottom: '1px solid rgba(255,255,255,0.05)',
-					alignItems: 'flex-start',
-					cursor: 'pointer',
-				},
-			});
+			const row = new ActivityRow({ appendTo: this._content });
 
-			new Elem({ tag: 'span', appendTo: row, style: { flexShrink: '0', fontSize: '14px' }, textContent: emoji });
+			new Elem({ tag: 'span', appendTo: row, addClass: 'glyph', textContent: emoji });
 
-			const info = new Component({ appendTo: row, style: { flex: '1', minWidth: '0' } });
+			const info = new Component({ appendTo: row, addClass: 'info' });
 
 			new Elem({
 				tag: 'div',
 				appendTo: info,
-				style: { color: '#fff' },
+				addClass: 'name',
 				textContent: event.name || meta?.label || event.category,
 			});
 
@@ -1084,7 +1236,7 @@ export default class FieldPanel extends Component {
 				new Elem({
 					tag: 'div',
 					appendTo: info,
-					style: { fontSize: '11px', color: 'rgba(255,255,255,0.4)' },
+					addClass: 'meta',
 					textContent: eventMeta.join(' · '),
 				});
 
@@ -1120,26 +1272,14 @@ export default class FieldPanel extends Component {
 		this._content.empty();
 
 		// Emoji row
-		const bldgEmojiRow = new Component({
-			appendTo: this._content,
-			style: { display: 'flex', alignItems: 'center', gap: '8px', margin: '4px 0 8px' },
-		});
+		const bldgEmojiRow = new EmojiRow({ appendTo: this._content });
 		const bldgEmojiInput = new Elem({ tag: 'input', appendTo: bldgEmojiRow });
 
 		Object.assign(bldgEmojiInput.elem, { type: 'text', maxLength: 4, value: b.emoji || buildingEmoji(b.type || '') });
-		bldgEmojiInput.setStyle({
-			...INPUT_STYLE,
-			width: '52px',
-			textAlign: 'center',
-			fontSize: '22px',
-			padding: '4px',
-			flexShrink: '0',
-		});
 		bldgEmojiInput.elem.title = 'Tap to change emoji';
 
 		const bldgEmojiHint = new Elem({ tag: 'span', appendTo: bldgEmojiRow });
 
-		bldgEmojiHint.setStyle({ fontSize: '11px', color: 'rgba(255,255,255,0.3)' });
 		bldgEmojiHint.elem.textContent = b.emoji ? 'Custom · clear to auto-detect' : 'Auto-detected · tap to change';
 
 		bldgEmojiInput.elem.addEventListener('input', () => {
@@ -1166,12 +1306,12 @@ export default class FieldPanel extends Component {
 				],
 			},
 		]) {
-			new Elem({ tag: 'label', appendTo: this._content, style: LABEL_STYLE, textContent: label });
+			new FormLabel({ appendTo: this._content, textContent: label });
 
 			if (options) {
 				const select = new Elem({ tag: 'select', appendTo: this._content });
 
-				select.setStyle({ ...INPUT_STYLE, cursor: 'pointer', appearance: 'auto', webkitAppearance: 'auto' });
+				select.setStyle(FIELD_STYLE);
 				options.forEach(({ value, label: optionLabel }) => {
 					const o = document.createElement('option');
 					o.value = value;
@@ -1184,7 +1324,7 @@ export default class FieldPanel extends Component {
 				const input = new Elem({ tag: 'input', appendTo: this._content });
 
 				Object.assign(input.elem, { type: 'text', placeholder: placeholder || '', value: b[key] || '' });
-				Object.assign(input.elem.style, INPUT_STYLE);
+				input.setStyle(FIELD_STYLE);
 				getters[key] = () => input.elem.value;
 				// Auto-update emoji when type changes
 				if (key === 'type')
@@ -1207,15 +1347,11 @@ export default class FieldPanel extends Component {
 
 		getters['properties'] = collectBldgProps;
 
-		const buttons = new Component({
-			appendTo: this._content,
-			style: { display: 'flex', gap: '8px', marginTop: '16px' },
-		});
+		const buttons = new FormButtons({ appendTo: this._content });
 
 		new Button({
 			appendTo: buttons,
 			textContent: 'Save',
-			style: { flex: '1' },
 			onPointerPress: async () => {
 				const data = Object.fromEntries(Object.entries(getters).map(([k, g]) => [k, g()]));
 				const updated = await callbacks.onSave?.(data);
@@ -1228,7 +1364,7 @@ export default class FieldPanel extends Component {
 		new Button({
 			appendTo: buttons,
 			textContent: 'Cancel',
-			style: { flex: '1' },
+			variant: 'flat',
 			onPointerPress: () => this._renderBuildingView(),
 		});
 	}
@@ -1263,25 +1399,21 @@ export default class FieldPanel extends Component {
 
 		this._metaElem.empty();
 		if (item.tenure) {
-			const color = item.tenure === 'own' ? '#4a90d9' : '#e8832a';
-			new Elem({
-				tag: 'span',
+			new OwnershipPill({
 				appendTo: this._metaElem,
-				style: { fontSize: '12px', padding: '2px 7px', borderRadius: '4px', background: `${color}22`, color },
+				addClass: item.tenure === 'own' ? 'own' : 'lease',
 				textContent: item.tenure === 'own' ? 'Owned' : 'Leased',
 			});
 		}
 		if (item.type)
-			new Elem({
-				tag: 'span',
+			new Meta({
 				appendTo: this._metaElem,
-				style: { fontSize: '13px', color: 'rgba(255,255,255,0.65)' },
 				textContent: item.type,
 			});
 
 		this._content.empty();
 
-		new SectionHeader({ appendTo: this._content, textContent: 'Equipment' });
+		new SectionLabel({ appendTo: this._content, textContent: 'Equipment' });
 
 		const formatCoordinate = n => (n != null ? Number(n).toFixed(5) : null);
 		const lat = formatCoordinate(item.lat);
@@ -1294,10 +1426,10 @@ export default class FieldPanel extends Component {
 			destroyed: '☠️ Destroyed',
 		};
 		const STATUS_COLORS = {
-			needs_maintenance: '#e8832a',
-			needs_service: '#e8c42a',
-			out_of_service: '#888',
-			destroyed: '#c62828',
+			needs_maintenance: colors.light(colors.orange),
+			needs_service: colors.light(colors.warning),
+			out_of_service: colors.muted,
+			destroyed: colors.light(colors.danger),
 		};
 
 		const rows = [
@@ -1359,13 +1491,9 @@ export default class FieldPanel extends Component {
 		this._content.empty();
 
 		const getters = {};
-		const SEL_STYLE = { ...INPUT_STYLE, cursor: 'pointer', appearance: 'auto', webkitAppearance: 'auto' };
 
 		// Emoji picker — same pattern as building and path edit
-		const eqEmojiRow = new Component({
-			appendTo: this._content,
-			style: { display: 'flex', alignItems: 'center', gap: '8px', margin: '4px 0 8px' },
-		});
+		const eqEmojiRow = new EmojiRow({ appendTo: this._content });
 		const eqEmojiInput = new Elem({ tag: 'input', appendTo: eqEmojiRow });
 
 		Object.assign(eqEmojiInput.elem, {
@@ -1373,19 +1501,10 @@ export default class FieldPanel extends Component {
 			maxLength: 4,
 			value: item.emoji || equipmentEmoji(item.type || ''),
 		});
-		eqEmojiInput.setStyle({
-			...INPUT_STYLE,
-			width: '52px',
-			textAlign: 'center',
-			fontSize: '22px',
-			padding: '4px',
-			flexShrink: '0',
-		});
 		eqEmojiInput.elem.title = 'Tap to change emoji';
 
 		const eqEmojiHint = new Elem({ tag: 'span', appendTo: eqEmojiRow });
 
-		eqEmojiHint.setStyle({ fontSize: '11px', color: 'rgba(255,255,255,0.3)' });
 		eqEmojiHint.elem.textContent = item.emoji ? 'Custom · clear to auto-detect' : 'Auto-detected · tap to change';
 
 		eqEmojiInput.elem.addEventListener('input', () => {
@@ -1396,12 +1515,12 @@ export default class FieldPanel extends Component {
 		});
 
 		const addField = (key, label, { placeholder = '', type = 'text', options = null } = {}) => {
-			new Elem({ tag: 'label', appendTo: this._content, style: LABEL_STYLE, textContent: label });
+			new FormLabel({ appendTo: this._content, textContent: label });
 
 			if (options) {
 				const select = new Elem({ tag: 'select', appendTo: this._content });
 
-				select.setStyle(SEL_STYLE);
+				select.setStyle(FIELD_STYLE);
 				for (const { value, label: optionLabel } of options) {
 					const opt = document.createElement('option');
 
@@ -1415,7 +1534,7 @@ export default class FieldPanel extends Component {
 				const input = new Elem({ tag: 'input', appendTo: this._content });
 
 				Object.assign(input.elem, { type, placeholder, value: item[key] || '' });
-				Object.assign(input.elem.style, INPUT_STYLE);
+				input.setStyle(FIELD_STYLE);
 				getters[key] = () => input.elem.value;
 			}
 		};
@@ -1423,11 +1542,11 @@ export default class FieldPanel extends Component {
 		addField('name', 'Name / ID', { placeholder: 'e.g. JD 8R 340' });
 
 		// Type field — auto-updates emoji if not manually overridden
-		new Elem({ tag: 'label', appendTo: this._content, style: LABEL_STYLE, textContent: 'Type' });
+		new FormLabel({ appendTo: this._content, textContent: 'Type' });
 		const typeInput = new Elem({ tag: 'input', appendTo: this._content });
 
 		Object.assign(typeInput.elem, { type: 'text', placeholder: 'e.g. Row crop tractor', value: item.type || '' });
-		Object.assign(typeInput.elem.style, INPUT_STYLE);
+		typeInput.setStyle(FIELD_STYLE);
 		typeInput.elem.addEventListener('input', () => {
 			if (!eqEmojiInput.elem.dataset.manual) eqEmojiInput.elem.value = equipmentEmoji(typeInput.elem.value);
 		});
@@ -1438,14 +1557,18 @@ export default class FieldPanel extends Component {
 				{ value: 'lease', label: 'Leased' },
 			],
 		});
-		new Elem({ tag: 'label', appendTo: this._content, style: LABEL_STYLE, textContent: 'Usage' });
+		new FormLabel({ appendTo: this._content, textContent: 'Usage' });
 		const usageRow = new Component({ appendTo: this._content, style: { display: 'flex', gap: '6px' } });
-		const usageInput = new Elem({ tag: 'input', appendTo: usageRow, style: { ...INPUT_STYLE, flex: '1' } });
+		const usageInput = new Elem({
+			tag: 'input',
+			appendTo: usageRow,
+			style: { ...FIELD_STYLE, flex: '1', minWidth: '0' },
+		});
 		Object.assign(usageInput.elem, { type: 'number', step: '0.1', placeholder: 'Amount', value: item.usage || '' });
 		const unitInput = new Elem({
 			tag: 'input',
 			appendTo: usageRow,
-			style: { ...INPUT_STYLE, width: '72px', flexShrink: '0' },
+			style: { ...FIELD_STYLE, width: '72px', flexShrink: '0' },
 		});
 		Object.assign(unitInput.elem, { type: 'text', placeholder: 'hrs', value: item.usageUnit || '' });
 		getters['usage'] = () => usageInput.elem.value;
@@ -1480,15 +1603,11 @@ export default class FieldPanel extends Component {
 
 		getters['properties'] = collectEqProps;
 
-		const buttons = new Component({
-			appendTo: this._content,
-			style: { display: 'flex', gap: '8px', marginTop: '16px' },
-		});
+		const buttons = new FormButtons({ appendTo: this._content });
 
 		new Button({
 			appendTo: buttons,
 			textContent: 'Save',
-			style: { flex: '1' },
 			onPointerPress: async () => {
 				const data = Object.fromEntries(Object.entries(getters).map(([k, g]) => [k, g()]));
 				// Use picker value; fall back to auto-detect if cleared
@@ -1505,7 +1624,7 @@ export default class FieldPanel extends Component {
 		new Button({
 			appendTo: buttons,
 			textContent: 'Cancel',
-			style: { flex: '1' },
+			variant: 'flat',
 			onPointerPress: () => this._renderEquipmentView(),
 		});
 	}
@@ -1531,19 +1650,15 @@ export default class FieldPanel extends Component {
 		TenureBadge(field.tenure || 'rent', this._metaElem);
 
 		if (field.acreage) {
-			new Elem({
-				tag: 'span',
+			new Meta({
 				appendTo: this._metaElem,
-				style: { fontSize: '13px', color: 'rgba(255,255,255,0.7)' },
 				textContent: formatArea(field.acreage, field.acreageUnit || 'ac'),
 			});
 		}
 
 		if (field.county || field.state) {
-			new Elem({
-				tag: 'span',
+			new MetaFaint({
 				appendTo: this._metaElem,
-				style: { fontSize: '12px', color: 'rgba(255,255,255,0.45)' },
 				textContent: [field.county, field.state].filter(Boolean).join(', '),
 			});
 		}
@@ -1564,12 +1679,12 @@ export default class FieldPanel extends Component {
 		const inputGetters = {};
 
 		for (const { key, label, placeholder, options, type } of EDIT_FIELDS) {
-			new Elem({ tag: 'label', appendTo: this._content, style: LABEL_STYLE, textContent: label });
+			new FormLabel({ appendTo: this._content, textContent: label });
 
 			if (options) {
 				const select = new Elem({ tag: 'select', appendTo: this._content });
 
-				select.setStyle({ ...INPUT_STYLE, cursor: 'pointer', appearance: 'auto', webkitAppearance: 'auto' });
+				select.setStyle(FIELD_STYLE);
 
 				for (const { value, label: optLabel } of options) {
 					const opt = document.createElement('option');
@@ -1582,19 +1697,7 @@ export default class FieldPanel extends Component {
 				select.elem.value = field[key] || options[0].value;
 				inputGetters[key] = () => select.elem.value;
 			} else if (key === 'acreage') {
-				const wrap = new Elem({
-					tag: 'div',
-					appendTo: this._content,
-					style: {
-						display: 'flex',
-						alignItems: 'center',
-						background: 'rgba(255,255,255,0.07)',
-						border: '1px solid rgba(255,255,255,0.12)',
-						borderRadius: '4px',
-						overflow: 'hidden',
-						marginTop: '4px',
-					},
-				});
+				const wrap = new AreaField({ appendTo: this._content });
 
 				const currentUnit = field.acreageUnit || 'ac';
 				const sqm = field.geometry ? geodesicAreaSqm(field.geometry) : null;
@@ -1610,37 +1713,16 @@ export default class FieldPanel extends Component {
 					placeholder: 'Size',
 					value: defaultAcreage ? Number(defaultAcreage).toFixed(unitMeta.decimals) : '',
 				});
-				Object.assign(input.elem.style, {
-					...INPUT_STYLE,
-					border: 'none',
-					background: 'transparent',
-					flex: '1',
-					marginTop: '0',
-				});
+				input.setStyle(FIELD_STYLE);
 
 				// Unit selector
 				const unitSelect = new Elem({ tag: 'select', appendTo: wrap });
-
-				unitSelect.setStyle({
-					background: 'transparent',
-					border: 'none',
-					borderLeft: '1px solid rgba(255,255,255,0.12)',
-					color: '#fff',
-					cursor: 'pointer',
-					fontSize: '13px',
-					padding: '7px 4px',
-					fontFamily: 'inherit',
-					flexShrink: '0',
-					outline: 'none',
-					width: '54px',
-				});
 
 				for (const { value: unitValue, label } of AREA_UNITS) {
 					const opt = document.createElement('option');
 
 					opt.value = unitValue;
 					opt.textContent = label;
-					opt.style.background = '#1a1a1a';
 					unitSelect.elem.append(opt);
 				}
 
@@ -1661,15 +1743,9 @@ export default class FieldPanel extends Component {
 				if (sqm) {
 					new Button({
 						appendTo: wrap,
-						textContent: '↺',
+						variant: 'flat',
+						icon: 'arrows-rotate',
 						title: 'Calculate from boundary',
-						style: {
-							borderRadius: '0',
-							borderLeft: '1px solid rgba(255,255,255,0.12)',
-							padding: '7px 9px',
-							fontSize: '13px',
-							flexShrink: '0',
-						},
 						onPointerPress: () => {
 							const meta = AREA_UNITS.find(u => u.value === unitSelect.elem.value) || AREA_UNITS[1];
 
@@ -1685,7 +1761,7 @@ export default class FieldPanel extends Component {
 					placeholder: placeholder || '',
 					value: field[key] || '',
 				});
-				Object.assign(input.elem.style, INPUT_STYLE);
+				input.setStyle(FIELD_STYLE);
 				inputGetters[key] = () => input.elem.value;
 			}
 		}
@@ -1698,15 +1774,11 @@ export default class FieldPanel extends Component {
 
 		inputGetters['properties'] = collectProps;
 
-		const buttons = new Component({
-			appendTo: this._content,
-			style: { display: 'flex', gap: '8px', marginTop: '16px' },
-		});
+		const buttons = new FormButtons({ appendTo: this._content });
 
 		new Button({
 			appendTo: buttons,
 			textContent: 'Save',
-			style: { flex: '1' },
 			onPointerPress: async () => {
 				const data = Object.fromEntries(Object.entries(inputGetters).map(([k, get]) => [k, get()]));
 				const updated = await this._callbacks.onSave?.(data);
@@ -1719,7 +1791,7 @@ export default class FieldPanel extends Component {
 		new Button({
 			appendTo: buttons,
 			textContent: 'Cancel',
-			style: { flex: '1' },
+			variant: 'flat',
 			onPointerPress: () => this._renderViewMode(),
 		});
 	}
@@ -1770,22 +1842,14 @@ export default class FieldPanel extends Component {
 		const pastYears = sortedYears.filter(y => y !== currentYear);
 
 		// ── Current Use ─────────────────────────────────────────────────────────
-		const useHeader = new Component({
-			appendTo: this._content,
-			style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center' },
-		});
-
-		new SectionHeader({ appendTo: useHeader, textContent: `Current Use — ${currentYear}` });
-
-		const useActions = new Component({
-			appendTo: useHeader,
-			style: { display: 'flex', gap: '6px', marginTop: '10px' },
-		});
+		const useHeader = new ActionHeader({ appendTo: this._content, title: `Current Use — ${currentYear}` });
+		const useActions = new SectionActions({ appendTo: useHeader });
 
 		new Button({
 			appendTo: useActions,
-			textContent: '+ Event',
-			style: { fontSize: '11px', padding: '2px 8px' },
+			variant: 'chip',
+			icon: 'plus',
+			textContent: 'Event',
 			onPointerPress: () =>
 				new EventDialog({
 					fieldId: field.id,
@@ -1801,8 +1865,10 @@ export default class FieldPanel extends Component {
 
 		new Button({
 			appendTo: useActions,
-			textContent: 'All →',
-			style: { fontSize: '11px', padding: '2px 6px' },
+			variant: 'chip',
+			icon: 'calendar-days',
+			textContent: 'All',
+			title: 'Open in Timeline',
 			onPointerPress: () => {
 				context.timelineFieldFilter = field.id;
 				window.location.hash = '/Timeline';
@@ -1811,10 +1877,8 @@ export default class FieldPanel extends Component {
 		});
 
 		if (!currentEvents.length) {
-			new Elem({
-				tag: 'div',
+			new EmptyNote({
 				appendTo: this._content,
-				style: { fontSize: '12px', color: 'rgba(255,255,255,0.3)', padding: '5px 0 8px' },
 				textContent: 'No activity this season',
 			});
 		} else {
@@ -1838,28 +1902,22 @@ export default class FieldPanel extends Component {
 				const emoji = eventEmoji(event);
 				const label = event.name || categoryMeta(event.category).label.replace(/^[^\s]+\s/, '');
 
-				const block = new Component({
-					appendTo: this._content,
-					style: { padding: '7px 0', borderBottom: '1px solid rgba(255,255,255,0.07)' },
-				});
+				const block = new EventBlock({ appendTo: this._content });
 
-				const titleRow = new Component({
-					appendTo: block,
-					style: { display: 'flex', alignItems: 'center', gap: '7px' },
-				});
+				const titleRow = new Component({ appendTo: block, addClass: 'title' });
 
-				new Elem({ tag: 'span', appendTo: titleRow, style: { fontSize: '15px' }, textContent: emoji });
+				new Elem({ tag: 'span', appendTo: titleRow, addClass: 'glyph', textContent: emoji });
 				new Elem({
 					tag: 'span',
 					appendTo: titleRow,
-					style: { fontSize: '14px', color: '#fff', fontWeight: '500', flex: '1' },
+					addClass: 'name',
 					textContent: label,
 				});
 				if (event.date)
 					new Elem({
 						tag: 'span',
 						appendTo: titleRow,
-						style: { fontSize: '11px', color: 'rgba(255,255,255,0.35)' },
+						addClass: 'date',
 						textContent: new Date(event.date).toLocaleDateString(),
 					});
 
@@ -1896,7 +1954,7 @@ export default class FieldPanel extends Component {
 					new Elem({
 						tag: 'div',
 						appendTo: block,
-						style: { fontSize: '11px', color: 'rgba(255,255,255,0.5)', paddingLeft: '22px', marginTop: '2px' },
+						addClass: 'details',
 						textContent: details.join(' · '),
 					});
 				}
@@ -1910,27 +1968,21 @@ export default class FieldPanel extends Component {
 					if (yearEvents.length > 1) {
 						const first = yearEvents[0];
 						const d = parseDetails(first.details);
-						const block = new Component({
-							appendTo: this._content,
-							style: { padding: '7px 0', borderBottom: '1px solid rgba(255,255,255,0.07)' },
-						});
-						const titleRow = new Component({
-							appendTo: block,
-							style: { display: 'flex', alignItems: 'center', gap: '7px' },
-						});
+						const block = new EventBlock({ appendTo: this._content });
+						const titleRow = new Component({ appendTo: block, addClass: 'title' });
 
-						new Elem({ tag: 'span', appendTo: titleRow, style: { fontSize: '15px' }, textContent: eventEmoji(first) });
+						new Elem({ tag: 'span', appendTo: titleRow, addClass: 'glyph', textContent: eventEmoji(first) });
 						new Elem({
 							tag: 'span',
 							appendTo: titleRow,
-							style: { fontSize: '14px', color: '#fff', fontWeight: '500', flex: '1' },
+							addClass: 'name',
 							textContent: `${yearEvents.length} ${cat === 'input' ? 'applications' : 'tillage passes'}`,
 						});
 						if (d.product || d.type)
 							new Elem({
 								tag: 'div',
 								appendTo: block,
-								style: { fontSize: '11px', color: 'rgba(255,255,255,0.5)', paddingLeft: '22px', marginTop: '2px' },
+								addClass: 'details',
 								textContent: yearEvents
 									.map(e => {
 										const dd = parseDetails(e.details);
@@ -1951,28 +2003,13 @@ export default class FieldPanel extends Component {
 
 		// ── History snippet ──────────────────────────────────────────────────────
 		if (pastYears.length) {
-			new SectionHeader({ appendTo: this._content, textContent: 'History' });
+			new SectionLabel({ appendTo: this._content, textContent: 'History' });
 
 			for (const yr of pastYears.slice(0, 5)) {
 				const yearEvents = byYear.get(yr);
-				const row = new Component({
-					appendTo: this._content,
-					style: {
-						display: 'flex',
-						alignItems: 'baseline',
-						gap: '6px',
-						padding: '4px 0',
-						borderBottom: '1px solid rgba(255,255,255,0.06)',
-						fontSize: '12px',
-					},
-				});
+				const row = new HistoryRow({ appendTo: this._content });
 
-				new Elem({
-					tag: 'span',
-					appendTo: row,
-					style: { color: 'rgba(255,255,255,0.4)', flexShrink: '0', width: '34px' },
-					textContent: `${yr}`,
-				});
+				new Elem({ tag: 'span', appendTo: row, addClass: 'year', textContent: `${yr}` });
 
 				// Show emoji + name for each unique primary category
 				const primaries = ['crop', 'livestock', 'harvest'];
@@ -1998,13 +2035,13 @@ export default class FieldPanel extends Component {
 				new Elem({
 					tag: 'span',
 					appendTo: row,
-					style: { color: 'rgba(255,255,255,0.7)', flex: '1' },
+					addClass: 'tokens',
 					textContent: tokens.join('  ') || '—',
 				});
 			}
 		}
 
-		new SectionHeader({ appendTo: this._content, textContent: 'Field' });
+		new SectionLabel({ appendTo: this._content, textContent: 'Field' });
 
 		const fieldStatusLabel = field.status
 			? FIELD_STATUSES.find(s => s.value === field.status)?.label || field.status
@@ -2038,7 +2075,7 @@ export default class FieldPanel extends Component {
 		);
 
 		if (fieldYears.size >= 2) {
-			new SectionHeader({ appendTo: this._content, textContent: 'Trends' });
+			new SectionLabel({ appendTo: this._content, textContent: 'Trends' });
 			new SeasonCharts({
 				appendTo: this._content,
 				events: fieldEvents,
