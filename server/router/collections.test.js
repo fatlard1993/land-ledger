@@ -2,6 +2,7 @@ import { mkdtempSync, rmSync } from 'fs';
 import { tmpdir } from 'os';
 import { join } from 'path';
 import { afterAll, beforeAll, describe, expect, test } from 'bun:test';
+import { serve } from '@vanilla-bean/components/app';
 
 import database from '../database/database';
 import archiveDb from '../database/archive';
@@ -85,28 +86,35 @@ describe('derived fields', () => {
 	});
 });
 
-describe('the router', () => {
+describe('the router, served', () => {
+	const DomResponse = globalThis.Response;
+	const nodeEnv = process.env.NODE_ENV;
+	let server;
+
+	beforeAll(async () => {
+		// Not development, where serve would build and watch the client; Bun.serve answers only its own Response, which the test DOM replaces
+		process.env.NODE_ENV = 'production';
+		globalThis.Response = (await Bun.fetch('data:,')).constructor;
+		server = await serve({ port: 0, router });
+	});
+
+	afterAll(() => {
+		server.stop(true);
+		process.env.NODE_ENV = nodeEnv;
+		globalThis.Response = DomResponse;
+	});
+
 	const request = (path, init = {}) =>
-		router(
-			new Request(`http://localhost:7450${path}`, {
-				...init,
-				headers: { 'content-type': 'application/json', ...init.headers },
-			}),
-		);
+		Bun.fetch(`http://localhost:${server.port}${path}`, {
+			...init,
+			headers: { 'content-type': 'application/json', ...init.headers },
+		});
 
 	test("another site's page can't write, though a script with no Origin can", async () => {
-		// The test DOM's Request drops Origin, so the cross-site write is built by hand
-		const crossSite = {
-			method: 'POST',
-			url: 'http://localhost:7450/fields',
-			headers: new Map([
-				['origin', 'https://evil.example'],
-				['host', 'localhost:7450'],
-			]),
-		};
+		const write = { method: 'POST', body: JSON.stringify({ name: 'x' }) };
 
-		expect((await router(crossSite)).status).toBe(403);
-		expect((await request('/fields', { method: 'POST', body: JSON.stringify({ name: 'x' }) })).status).toBe(201);
+		expect((await request('/fields', { ...write, headers: { origin: 'https://evil.example' } })).status).toBe(403);
+		expect((await request('/fields', write)).status).toBe(201);
 	});
 
 	test('the page always revalidates; a file that is gone is a 404, not the page', async () => {

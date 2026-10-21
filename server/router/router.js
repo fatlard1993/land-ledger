@@ -1,4 +1,4 @@
-import { sameOrigin, serveApp, serveStatic, withErrors } from '@vanilla-bean/components/app';
+import { serveApp, serveStatic, withErrors } from '@vanilla-bean/components/app';
 
 import { requireAuth, requireRole } from '../auth';
 import { enforceJsonBodyLimit, MAX_JSON_BYTES } from '../utils/limitBody.js';
@@ -43,10 +43,6 @@ const FINANCIAL_PREFIXES = ['/revenue', '/budget-items', '/loans'];
 const APP = { api: false };
 
 const router = async request => {
-	// ── Cross-site guard ─────────────────────────────────────────────────────
-	// Another site's page can't write here or attach a socket, whatever its cookies
-	if (!sameOrigin(request)) return new Response('Cross-origin request refused', { status: 403 });
-
 	// ── App shell ────────────────────────────────────────────────────────────
 	const { pathname } = new URL(request.url);
 
@@ -109,8 +105,8 @@ const router = async request => {
 		return response;
 	}
 
-	// The page for any other GET, so the client's router has every path; a missing file is a 404
-	return (await serveApp(request, APP)) ?? new Response('Not Found', { status: 404 });
+	// The page for any other GET, so the client's router has every path; serve answers 404 for a missing file
+	return serveApp(request, APP);
 };
 
 // Bad JSON and invalid fields answer 400, a stale edit 409 with { _conflict, current } for the conflict dialog; anything else is logged and answers 500

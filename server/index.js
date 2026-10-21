@@ -4,7 +4,7 @@ import os from 'os';
 import path from 'path';
 import { existsSync } from 'fs';
 
-import { hotReload } from '@vanilla-bean/components/app';
+import { devConsole } from '@vanilla-bean/components/app';
 import Argi from 'argi';
 
 import database from './database';
@@ -127,16 +127,4 @@ if (!tls) {
 setTlsActive(!!tls);
 server.init({ port: options.port, tls });
 
-if (process.env.NODE_ENV === 'development') {
-	try {
-		for await (const line of console) {
-			if (['stop', 'close', 'exit'].includes(line)) process.kill(process.pid, 'SIGTERM');
-			else if (line === 'b') {
-				console.log('>> Building...');
-				hotReload.rebuild();
-			}
-		}
-	} catch (error) {
-		console.error('Build Error', error);
-	}
-}
+devConsole();
