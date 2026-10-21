@@ -52,7 +52,7 @@ export class EquipmentLayer {
 	}
 
 	makeIcon(item, selected, leases) {
-		return this.makeIcon(item, selected, leases);
+		return this._makeIcon(item, selected, leases);
 	}
 
 	dotSize(item) {
