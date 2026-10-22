@@ -6,7 +6,7 @@ import { writeJSON } from './jsonFile.js';
 
 // ── Collections stored in the archive ─────────────────────────────────────────
 
-const ARCHIVE_COLLECTIONS = [
+export const ARCHIVE_COLLECTIONS = [
 	'events',
 	'maintenance',
 	'feedingLogs',

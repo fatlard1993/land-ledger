@@ -1,20 +1,10 @@
 import { Low } from 'lowdb';
-import { YearArchiveAdapter, yearFromRecord } from './YearArchiveAdapter.js';
+import { ARCHIVE_COLLECTIONS, YearArchiveAdapter, yearFromRecord } from './YearArchiveAdapter.js';
 import { createDebouncedWriter } from './createDebouncedWriter.js';
 
 const archiveDb = {
 	db: null,
-	default: {
-		events: {},
-		maintenance: {},
-		feedingLogs: {},
-		revenue: {},
-		incidents: {},
-		applicationLogs: {},
-		healthRecords: {},
-		breedingRecords: {},
-		precisionLayers: {},
-	},
+	default: Object.fromEntries(ARCHIVE_COLLECTIONS.map(collection => [collection, {}])),
 
 	// Assigned in init() once the db is ready.
 	write: null,
