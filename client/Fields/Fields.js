@@ -27,12 +27,12 @@ import SeasonCharts from '../Charts/SeasonCharts';
 import ExportDialog from '../Export/ExportDialog';
 import FieldDialog from './FieldDialog';
 
-const { colors } = theme;
+const { colors, space } = theme;
 
 const SummaryBar = styled(
 	Card,
-	({ colors }) => `
-		padding: 12px 16px;
+	({ colors, space }) => `
+		padding: ${space.md} ${space.lg};
 
 		& .stat-value {
 			font-size: 28px;
@@ -46,13 +46,13 @@ const SummaryBar = styled(
 			text-transform: uppercase;
 			letter-spacing: 0.07em;
 			color: ${colors.gray};
-			margin-top: 2px;
+			margin-top: ${space.xs};
 		}
 
 		& .stat-sub {
 			font-size: 11px;
 			color: ${colors.gray};
-			margin-top: 6px;
+			margin-top: ${space.sm};
 		}
 	`,
 );
@@ -60,13 +60,13 @@ const SummaryBar = styled(
 // A field's key facts across the top of its detail: value over a small caption
 const Stats = styled(
 	Component,
-	({ colors }) => `
+	({ colors, space }) => `
 		display: flex;
 		flex-wrap: wrap;
-		gap: 12px;
-		padding: 4px 0 12px;
+		gap: ${space.md};
+		padding: ${space.xs} 0 ${space.md};
 		border-bottom: 1px solid ${colors.border};
-		margin-bottom: 12px;
+		margin-bottom: ${space.md};
 
 		& .stat-value {
 			font-size: 14px;
@@ -85,11 +85,11 @@ const Stats = styled(
 
 const HistoryRow = styled(
 	Component,
-	({ colors }) => `
+	({ colors, space }) => `
 		display: flex;
 		align-items: center;
-		gap: 8px;
-		padding: 4px 0;
+		gap: ${space.sm};
+		padding: ${space.xs} 0;
 		border-bottom: 1px solid ${colors.border};
 		font-size: 13px;
 
@@ -118,8 +118,8 @@ const HistoryRow = styled(
 // This season's crops, cover and stock, grouped by kind
 const UseSummary = styled(
 	Card,
-	({ colors }) => `
-		padding: 8px 12px;
+	({ colors, space }) => `
+		padding: ${space.sm} ${space.md};
 		font-size: 12px;
 
 		& .use-title, & .use-group {
@@ -130,14 +130,14 @@ const UseSummary = styled(
 		}
 
 		& .use-title {
-			margin-bottom: 6px;
+			margin-bottom: ${space.sm};
 		}
 
 		& .use-row {
 			display: flex;
 			align-items: baseline;
-			gap: 12px;
-			margin-bottom: 3px;
+			gap: ${space.md};
+			margin-bottom: ${space.xs};
 		}
 
 		& .use-group {
@@ -148,7 +148,7 @@ const UseSummary = styled(
 		& .use-items {
 			display: flex;
 			flex-wrap: wrap;
-			gap: 10px;
+			gap: ${space.md};
 			color: ${colors.white};
 		}
 	`,
@@ -156,18 +156,18 @@ const UseSummary = styled(
 
 const LeaseWarning = styled(
 	Component,
-	({ colors, radius }) => `
+	({ colors, radius, space }) => `
 		display: flex;
 		flex-direction: column;
-		gap: 4px;
-		padding: 8px 12px;
+		gap: ${space.xs};
+		padding: ${space.sm} ${space.md};
 		border: 1px solid ${colors.alpha(colors.orange, 0.35)};
 		border-radius: ${radius.md};
 		background: ${colors.alpha(colors.orange, 0.12)};
 		font-size: 13px;
 
 		& > .warning-title {
-			margin-bottom: 2px;
+			margin-bottom: ${space.xs};
 			font-size: 11px;
 			text-transform: uppercase;
 			letter-spacing: 0.07em;
@@ -178,12 +178,12 @@ const LeaseWarning = styled(
 
 const CardTitleRow = styled(
 	Component,
-	({ colors, radius }) => `
+	({ colors, radius, space }) => `
 		display: flex;
 		align-items: center;
 		justify-content: space-between;
-		gap: 8px;
-		margin-bottom: 4px;
+		gap: ${space.sm};
+		margin-bottom: ${space.xs};
 
 		& > .card-title {
 			min-width: 0;
@@ -195,7 +195,7 @@ const CardTitleRow = styled(
 		& > .facts {
 			display: flex;
 			align-items: center;
-			gap: 6px;
+			gap: ${space.sm};
 			flex-shrink: 0;
 		}
 
@@ -206,7 +206,7 @@ const CardTitleRow = styled(
 		}
 
 		& .rented {
-			padding: 1px 5px;
+			padding: 1px ${space.sm};
 			border-radius: ${radius.sm};
 			background: ${colors.alpha(colors.orange, 0.15)};
 			font-size: 10px;
@@ -218,12 +218,12 @@ const CardTitleRow = styled(
 // Current uses on a field's card; a fenced field draws them inside a ruled box captioned on its edge
 const UseBlock = styled(
 	Component,
-	({ colors, radius }) => `
+	({ colors, radius, space }) => `
 		position: relative;
-		margin-top: 6px;
+		margin-top: ${space.sm};
 
 		&.fenced {
-			padding: 5px 8px;
+			padding: ${space.sm} ${space.sm};
 			border: 1px solid ${colors.alpha(colors.white, 0.18)};
 			border-radius: ${radius.sm};
 		}
@@ -232,7 +232,7 @@ const UseBlock = styled(
 			position: absolute;
 			top: -8px;
 			left: 8px;
-			padding: 0 4px;
+			padding: 0 ${space.xs};
 			/* Solid, so the border doesn't run through it: the page under a card's 5% white */
 			background: ${colors.black.mix(colors.white, 5)};
 			font-size: 9px;
@@ -755,7 +755,7 @@ export default class Fields extends AsyncView {
 				new Elem({
 					tag: 'div',
 					appendTo: card,
-					style: { fontSize: '11px', color: renewalColor(days), marginTop: '4px' },
+					style: { fontSize: '11px', color: renewalColor(days), marginTop: space.xs },
 					textContent: days <= 0 ? 'Lease renewal past due' : `Lease renewal in ${days} days`,
 				});
 			}
