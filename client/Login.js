@@ -25,17 +25,17 @@ const LoginCard = styled(
 		padding: ${space.xl};
 		display: flex;
 		flex-direction: column;
-		gap: 20px;
+		gap: ${space.lg};
 	`,
 );
 
 const Masthead = styled(
 	Component,
-	({ colors }) => `
+	({ colors, space }) => `
 		text-align: center;
 
 		& .logo {
-			margin-bottom: 8px;
+			margin-bottom: ${space.sm};
 			font-size: 36px;
 			color: ${colors.light(colors.green)};
 		}
@@ -47,7 +47,7 @@ const Masthead = styled(
 		}
 
 		& .hint {
-			margin-top: 4px;
+			margin-top: ${space.xs};
 			font-size: 12px;
 			color: ${colors.gray};
 		}
@@ -57,8 +57,8 @@ const Masthead = styled(
 // A passkey is typed blind, so it gets room and a centered, spaced line
 const PasskeyInput = styled(
 	Input,
-	() => `
-		padding: 12px 14px;
+	({ space }) => `
+		padding: ${space.md};
 		font-size: 16px;
 		text-align: center;
 		letter-spacing: 0.15em;
@@ -77,9 +77,9 @@ const ErrorLine = styled(
 
 const LoginButton = styled(
 	Button,
-	({ colors }) => `
+	({ colors, space }) => `
 		width: 100%;
-		padding: 11px;
+		padding: ${space.md};
 		background-color: ${colors.dark(colors.green)};
 		font-size: 14px;
 		font-weight: 600;

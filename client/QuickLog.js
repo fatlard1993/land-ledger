@@ -15,16 +15,16 @@ const LOG_TYPES = [
 	{ value: 'note', label: 'Quick note', icon: 'pen', sub: 'Observation or reminder' },
 ];
 
-const { colors } = theme;
+const { colors, space } = theme;
 
 const SheetHeader = styled(
 	Component,
-	({ colors }) => `
+	({ colors, space }) => `
 		display: flex;
 		align-items: center;
 		justify-content: space-between;
-		gap: 8px;
-		padding: 14px 16px 10px;
+		gap: ${space.sm};
+		padding: ${space.md} ${space.lg} ${space.md};
 
 		& .where {
 			flex: 1;
@@ -41,12 +41,12 @@ const SheetHeader = styled(
 		}
 
 		& .location > .icon {
-			margin-right: 6px;
+			margin-right: ${space.sm};
 			color: ${colors.light(colors.danger)};
 		}
 
 		& .date {
-			margin-top: 2px;
+			margin-top: ${space.xs};
 			font-size: 12px;
 			color: ${colors.gray};
 		}
@@ -55,18 +55,18 @@ const SheetHeader = styled(
 
 const TypeGrid = styled(
 	Component,
-	({ colors, radius }) => `
+	({ colors, radius, space }) => `
 		display: grid;
 		grid-template-columns: repeat(3, minmax(0, 1fr));
-		gap: 8px;
-		margin-bottom: 4px;
+		gap: ${space.sm};
+		margin-bottom: ${space.xs};
 
 		& > .vbc-button {
 			display: flex;
 			flex-direction: column;
 			align-items: center;
-			gap: 4px;
-			padding: 14px 8px;
+			gap: ${space.xs};
+			padding: ${space.md} ${space.sm};
 			border-radius: ${radius.lg};
 			background-color: ${colors.alpha(colors.white, 0.05)};
 			font-size: 12px;
@@ -94,14 +94,14 @@ const TypeGrid = styled(
 // Big enough to hit outdoors; a tinted chip takes its category's own color when chosen
 const ChipRow = styled(
 	Component,
-	() => `
+	({ space }) => `
 		display: flex;
 		flex-wrap: wrap;
-		gap: 6px;
-		margin-bottom: 4px;
+		gap: ${space.sm};
+		margin-bottom: ${space.xs};
 
 		& > .vbc-button {
-			padding: 7px 12px;
+			padding: ${space.sm} ${space.md};
 			font-size: 13px;
 		}
 
@@ -115,11 +115,11 @@ const ChipRow = styled(
 
 const SubmitButton = styled(
 	Button,
-	({ colors, radius }) => `
+	({ colors, radius, space }) => `
 		display: block;
 		width: 100%;
-		margin-top: 18px;
-		padding: 15px;
+		margin-top: ${space.lg};
+		padding: ${space.md};
 		border-radius: ${radius.lg};
 		background-color: ${colors.dark(colors.green)};
 		font-size: 16px;
@@ -207,7 +207,7 @@ export function openQuickLog() {
 	});
 
 	// ── Body ───────────────────────────────────────────────────────────────────
-	const body = new Component({ appendTo: sheet.body, style: { padding: '0 16px 20px' } });
+	const body = new Component({ appendTo: sheet.body, style: { padding: `0 ${space.lg} ${space.lg}` } });
 
 	// ── State ──────────────────────────────────────────────────────────────────
 	let currentField = null;
@@ -284,7 +284,7 @@ export function openQuickLog() {
 			variant: 'flat',
 			icon: 'arrow-left',
 			textContent: 'Choose type',
-			style: { marginBottom: '8px', color: colors.muted },
+			style: { marginBottom: space.sm, color: colors.muted },
 			onPointerPress: () => {
 				typeGrid.setStyle({ display: '' });
 				formArea.setStyle({ display: 'none' });
@@ -420,7 +420,7 @@ export function openQuickLog() {
 
 			const rateRow = new Component({
 				appendTo: formArea,
-				style: { display: 'grid', gridTemplateColumns: '1fr 120px', gap: '8px' },
+				style: { display: 'grid', gridTemplateColumns: '1fr 120px', gap: space.sm },
 			});
 			const rateCol1 = new Component({ appendTo: rateRow });
 			const rateCol2 = new Component({ appendTo: rateRow });

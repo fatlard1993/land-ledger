@@ -127,14 +127,14 @@ export async function mountWeatherAlerts() {
 
 const AlertContainer = styled(
 	Component,
-	() => `
+	({ space }) => `
 	position: fixed;
 	bottom: 72px;
 	right: 12px;
 	z-index: 9000;
 	display: flex;
 	flex-direction: column;
-	gap: 6px;
+	gap: ${space.sm};
 	max-width: 290px;
 	pointer-events: none;
 `,
@@ -143,13 +143,13 @@ const AlertContainer = styled(
 // Floats over the map, so it's opaque where a Card on the page is translucent
 const AlertCard = styled(
 	Card,
-	({ colors }) => `
+	({ colors, space }) => `
 		pointer-events: auto;
 		display: flex;
 		align-items: center;
-		gap: 8px;
+		gap: ${space.sm};
 		background-color: ${colors.alpha(colors.black, 0.95)};
-		padding: 8px 10px;
+		padding: ${space.sm} ${space.md};
 		font-size: 12px;
 		color: ${colors.white};
 		box-shadow: 0 2px 8px ${colors.alpha(colors.vantablack, 0.4)};

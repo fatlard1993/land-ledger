@@ -4,7 +4,7 @@ const { colors } = theme;
 
 const IndicatorBar = styled(
 	Component,
-	({ colors }) => `
+	({ colors, space }) => `
 	position: fixed;
 	top: 0;
 	left: 0;
@@ -13,7 +13,7 @@ const IndicatorBar = styled(
 	font-size: 13px;
 	font-family: inherit;
 	text-align: center;
-	padding: 6px 12px;
+	padding: ${space.sm} ${space.md};
 	user-select: none;
 	letter-spacing: .02em;
 	color: ${colors.white};

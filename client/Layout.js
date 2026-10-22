@@ -35,12 +35,12 @@ export const BottomNav = styled(
 	`,
 );
 
-const navItem = ({ colors, media }) => `
+const navItem = ({ colors, media, space }) => `
 	display: flex;
 	flex-direction: column;
 	align-items: center;
 	justify-content: center;
-	gap: 4px;
+	gap: ${space.xs};
 	flex: 1;
 	min-width: 0;
 	height: 100%;
@@ -97,7 +97,7 @@ export class PageView extends styled(
 // A record in a list view: a title row, then a muted line of facts about it
 export const RecordCard = styled(
 	Card,
-	({ colors }) => `
+	({ colors, space }) => `
 		& .card-title {
 			font-weight: 600;
 		}
@@ -105,7 +105,7 @@ export const RecordCard = styled(
 		& .card-meta {
 			display: flex;
 			flex-wrap: wrap;
-			gap: 2px 12px;
+			gap: ${space.xs} ${space.md};
 			font-size: 12px;
 			color: ${colors.muted};
 		}
@@ -182,7 +182,7 @@ export const FieldPanel = styled(
 			height: 4px;
 			background: ${colors.alpha(colors.white, 0.2)};
 			border-radius: 2px;
-			margin: 10px auto 8px;
+			margin: ${space.md} auto ${space.sm};
 			flex-shrink: 0;
 		}
 
@@ -216,12 +216,12 @@ export const FieldPanel = styled(
 
 export const DetailRow = styled(
 	Component,
-	({ colors }) => `
+	({ colors, space }) => `
 		display: flex;
 		justify-content: space-between;
 		align-items: center;
-		gap: 8px;
-		padding: 6px 0;
+		gap: ${space.sm};
+		padding: ${space.sm} 0;
 		border-bottom: 1px solid ${colors.border};
 		font-size: 14px;
 
@@ -236,9 +236,9 @@ export const DetailRow = styled(
 	`,
 );
 
-const badge = ({ radius }) => `
+const badge = ({ radius, space }) => `
 	display: inline-block;
-	padding: 2px 8px;
+	padding: ${space.xs} ${space.sm};
 	border-radius: ${radius.sm};
 	font-size: 11px;
 	font-weight: 600;
@@ -285,9 +285,9 @@ export class ActionHeader extends Component {
 
 export const SquareBadge = styled(
 	Component,
-	({ radius }) => `
+	({ radius, space }) => `
 		display: inline-block;
-		padding: 1px 5px;
+		padding: 1px ${space.sm};
 		border-radius: ${radius.sm};
 		font-size: 10px;
 		font-weight: 600;

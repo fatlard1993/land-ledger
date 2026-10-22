@@ -17,9 +17,9 @@ export const STATUS_ICONS = {
 // A glyph beside its words, inline, spaced the way a Button spaces its own
 export const IconText = styled(
 	Icon,
-	() => `
+	({ space }) => `
 		&:before {
-			padding-right: 6px;
+			padding-right: ${space.sm};
 		}
 	`,
 );
