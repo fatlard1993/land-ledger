@@ -203,7 +203,7 @@ export async function applyLivestockLosses(newLossesJson, livestockEvents = [], 
 		}).catch(() => null);
 
 		// Keep local copy in sync so the panel re-render shows the new count
-		if (result?.body && event) {
+		if (result?.status === 'success' && result.body && event) {
 			event.details = { ...d, headCount: updated };
 		}
 	}

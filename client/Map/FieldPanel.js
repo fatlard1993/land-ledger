@@ -11,6 +11,7 @@ import {
 	styled,
 	theme,
 } from '@vanilla-bean/components';
+import { failureReason } from '@vanilla-bean/hypertether';
 
 import { geodesicAreaSqm, convertArea, formatArea, AREA_UNITS } from '../geo';
 import parseDetails from '../utils/parseDetails';
@@ -356,6 +357,25 @@ const FormButtons = styled(
 		}
 	`,
 );
+
+const SaveFailure = styled(
+	Elem,
+	({ colors, space }) => `
+		margin-top: ${space.md};
+		color: ${colors.light(colors.danger)};
+	`,
+);
+
+// The panel's edit forms save outside a FormDialog, so one shows a failed save's reason above its buttons as a FormDialog would
+const failedSave = (result, buttons) => {
+	if (result?.status !== 'error') return false;
+
+	buttons.failure ??= new SaveFailure({ attributes: { role: 'alert' } });
+	buttons.elem.before(buttons.failure.elem);
+	buttons.failure.elem.textContent = failureReason(result);
+
+	return true;
+};
 
 const FIELD_STATUSES = [
 	{ value: '', label: 'Active' },
@@ -899,6 +919,7 @@ export default class FieldPanel extends Component {
 
 				const updated = await callbacks.onSave?.(data);
 
+				if (failedSave(updated, buttons)) return;
 				if (updated) this._entity.data = updated;
 				this._renderPathView();
 			},
@@ -1101,6 +1122,8 @@ export default class FieldPanel extends Component {
 			onPointerPress: async () => {
 				const data = Object.fromEntries(Object.entries(getters).map(([k, g]) => [k, g()]));
 				const updated = await callbacks.onSave?.(data);
+
+				if (failedSave(updated, buttons)) return;
 				if (updated) this._entity.data = updated;
 				this._renderParcelView();
 			},
@@ -1376,6 +1399,8 @@ export default class FieldPanel extends Component {
 			onPointerPress: async () => {
 				const data = Object.fromEntries(Object.entries(getters).map(([k, g]) => [k, g()]));
 				const updated = await callbacks.onSave?.(data);
+
+				if (failedSave(updated, buttons)) return;
 				if (updated) {
 					this._entity.data = updated;
 				}
@@ -1641,6 +1666,8 @@ export default class FieldPanel extends Component {
 
 				data.emoji = eqEmojiInput.elem.value && eqEmojiInput.elem.value !== autoEmoji ? eqEmojiInput.elem.value : '';
 				const updated = await callbacks.onSave?.(data);
+
+				if (failedSave(updated, buttons)) return;
 				if (updated) {
 					this._entity.data = updated;
 				}
@@ -1809,6 +1836,7 @@ export default class FieldPanel extends Component {
 				const data = Object.fromEntries(Object.entries(inputGetters).map(([k, get]) => [k, get()]));
 				const updated = await this._callbacks.onSave?.(data);
 
+				if (failedSave(updated, buttons)) return;
 				if (updated) this._field = updated;
 				await this._renderViewMode();
 			},

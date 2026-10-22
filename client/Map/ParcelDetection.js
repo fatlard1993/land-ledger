@@ -303,7 +303,7 @@ export function createParcelDetection({
 				},
 			});
 
-			if (result?.body && parcels?.body) parcels.body[result.body.id] = result.body;
+			if (result?.status === 'success' && result.body && parcels?.body) parcels.body[result.body.id] = result.body;
 		}
 
 		onRenderParcels();

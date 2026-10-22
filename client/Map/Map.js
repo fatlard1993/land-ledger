@@ -509,7 +509,7 @@ export default class MapView extends AsyncView {
 			fields: this.fields,
 			onSave: async data => {
 				const result = await createField({ body: data });
-				if (result?.body && this.fields?.body) {
+				if (result?.status === 'success' && result.body && this.fields?.body) {
 					this.fields.body[result.body.id] = result.body;
 					this._renderFieldLayers();
 					this._updateLabels();
@@ -567,6 +567,8 @@ export default class MapView extends AsyncView {
 			allFields: this.fields?.body || {},
 			onSave: async data => {
 				const result = await updateField(field.id, { body: { ...data, _v: field._v } });
+
+				if (result?.status === 'error') return result;
 
 				if (result?.body && this.fields?.body) {
 					this.fields.body[field.id] = result.body;
@@ -628,7 +630,7 @@ export default class MapView extends AsyncView {
 				const acreage = geodesicAcreage(updatedGeometry);
 				const result = await updateField(field.id, { body: { geometry: updatedGeometry, acreage, _v: field._v } });
 
-				if (result?.body && this.fields?.body) {
+				if (result?.status === 'success' && result.body && this.fields?.body) {
 					this.fields.body[field.id] = result.body;
 					this._renderFieldLayers();
 				}
@@ -681,6 +683,8 @@ export default class MapView extends AsyncView {
 			},
 			onSave: async data => {
 				const r = await updateBuilding(building.id, { body: { ...data, _v: building._v } });
+
+				if (r?.status === 'error') return r;
 				if (r?.body && this.buildings?.body) this.buildings.body[building.id] = r.body;
 				this._renderBuildingLayers();
 				return r?.body;
@@ -767,6 +771,9 @@ export default class MapView extends AsyncView {
 				},
 				onSave: async data => {
 					const result = await updateParcel(parcel.id, { body: { ...data, _v: parcel._v } });
+
+					if (result?.status === 'error') return result;
+
 					if (result?.body && this.parcels?.body) {
 						this.parcels.body[parcel.id] = result.body;
 						this._renderParcelLayers();
@@ -916,7 +923,7 @@ export default class MapView extends AsyncView {
 
 				const result = await updateParcel(parcel.id, { body: { geometry: updatedGeometry, _v: parcel._v } });
 
-				if (result?.body && this.parcels?.body) {
+				if (result?.status === 'success' && result.body && this.parcels?.body) {
 					this.parcels.body[parcel.id] = result.body;
 					this._renderParcelLayers();
 					this._updateLabels();
@@ -955,7 +962,7 @@ export default class MapView extends AsyncView {
 
 				const result = await updateBuilding(building.id, { body: { geometry: updatedGeometry, _v: building._v } });
 
-				if (result?.body && this.buildings?.body) {
+				if (result?.status === 'success' && result.body && this.buildings?.body) {
 					this.buildings.body[building.id] = result.body;
 					this._renderBuildingLayers();
 				}
@@ -978,7 +985,7 @@ export default class MapView extends AsyncView {
 
 			updateEquipment(item.id, { body: { lat, lng, _v: item._v } })
 				.then(result => {
-					if (result?.body && this.equipment?.body) {
+					if (result?.status === 'success' && result.body && this.equipment?.body) {
 						this.equipment.body[item.id] = result.body;
 						this._renderEquipmentMarkers();
 					}
@@ -1003,6 +1010,9 @@ export default class MapView extends AsyncView {
 				},
 				onSave: async data => {
 					const result = await updatePath(path.id, { body: { ...data, _v: path._v } });
+
+					if (result?.status === 'error') return result;
+
 					if (result?.body && this.paths?.body) {
 						this.paths.body[path.id] = result.body;
 						this._renderPathLayers();
@@ -1071,6 +1081,8 @@ export default class MapView extends AsyncView {
 			},
 			onSave: async data => {
 				const result = await updateEquipment(item.id, { body: { ...data, _v: item._v } });
+
+				if (result?.status === 'error') return result;
 
 				if (result?.body && this.equipment?.body) {
 					this.equipment.body[item.id] = result.body;
@@ -1371,7 +1383,7 @@ export default class MapView extends AsyncView {
 
 			const updated = await updateField(fieldId, { body: { ...location, _v: this.fields?.body?.[fieldId]?._v } });
 
-			if (updated?.body && this.fields?.body) this.fields.body[fieldId] = updated.body;
+			if (updated?.status === 'success' && updated.body && this.fields?.body) this.fields.body[fieldId] = updated.body;
 		} catch {
 			// location detection is best-effort, fail silently
 		}
@@ -1396,7 +1408,7 @@ export default class MapView extends AsyncView {
 				},
 			});
 
-			if (result?.body && this.fields?.body) {
+			if (result?.status === 'success' && result.body && this.fields?.body) {
 				this.fields.body[result.body.id] = result.body;
 				this._detectAndPatchLocation(result.body.id, feature.geometry);
 			}
