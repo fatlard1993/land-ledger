@@ -1,6 +1,6 @@
 // Full-screen login overlay — shown when auth is enabled and the user has no session.
 // Single passkey field; no username. First matching account wins.
-import { Button, Card, Component, Icon, Input, styled } from '@vanilla-bean/components';
+import { Button, Card, Component, Icon, Input, Page, styled } from '@vanilla-bean/components';
 
 import { login } from './api/auth';
 
@@ -87,7 +87,9 @@ const LoginButton = styled(
 );
 
 export function mountLoginScreen(onSuccess) {
-	const overlay = new LoginOverlay({ appendTo: document.body });
+	// The app's Page is never built behind the login screen, and Page is what links the icon font and typeface
+	const page = new Page({ appendTo: document.body });
+	const overlay = new LoginOverlay({ appendTo: page });
 
 	const card = new LoginCard({ appendTo: overlay });
 
@@ -125,7 +127,7 @@ export function mountLoginScreen(onSuccess) {
 
 		try {
 			if (await login(passkey)) {
-				overlay.destroy();
+				page.destroy();
 				onSuccess();
 			} else {
 				errorElem.options.textContent = 'Invalid passkey';
@@ -147,5 +149,5 @@ export function mountLoginScreen(onSuccess) {
 
 	setTimeout(() => input.elem.focus(), 50);
 
-	return overlay;
+	return page;
 }
