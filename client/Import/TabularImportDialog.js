@@ -346,7 +346,8 @@ export default class TabularImportDialog extends Dialog {
 		// Import button
 		this._importBtn = new Button({
 			appendTo: this.body,
-			style: { width: '100%' },
+			// The label carries both counts, so it can outgrow a phone; it wraps rather than overflow
+			style: { width: '100%', whiteSpace: 'normal' },
 			onPointerPress: () => this._doImport(),
 		});
 
