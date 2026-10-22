@@ -224,7 +224,7 @@ const UseBlock = styled(
 
 		&.fenced {
 			padding: ${space.sm} ${space.sm};
-			border: 1px solid ${colors.alpha(colors.white, 0.18)};
+			border: 1px solid ${colors.border};
 			border-radius: ${radius.sm};
 		}
 

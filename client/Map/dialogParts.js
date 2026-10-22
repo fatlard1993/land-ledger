@@ -43,7 +43,7 @@ const AreaFrame = styled(
 		align-items: center;
 		overflow: hidden;
 		background-color: ${colors.alpha(colors.white, 0.06)};
-		border: 1px solid ${colors.alpha(colors.white, 0.15)};
+		border: 1px solid ${colors.border};
 		border-radius: ${radius.sm};
 
 		&:focus-within {

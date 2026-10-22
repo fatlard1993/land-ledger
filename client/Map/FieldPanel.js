@@ -288,7 +288,7 @@ const AreaField = styled(
 		display: flex;
 		align-items: center;
 		overflow: hidden;
-		border: 1px solid ${colors.alpha(colors.white, 0.15)};
+		border: 1px solid ${colors.border};
 		border-radius: ${radius.sm};
 		background: ${colors.alpha(colors.white, 0.06)};
 
