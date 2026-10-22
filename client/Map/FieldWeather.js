@@ -1,4 +1,4 @@
-import { Component, styled } from '@vanilla-bean/components';
+import { Component, formatDate, styled } from '@vanilla-bean/components';
 
 import { getWeather } from '../api';
 import { centroidFromGeometry } from '../geo';
@@ -142,8 +142,7 @@ export async function renderWeatherStrip(field, container) {
 
 	for (const [date, day] of days) {
 		const isToday = date === startStr;
-		const d = new Date(`${date}T12:00:00`);
-		const dayLabel = isToday ? 'Today' : d.toLocaleDateString('en-US', { weekday: 'short' });
+		const dayLabel = isToday ? 'Today' : formatDate(date, { weekday: 'short' });
 
 		const isHardFreeze = day.tempMin != null && day.tempMin <= 28;
 		const isFrost = day.tempMin != null && day.tempMin <= 36 && !isHardFreeze;

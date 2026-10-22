@@ -1,4 +1,4 @@
-import { Elem, FormDialog, Notify, Select, theme } from '@vanilla-bean/components';
+import { Elem, FormDialog, Notify, parseDate, Select, theme } from '@vanilla-bean/components';
 
 import { createHealthRecord, updateHealthRecord, deleteHealthRecord } from '../api/animals';
 import { watchFormConflicts } from '../utils/watchFormConflicts.js';
@@ -118,7 +118,7 @@ export default class HealthRecordDialog extends FormDialog {
 			const dateVal = this.form.options.data.date;
 			const days = parseInt(this.form.options.data.withdrawalDays, 10);
 			if (dateVal && days > 0) {
-				const d = new Date(`${dateVal}T12:00:00`);
+				const d = parseDate(dateVal);
 				d.setDate(d.getDate() + days);
 				withdrawalDisplay.options.textContent = `Withdrawal until: ${toDateOnly(d)}`;
 				withdrawalDisplay.options.style = { color: colors.light(colors.warning) };

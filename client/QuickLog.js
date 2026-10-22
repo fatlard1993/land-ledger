@@ -1,4 +1,4 @@
-import { BottomSheet, Button, Component, Elem, Icon, Input, Select, styled, theme } from '@vanilla-bean/components';
+import { BottomSheet, Button, Component, Elem, formatDate, Icon, Input, Select, styled, theme } from '@vanilla-bean/components';
 import { pointInPolygon } from './geo';
 import { getFields, getBuildings, createEvent } from './api';
 import { createApplicationLog } from './api/applicationLogs';
@@ -195,7 +195,7 @@ export function openQuickLog() {
 		tag: 'div',
 		appendTo: fieldLabel,
 		addClass: 'date',
-		textContent: new Date().toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }),
+		textContent: formatDate(Date.now(), { weekday: 'short', month: 'short', day: 'numeric' }),
 	});
 
 	new Button({

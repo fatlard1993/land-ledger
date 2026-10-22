@@ -1,4 +1,4 @@
-import { Elem, FormDialog, Notify, Select, theme } from '@vanilla-bean/components';
+import { Elem, FormDialog, Notify, parseDate, Select, theme } from '@vanilla-bean/components';
 
 import { createBreedingRecord, updateBreedingRecord, deleteBreedingRecord } from '../api/animals';
 import { watchFormConflicts } from '../utils/watchFormConflicts.js';
@@ -134,7 +134,7 @@ export default class BreedingDialog extends FormDialog {
 					return;
 				}
 				if (dateVal) {
-					const d = new Date(`${dateVal}T12:00:00`);
+					const d = parseDate(dateVal);
 					d.setDate(d.getDate() + gestation);
 					const computed = toDateOnly(d);
 					dueDisplay.options.textContent = `Auto-computed: ${computed}`;

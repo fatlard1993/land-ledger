@@ -393,7 +393,7 @@ export default class Timeline extends AsyncView {
 					const harvestEvents = allEvents.filter(
 						e =>
 							e.fieldId === field.id &&
-							(e.season === season || new Date(e.date + 'T12:00:00').getFullYear() === season) &&
+							(e.season === season || parseDate(e.date)?.getFullYear() === season) &&
 							e.category === 'harvest',
 					);
 
@@ -445,7 +445,7 @@ export default class Timeline extends AsyncView {
 
 		// Growing season avg high (May–Aug)
 		const growing = days.filter(([d]) => {
-			const m = new Date(d + 'T12:00:00').getMonth();
+			const m = parseDate(d).getMonth();
 			return m >= 4 && m <= 7;
 		});
 		const avgHigh = growing.length

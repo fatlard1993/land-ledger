@@ -1,4 +1,4 @@
-import { parseDate } from '@vanilla-bean/components';
+import { formatDate, parseDate } from '@vanilla-bean/components';
 
 // Shared schedule-status computation — used by FieldPanel (panel display) and
 // Todo (overdue alerts). Returns { status, label } for all configured schedules.
@@ -36,7 +36,7 @@ export function scheduleStatus(schedule, currentUsage, unit = '', today = new Da
 			};
 		else if (daysUntil <= buffer)
 			dateStatus = { status: 'due_soon', label: `Due in ${daysUntil} day${daysUntil !== 1 ? 's' : ''}` };
-		else dateStatus = { status: 'ok', label: `Due ${nextDue.toLocaleDateString()}` };
+		else dateStatus = { status: 'ok', label: `Due ${formatDate(nextDue)}` };
 	}
 
 	// No intervals configured — report last-done date or nothing to check

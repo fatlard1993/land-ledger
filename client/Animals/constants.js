@@ -1,4 +1,4 @@
-import { theme } from '@vanilla-bean/components';
+import { parseDate, theme } from '@vanilla-bean/components';
 
 const { colors } = theme;
 
@@ -31,7 +31,7 @@ export const animalLabel = animal => {
 
 export const ageLabel = birthDate => {
 	if (!birthDate) return null;
-	const days = Math.floor((Date.now() - new Date(`${birthDate}T12:00:00`)) / 86_400_000);
+	const days = Math.floor((Date.now() - parseDate(birthDate)) / 86_400_000);
 	if (days < 0) return null;
 	if (days < 30) return `${days}d`;
 	if (days < 365) return `${Math.floor(days / 30)}mo`;
