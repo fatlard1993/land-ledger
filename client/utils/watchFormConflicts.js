@@ -9,19 +9,21 @@
 //
 // Returns a cleanup function — pass it to form.addCleanup() or call on dialog close.
 
-import { Button, Component, styled } from '@vanilla-bean/components';
+import { Button, Component, styled, theme } from '@vanilla-bean/components';
 
 import { formatVal } from './format.js';
 
+const { space } = theme;
+
 const Banner = styled(
 	Component,
-	({ colors, radius }) => `
+	({ colors, radius, space }) => `
 		display: flex;
 		align-items: center;
 		justify-content: space-between;
-		gap: 8px;
-		margin-bottom: 10px;
-		padding: 8px 10px;
+		gap: ${space.sm};
+		margin-bottom: ${space.md};
+		padding: ${space.sm} ${space.md};
 		border: 1px solid ${colors.alpha(colors.warning, 0.35)};
 		border-radius: ${radius.sm};
 		background: ${colors.alpha(colors.warning, 0.1)};
@@ -112,7 +114,7 @@ export function watchFormConflicts(form, collection, id) {
 			textContent: `${changed.size} field${changed.size !== 1 ? 's' : ''} changed on another device`,
 		});
 
-		const buttons = new Component({ appendTo: banner, style: { display: 'flex', gap: '6px', flexShrink: '0' } });
+		const buttons = new Component({ appendTo: banner, style: { display: 'flex', gap: space.sm, flexShrink: '0' } });
 
 		new Button({ appendTo: buttons, variant: 'chip', textContent: 'Accept all', onPointerPress: acceptAll });
 		new Button({ appendTo: buttons, variant: 'flat', textContent: 'Dismiss', onPointerPress: clearAll });

@@ -1,4 +1,6 @@
-import { Button, Elem, Input, SectionLabel } from '@vanilla-bean/components';
+import { Button, Elem, Input, SectionLabel, theme } from '@vanilla-bean/components';
+
+const { space } = theme;
 
 export const makePropertiesEditor = (container, initialProperties = {}) => {
 	const root = container.elem ?? container;
@@ -10,7 +12,11 @@ export const makePropertiesEditor = (container, initialProperties = {}) => {
 	const rows = [];
 
 	const addRow = (key = '', value = '') => {
-		const row = new Elem({ tag: 'div', style: { display: 'flex', gap: '6px', marginBottom: '5px' }, appendTo: rowsEl });
+		const row = new Elem({
+			tag: 'div',
+			style: { display: 'flex', gap: space.sm, marginBottom: space.sm },
+			appendTo: rowsEl,
+		});
 
 		const keyInput = new Input({ appendTo: row, style: { flex: '1' }, placeholder: 'Key' });
 		const valueInput = new Input({ appendTo: row, style: { flex: '2' }, placeholder: 'Value' });
@@ -45,7 +51,7 @@ export const makePropertiesEditor = (container, initialProperties = {}) => {
 		variant: 'flat',
 		icon: 'plus',
 		textContent: 'Add Property',
-		style: { marginTop: '2px' },
+		style: { marginTop: space.xs },
 		onPointerPress: () => addRow(),
 	});
 

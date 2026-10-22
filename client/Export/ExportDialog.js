@@ -1,16 +1,16 @@
 import { Dialog, Card, Component, Elem, Button, SectionLabel, styled, theme } from '@vanilla-bean/components';
 
-const { colors } = theme;
+const { colors, space } = theme;
 
-const SECTION_STYLE = { margin: '14px 0 6px' };
+const SECTION_STYLE = { margin: `${space.md} 0 ${space.sm}` };
 
 const ExportRow = styled(
 	Card,
-	({ colors }) => `
+	({ colors, space }) => `
 		display: flex;
 		align-items: center;
-		gap: 10px;
-		padding: 7px 10px;
+		gap: ${space.md};
+		padding: ${space.sm} ${space.md};
 
 		/* The everyday exports stand out with a hairline */
 		&.featured {
@@ -197,7 +197,7 @@ export default class ExportDialog extends Dialog {
 		new Elem({
 			tag: 'p',
 			appendTo: this.body,
-			style: { fontSize: '13px', color: colors.muted, margin: '0 0 2px' },
+			style: { fontSize: '13px', color: colors.muted, margin: `0 0 ${space.xs}` },
 			textContent: 'Files download instantly — no data leaves your machine.',
 		});
 
@@ -206,7 +206,7 @@ export default class ExportDialog extends Dialog {
 
 			const grid = new Component({
 				appendTo: this.body,
-				style: { display: 'flex', flexDirection: 'column', gap: '4px' },
+				style: { display: 'flex', flexDirection: 'column', gap: space.xs },
 			});
 
 			for (const item of items) renderExportRow(grid, item);
@@ -233,7 +233,7 @@ export default class ExportDialog extends Dialog {
 
 		const grid = new Component({
 			appendTo: this.body,
-			style: { display: 'flex', flexDirection: 'column', gap: '4px' },
+			style: { display: 'flex', flexDirection: 'column', gap: space.xs },
 		});
 
 		for (const tpl of templates) {

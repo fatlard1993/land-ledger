@@ -1,4 +1,16 @@
-import { Button, capitalize, Card, Component, Dialog, Elem, fromCamelCase, styled } from '@vanilla-bean/components';
+import {
+	Button,
+	capitalize,
+	Card,
+	Component,
+	Dialog,
+	Elem,
+	fromCamelCase,
+	styled,
+	theme,
+} from '@vanilla-bean/components';
+
+const { space } = theme;
 
 const formatVal = v => {
 	if (v == null || v === '') return '—';
@@ -16,8 +28,8 @@ const COLUMNS = 'minmax(70px, 100px) minmax(0, 1fr) minmax(0, 1fr) auto';
 
 const Intro = styled(
 	Component,
-	({ colors }) => `
-		margin: 0 0 12px;
+	({ colors, space }) => `
+		margin: 0 0 ${space.md};
 		font-size: 13px;
 		color: ${colors.gray};
 	`,
@@ -26,8 +38,8 @@ const Intro = styled(
 
 const RecordTitle = styled(
 	Component,
-	({ colors }) => `
-		margin-bottom: 8px;
+	({ colors, space }) => `
+		margin-bottom: ${space.sm};
 		font-size: 13px;
 		font-weight: 600;
 		color: ${colors.white};
@@ -37,19 +49,19 @@ const RecordTitle = styled(
 // On a phone the field's name and the choice take rows of their own, so the two values get the width between them
 const Row = styled(
 	Component,
-	({ colors, media }) => `
+	({ colors, media, space }) => `
 		display: grid;
 		grid-template-columns: ${COLUMNS};
-		gap: 6px;
+		gap: ${space.sm};
 		align-items: center;
-		padding: 5px 0;
+		padding: ${space.sm} 0;
 		border-bottom: 1px solid ${colors.border};
 		font-size: 12px;
 		overflow-wrap: anywhere;
 
 		&.head {
-			padding: 3px 0;
-			margin-bottom: 4px;
+			padding: ${space.xs} 0;
+			margin-bottom: ${space.xs};
 			font-size: 10px;
 			letter-spacing: 0.06em;
 			text-transform: uppercase;
@@ -149,7 +161,7 @@ export function showConflictDialog(conflicts) {
 		// Shortcuts
 		const shortcuts = new Component({
 			appendTo: dialog.body,
-			style: { display: 'flex', gap: '8px', marginBottom: '14px' },
+			style: { display: 'flex', gap: space.sm, marginBottom: space.md },
 		});
 
 		new Button({
@@ -168,7 +180,7 @@ export function showConflictDialog(conflicts) {
 		const cardsWrap = new Component({ appendTo: dialog.body, style: { maxHeight: '420px', overflowY: 'auto' } });
 
 		for (const { entry, current, conflictingFields } of conflicts) {
-			const card = new Card({ appendTo: cardsWrap, style: { marginBottom: '8px' } });
+			const card = new Card({ appendTo: cardsWrap, style: { marginBottom: space.sm } });
 
 			const snapshot = entry.snapshot;
 			const label = entityLabel(snapshot || current);
@@ -205,7 +217,7 @@ export function showConflictDialog(conflicts) {
 					addClass: 'value',
 					textContent: formatVal(serverValue),
 				});
-				const toggleRow = new Component({ appendTo: row, style: { display: 'flex', gap: '4px' } });
+				const toggleRow = new Component({ appendTo: row, style: { display: 'flex', gap: space.xs } });
 
 				const mineBtn = new Button({
 					appendTo: toggleRow,
