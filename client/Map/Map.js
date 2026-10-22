@@ -56,7 +56,7 @@ import { createParcelDetection } from './ParcelDetection.js';
 import { loadReferenceFields, adoptReferenceField } from './ReferenceFields.js';
 import { createDrawModeToggle, createMapControls } from './MapControls.js';
 
-const { colors } = theme;
+const { colors, media } = theme;
 
 export default class MapView extends AsyncView {
 	_loadOnConnect = true;
@@ -73,10 +73,10 @@ export default class MapView extends AsyncView {
 
 			s.id = 'map-view-root-style';
 			s.textContent = `
-				@media(min-width:768px){.map-view-root{flex-direction:row!important}}
+				@media ${media.wide}{.map-view-root{flex-direction:row!important}}
 
 				/* Mobile: bigger Leaflet zoom buttons */
-				@media(max-width:767px){
+				@media ${media.phone}{
 					.leaflet-control-zoom a {
 						width: 44px !important;
 						height: 44px !important;
