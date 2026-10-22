@@ -1,7 +1,7 @@
 import { FormDialog, Select } from '@vanilla-bean/components';
 import { makePropertiesEditor } from '../utils/PropertiesEditor';
 import { watchFormConflicts } from '../utils/watchFormConflicts.js';
-import { keepOpenIfFailed } from '../utils/keepOpenIfFailed';
+import { stayOpenFor } from '../utils/stayOpenFor';
 import { checkboxRow, emojiField } from './dialogParts';
 
 const COMMON_TYPES = [
@@ -117,10 +117,10 @@ export default class BuildingDialog extends FormDialog {
 				if (options.geometry && !isEdit) data.geometry = options.geometry;
 				if (isEdit) data.geometry = options.building.geometry;
 
-				return keepOpenIfFailed(await options.onSave?.(data));
+				return stayOpenFor(await options.onSave?.(data));
 			},
 			...(isEdit && {
-				onDelete: async () => keepOpenIfFailed(await options.onDelete?.(), 'Delete'),
+				onDelete: async () => stayOpenFor(await options.onDelete?.()),
 				confirmDelete: { header: `Delete "${options.building.name || 'this building'}"?` },
 			}),
 			...withoutCallbacks(options),

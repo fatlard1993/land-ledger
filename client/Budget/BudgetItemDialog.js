@@ -2,7 +2,7 @@ import { FormDialog, Component, Elem, Select, Button, theme } from '@vanilla-bea
 import { makePropertiesEditor } from '../utils/PropertiesEditor';
 import { toNum } from '../utils/format.js';
 import { watchFormConflicts } from '../utils/watchFormConflicts.js';
-import { keepOpenIfFailed } from '../utils/keepOpenIfFailed';
+import { stayOpenFor } from '../utils/stayOpenFor';
 
 const { colors } = theme;
 
@@ -110,7 +110,7 @@ export default class BudgetItemDialog extends FormDialog {
 				},
 			],
 			onSave: async d => {
-				return keepOpenIfFailed(
+				return stayOpenFor(
 					await options.onSave?.({
 						name: d.name,
 						type: typeSelect.value,
@@ -127,7 +127,7 @@ export default class BudgetItemDialog extends FormDialog {
 				);
 			},
 			...(isEdit && {
-				onDelete: async () => keepOpenIfFailed(await options.onDelete?.(), 'Delete'),
+				onDelete: async () => stayOpenFor(await options.onDelete?.()),
 				confirmDelete: { header: `Delete "${item.name || 'this budget item'}"?` },
 			}),
 			...withoutCallbacks(options),

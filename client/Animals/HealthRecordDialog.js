@@ -1,8 +1,8 @@
-import { Elem, FormDialog, Notify, parseDate, Select, theme } from '@vanilla-bean/components';
+import { Elem, FormDialog, parseDate, Select, theme } from '@vanilla-bean/components';
 
 import { createHealthRecord, updateHealthRecord, deleteHealthRecord } from '../api/animals';
 import { watchFormConflicts } from '../utils/watchFormConflicts.js';
-import { keepOpenIfFailed } from '../utils/keepOpenIfFailed';
+import { stayOpenFor } from '../utils/stayOpenFor';
 import { toDateOnly } from '../utils/dates';
 import { animalLabel } from './constants';
 
@@ -93,15 +93,11 @@ export default class HealthRecordDialog extends FormDialog {
 			...(!isNew && {
 				confirmDelete: { header: `Delete this ${rec.type || 'health'} record for ${animalLabel(animal)}?` },
 				onDelete: async () => {
-					try {
-						if (keepOpenIfFailed(await deleteHealthRecord(rec.id), 'Delete') === false) return false;
+					const stay = stayOpenFor(await deleteHealthRecord(rec.id));
 
-						options.onDelete?.();
-					} catch (err) {
-						new Notify({ type: 'error', textContent: err.message || 'Delete failed', timeout: 4000 });
+					if (stay !== undefined) return stay;
 
-						return false;
-					}
+					options.onDelete?.();
 				},
 			}),
 			...withoutCallbacks(options),
@@ -141,17 +137,12 @@ export default class HealthRecordDialog extends FormDialog {
 		);
 		data.animalId = options.animal?.id || options.animalId;
 
-		try {
-			const fn = isNew ? createHealthRecord : body => updateHealthRecord(id, body);
-			const result = await fn({ body: data });
+		const fn = isNew ? createHealthRecord : body => updateHealthRecord(id, body);
+		const result = await fn({ body: data });
+		const stay = stayOpenFor(result);
 
-			if (keepOpenIfFailed(result) === false) return false;
+		if (stay !== undefined) return stay;
 
-			options.onSave?.(result?.body);
-		} catch (err) {
-			new Notify({ type: 'error', textContent: err.message || 'Save failed', timeout: 4000 });
-
-			return false;
-		}
+		options.onSave?.(result?.body);
 	}
 }

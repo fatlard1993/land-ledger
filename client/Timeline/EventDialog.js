@@ -4,7 +4,7 @@ import { EVENT_CATEGORIES, categoryMeta } from '../eventCategories';
 import { FormLabel } from '../Layout';
 import { getFields } from '../api';
 import { makeCropCombobox } from '../Charts/cropCombobox';
-import { keepOpenIfFailed } from '../utils/keepOpenIfFailed';
+import { stayOpenFor } from '../utils/stayOpenFor';
 import { makePropertiesEditor } from '../utils/PropertiesEditor';
 import { toDateOnly } from '../utils/dates';
 import { buildHarvestSection } from './HarvestSection.js';
@@ -182,11 +182,11 @@ export default class EventDialog extends FormDialog {
 
 				if (!data) return false;
 
-				return keepOpenIfFailed(await options.onSave?.(data));
+				return stayOpenFor(await options.onSave?.(data));
 			},
 			...(isEdit &&
 				options.onDelete && {
-					onDelete: async () => keepOpenIfFailed(await options.onDelete(), 'Delete'),
+					onDelete: async () => stayOpenFor(await options.onDelete()),
 					confirmDelete: { header: 'Delete this event?' },
 				}),
 			...withoutCallbacks(options),

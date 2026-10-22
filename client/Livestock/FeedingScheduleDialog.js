@@ -4,7 +4,7 @@ import { toNum } from '../utils/format.js';
 import { watchFormConflicts } from '../utils/watchFormConflicts.js';
 
 import { getSupplies } from '../api';
-import { keepOpenIfFailed } from '../utils/keepOpenIfFailed';
+import { stayOpenFor } from '../utils/stayOpenFor';
 
 export const FEED_TYPES = [
 	'Hay — Grass',
@@ -117,7 +117,7 @@ export default class FeedingScheduleDialog extends FormDialog {
 				},
 			],
 			onSave: async d => {
-				return keepOpenIfFailed(
+				return stayOpenFor(
 					await options.onSave?.({
 						fieldId: options.fieldId || schedule.fieldId || '',
 						eventId: options.eventId || schedule.eventId || '',
@@ -131,7 +131,7 @@ export default class FeedingScheduleDialog extends FormDialog {
 				);
 			},
 			...(isEdit && {
-				onDelete: async () => keepOpenIfFailed(await options.onDelete?.(), 'Delete'),
+				onDelete: async () => stayOpenFor(await options.onDelete?.()),
 				confirmDelete: { header: `Delete the ${schedule.feedType || 'feeding'} schedule?` },
 			}),
 			...withoutCallbacks(options),

@@ -3,7 +3,7 @@ import { makePropertiesEditor } from '../utils/PropertiesEditor';
 
 import { getBuildings } from '../api';
 import { watchFormConflicts } from '../utils/watchFormConflicts.js';
-import { keepOpenIfFailed } from '../utils/keepOpenIfFailed';
+import { stayOpenFor } from '../utils/stayOpenFor';
 import { FormLabel } from '../Layout';
 
 const { colors } = theme;
@@ -125,7 +125,7 @@ export default class SupplyDialog extends FormDialog {
 				},
 			],
 			onSave: async d => {
-				return keepOpenIfFailed(
+				return stayOpenFor(
 					await options.onSave?.({
 						...d,
 						emoji: this._getEmoji?.() || '',
@@ -138,7 +138,7 @@ export default class SupplyDialog extends FormDialog {
 				);
 			},
 			...(isEdit && {
-				onDelete: async () => keepOpenIfFailed(await options.onDelete?.(), 'Delete'),
+				onDelete: async () => stayOpenFor(await options.onDelete?.()),
 				confirmDelete: { header: `Delete "${supply.name || 'this supply'}"?` },
 			}),
 			...withoutCallbacks(options),

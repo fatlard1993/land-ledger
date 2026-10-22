@@ -4,7 +4,7 @@ import { FormLabel } from '../Layout';
 import { makePropertiesEditor } from '../utils/PropertiesEditor';
 import { toNum } from '../utils/format.js';
 import { watchFormConflicts } from '../utils/watchFormConflicts.js';
-import { keepOpenIfFailed } from '../utils/keepOpenIfFailed';
+import { stayOpenFor } from '../utils/stayOpenFor';
 
 const { colors } = theme;
 
@@ -116,7 +116,7 @@ export default class MaintenanceScheduleDialog extends FormDialog {
 				},
 			],
 			onSave: async d => {
-				return keepOpenIfFailed(
+				return stayOpenFor(
 					await options.onSave?.({
 						equipmentId: equipment.id,
 						name: d.name,
@@ -130,7 +130,7 @@ export default class MaintenanceScheduleDialog extends FormDialog {
 				);
 			},
 			...(isEdit && {
-				onDelete: async () => keepOpenIfFailed(await options.onDelete?.(), 'Delete'),
+				onDelete: async () => stayOpenFor(await options.onDelete?.()),
 				confirmDelete: { header: `Delete the "${schedule.name || 'maintenance'}" schedule?` },
 			}),
 			...withoutCallbacks(options),

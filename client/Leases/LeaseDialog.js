@@ -1,5 +1,5 @@
 import { Button, Component, Elem, FormDialog, Input, parseDate, Select, styled, theme } from '@vanilla-bean/components';
-import { keepOpenIfFailed } from '../utils/keepOpenIfFailed';
+import { stayOpenFor } from '../utils/stayOpenFor';
 import { makePropertiesEditor } from '../utils/PropertiesEditor';
 import { FormLabel } from '../Layout';
 
@@ -111,10 +111,10 @@ export default class LeaseDialog extends FormDialog {
 			size: 'large',
 			header: isEdit ? 'Edit' : headerLabels[preRole] || 'Add Lease',
 			inputs: [],
-			onSave: async () => keepOpenIfFailed(await options.onSave?.(this._collect())),
+			onSave: async () => stayOpenFor(await options.onSave?.(this._collect())),
 			...(isEdit &&
 				options.onDelete && {
-					onDelete: async () => keepOpenIfFailed(await options.onDelete(), 'Delete'),
+					onDelete: async () => stayOpenFor(await options.onDelete()),
 					confirmDelete: { header: `Delete this ${preRole === 'loan' ? 'loan' : 'lease'}?` },
 				}),
 			...withoutCallbacks(options),

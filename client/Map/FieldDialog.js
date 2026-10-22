@@ -3,7 +3,7 @@ import { Button, FormDialog, Input, Select } from '@vanilla-bean/components';
 import { geodesicAreaSqm, convertArea, AREA_UNITS } from '../geo';
 import { makePropertiesEditor } from '../utils/PropertiesEditor';
 import { watchFormConflicts } from '../utils/watchFormConflicts.js';
-import { keepOpenIfFailed } from '../utils/keepOpenIfFailed';
+import { stayOpenFor } from '../utils/stayOpenFor';
 import { areaField, Caption, checkboxRow } from './dialogParts';
 
 const withoutCallbacks = ({ onSave: _onSave, onDelete: _onDelete, ...options }) => options;
@@ -55,10 +55,10 @@ export default class FieldDialog extends FormDialog {
 				if (options.geometry && !isEdit) data.geometry = options.geometry;
 				if (isEdit) data.geometry = options.field.geometry;
 
-				return keepOpenIfFailed(await options.onSave?.(data));
+				return stayOpenFor(await options.onSave?.(data));
 			},
 			...(isEdit && {
-				onDelete: async () => keepOpenIfFailed(await options.onDelete?.(), 'Delete'),
+				onDelete: async () => stayOpenFor(await options.onDelete?.()),
 				confirmDelete: { header: `Delete "${options.field.name || 'this field'}"?` },
 			}),
 			...withoutCallbacks(options),

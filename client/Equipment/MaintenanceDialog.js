@@ -3,7 +3,7 @@ import { Button, Component, Elem, FormDialog, Input, theme } from '@vanilla-bean
 import { makePropertiesEditor } from '../utils/PropertiesEditor';
 import { toNum } from '../utils/format.js';
 import { watchFormConflicts } from '../utils/watchFormConflicts.js';
-import { keepOpenIfFailed } from '../utils/keepOpenIfFailed';
+import { stayOpenFor } from '../utils/stayOpenFor';
 import { toDateOnly } from '../utils/dates';
 
 const { colors } = theme;
@@ -114,7 +114,7 @@ export default class MaintenanceDialog extends FormDialog {
 				},
 			],
 			onSave: async d => {
-				return keepOpenIfFailed(
+				return stayOpenFor(
 					await options.onSave?.({
 						equipmentId: equipment.id,
 						workType: this._workType,
@@ -129,7 +129,7 @@ export default class MaintenanceDialog extends FormDialog {
 				);
 			},
 			...(isEdit && {
-				onDelete: async () => keepOpenIfFailed(await options.onDelete?.(), 'Delete'),
+				onDelete: async () => stayOpenFor(await options.onDelete?.()),
 				confirmDelete: { header: `Delete this ${record.type || 'service'} record?` },
 			}),
 			...withoutCallbacks(options),

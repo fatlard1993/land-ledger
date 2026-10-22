@@ -1,10 +1,10 @@
-import { FormDialog, Select, Notify } from '@vanilla-bean/components';
+import { FormDialog, Select } from '@vanilla-bean/components';
 
 import { getFields } from '../api';
 import { createAnimal, updateAnimal, deleteAnimal } from '../api/animals';
 import { watchFormConflicts } from '../utils/watchFormConflicts.js';
+import { stayOpenFor } from '../utils/stayOpenFor';
 import { SPECIES } from './constants';
-import { keepOpenIfFailed } from '../utils/keepOpenIfFailed';
 
 const withoutCallbacks = ({ onSave: _onSave, onDelete: _onDelete, ...options }) => options;
 
@@ -110,15 +110,11 @@ export default class AnimalDialog extends FormDialog {
 			...(!isNew && {
 				confirmDelete: { header: `Delete "${rec.name || rec.tagId || 'this animal'}"?` },
 				onDelete: async () => {
-					try {
-						if (keepOpenIfFailed(await deleteAnimal(rec.id), 'Delete') === false) return false;
+					const stay = stayOpenFor(await deleteAnimal(rec.id));
 
-						options.onDelete?.();
-					} catch (err) {
-						new Notify({ type: 'error', textContent: err.message || 'Delete failed', timeout: 4000 });
+					if (stay !== undefined) return stay;
 
-						return false;
-					}
+					options.onDelete?.();
 				},
 			}),
 			...withoutCallbacks(options),
@@ -149,17 +145,12 @@ export default class AnimalDialog extends FormDialog {
 			Object.keys(this.form.inputElements).map(k => [k, this.form.inputElements[k].options.value]),
 		);
 
-		try {
-			const fn = isNew ? createAnimal : body => updateAnimal(id, body);
-			const result = await fn({ body: data });
+		const fn = isNew ? createAnimal : body => updateAnimal(id, body);
+		const result = await fn({ body: data });
+		const stay = stayOpenFor(result);
 
-			if (keepOpenIfFailed(result) === false) return false;
+		if (stay !== undefined) return stay;
 
-			options.onSave?.(result?.body);
-		} catch (err) {
-			new Notify({ type: 'error', textContent: err.message || 'Save failed', timeout: 4000 });
-
-			return false;
-		}
+		options.onSave?.(result?.body);
 	}
 }

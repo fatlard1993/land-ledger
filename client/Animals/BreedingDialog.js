@@ -1,8 +1,8 @@
-import { Elem, FormDialog, Notify, parseDate, Select, theme } from '@vanilla-bean/components';
+import { Elem, FormDialog, parseDate, Select, theme } from '@vanilla-bean/components';
 
 import { createBreedingRecord, updateBreedingRecord, deleteBreedingRecord } from '../api/animals';
 import { watchFormConflicts } from '../utils/watchFormConflicts.js';
-import { keepOpenIfFailed } from '../utils/keepOpenIfFailed';
+import { stayOpenFor } from '../utils/stayOpenFor';
 import { toDateOnly } from '../utils/dates';
 import { animalLabel, speciesMeta } from './constants';
 
@@ -100,15 +100,11 @@ export default class BreedingDialog extends FormDialog {
 			...(!isNew && {
 				confirmDelete: { header: `Delete this breeding record for ${animalLabel(dam)}?` },
 				onDelete: async () => {
-					try {
-						if (keepOpenIfFailed(await deleteBreedingRecord(rec.id), 'Delete') === false) return false;
+					const stay = stayOpenFor(await deleteBreedingRecord(rec.id));
 
-						options.onDelete?.();
-					} catch (err) {
-						new Notify({ type: 'error', textContent: err.message || 'Delete failed', timeout: 4000 });
+					if (stay !== undefined) return stay;
 
-						return false;
-					}
+					options.onDelete?.();
 				},
 			}),
 			...withoutCallbacks(options),
@@ -153,17 +149,12 @@ export default class BreedingDialog extends FormDialog {
 		);
 		data.damId = options.dam?.id || options.damId;
 
-		try {
-			const fn = isNew ? createBreedingRecord : body => updateBreedingRecord(id, body);
-			const result = await fn({ body: data });
+		const fn = isNew ? createBreedingRecord : body => updateBreedingRecord(id, body);
+		const result = await fn({ body: data });
+		const stay = stayOpenFor(result);
 
-			if (keepOpenIfFailed(result) === false) return false;
+		if (stay !== undefined) return stay;
 
-			options.onSave?.(result?.body);
-		} catch (err) {
-			new Notify({ type: 'error', textContent: err.message || 'Save failed', timeout: 4000 });
-
-			return false;
-		}
+		options.onSave?.(result?.body);
 	}
 }

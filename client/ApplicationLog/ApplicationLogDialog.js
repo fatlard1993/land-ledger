@@ -1,10 +1,10 @@
-import { FormDialog, Notify, Select, theme } from '@vanilla-bean/components';
+import { FormDialog, Select, theme } from '@vanilla-bean/components';
 
 import { getFields } from '../api';
 import { createApplicationLog, updateApplicationLog, deleteApplicationLog } from '../api/applicationLogs';
 import { watchFormConflicts } from '../utils/watchFormConflicts.js';
 import { toNum } from '../utils/format.js';
-import { keepOpenIfFailed } from '../utils/keepOpenIfFailed';
+import { stayOpenFor } from '../utils/stayOpenFor';
 import { toDateOnly } from '../utils/dates';
 
 const { colors } = theme;
@@ -219,17 +219,11 @@ export default class ApplicationLogDialog extends FormDialog {
 			...(!isNew && {
 				confirmDelete: { header: `Delete the ${rec.product || 'application'} record?` },
 				onDelete: async () => {
-					try {
-						if (keepOpenIfFailed(await deleteApplicationLog(rec.id), 'Delete') === false) return false;
+					const stay = stayOpenFor(await deleteApplicationLog(rec.id));
 
-						options.onDelete?.();
+					if (stay !== undefined) return stay;
 
-						return true;
-					} catch (err) {
-						new Notify({ type: 'error', textContent: err.message || 'Delete failed', timeout: 4000 });
-
-						return false;
-					}
+					options.onDelete?.();
 				},
 			}),
 			...withoutCallbacks(options),
@@ -295,26 +289,13 @@ export default class ApplicationLogDialog extends FormDialog {
 			notes: d.notes?.trim() || null,
 		};
 
-		try {
-			if (isNew) {
-				const result = await createApplicationLog({ body });
+		const result = isNew
+			? await createApplicationLog({ body })
+			: await updateApplicationLog(id, { body: { ...body, _v } });
+		const stay = stayOpenFor(result);
 
-				if (keepOpenIfFailed(result) === false) return false;
+		if (stay !== undefined) return stay;
 
-				options.onSave?.(result?.body);
-			} else {
-				const result = await updateApplicationLog(id, { body: { ...body, _v } });
-
-				if (keepOpenIfFailed(result) === false) return false;
-
-				options.onSave?.(result?.body);
-			}
-
-			return true;
-		} catch (err) {
-			new Notify({ type: 'error', textContent: err.message || 'Save failed', timeout: 4000 });
-
-			return false;
-		}
+		options.onSave?.(result?.body);
 	}
 }

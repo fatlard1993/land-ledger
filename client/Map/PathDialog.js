@@ -1,5 +1,5 @@
 import { Button, Elem, FormDialog, Input, Select } from '@vanilla-bean/components';
-import { keepOpenIfFailed } from '../utils/keepOpenIfFailed';
+import { stayOpenFor } from '../utils/stayOpenFor';
 import { makePropertiesEditor } from '../utils/PropertiesEditor';
 import { Caption, checkboxRow, emojiField } from './dialogParts';
 
@@ -56,10 +56,10 @@ export default class PathDialog extends FormDialog {
 			size: 'large',
 			header: isEdit ? `Edit Path — ${options.path.name || ''}` : 'Mark Path / Road',
 			inputs: [],
-			onSave: async () => keepOpenIfFailed(await options.onSave?.(this._collect())),
+			onSave: async () => stayOpenFor(await options.onSave?.(this._collect())),
 			...(isEdit &&
 				options.onDelete && {
-					onDelete: async () => keepOpenIfFailed(await options.onDelete(), 'Delete'),
+					onDelete: async () => stayOpenFor(await options.onDelete()),
 					confirmDelete: { header: `Delete "${options.path.name || 'this path'}"?` },
 				}),
 			...withoutCallbacks(options),

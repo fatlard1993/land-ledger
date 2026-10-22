@@ -1,6 +1,6 @@
 import { FormDialog, Select } from '@vanilla-bean/components';
 import { makePropertiesEditor } from '../utils/PropertiesEditor';
-import { keepOpenIfFailed } from '../utils/keepOpenIfFailed';
+import { stayOpenFor } from '../utils/stayOpenFor';
 import { checkboxRow, emojiField } from './dialogParts';
 
 const COMMON_TYPES = [
@@ -160,10 +160,10 @@ export default class EquipmentDialog extends FormDialog {
 					data.lng = options.item.lng;
 				}
 
-				return keepOpenIfFailed(await options.onSave?.(data));
+				return stayOpenFor(await options.onSave?.(data));
 			},
 			...(isEdit && {
-				onDelete: async () => keepOpenIfFailed(await options.onDelete?.(), 'Delete'),
+				onDelete: async () => stayOpenFor(await options.onDelete?.()),
 				confirmDelete: { header: `Delete "${options.item.name || 'this equipment'}"?` },
 			}),
 			...withoutCallbacks(options),

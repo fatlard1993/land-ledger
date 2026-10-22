@@ -10,11 +10,13 @@ import {
 	theme,
 } from '@vanilla-bean/components';
 
+import { failureReason } from '@vanilla-bean/hypertether';
+
 import { FormLabel } from '../Layout';
 import { makePropertiesEditor } from '../utils/PropertiesEditor';
 import { toNum } from '../utils/format.js';
 import { watchFormConflicts } from '../utils/watchFormConflicts.js';
-import { keepOpenIfFailed } from '../utils/keepOpenIfFailed';
+import { stayOpenFor } from '../utils/stayOpenFor';
 import { toDateOnly } from '../utils/dates';
 
 export const INCIDENT_TYPES = [
@@ -208,10 +210,10 @@ export default class IncidentDialog extends FormDialog {
 				{ key: 'resolved', label: 'Incident resolved / closed', type: 'checkbox' },
 			],
 			onSave: async d => {
-				return keepOpenIfFailed(await options.onSave?.(payloadFor(d, 'Save')));
+				return stayOpenFor(await options.onSave?.(payloadFor(d, 'Save')));
 			},
 			...(isEdit && {
-				onDelete: async () => keepOpenIfFailed(await options.onDelete?.(), 'Delete'),
+				onDelete: async () => stayOpenFor(await options.onDelete?.()),
 				confirmDelete: { header: `Delete this ${incident.type || 'incident'} report?` },
 			}),
 			// Mark Resolved is a button of this dialog's own; FormDialog passes it through
@@ -220,7 +222,10 @@ export default class IncidentDialog extends FormDialog {
 
 				const result = await options.onSave?.(payloadFor({ ...this.form.options.data }, 'Mark Resolved'));
 
-				if (keepOpenIfFailed(result, 'Mark Resolved') !== false) closeDialog();
+				const stay = stayOpenFor(result);
+
+				if (stay === undefined) closeDialog();
+				else if (stay) this.failure.elem.textContent = failureReason(stay);
 			},
 			...withoutCallbacks(options),
 		});
