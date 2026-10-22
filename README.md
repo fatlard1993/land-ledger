@@ -4,7 +4,13 @@
 
 No subscription. Your data stays on your machine.
 
-![Land Ledger map interface](docs/screenshot.png)
+![The map on satellite imagery with four fields drawn on it, and North Quarter's panel open: weather forecast, this season's events, field notes and per-acre economics](docs/screenshot.png)
+
+![The Timeline: a season's events across every field, newest first, with harvest yields and revenue](docs/timeline.png)
+
+![Financials: net worth from supplies, appraised equipment and property against outstanding loans, the recurring budget, and month-by-month income and expense](docs/financials.png)
+
+<img src="docs/quick-log.png" alt="Quick Log on a phone: GPS has placed the user in North Quarter, offering a field event, an application record or a quick note" width="300">
 
 ---
 
@@ -52,7 +58,7 @@ Pull up a field and see its acreage, who's renting it, what was planted last sea
 
 **Import** Import CSV or JSON files into any collection with a column mapper. Unmapped columns go into the free-form Properties bag automatically. Save column mappings as named templates for recurring sources (same lab, same platform). Import previously exported application records, soil tests, and supply inventory from any supported platform.
 
-**Export** Export any collection as CSV or GeoJSON (map features), or generate a full JSON backup of everything. Template-matched exports produce a CSV whose columns match a saved import mapping exactly — making the export → edit → re-import cycle seamless.
+**Export** Export any collection as CSV or GeoJSON (map features), or generate a full JSON backup of everything. Template-matched exports produce a CSV whose columns match a saved import mapping exactly — so an export can be edited and imported again.
 
 **Shared access links** Generate time-limited, read-only, scoped links for auditors, certifiers, lenders, and crop consultants. Pre-built templates for organic/GAP certification (application records + field history), regulatory audit, lender packages, and crop consultant access. Each link renders a printable HTML report — no login required, token is the auth. Revocable at any time.
 
@@ -79,7 +85,14 @@ There are no accounts, no sync, and no third-party services required for core fu
 
 ### Authentication
 
-Auth is disabled by default — all routes are open. Enable it from the Admin panel (👤 in the nav) to require a passkey to open the app. The Admin panel also manages:
+Auth is disabled by default — all routes are open. Turning it on requires a passkey to open the app. The first time, do it through the API: give the default `admin` account a new passkey (its first passkey is `admin`), then switch auth on:
+
+```bash
+curl -X PATCH localhost:7450/auth/accounts/admin -H 'Content-Type: application/json' -d '{"passkey":"<new passkey>"}'
+curl -X PATCH localhost:7450/auth/settings -H 'Content-Type: application/json' -d '{"authEnabled":true}'
+```
+
+Once auth is on and you sign in as an admin, **Admin** appears in the nav. The Admin panel turns auth back off and manages:
 
 - **Accounts** — name, passkey (bcrypt-hashed), and role flags (Admin / Financials / Farmhand)
 - **API tokens** — long-lived bearer tokens for external integrations (`Authorization: Bearer ll_live_...`)
@@ -187,7 +200,9 @@ The full API surface is documented at `GET /api` (no auth required). All routes 
 bun dev
 ```
 
-Client rebuilds on file changes, hot-reloads in browser. Terminal: `b` to force rebuild, `stop`/`exit`/`close` to quit.
+Client rebuilds on file changes, hot-reloads in browser. Terminal: `b` (or `build`) to force a rebuild, `stop` to quit.
+
+The server runs on the library's app server kit (`@vanilla-bean/components/app`): `serve` builds and serves the client and routes the API, `handleExit` flushes pending writes before the process ends, and `devConsole` reads those terminal commands. `bun run build` runs `client/build.js`, the kit's `buildClient` plus a step that stamps the service worker's cache name.
 
 ### Stack
 
@@ -195,6 +210,7 @@ Client rebuilds on file changes, hot-reloads in browser. Terminal: `b` to force 
 | --------------- | ------------------------------------------------------------------------------------- |
 | Runtime & build | [Bun](https://bun.sh)                                                                 |
 | Database        | [lowdb](https://github.com/typicode/lowdb) — local JSON, atomic writes via tmp→rename |
+| Data fetching   | [hypertether](https://github.com/fatlard1993/hypertether) — cached client resources   |
 | Frontend        | [vanilla-bean-components](https://github.com/fatlard1993/vanilla-bean-components)     |
 | Mapping         | [Leaflet](https://leafletjs.com) + [Leaflet-Geoman](https://geoman.io)                |
 | Geometry        | [Turf.js](https://turfjs.org)                                                         |
@@ -207,14 +223,14 @@ Client rebuilds on file changes, hot-reloads in browser. Terminal: `b` to force 
 
 **Archive DB** (`archive.js`, `YearArchiveAdapter`) — historical records split by year: events, maintenance, feedingLogs, revenue, incidents, applicationLogs, healthRecords, breedingRecords, precisionLayers. Each year is a separate file (`archive-2024.json`, `archive-2025.json`, …) loaded in parallel at startup. Only years that were actually modified during a session are written on flush — unmodified years are never touched.
 
-**Atomic writes** (`AtomicJSONFile`) — all databases write via `writeFile(path.tmp) → rename(path.tmp, path)`. POSIX `rename()` is atomic; a crash mid-write leaves the previous file untouched.
+**Atomic writes** (`jsonFile.js`) — all databases write through lowdb's steno writer: a temporary file, then `rename()` over the real one, one write per file at a time. POSIX `rename()` is atomic; a crash mid-write leaves the previous file untouched.
 
 ### Structure
 
 ```
 land-ledger/
 ├── client/
-│   ├── api/                     # HTTP client wrappers per collection
+│   ├── api/                     # HTTP client wrappers per collection (hypertether)
 │   ├── Admin/
 │   │   ├── AccountsDialog.js    # Auth toggle + account management
 │   │   ├── ShareLinksSection.js # Scoped read-only link management
@@ -238,11 +254,14 @@ land-ledger/
 │   │   ├── HarvestSection.js    # Harvest form fields (extracted from EventDialog)
 │   │   ├── CoverCropSection.js  # Cover crop form fields (extracted from EventDialog)
 │   │   └── Timeline.js          # Timeline view
-│   ├── Layout.js                # Shared styled components — FormLabel, FormInput, FormSelect, SectionHeader, Card, …
+│   ├── Layout.js                # Shared styled components — PageView, RecordCard, FieldPanel, DetailRow, FormLabel, …
+│   ├── build.js                 # Client build (the kit's buildClient + service worker)
 │   └── ...                      # Views: Todo, Financials, Leases, Supplies, etc.
 ├── server/
+│   ├── index.js                 # Flags, database init, then the kit's serve and devConsole
+│   ├── exit.js                  # handleExit: flush pending writes before the process ends
 │   ├── database/
-│   │   ├── AtomicJSONFile.js        # Crash-safe write adapter (tmp→rename)
+│   │   ├── jsonFile.js              # Crash-safe JSON writes (lowdb's steno: tmp→rename)
 │   │   ├── createDebouncedWriter.js # Shared debounce+flush utility
 │   │   ├── CollectionDB.js          # Per-collection in-memory store with debounced writes
 │   │   ├── YearArchiveAdapter.js    # Year-partitioned archive with dirty-year tracking
