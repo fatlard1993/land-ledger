@@ -6,7 +6,7 @@ import { watchFormConflicts } from '../utils/watchFormConflicts.js';
 import { stayOpenFor } from '../utils/stayOpenFor';
 import { FormLabel } from '../Layout';
 
-const { colors } = theme;
+const { colors, space } = theme;
 
 export const SUPPLY_CATEGORY_SUGGESTIONS = [
 	'Seed',
@@ -148,7 +148,7 @@ export default class SupplyDialog extends FormDialog {
 		const emojiRow = new Elem({
 			tag: 'div',
 			appendTo: this.intro,
-			style: { display: 'flex', alignItems: 'center', gap: '8px', margin: '8px 0' },
+			style: { display: 'flex', alignItems: 'center', gap: space.sm, margin: `${space.sm} 0` },
 		});
 
 		const emojiInput = new Input({
@@ -158,7 +158,7 @@ export default class SupplyDialog extends FormDialog {
 				maxlength: '4',
 				title: 'Tap to change emoji — auto-detected from category',
 			},
-			style: { fontSize: '22px', padding: '4px', width: '52px', textAlign: 'center', flexShrink: '0' },
+			style: { fontSize: '22px', padding: space.xs, width: '52px', textAlign: 'center', flexShrink: '0' },
 		});
 
 		emojiInput.elem.value = supply.emoji || detectSupplyEmoji(supply.category || '');
@@ -181,7 +181,7 @@ export default class SupplyDialog extends FormDialog {
 
 		// If no pre-set building, show a building selector
 		if (!options.buildingId) {
-			const bldgRow = new Elem({ tag: 'div', appendTo: this.intro, style: { marginBottom: '4px' } });
+			const bldgRow = new Elem({ tag: 'div', appendTo: this.intro, style: { marginBottom: space.xs } });
 
 			new FormLabel({ appendTo: bldgRow, textContent: 'Stored in building (optional)', style: { marginTop: '0' } });
 
@@ -231,16 +231,16 @@ export default class SupplyDialog extends FormDialog {
 		const pricingDiv = new Elem({
 			tag: 'div',
 			appendTo: this.body,
-			style: { marginTop: '12px', borderTop: `1px solid ${colors.border}`, paddingTop: '12px' },
+			style: { marginTop: space.md, borderTop: `1px solid ${colors.border}`, paddingTop: space.md },
 		});
 
-		new SectionLabel({ appendTo: pricingDiv, textContent: 'Sale Price', style: { margin: '0 0 8px' } });
+		new SectionLabel({ appendTo: pricingDiv, textContent: 'Sale Price', style: { margin: `0 0 ${space.sm}` } });
 
 		// Mode toggle
 		const modeRow = new Elem({
 			tag: 'div',
 			appendTo: pricingDiv,
-			style: { display: 'flex', gap: '6px', marginBottom: '8px' },
+			style: { display: 'flex', gap: space.sm, marginBottom: space.sm },
 		});
 
 		this._priceMode = supply.priceMode || 'markup';
@@ -261,7 +261,7 @@ export default class SupplyDialog extends FormDialog {
 		const markupWrap = new Elem({
 			tag: 'div',
 			appendTo: pricingDiv,
-			style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' },
+			style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: space.sm },
 		});
 
 		const markupLabelStyle = { marginTop: '0' };

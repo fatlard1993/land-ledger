@@ -26,17 +26,18 @@ import context from '../context';
 import { PageView, RecordCard } from '../Layout';
 import { feedIcon } from '../utils/icons';
 import FeedingScheduleDialog, { frequencyLabel } from '../Livestock/FeedingScheduleDialog';
+import { IconText } from '../statusIcons';
 
 const { colors } = theme;
 
 const TitleRow = styled(
 	Component,
-	() => `
+	({ space }) => `
 		display: flex;
 		justify-content: space-between;
 		align-items: flex-start;
-		gap: 8px;
-		margin-bottom: 4px;
+		gap: ${space.sm};
+		margin-bottom: ${space.xs};
 	`,
 );
 
@@ -53,11 +54,11 @@ const Frequency = styled(
 // One feeding in the log: what was fed, where and when, and a way to strike it
 const LogRow = styled(
 	Component,
-	({ colors }) => `
+	({ colors, space }) => `
 		display: flex;
 		align-items: center;
-		gap: 8px;
-		padding: 5px 0;
+		gap: ${space.sm};
+		padding: ${space.sm} 0;
 		border-bottom: 1px solid ${colors.border};
 		font-size: 12px;
 
@@ -199,7 +200,7 @@ export default class Feeding extends AsyncView {
 						appendTo: meta,
 						textContent: `${schedule.amountPerHead} ${schedule.amountUnit || 'lbs/hd'}`,
 					});
-				if (supply) new Elem({ tag: 'span', appendTo: meta, textContent: `📦 ${supply.name}` });
+				if (supply) new IconText({ tag: 'span', appendTo: meta, icon: 'box', textContent: supply.name });
 			}
 		}
 

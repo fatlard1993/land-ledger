@@ -14,6 +14,7 @@ import FeedingScheduleDialog from '../Livestock/FeedingScheduleDialog';
 import { ActionHeader, FormLabel } from '../Layout';
 import { daysAgoLabel, toDateOnly } from '../utils/dates';
 import { feedIcon } from '../utils/icons';
+import { IconText } from '../statusIcons';
 import {
 	EmptyNote,
 	HeaderActions,
@@ -174,8 +175,14 @@ export async function renderFeedingSection(field, livestockEvents, refresh, cont
 			const meta = [];
 			if (schedule.amountPerHead) meta.push(`${schedule.amountPerHead} ${schedule.amountUnit || 'lbs/hd'}`);
 			if (schedule.frequency) meta.push(frequencyLabel(schedule.frequency));
-			if (supply) meta.push(`📦 ${supply.name}`);
-			if (meta.length) new RowMeta({ appendTo: info, textContent: meta.join(' · ') });
+			if (meta.length || supply) {
+				const metaRow = new RowMeta({ appendTo: info, textContent: meta.join(' · ') });
+
+				if (supply) {
+					if (meta.length) metaRow.elem.append(' · ');
+					new IconText({ tag: 'span', appendTo: metaRow, icon: 'box', textContent: supply.name });
+				}
+			}
 
 			if (lastLog) {
 				new RowMeta({

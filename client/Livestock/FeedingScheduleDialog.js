@@ -1,10 +1,12 @@
-import { FormDialog, Select } from '@vanilla-bean/components';
+import { FormDialog, Select, theme } from '@vanilla-bean/components';
 import { makePropertiesEditor } from '../utils/PropertiesEditor';
 import { toNum } from '../utils/format.js';
 import { watchFormConflicts } from '../utils/watchFormConflicts.js';
 
 import { getSupplies } from '../api';
 import { stayOpenFor } from '../utils/stayOpenFor';
+
+const { space } = theme;
 
 export const FEED_TYPES = [
 	'Hay — Grass',
@@ -85,7 +87,7 @@ export default class FeedingScheduleDialog extends FormDialog {
 				},
 				{
 					type: 'group',
-					style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' },
+					style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: space.sm },
 					inputs: [
 						{
 							key: 'amountPerHead',

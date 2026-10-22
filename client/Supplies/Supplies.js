@@ -19,18 +19,19 @@ import { PageView } from '../Layout';
 
 import TabularImportDialog from '../Import/TabularImportDialog';
 import ExportDialog from '../Export/ExportDialog';
+import { IconText } from '../statusIcons';
 import SupplyDialog, { detectSupplyEmoji } from './SupplyDialog';
 
 const format = n => n?.toFixed?.(2) ?? '0.00';
 
-const { colors } = theme;
+const { colors, space } = theme;
 
 const InventoryCard = styled(
 	Card,
-	({ colors }) => `
+	({ colors, space }) => `
 		display: flex;
 		align-items: center;
-		gap: 10px;
+		gap: ${space.md};
 
 		& .supply-name { font-size: 14px; font-weight: 600; color: ${colors.white}; flex: 1; }
 		& .supply-meta { font-size: 12px; color: ${colors.muted}; }
@@ -113,7 +114,7 @@ export default class Supplies extends AsyncView {
 
 		const summary = new Card({
 			appendTo: this.content,
-			style: { display: 'flex', flexWrap: 'wrap', gap: '10px', fontSize: '12px' },
+			style: { display: 'flex', flexWrap: 'wrap', gap: space.md, fontSize: '12px' },
 		});
 
 		new Elem({
@@ -146,7 +147,11 @@ export default class Supplies extends AsyncView {
 		for (const [cat, items] of [...grouped.entries()].sort((a, b) => a[0].localeCompare(b[0]))) {
 			const catEmoji = detectSupplyEmoji(cat);
 
-			new SectionLabel({ appendTo: this.content, style: { margin: '8px 0 0' }, textContent: `${catEmoji} ${cat}` });
+			new SectionLabel({
+				appendTo: this.content,
+				style: { margin: `${space.sm} 0 0` },
+				textContent: `${catEmoji} ${cat}`,
+			});
 
 			for (const supply of items) {
 				const building = this.buildings?.body?.[supply.buildingId];
@@ -185,7 +190,7 @@ export default class Supplies extends AsyncView {
 
 				new Elem({ tag: 'div', appendTo: info, addClass: 'supply-name', textContent: supply.name });
 
-				const metaLine = new Component({ appendTo: info, style: { display: 'flex', gap: '8px', flexWrap: 'wrap' } });
+				const metaLine = new Component({ appendTo: info, style: { display: 'flex', gap: space.sm, flexWrap: 'wrap' } });
 
 				if (supply.costPerUnit) {
 					new Elem({
@@ -197,7 +202,13 @@ export default class Supplies extends AsyncView {
 				}
 
 				if (building) {
-					new Elem({ tag: 'span', appendTo: metaLine, addClass: 'supply-meta', textContent: `📍 ${building.name}` });
+					new IconText({
+						tag: 'span',
+						appendTo: metaLine,
+						addClass: 'supply-meta',
+						icon: 'location-dot',
+						textContent: building.name,
+					});
 				}
 
 				if (supply.currentStock) {
