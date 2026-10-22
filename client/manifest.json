@@ -1,0 +1,12 @@
+{
+	"name": "Land Ledger",
+	"short_name": "Land Ledger",
+	"description": "Farm field and lease management",
+	"lang": "en-US",
+	"orientation": "any",
+	"display": "standalone",
+	"theme_color": "#333333",
+	"background_color": "#1b1b1b",
+	"start_url": ".",
+	"icons": [{ "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }]
+}

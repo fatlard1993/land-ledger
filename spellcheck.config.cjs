@@ -1,6 +1,7 @@
 module.exports = {
 	skipWords: [
 		'localhost',
+		'favicon',
 		'nanoid',
 		'argi',
 		'os',
