@@ -89,7 +89,8 @@ function openShareForm(container, { onRefresh }) {
 
 	const dateRangeRow = new Elem({
 		tag: 'div',
-		style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginBottom: '4px' },
+		// minmax(0, …): a plain 1fr won't go below a date input's intrinsic width, which is wider than half a phone
+		style: { display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '8px', marginBottom: '4px' },
 		appendTo: form,
 	});
 
