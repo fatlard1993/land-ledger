@@ -40,7 +40,7 @@ const formatMoney = n => {
 	return n < 0 ? `-${str}` : str;
 };
 
-const { colors } = theme;
+const { colors, radius, space } = theme;
 
 // Gains read green, losses red, nothing at all quiet
 const signColor = n => {
@@ -50,15 +50,15 @@ const signColor = n => {
 	return colors.gray;
 };
 
-const CardLabel = styled(SectionLabel, () => 'margin: 0 0 10px;');
+const CardLabel = styled(SectionLabel, ({ space }) => `margin: 0 0 ${space.md};`);
 
 const BarRow = styled(
 	Component,
-	() => `
+	({ space }) => `
 		display: flex;
 		align-items: center;
-		gap: 8px;
-		margin-bottom: 6px;
+		gap: ${space.sm};
+		margin-bottom: ${space.sm};
 	`,
 );
 
@@ -78,11 +78,11 @@ const BarLabel = styled(
 
 const Track = styled(
 	Component,
-	({ colors }) => `
+	({ colors, radius }) => `
 		flex: 1;
 		height: 6px;
 		overflow: hidden;
-		border-radius: 3px;
+		border-radius: ${radius.sm};
 		background: ${colors.alpha(colors.white, 0.05)};
 
 		&.thin {
@@ -113,11 +113,11 @@ const Amount = styled(
 // A label and its amount, at either end of a line
 const AmountRow = styled(
 	Component,
-	({ colors }) => `
+	({ colors, space }) => `
 		display: flex;
 		justify-content: space-between;
-		gap: 8px;
-		padding: 2px 0;
+		gap: ${space.sm};
+		padding: ${space.xs} 0;
 		font-size: 12px;
 
 		& > :first-child {
@@ -128,8 +128,8 @@ const AmountRow = styled(
 
 const Note = styled(
 	Component,
-	({ colors }) => `
-		margin-top: 8px;
+	({ colors, space }) => `
+		margin-top: ${space.sm};
 		font-size: 10px;
 		color: ${colors.gray};
 	`,
@@ -149,15 +149,15 @@ const TableScroll = styled(
 
 const GridRow = styled(
 	Component,
-	({ colors }) => `
+	({ colors, space }) => `
 		display: grid;
 		align-items: center;
-		gap: 6px;
-		padding: 7px 0;
+		gap: ${space.sm};
+		padding: ${space.sm} 0;
 		border-bottom: 1px solid ${colors.border};
 
 		&.head {
-			padding: 2px 0 6px;
+			padding: ${space.xs} 0 ${space.sm};
 			font-size: 10px;
 			letter-spacing: 0.06em;
 			text-transform: uppercase;
@@ -353,7 +353,7 @@ export default class Financials extends AsyncView {
 			const nwCard = new Card({ appendTo: this.content });
 			const nwHeader = new Component({
 				appendTo: nwCard,
-				style: { display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '8px' },
+				style: { display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: space.sm },
 			});
 
 			new CardLabel({ appendTo: nwHeader, style: { margin: '0' }, textContent: 'Net Worth Snapshot' });
@@ -387,7 +387,7 @@ export default class Financials extends AsyncView {
 			if (loanEquity.length) {
 				new SectionLabel({
 					appendTo: nwCard,
-					style: { margin: '8px 0 4px', paddingTop: '8px', borderTop: `1px solid ${colors.border}` },
+					style: { margin: `${space.sm} 0 ${space.xs}`, paddingTop: space.sm, borderTop: `1px solid ${colors.border}` },
 					textContent: 'Equity by Asset',
 				});
 
@@ -415,7 +415,7 @@ export default class Financials extends AsyncView {
 		const monthCard = new Card({ appendTo: this.content });
 		const monthHeader = new Component({
 			appendTo: monthCard,
-			style: { display: 'flex', justifyContent: 'space-between', marginBottom: '8px' },
+			style: { display: 'flex', justifyContent: 'space-between', marginBottom: space.sm },
 		});
 
 		new CardLabel({
@@ -441,7 +441,7 @@ export default class Financials extends AsyncView {
 			for (const m of monthsWithData) {
 				const mRow = new Component({
 					appendTo: monthCard,
-					style: { display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '5px' },
+					style: { display: 'flex', alignItems: 'center', gap: space.sm, marginBottom: space.sm },
 				});
 
 				new Elem({
@@ -453,7 +453,7 @@ export default class Financials extends AsyncView {
 
 				const barArea = new Component({
 					appendTo: mRow,
-					style: { flex: '1', display: 'flex', flexDirection: 'column', gap: '2px' },
+					style: { flex: '1', display: 'flex', flexDirection: 'column', gap: space.xs },
 				});
 
 				if (m.income) {
@@ -486,13 +486,19 @@ export default class Financials extends AsyncView {
 			}
 
 			// Legend
-			const legend = new Component({ appendTo: monthCard, style: { display: 'flex', gap: '12px', marginTop: '6px' } });
+			const legend = new Component({
+				appendTo: monthCard,
+				style: { display: 'flex', gap: space.md, marginTop: space.sm },
+			});
 
 			[
 				[colors.success, 'Income'],
 				[colors.warning, 'Expense'],
 			].forEach(([color, label]) => {
-				const item = new Component({ appendTo: legend, style: { display: 'flex', alignItems: 'center', gap: '4px' } });
+				const item = new Component({
+					appendTo: legend,
+					style: { display: 'flex', alignItems: 'center', gap: space.xs },
+				});
 
 				new Elem({
 					tag: 'div',
@@ -744,7 +750,7 @@ export default class Financials extends AsyncView {
 
 		new CardLabel({ appendTo: matCard, textContent: 'Season Comparison — Net P/L by Field' });
 
-		const columns = { gridTemplateColumns: `150px ${years.map(() => '1fr').join(' ')}`, gap: '4px' };
+		const columns = { gridTemplateColumns: `150px ${years.map(() => '1fr').join(' ')}`, gap: space.xs };
 		const table = new Component({ appendTo: new TableScroll({ appendTo: matCard }) });
 		const header = new GridRow({ appendTo: table, addClass: 'head', style: columns });
 
@@ -763,7 +769,7 @@ export default class Financials extends AsyncView {
 			const ac = this._acreageFor(field.id);
 			const rent = rentByField[field.id] || 0;
 			const fData = econByField[field.id] || [];
-			const row = new GridRow({ appendTo: table, style: { ...columns, padding: '6px 0' } });
+			const row = new GridRow({ appendTo: table, style: { ...columns, padding: `${space.sm} 0` } });
 
 			new RowName({ appendTo: row, style: { fontSize: '12px' }, textContent: field.name || 'Field' });
 
@@ -790,8 +796,8 @@ export default class Financials extends AsyncView {
 						fontWeight: '600',
 						color: signColor(net),
 						background: bg,
-						borderRadius: '4px',
-						padding: '2px 4px',
+						borderRadius: radius.sm,
+						padding: `${space.xs} ${space.xs}`,
 					},
 					textContent: formatMoney(net),
 				});
@@ -827,7 +833,7 @@ export default class Financials extends AsyncView {
 
 		const budgetRow = new Component({
 			appendTo: budgetCard,
-			style: { display: 'flex', gap: '16px', marginBottom: '10px', flexWrap: 'wrap' },
+			style: { display: 'flex', gap: space.lg, marginBottom: space.md, flexWrap: 'wrap' },
 		});
 
 		if (budgetInc)
@@ -861,11 +867,11 @@ export default class Financials extends AsyncView {
 		]) {
 			if (!items.length) continue;
 
-			new SectionLabel({ appendTo: budgetCard, style: { margin: '8px 0 2px' }, textContent: label });
+			new SectionLabel({ appendTo: budgetCard, style: { margin: `${space.sm} 0 ${space.xs}` }, textContent: label });
 
 			for (const b of items.sort((a, z) => annualAmount(z) - annualAmount(a))) {
 				const freq = FREQUENCIES.find(f => f.value === b.frequency);
-				const row = new AmountRow({ appendTo: budgetCard, style: { padding: '3px 0' } });
+				const row = new AmountRow({ appendTo: budgetCard, style: { padding: `${space.xs} 0` } });
 				const nameText = b.entityName ? `${b.name} (${b.entityName})` : b.name;
 
 				new Elem({ tag: 'span', appendTo: row, style: { color: colors.muted }, textContent: nameText });

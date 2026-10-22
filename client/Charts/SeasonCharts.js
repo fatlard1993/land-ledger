@@ -15,7 +15,7 @@ Chart.register(...registerables);
 
 const isPreSeason = p => p.timing !== 'post-harvest' && p.timing !== 'fall';
 
-const { colors } = theme;
+const { colors, space } = theme;
 
 // Chart.js draws on a canvas and reads its colors as strings
 const css = color => color.toRgbString();
@@ -90,7 +90,7 @@ export default class SeasonCharts extends Component {
 			new Elem({
 				tag: 'p',
 				appendTo: this,
-				style: { fontSize: '12px', color: colors.gray, textAlign: 'center', padding: '12px 0' },
+				style: { fontSize: '12px', color: colors.gray, textAlign: 'center', padding: `${space.md} 0` },
 				textContent: 'Need data from at least 2 seasons to show trends',
 			});
 
@@ -278,7 +278,7 @@ export default class SeasonCharts extends Component {
 			new Elem({
 				tag: 'div',
 				appendTo: wrap,
-				style: { fontSize: '11px', color: colors.gray, marginBottom: '4px', marginTop: '8px' },
+				style: { fontSize: '11px', color: colors.gray, marginBottom: space.xs, marginTop: space.sm },
 				textContent: title,
 			});
 

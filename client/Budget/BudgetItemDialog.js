@@ -4,7 +4,7 @@ import { toNum } from '../utils/format.js';
 import { watchFormConflicts } from '../utils/watchFormConflicts.js';
 import { stayOpenFor } from '../utils/stayOpenFor';
 
-const { colors } = theme;
+const { colors, space } = theme;
 
 export const FREQUENCIES = [
 	{ value: 'daily', label: 'Daily', multiplier: 365 },
@@ -81,7 +81,7 @@ export default class BudgetItemDialog extends FormDialog {
 				},
 				{
 					type: 'group',
-					style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' },
+					style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: space.sm },
 					inputs: [
 						{
 							key: 'amount',
@@ -102,7 +102,7 @@ export default class BudgetItemDialog extends FormDialog {
 				},
 				{
 					type: 'group',
-					style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' },
+					style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: space.sm },
 					inputs: [
 						{ key: 'startDate', label: 'Start Date (optional)', type: 'date' },
 						{ key: 'endDate', label: 'End Date (optional)', type: 'date' },
@@ -136,7 +136,7 @@ export default class BudgetItemDialog extends FormDialog {
 		// Type toggle
 		const typeRow = new Component({
 			appendTo: this.intro,
-			style: { display: 'flex', gap: '6px', marginBottom: '4px' },
+			style: { display: 'flex', gap: space.sm, marginBottom: space.xs },
 		});
 		const makeType = (icon, label, value) => {
 			const btn = new Button({
@@ -173,7 +173,7 @@ export default class BudgetItemDialog extends FormDialog {
 
 		const preview = new Elem({
 			tag: 'div',
-			style: { fontSize: '11px', color: colors.gray, marginTop: '6px' },
+			style: { fontSize: '11px', color: colors.gray, marginTop: space.sm },
 		});
 
 		const updatePreview = () => {
@@ -196,7 +196,7 @@ export default class BudgetItemDialog extends FormDialog {
 		if (options.entity) {
 			new Elem({
 				tag: 'div',
-				style: { fontSize: '11px', color: colors.gray, marginTop: '10px' },
+				style: { fontSize: '11px', color: colors.gray, marginTop: space.md },
 				textContent: `Linked to: ${options.entity.name || options.entityType}`,
 				appendTo: this.body,
 			});
