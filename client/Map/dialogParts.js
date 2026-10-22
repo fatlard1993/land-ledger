@@ -1,14 +1,16 @@
-import { Component, Input, Select, styled } from '@vanilla-bean/components';
+import { Component, Input, Select, styled, theme } from '@vanilla-bean/components';
 
 import { AREA_UNITS } from '../geo';
+
+const { space } = theme;
 
 // The pieces the map's hand-built entity dialogs share
 
 export const Caption = styled(
 	Component,
-	({ colors }) => `
+	({ colors, space }) => `
 		display: block;
-		margin: 10px 0 4px;
+		margin: ${space.md} 0 ${space.xs};
 		font-size: 13px;
 		color: ${colors.muted};
 	`,
@@ -36,7 +38,7 @@ const Row = styled(
 // One field's frame around the size, its unit and the recalculate button
 const AreaFrame = styled(
 	Component,
-	({ colors, radius }) => `
+	({ colors, radius, space }) => `
 		display: flex;
 		align-items: center;
 		overflow: hidden;
@@ -61,14 +63,14 @@ const AreaFrame = styled(
 
 		& input {
 			flex: 1;
-			padding: 8px 10px;
+			padding: ${space.sm} ${space.md};
 			font-size: 16px;
 		}
 
 		& select {
 			flex-shrink: 0;
 			width: 54px;
-			padding: 8px 4px;
+			padding: ${space.sm} ${space.xs};
 			border-left: 1px solid ${colors.border};
 			font-size: 13px;
 			cursor: pointer;
@@ -78,7 +80,7 @@ const AreaFrame = styled(
 			flex-shrink: 0;
 			border-radius: 0;
 			border-left: 1px solid ${colors.border};
-			padding: 8px 10px;
+			padding: ${space.sm} ${space.md};
 			font-size: 13px;
 		}
 	`,
@@ -130,7 +132,7 @@ export const areaField = (appendTo, { estimate, unit }) => {
  */
 export const checkboxRow = (appendTo, { label, checked, style }) => {
 	const id = `lbl-${Math.random().toString(36).slice(2)}`;
-	const row = new Row({ appendTo, style: { marginTop: '12px', ...style } });
+	const row = new Row({ appendTo, style: { marginTop: space.md, ...style } });
 	const checkbox = new Input({ appendTo: row, attributes: { type: 'checkbox', id } });
 
 	checkbox.elem.checked = checked;
@@ -152,14 +154,14 @@ export const checkboxRow = (appendTo, { label, checked, style }) => {
  * @returns {Input} The emoji input; its dataset.manual is set once the user types in it
  */
 export const emojiField = (appendTo, value) => {
-	const row = new Row({ appendTo, style: { margin: '8px 0' } });
+	const row = new Row({ appendTo, style: { margin: `${space.sm} 0` } });
 
 	const input = new Input({
 		appendTo: row,
 		type: 'text',
 		value,
 		attributes: { maxlength: '4', title: 'Tap to change emoji — auto-detected from type' },
-		style: { width: '52px', padding: '4px', flexShrink: '0', fontSize: '22px', textAlign: 'center' },
+		style: { width: '52px', padding: space.xs, flexShrink: '0', fontSize: '22px', textAlign: 'center' },
 	});
 
 	const hint = new Hint({ appendTo: row, textContent: 'Auto-detected · tap to change' });
@@ -175,8 +177,8 @@ export const emojiField = (appendTo, value) => {
 // Where a file is dropped or tapped to browse
 export const DropZone = styled(
 	Component,
-	({ colors, radius }) => `
-		margin: 8px 0;
+	({ colors, radius, space }) => `
+		margin: ${space.sm} 0;
 		padding: 28px 16px;
 		border: 2px dashed ${colors.gray};
 		border-radius: ${radius.lg};
@@ -191,12 +193,12 @@ export const DropZone = styled(
 		}
 
 		& .drop-icon {
-			margin-bottom: 8px;
+			margin-bottom: ${space.sm};
 			font-size: 32px;
 		}
 
 		& .drop-sub {
-			margin-top: 4px;
+			margin-top: ${space.xs};
 			font-size: 12px;
 		}
 	`,
@@ -205,16 +207,16 @@ export const DropZone = styled(
 // The features a file holds, listed before they're imported
 export const PreviewList = styled(
 	Component,
-	({ colors, radius }) => `
+	({ colors, radius, space }) => `
 		max-height: 200px;
 		overflow-y: auto;
-		margin-bottom: 10px;
+		margin-bottom: ${space.md};
 		border: 1px solid ${colors.border};
 		border-radius: ${radius.md};
 		font-size: 12px;
 
 		& > * {
-			padding: 5px 10px;
+			padding: ${space.sm} ${space.md};
 			border-bottom: 1px solid ${colors.border};
 		}
 
@@ -228,8 +230,8 @@ export const PreviewList = styled(
 
 export const Lead = styled(
 	Component,
-	({ colors }) => `
-		margin: 0 0 8px;
+	({ colors, space }) => `
+		margin: 0 0 ${space.sm};
 		font-size: 13px;
 		color: ${colors.gray};
 	`,

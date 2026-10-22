@@ -26,7 +26,7 @@ import {
 	SubLabel,
 } from './panelParts';
 
-const { colors } = theme;
+const { colors, space } = theme;
 
 export function openTreatDialog(field, totalHead, refresh) {
 	const dialog = new Dialog({
@@ -76,7 +76,7 @@ export function openTreatDialog(field, totalHead, refresh) {
 	});
 
 	const rowEl = new Component({
-		style: { display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px' },
+		style: { display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: space.sm },
 		appendTo: dialog.body,
 	});
 
@@ -243,7 +243,7 @@ export async function renderFeedingSection(field, livestockEvents, refresh, cont
 	for (const log of recentLogs) {
 		const row = new RowMeta({
 			appendTo: container,
-			style: { display: 'flex', gap: '7px', padding: '3px 0', color: colors.muted, alignItems: 'center' },
+			style: { display: 'flex', gap: space.sm, padding: `${space.xs} 0`, color: colors.muted, alignItems: 'center' },
 		});
 
 		new Icon({

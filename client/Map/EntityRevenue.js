@@ -8,12 +8,12 @@ import { FormLabel } from '../Layout';
 import { toDateOnly } from '../utils/dates';
 import { SubLabel } from './panelParts';
 
-const { colors } = theme;
+const { colors, space } = theme;
 
 const DialogNote = styled(
 	Component,
-	({ colors }) => `
-		margin: 0 0 4px;
+	({ colors, space }) => `
+		margin: 0 0 ${space.xs};
 		font-size: 13px;
 		color: ${colors.gray};
 	`,
@@ -22,9 +22,9 @@ const DialogNote = styled(
 
 const Preview = styled(
 	Component,
-	({ colors }) => `
+	({ colors, space }) => `
 		min-height: 16px;
-		margin-top: 6px;
+		margin-top: ${space.sm};
 		font-size: 12px;
 		color: ${colors.light(colors.success)};
 	`,
@@ -147,7 +147,7 @@ export function openRevenueDialog(entityType, entity, existingRecord, onSave, on
 	// Amount + Date
 	const row = new Component({
 		appendTo: dialog.body,
-		style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' },
+		style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: space.sm },
 	});
 
 	new FormLabel({ appendTo: row, textContent: 'Amount ($)' });
@@ -168,7 +168,7 @@ export function openRevenueDialog(entityType, entity, existingRecord, onSave, on
 	if (!existingRecord) {
 		const divider = new Component({
 			appendTo: dialog.body,
-			style: { borderTop: `1px solid ${colors.border}`, marginTop: '14px', paddingTop: '12px' },
+			style: { borderTop: `1px solid ${colors.border}`, marginTop: space.md, paddingTop: space.md },
 		});
 
 		const inventoryHeaderRow = new Component({
@@ -177,8 +177,8 @@ export function openRevenueDialog(entityType, entity, existingRecord, onSave, on
 				display: 'flex',
 				justifyContent: 'space-between',
 				alignItems: 'center',
-				gap: '8px',
-				marginBottom: '8px',
+				gap: space.sm,
+				marginBottom: space.sm,
 			},
 		});
 
@@ -245,9 +245,9 @@ export function openRevenueDialog(entityType, entity, existingRecord, onSave, on
 				style: {
 					display: 'grid',
 					gridTemplateColumns: '2fr 70px 70px 28px',
-					gap: '4px',
+					gap: space.xs,
 					alignItems: 'center',
-					marginBottom: '4px',
+					marginBottom: space.xs,
 				},
 			});
 

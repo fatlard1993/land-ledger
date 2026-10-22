@@ -1,8 +1,9 @@
 import { Button, Card, Component, Dialog, Elem, Icon, Input, theme } from '@vanilla-bean/components';
 
+import { IconText } from '../statusIcons';
 import { DropZone, Lead, PreviewList } from './dialogParts';
 
-const { colors } = theme;
+const { colors, space } = theme;
 
 export default class ParcelImportDialog extends Dialog {
 	constructor(options = {}) {
@@ -22,13 +23,13 @@ export default class ParcelImportDialog extends Dialog {
 		const guide = new Card({
 			appendTo: this.body,
 			accent: colors.orange,
-			style: { marginBottom: '12px', fontSize: '12px', color: colors.muted },
+			style: { marginBottom: space.md, fontSize: '12px', color: colors.muted },
 		});
 
 		new Elem({
 			tag: 'div',
 			appendTo: guide,
-			style: { fontWeight: '600', color: colors.light(colors.orange), marginBottom: '4px' },
+			style: { fontWeight: '600', color: colors.light(colors.orange), marginBottom: space.xs },
 			textContent: "Finding your county's parcel data:",
 		});
 		new Elem({ tag: 'div', appendTo: guide, textContent: '1. Search "[county name] GIS open data parcels"' });
@@ -37,7 +38,7 @@ export default class ParcelImportDialog extends Dialog {
 		new Elem({
 			tag: 'div',
 			appendTo: guide,
-			style: { marginTop: '4px' },
+			style: { marginTop: space.xs },
 			textContent: '→ Accepts .geojson, .json files (Shapefile: convert at mapshaper.org first)',
 		});
 
@@ -102,7 +103,7 @@ export default class ParcelImportDialog extends Dialog {
 		new Elem({
 			tag: 'p',
 			appendTo: this._preview,
-			style: { fontSize: '13px', margin: '12px 0 6px' },
+			style: { fontSize: '13px', margin: `${space.md} 0 ${space.sm}` },
 			textContent: `Found ${features.length} polygon${features.length !== 1 ? 's' : ''} — they will be saved as property lines:`,
 		});
 
@@ -113,7 +114,7 @@ export default class ParcelImportDialog extends Dialog {
 			const name =
 				p.name || p.NAME || p.OWNER || p.OWNER_NAME || p.APN || p.PARCEL_ID || p.PARCELID || `Parcel ${i + 1}`;
 
-			new Elem({ tag: 'div', appendTo: list, textContent: `📐 ${name}` });
+			new IconText({ tag: 'div', appendTo: list, icon: 'ruler-combined', textContent: name });
 		}
 
 		if (features.length > 20) {

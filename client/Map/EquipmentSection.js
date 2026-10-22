@@ -28,7 +28,7 @@ import {
 	SubLabel,
 } from './panelParts';
 
-const { colors } = theme;
+const { colors, space } = theme;
 
 export async function renderMaintenanceSection(equipment, maintenance, schedules, { refresh, appendTo }) {
 	const item = equipment;
@@ -100,7 +100,7 @@ export async function renderMaintenanceSection(equipment, maintenance, schedules
 			new Icon({
 				appendTo: row,
 				icon: 'circle',
-				style: { flexShrink: '0', marginTop: '3px', fontSize: '10px', color: statusColor },
+				style: { flexShrink: '0', marginTop: space.xs, fontSize: '10px', color: statusColor },
 			});
 
 			const scheduleInfo = new RowMain({ appendTo: row, style: { cursor: 'pointer' } });
@@ -111,7 +111,7 @@ export async function renderMaintenanceSection(equipment, maintenance, schedules
 			if (schedule.procedure) {
 				new RowMeta({
 					appendTo: scheduleInfo,
-					style: { marginTop: '2px', whiteSpace: 'pre-wrap' },
+					style: { marginTop: space.xs, whiteSpace: 'pre-wrap' },
 					textContent: schedule.procedure,
 				});
 			}
@@ -204,7 +204,7 @@ export async function renderMaintenanceSection(equipment, maintenance, schedules
 		if (rec.procedure)
 			new RowMeta({
 				appendTo: left,
-				style: { fontStyle: 'italic', marginTop: '2px' },
+				style: { fontStyle: 'italic', marginTop: space.xs },
 				textContent: rec.procedure.slice(0, 80) + (rec.procedure.length > 80 ? '…' : ''),
 			});
 

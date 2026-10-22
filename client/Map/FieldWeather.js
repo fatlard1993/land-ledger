@@ -6,18 +6,18 @@ import { toDateOnly } from '../utils/dates';
 
 const Strip = styled(
 	Component,
-	() => `
+	({ space }) => `
 		display: grid;
-		gap: 3px;
-		margin-bottom: 12px;
+		gap: ${space.xs};
+		margin-bottom: ${space.md};
 	`,
 );
 
 // A day's tint says what to watch for: a hard freeze, a frost, or heavy rain
 const DayCard = styled(
 	Component,
-	({ colors, radius }) => `
-		padding: 5px 2px;
+	({ colors, radius, space }) => `
+		padding: ${space.sm} ${space.xs};
 		border: 1px solid transparent;
 		border-radius: ${radius.md};
 		background: ${colors.alpha(colors.white, 0.04)};

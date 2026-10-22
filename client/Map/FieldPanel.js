@@ -40,7 +40,7 @@ import { renderIncidents } from './EntityIncidents';
 import { renderBuildingInventory, renderEntityRevenue, renderBudgetItems } from './BuildingSection';
 import { openSellDialog } from './EntityRevenue';
 
-const { colors } = theme;
+const { colors, space } = theme;
 
 // At 16px a phone's browser doesn't zoom the page in when the field takes focus
 const FIELD_STYLE = { fontSize: '16px' };
@@ -72,12 +72,12 @@ const PanelTitle = styled(
 
 const Presence = styled(
 	Component,
-	({ colors, radius }) => `
+	({ colors, radius, space }) => `
 		display: none;
 		flex-shrink: 0;
 		align-items: center;
-		margin-right: 6px;
-		padding: 1px 7px;
+		margin-right: ${space.sm};
+		padding: 1px ${space.sm};
 		border: 1px solid ${colors.alpha(colors.warning, 0.35)};
 		border-radius: ${radius.pill};
 		background: ${colors.alpha(colors.warning, 0.15)};
@@ -97,7 +97,7 @@ const StaleBanner = styled(
 		justify-content: space-between;
 		gap: ${space.sm};
 		margin-bottom: ${space.sm};
-		padding: 7px 10px;
+		padding: ${space.sm} ${space.md};
 		border: 1px solid ${colors.alpha(colors.warning, 0.4)};
 		border-radius: ${radius.sm};
 		background: ${colors.alpha(colors.warning, 0.15)};
@@ -131,8 +131,8 @@ const MetaFaint = styled(
 
 const OwnershipPill = styled(
 	Component,
-	({ colors, radius }) => `
-		padding: 2px 7px;
+	({ colors, radius, space }) => `
+		padding: ${space.xs} ${space.sm};
 		border-radius: ${radius.sm};
 		font-size: 12px;
 		background: ${colors.alpha(colors.orange, 0.15)};
@@ -148,17 +148,17 @@ const OwnershipPill = styled(
 
 const SectionActions = styled(
 	Component,
-	() => `
+	({ space }) => `
 		display: flex;
-		gap: 6px;
-		margin-top: 10px;
+		gap: ${space.sm};
+		margin-top: ${space.md};
 	`,
 );
 
 const EmptyNote = styled(
 	Component,
-	({ colors }) => `
-		padding: 5px 0 8px;
+	({ colors, space }) => `
+		padding: ${space.sm} 0 ${space.sm};
 		font-size: 12px;
 		color: ${colors.gray};
 	`,
@@ -170,7 +170,7 @@ const ActivityRow = styled(
 		display: flex;
 		align-items: flex-start;
 		gap: ${space.sm};
-		padding: 4px 0;
+		padding: ${space.xs} 0;
 		border-bottom: 1px solid ${colors.border};
 		font-size: 12px;
 		cursor: pointer;
@@ -199,14 +199,14 @@ const ActivityRow = styled(
 // One event of this season: its category glyph, name and date, then a line of its details
 const EventBlock = styled(
 	Component,
-	({ colors }) => `
-		padding: 7px 0;
+	({ colors, space }) => `
+		padding: ${space.sm} 0;
 		border-bottom: 1px solid ${colors.border};
 
 		& .title {
 			display: flex;
 			align-items: center;
-			gap: 7px;
+			gap: ${space.sm};
 		}
 
 		& .glyph {
@@ -227,8 +227,8 @@ const EventBlock = styled(
 		}
 
 		& .details {
-			margin-top: 2px;
-			padding-left: 22px;
+			margin-top: ${space.xs};
+			padding-left: ${space.xl};
 			font-size: 11px;
 			color: ${colors.muted};
 		}
@@ -237,11 +237,11 @@ const EventBlock = styled(
 
 const HistoryRow = styled(
 	Component,
-	({ colors }) => `
+	({ colors, space }) => `
 		display: flex;
 		align-items: baseline;
-		gap: 6px;
-		padding: 4px 0;
+		gap: ${space.sm};
+		padding: ${space.xs} 0;
 		border-bottom: 1px solid ${colors.border};
 		font-size: 12px;
 
@@ -264,12 +264,12 @@ const EmojiRow = styled(
 		display: flex;
 		align-items: center;
 		gap: ${space.sm};
-		margin: 4px 0 8px;
+		margin: ${space.xs} 0 ${space.sm};
 
 		& > input {
 			flex-shrink: 0;
 			width: 52px;
-			padding: 4px;
+			padding: ${space.xs};
 			font-size: 22px;
 			text-align: center;
 		}
@@ -284,7 +284,7 @@ const EmojiRow = styled(
 // A number with its unit beside it, drawn as one field
 const AreaField = styled(
 	Component,
-	({ colors, radius }) => `
+	({ colors, radius, space }) => `
 		display: flex;
 		align-items: center;
 		overflow: hidden;
@@ -310,7 +310,7 @@ const AreaField = styled(
 		& > select:focus {
 			flex-shrink: 0;
 			width: 54px;
-			padding: 7px 4px;
+			padding: ${space.sm} ${space.xs};
 			border: none;
 			border-left: 1px solid ${colors.border};
 			border-radius: 0;
@@ -334,7 +334,7 @@ const LabelToggle = styled(
 		display: flex;
 		align-items: center;
 		gap: ${space.sm};
-		margin-top: 10px;
+		margin-top: ${space.md};
 
 		& label {
 			font-size: 13px;
@@ -535,7 +535,7 @@ export default class FieldPanel extends Component {
 		this._titleElem = new PanelTitle({ appendTo: header });
 		this._presenceIndicator = new Presence({ appendTo: header });
 
-		this._actions = new Component({ appendTo: header, style: { display: 'flex', gap: '6px', flexShrink: '0' } });
+		this._actions = new Component({ appendTo: header, style: { display: 'flex', gap: space.sm, flexShrink: '0' } });
 
 		this._editBtn = new Button({ appendTo: this._actions, variant: 'flat', icon: 'pen', title: 'Edit details' });
 		this._editBoundaryBtn = new Button({
@@ -576,7 +576,7 @@ export default class FieldPanel extends Component {
 
 		this._metaElem = new Component({
 			appendTo: this.panel,
-			style: { display: 'flex', gap: '8px', marginBottom: '8px', flexWrap: 'wrap', alignItems: 'center' },
+			style: { display: 'flex', gap: space.sm, marginBottom: space.sm, flexWrap: 'wrap', alignItems: 'center' },
 		});
 		this._content = new Component({ appendTo: this.panel });
 	}
@@ -847,9 +847,9 @@ export default class FieldPanel extends Component {
 			style: {
 				display: 'grid',
 				gridTemplateColumns: 'repeat(4, 1fr)',
-				gap: '4px',
-				marginTop: '4px',
-				marginBottom: '8px',
+				gap: space.xs,
+				marginTop: space.xs,
+				marginBottom: space.sm,
 			},
 		});
 
@@ -865,7 +865,7 @@ export default class FieldPanel extends Component {
 					border: `2px solid ${value}`,
 					color: colors.white,
 					fontSize: '11px',
-					padding: '5px 4px',
+					padding: `${space.sm} ${space.xs}`,
 				},
 				onPointerPress: () => {
 					selectedColor = value;
@@ -946,7 +946,8 @@ export default class FieldPanel extends Component {
 	async _renderParcelView() {
 		const { data: p, callbacks } = this._entity;
 
-		this._titleElem.elem.textContent = `📐 ${p.name || p.parcelId || 'Property Line'}`;
+		this._titleElem.elem.textContent = p.name || p.parcelId || 'Property Line';
+		new IconText({ prependTo: this._titleElem, icon: 'ruler-combined', style: { display: 'inline-block' } });
 		this._editBoundaryBtn.elem.title = 'Edit boundary';
 		this._configureButtons({ edit: true, editBoundary: !!p.geometry, sell: true, del: true });
 
@@ -1611,7 +1612,7 @@ export default class FieldPanel extends Component {
 			],
 		});
 		new FormLabel({ appendTo: this._content, textContent: 'Usage' });
-		const usageRow = new Component({ appendTo: this._content, style: { display: 'flex', gap: '6px' } });
+		const usageRow = new Component({ appendTo: this._content, style: { display: 'flex', gap: space.sm } });
 		const usageInput = new Input({
 			appendTo: usageRow,
 			style: { ...FIELD_STYLE, flex: '1', minWidth: '0' },

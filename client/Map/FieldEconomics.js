@@ -8,8 +8,8 @@ const { colors } = theme;
 
 const Insight = styled(
 	Component,
-	({ colors }) => `
-		padding: 3px 0;
+	({ colors, space }) => `
+		padding: ${space.xs} 0;
 		border-bottom: 1px solid ${colors.border};
 		font-size: 11px;
 		color: ${colors.muted};

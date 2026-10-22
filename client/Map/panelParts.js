@@ -5,11 +5,11 @@ import { Button, Component, SectionLabel, styled } from '@vanilla-bean/component
 // A record in a section's list; interactive when the whole row opens it
 export const PanelRow = styled(
 	Component,
-	({ colors }) => `
+	({ colors, space }) => `
 		display: flex;
 		align-items: flex-start;
-		gap: 8px;
-		padding: 6px 0;
+		gap: ${space.sm};
+		padding: ${space.sm} 0;
 		border-bottom: 1px solid ${colors.border};
 
 		&.interactive {
@@ -45,10 +45,10 @@ export const RowMeta = styled(
 // A date or amount on the right of a row
 export const RowAside = styled(
 	Component,
-	({ colors }) => `
+	({ colors, space }) => `
 		flex-shrink: 0;
-		padding-left: 6px;
-		margin-top: 2px;
+		padding-left: ${space.sm};
+		margin-top: ${space.xs};
 		font-size: 11px;
 		color: ${colors.gray};
 		text-align: right;
@@ -69,8 +69,8 @@ export const RowGlyph = styled(
 
 export const EmptyNote = styled(
 	Component,
-	({ colors }) => `
-		padding: 4px 0 8px;
+	({ colors, space }) => `
+		padding: ${space.xs} 0 ${space.sm};
 		font-size: 12px;
 		color: ${colors.gray};
 	`,
@@ -82,18 +82,18 @@ export const SubLabel = styled(SectionLabel, () => 'margin: 8px 0 4px;');
 // The buttons beside a section's label, level with its text
 export const HeaderActions = styled(
 	Component,
-	() => `
+	({ space }) => `
 		display: flex;
 		align-items: center;
-		gap: 6px;
-		margin-top: 10px;
+		gap: ${space.sm};
+		margin-top: ${space.md};
 	`,
 );
 
 export const HeaderButton = styled(
 	Button,
-	() => `
-		padding: 3px 8px;
+	({ space }) => `
+		padding: ${space.xs} ${space.sm};
 		font-size: 12px;
 	`,
 );
@@ -101,13 +101,13 @@ export const HeaderButton = styled(
 // A small table of figures inside a dialog
 export const FigureTable = styled(
 	Component,
-	({ colors }) => `
+	({ colors, space }) => `
 		width: 100%;
 		border-collapse: collapse;
 		font-size: 12px;
 
 		& th {
-			padding: 4px 6px;
+			padding: ${space.xs} ${space.sm};
 			border-bottom: 1px solid ${colors.border};
 			font-size: 10px;
 			font-weight: normal;
@@ -118,7 +118,7 @@ export const FigureTable = styled(
 		}
 
 		& td {
-			padding: 4px 6px;
+			padding: ${space.xs} ${space.sm};
 			border-bottom: 1px solid ${colors.border};
 			color: ${colors.muted};
 		}

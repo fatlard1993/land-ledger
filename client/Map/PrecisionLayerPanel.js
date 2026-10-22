@@ -5,7 +5,7 @@ import PrecisionLayerImport from './PrecisionLayerImport';
 import PrecisionAnalysisDialog from './PrecisionAnalysisDialog';
 import { EmptyNote, HeaderButton, PanelRow, RowGlyph, RowMain, RowMeta, RowTitle, SubLabel } from './panelParts';
 
-const { colors } = theme;
+const { colors, space } = theme;
 
 const TYPE_LABELS = { yield: 'Yield map', 'as-applied': 'As-applied', 'soil-ec': 'Soil EC', other: 'Data layer' };
 const TYPE_ICONS = { yield: '🌾', 'as-applied': '🌱', 'soil-ec': '⚡', other: '📡' };
@@ -60,7 +60,7 @@ export async function renderPrecisionLayersSection(field, container, callbacks =
 		appendTo: header,
 		icon: 'plus',
 		textContent: 'Import',
-		style: { marginTop: '10px' },
+		style: { marginTop: space.md },
 		onPointerPress: () =>
 			new PrecisionLayerImport({
 				presetFieldId: field?.id,
@@ -97,13 +97,13 @@ export async function renderPrecisionLayersSection(field, container, callbacks =
 				s.count ? `${s.count.toLocaleString()} pts` : null,
 			].filter(Boolean);
 
-			new RowMeta({ appendTo: info, style: { marginTop: '2px' }, textContent: statParts.join('  ·  ') });
+			new RowMeta({ appendTo: info, style: { marginTop: space.xs }, textContent: statParts.join('  ·  ') });
 
 			// Min / max color legend strip
 			if (s.min != null && s.max != null) {
 				const legend = new RowMeta({
 					appendTo: info,
-					style: { display: 'flex', alignItems: 'center', gap: '5px', marginTop: '3px', fontSize: '10px' },
+					style: { display: 'flex', alignItems: 'center', gap: space.sm, marginTop: space.xs, fontSize: '10px' },
 				});
 
 				new Component({ tag: 'span', appendTo: legend, textContent: formatNum(s.min) });
@@ -125,7 +125,7 @@ export async function renderPrecisionLayersSection(field, container, callbacks =
 		// Show / remove buttons
 		const buttons = new Component({
 			appendTo: row,
-			style: { display: 'flex', flexDirection: 'column', gap: '4px', flexShrink: '0' },
+			style: { display: 'flex', flexDirection: 'column', gap: space.xs, flexShrink: '0' },
 		});
 
 		new HeaderButton({
@@ -178,7 +178,7 @@ export async function renderPrecisionLayersSection(field, container, callbacks =
 				icon: 'chart-line',
 				style: {
 					width: '100%',
-					marginBottom: '4px',
+					marginBottom: space.xs,
 					textAlign: 'left',
 					fontSize: '12px',
 					backgroundColor: colors.alpha(colors.info, 0.1),

@@ -16,7 +16,7 @@ import {
 } from '../api';
 import { EmptyNote, HeaderButton, PanelRow, RowAside, RowGlyph, RowMain, RowMeta, RowTitle } from './panelParts';
 
-const { colors } = theme;
+const { colors, space } = theme;
 
 export async function renderIncidents(entityType, entity, refresh, appendTo, { livestockEvents = [] } = {}) {
 	const data = await getIncidents();
@@ -37,7 +37,7 @@ export async function renderIncidents(entityType, entity, refresh, appendTo, { l
 		appendTo: header,
 		icon: 'triangle-exclamation',
 		textContent: 'Report',
-		style: { marginTop: '10px' },
+		style: { marginTop: space.md },
 		onPointerPress: () =>
 			new IncidentDialog({
 				entityType,
@@ -72,7 +72,7 @@ export async function renderIncidents(entityType, entity, refresh, appendTo, { l
 
 		const titleRow = new RowTitle({
 			appendTo: info,
-			style: { display: 'flex', gap: '6px', alignItems: 'center', flexWrap: 'wrap' },
+			style: { display: 'flex', gap: space.sm, alignItems: 'center', flexWrap: 'wrap' },
 		});
 
 		new RowTitle({
@@ -119,7 +119,7 @@ export async function renderIncidents(entityType, entity, refresh, appendTo, { l
 		if (rec.estimatedLoss) meta.push(`${formatDollar(rec.estimatedLoss)} loss`);
 		if (rec.insuranceClaim) meta.push(`Claim: ${rec.insuranceClaim}`);
 		if (meta.length || rec.resolved) {
-			const metaRow = new RowMeta({ appendTo: info, style: { marginTop: '2px' }, textContent: meta.join(' · ') });
+			const metaRow = new RowMeta({ appendTo: info, style: { marginTop: space.xs }, textContent: meta.join(' · ') });
 
 			if (rec.resolved) {
 				if (meta.length) metaRow.elem.append(' · ');

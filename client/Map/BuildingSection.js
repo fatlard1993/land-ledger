@@ -32,7 +32,7 @@ import {
 	SubLabel,
 } from './panelParts';
 
-const { colors } = theme;
+const { colors, space } = theme;
 
 export async function renderBuildingInventory(building, refresh, appendTo) {
 	const data = await getSupplies();
@@ -46,7 +46,7 @@ export async function renderBuildingInventory(building, refresh, appendTo) {
 		appendTo: header,
 		icon: 'plus',
 		textContent: 'Add',
-		style: { marginTop: '10px' },
+		style: { marginTop: space.md },
 		onPointerPress: () =>
 			new SupplyDialog({
 				buildingId: building.id,
@@ -136,7 +136,7 @@ export async function renderEntityRevenue(entityType, entity, refresh, appendTo)
 		.reduce((s, r) => s + (Number(r.amount) || 0), 0);
 
 	const header = new ActionHeader({ appendTo, title: 'Income' });
-	const hRight = new HeaderActions({ appendTo: header, style: { gap: '10px' } });
+	const hRight = new HeaderActions({ appendTo: header, style: { gap: space.md } });
 
 	if (totalYTD > 0)
 		new Component({
@@ -220,7 +220,7 @@ export async function renderBudgetItems(entityType, entity, refresh, appendTo) {
 	const totalExp = expItems.reduce((s, i) => s + annualAmount(i), 0);
 
 	const header = new ActionHeader({ appendTo, title: 'Budget' });
-	const hRight = new HeaderActions({ appendTo: header, style: { gap: '8px' } });
+	const hRight = new HeaderActions({ appendTo: header, style: { gap: space.sm } });
 
 	if (totalInc > 0)
 		new Component({
