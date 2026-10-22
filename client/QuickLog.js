@@ -496,7 +496,7 @@ export function openQuickLog() {
 // ── Floating action button ─────────────────────────────────────────────────────
 
 const QuickLogFAB = styled(
-	Component,
+	Button,
 	({ colors, media, safeArea }) => `
 		position: fixed;
 		bottom: calc(${safeArea.bottom} + 68px);
@@ -529,10 +529,9 @@ const QuickLogFAB = styled(
 
 export function mountQuickLogButton() {
 	new QuickLogFAB({
-		tag: 'button',
 		appendTo: document.body,
+		icon: 'plus',
 		title: 'Quick log',
-		textContent: '+',
 		attributes: { 'aria-label': 'Quick log' },
 		onPointerPress: openQuickLog,
 	});
