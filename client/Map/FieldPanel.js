@@ -4,8 +4,10 @@ import {
 	Dialog,
 	Elem,
 	formatDate,
+	Input,
 	parseDate,
 	SectionLabel,
+	Select,
 	styled,
 	theme,
 } from '@vanilla-bean/components';
@@ -469,7 +471,7 @@ export default class FieldPanel extends Component {
 	_mkLabelToggle(defaultOn = true) {
 		const uniqueId = `lbl-toggle-${Math.random().toString(36).slice(2)}`;
 		const row = new LabelToggle({ appendTo: this._content });
-		const cb = new Elem({ tag: 'input', appendTo: row, attributes: { id: uniqueId } });
+		const cb = new Input({ appendTo: row, attributes: { id: uniqueId } });
 
 		cb.elem.type = 'checkbox';
 		cb.elem.checked = defaultOn;
@@ -782,7 +784,7 @@ export default class FieldPanel extends Component {
 
 		// Emoji row
 		const emojiRow = new EmojiRow({ appendTo: this._content });
-		const emojiInput = new Elem({ tag: 'input', appendTo: emojiRow });
+		const emojiInput = new Input({ appendTo: emojiRow });
 
 		Object.assign(emojiInput.elem, { type: 'text', maxLength: 4, value: p.emoji || detectPathEmoji(p.type || '') });
 		emojiInput.elem.title = 'Tap to change emoji';
@@ -805,7 +807,7 @@ export default class FieldPanel extends Component {
 			{ key: 'widthFt', label: 'Width (feet)', placeholder: '10', type: 'number' },
 		]) {
 			new FormLabel({ appendTo: this._content, textContent: label });
-			const input = new Elem({ tag: 'input', appendTo: this._content });
+			const input = new Input({ appendTo: this._content });
 			Object.assign(input.elem, { type: type || 'text', placeholder: placeholder || '', value: p[key] || '' });
 			input.setStyle(FIELD_STYLE);
 			getters[key] = () => input.elem.value;
@@ -857,7 +859,7 @@ export default class FieldPanel extends Component {
 		}
 
 		new FormLabel({ appendTo: this._content, textContent: 'Status' });
-		const pathStatusSelect = new Elem({ tag: 'select', appendTo: this._content });
+		const pathStatusSelect = new Select({ appendTo: this._content });
 
 		pathStatusSelect.setStyle(FIELD_STYLE);
 		[
@@ -1010,7 +1012,7 @@ export default class FieldPanel extends Component {
 			new FormLabel({ appendTo: this._content, textContent: label });
 
 			if (options) {
-				const select = new Elem({ tag: 'select', appendTo: this._content });
+				const select = new Select({ appendTo: this._content });
 
 				select.setStyle(FIELD_STYLE);
 				options.forEach(({ value, label: optionLabel }) => {
@@ -1022,7 +1024,7 @@ export default class FieldPanel extends Component {
 				select.elem.value = p[key] || '';
 				getters[key] = () => select.elem.value;
 			} else {
-				const input = new Elem({ tag: 'input', appendTo: this._content });
+				const input = new Input({ appendTo: this._content });
 
 				Object.assign(input.elem, { type: 'text', placeholder: placeholder || '', value: p[key] || '' });
 				input.setStyle(FIELD_STYLE);
@@ -1040,7 +1042,7 @@ export default class FieldPanel extends Component {
 		const defaultArea = p.acreage || (sqm ? convertArea(sqm, currentUnit) : '') || '';
 		const unitMeta = AREA_UNITS.find(u => u.value === currentUnit) || AREA_UNITS[1];
 
-		const areaInput = new Elem({ tag: 'input', appendTo: areaRow });
+		const areaInput = new Input({ appendTo: areaRow });
 
 		Object.assign(areaInput.elem, {
 			type: 'number',
@@ -1051,7 +1053,7 @@ export default class FieldPanel extends Component {
 		});
 		areaInput.setStyle(FIELD_STYLE);
 
-		const unitSelect = new Elem({ tag: 'select', appendTo: areaRow });
+		const unitSelect = new Select({ appendTo: areaRow });
 
 		for (const { value: unitValue, label } of AREA_UNITS) {
 			const opt = document.createElement('option');
@@ -1292,7 +1294,7 @@ export default class FieldPanel extends Component {
 
 		// Emoji row
 		const bldgEmojiRow = new EmojiRow({ appendTo: this._content });
-		const bldgEmojiInput = new Elem({ tag: 'input', appendTo: bldgEmojiRow });
+		const bldgEmojiInput = new Input({ appendTo: bldgEmojiRow });
 
 		Object.assign(bldgEmojiInput.elem, { type: 'text', maxLength: 4, value: b.emoji || buildingEmoji(b.type || '') });
 		bldgEmojiInput.elem.title = 'Tap to change emoji';
@@ -1328,7 +1330,7 @@ export default class FieldPanel extends Component {
 			new FormLabel({ appendTo: this._content, textContent: label });
 
 			if (options) {
-				const select = new Elem({ tag: 'select', appendTo: this._content });
+				const select = new Select({ appendTo: this._content });
 
 				select.setStyle(FIELD_STYLE);
 				options.forEach(({ value, label: optionLabel }) => {
@@ -1340,7 +1342,7 @@ export default class FieldPanel extends Component {
 				select.elem.value = b[key] || '';
 				getters[key] = () => select.elem.value;
 			} else {
-				const input = new Elem({ tag: 'input', appendTo: this._content });
+				const input = new Input({ appendTo: this._content });
 
 				Object.assign(input.elem, { type: 'text', placeholder: placeholder || '', value: b[key] || '' });
 				input.setStyle(FIELD_STYLE);
@@ -1520,7 +1522,7 @@ export default class FieldPanel extends Component {
 
 		// Emoji picker — same pattern as building and path edit
 		const eqEmojiRow = new EmojiRow({ appendTo: this._content });
-		const eqEmojiInput = new Elem({ tag: 'input', appendTo: eqEmojiRow });
+		const eqEmojiInput = new Input({ appendTo: eqEmojiRow });
 
 		Object.assign(eqEmojiInput.elem, {
 			type: 'text',
@@ -1544,7 +1546,7 @@ export default class FieldPanel extends Component {
 			new FormLabel({ appendTo: this._content, textContent: label });
 
 			if (options) {
-				const select = new Elem({ tag: 'select', appendTo: this._content });
+				const select = new Select({ appendTo: this._content });
 
 				select.setStyle(FIELD_STYLE);
 				for (const { value, label: optionLabel } of options) {
@@ -1557,7 +1559,7 @@ export default class FieldPanel extends Component {
 				select.elem.value = item[key] || '';
 				getters[key] = () => select.elem.value;
 			} else {
-				const input = new Elem({ tag: 'input', appendTo: this._content });
+				const input = new Input({ appendTo: this._content });
 
 				Object.assign(input.elem, { type, placeholder, value: item[key] || '' });
 				input.setStyle(FIELD_STYLE);
@@ -1569,7 +1571,7 @@ export default class FieldPanel extends Component {
 
 		// Type field — auto-updates emoji if not manually overridden
 		new FormLabel({ appendTo: this._content, textContent: 'Type' });
-		const typeInput = new Elem({ tag: 'input', appendTo: this._content });
+		const typeInput = new Input({ appendTo: this._content });
 
 		Object.assign(typeInput.elem, { type: 'text', placeholder: 'e.g. Row crop tractor', value: item.type || '' });
 		typeInput.setStyle(FIELD_STYLE);
@@ -1585,14 +1587,12 @@ export default class FieldPanel extends Component {
 		});
 		new FormLabel({ appendTo: this._content, textContent: 'Usage' });
 		const usageRow = new Component({ appendTo: this._content, style: { display: 'flex', gap: '6px' } });
-		const usageInput = new Elem({
-			tag: 'input',
+		const usageInput = new Input({
 			appendTo: usageRow,
 			style: { ...FIELD_STYLE, flex: '1', minWidth: '0' },
 		});
 		Object.assign(usageInput.elem, { type: 'number', step: '0.1', placeholder: 'Amount', value: item.usage || '' });
-		const unitInput = new Elem({
-			tag: 'input',
+		const unitInput = new Input({
 			appendTo: usageRow,
 			style: { ...FIELD_STYLE, width: '72px', flexShrink: '0' },
 		});
@@ -1708,7 +1708,7 @@ export default class FieldPanel extends Component {
 			new FormLabel({ appendTo: this._content, textContent: label });
 
 			if (options) {
-				const select = new Elem({ tag: 'select', appendTo: this._content });
+				const select = new Select({ appendTo: this._content });
 
 				select.setStyle(FIELD_STYLE);
 
@@ -1730,7 +1730,7 @@ export default class FieldPanel extends Component {
 				const defaultAcreage = field[key] || (sqm ? convertArea(sqm, currentUnit) : '') || '';
 				const unitMeta = AREA_UNITS.find(u => u.value === currentUnit) || AREA_UNITS[1];
 
-				const input = new Elem({ tag: 'input', appendTo: wrap });
+				const input = new Input({ appendTo: wrap });
 
 				Object.assign(input.elem, {
 					type: 'number',
@@ -1742,7 +1742,7 @@ export default class FieldPanel extends Component {
 				input.setStyle(FIELD_STYLE);
 
 				// Unit selector
-				const unitSelect = new Elem({ tag: 'select', appendTo: wrap });
+				const unitSelect = new Select({ appendTo: wrap });
 
 				for (const { value: unitValue, label } of AREA_UNITS) {
 					const opt = document.createElement('option');
@@ -1780,7 +1780,7 @@ export default class FieldPanel extends Component {
 					});
 				}
 			} else {
-				const input = new Elem({ tag: 'input', appendTo: this._content });
+				const input = new Input({ appendTo: this._content });
 
 				Object.assign(input.elem, {
 					type: type || 'text',

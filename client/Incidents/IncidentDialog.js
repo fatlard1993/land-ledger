@@ -3,6 +3,7 @@ import {
 	conditionalList,
 	Elem,
 	FormDialog,
+	Input,
 	SectionLabel,
 	Select,
 	styled,
@@ -274,8 +275,7 @@ export default class IncidentDialog extends FormDialog {
 					style: { fontSize: '13px' },
 				});
 
-				const lostInput = new Elem({
-					tag: 'input',
+				const lostInput = new Input({
 					appendTo: eventRow,
 					type: 'number',
 					step: '1',
@@ -285,8 +285,7 @@ export default class IncidentDialog extends FormDialog {
 					title: 'Head lost / killed',
 					style: { textAlign: 'center', fontSize: '13px' },
 				});
-				const injuredInput = new Elem({
-					tag: 'input',
+				const injuredInput = new Input({
 					appendTo: eventRow,
 					type: 'number',
 					step: '1',
@@ -324,7 +323,7 @@ export default class IncidentDialog extends FormDialog {
 
 			if (!isEdit) {
 				new FormLabel({ appendTo: divider, textContent: 'Entity Status After This Incident', style: { marginTop: 0 } });
-				statusImpactSelect = new Elem({ tag: 'select', appendTo: divider });
+				statusImpactSelect = new Select({ appendTo: divider });
 				[
 					{ value: '', label: '— no change —' },
 					{ value: 'needs_maintenance', label: 'Needs maintenance' },
@@ -346,7 +345,7 @@ export default class IncidentDialog extends FormDialog {
 					style: { display: 'flex', alignItems: 'center', gap: '8px' },
 				});
 
-				restoreEl = new Elem({ tag: 'input', appendTo: restoreRow });
+				restoreEl = new Input({ appendTo: restoreRow });
 				restoreEl.elem.type = 'checkbox';
 				restoreEl.elem.id = 'inc-restore-cb';
 				restoreEl.elem.checked = false;

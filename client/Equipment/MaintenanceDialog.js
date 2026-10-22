@@ -1,4 +1,4 @@
-import { Button, Component, Elem, FormDialog, theme } from '@vanilla-bean/components';
+import { Button, Component, Elem, FormDialog, Input, theme } from '@vanilla-bean/components';
 
 import { makePropertiesEditor } from '../utils/PropertiesEditor';
 import { toNum } from '../utils/format.js';
@@ -188,7 +188,7 @@ export default class MaintenanceDialog extends FormDialog {
 				style: { display: 'flex', alignItems: 'center', gap: '8px', marginTop: '12px' },
 			});
 			const cbId = `maintenance-hrs-${Math.random().toString(36).slice(2)}`;
-			const cb = new Elem({ tag: 'input', type: 'checkbox', appendTo: checkRow, attributes: { id: cbId } });
+			const cb = new Input({ type: 'checkbox', appendTo: checkRow, attributes: { id: cbId } });
 
 			cb.elem.checked = true;
 			cb.elem.style.accentColor = `${colors.info}`;

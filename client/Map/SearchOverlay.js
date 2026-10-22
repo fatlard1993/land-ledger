@@ -1,5 +1,5 @@
 import L from 'leaflet';
-import { Button, Icon, Notify, debounce, theme } from '@vanilla-bean/components';
+import { Button, Icon, Input, Notify, debounce, theme } from '@vanilla-bean/components';
 
 import { searchLocation } from '../api';
 
@@ -50,19 +50,20 @@ export function buildSearchOverlay(container, map) {
 		style: { padding: '0 4px 0 10px', color: colors.gray, flexShrink: '0' },
 	}).elem;
 
-	const input = document.createElement('input');
-
-	Object.assign(input, { type: 'text', placeholder: 'Search location…' });
-	Object.assign(input.style, {
-		flex: '1',
-		background: 'transparent',
-		border: 'none',
-		outline: 'none',
-		color: `${colors.white}`,
-		fontSize: '14px',
-		padding: '9px 4px',
-		minWidth: '0',
-	});
+	const input = new Input({
+		type: 'text',
+		placeholder: 'Search location…',
+		style: {
+			flex: '1',
+			background: 'transparent',
+			border: 'none',
+			outline: 'none',
+			color: `${colors.white}`,
+			fontSize: '14px',
+			padding: '9px 4px',
+			minWidth: '0',
+		},
+	}).elem;
 
 	const clearBtn = new Button({ variant: 'flat', icon: 'xmark', title: 'Clear search' }).elem;
 

@@ -1,4 +1,4 @@
-import { Elem, FormDialog, theme } from '@vanilla-bean/components';
+import { Elem, FormDialog, Select, theme } from '@vanilla-bean/components';
 
 import { FormLabel } from '../Layout';
 import { makePropertiesEditor } from '../utils/PropertiesEditor';
@@ -142,7 +142,7 @@ export default class MaintenanceScheduleDialog extends FormDialog {
 		if (!isEdit) {
 			new FormLabel({ appendTo: this.intro, textContent: 'Start from template (optional)' });
 			// A bare select takes the theme's field look
-			tplSelect = new Elem({ tag: 'select', appendTo: this.intro, style: { cursor: 'pointer' } });
+			tplSelect = new Select({ appendTo: this.intro, style: { cursor: 'pointer' } });
 
 			const blankOpt = document.createElement('option');
 

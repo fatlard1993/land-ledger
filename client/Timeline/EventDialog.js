@@ -300,7 +300,6 @@ export default class EventDialog extends FormDialog {
 		const emojiRow = new EmojiRow({ appendTo: form });
 
 		const emojiPreview = new Input({
-			tag: 'input',
 			appendTo: emojiRow,
 			type: 'text',
 			maxLength: 4,
@@ -379,7 +378,6 @@ export default class EventDialog extends FormDialog {
 
 		new FormLabel({ appendTo: form, textContent: 'Notes' });
 		const notesEl = new Input({
-			tag: 'input',
 			appendTo: form,
 			attributes: { type: 'text', placeholder: 'Optional' },
 		});
@@ -645,7 +643,6 @@ export default class EventDialog extends FormDialog {
 				const cell = new Elem({ tag: 'div', appendTo: gridEl });
 				new FormLabel({ appendTo: cell, textContent: unit ? `${label} (${unit})` : label });
 				const el = new Input({
-					tag: 'input',
 					appendTo: cell,
 					attributes: { type: 'number', step: 'any', placeholder: '—' },
 				});

@@ -502,8 +502,7 @@ export default class LeaseDialog extends FormDialog {
 			appendTo: container,
 			style: { display: 'flex', alignItems: 'center', gap: '8px', marginTop: '10px' },
 		});
-		const escrowCb = new Elem({
-			tag: 'input',
+		const escrowCb = new Input({
 			appendTo: escrowRow,
 			type: 'checkbox',
 			id: 'loan-escrow-cb',

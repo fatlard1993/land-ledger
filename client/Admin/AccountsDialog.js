@@ -246,8 +246,7 @@ export default class AccountsDialog extends Dialog {
 			textContent: 'When enabled, a passkey is required to open the app',
 		});
 
-		const toggle = new Elem({
-			tag: 'input',
+		const toggle = new Input({
 			attributes: { type: 'checkbox' },
 			style: { flexShrink: '0' },
 			appendTo: toggleRow,
@@ -462,7 +461,7 @@ export default class AccountsDialog extends Dialog {
 
 			chip.elem.title = sub;
 
-			const cb = new Elem({ tag: 'input', type: 'checkbox', checked: existing?.roles?.[key] ?? key === 'farmhand' });
+			const cb = new Input({ type: 'checkbox', value: existing?.roles?.[key] ?? key === 'farmhand' });
 
 			// Admin account always keeps its admin role
 			if (existing?.id === 'admin' && key === 'admin') {

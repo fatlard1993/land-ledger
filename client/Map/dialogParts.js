@@ -1,4 +1,4 @@
-import { Component, Elem, Input, styled } from '@vanilla-bean/components';
+import { Component, Input, Select, styled } from '@vanilla-bean/components';
 
 import { AREA_UNITS } from '../geo';
 
@@ -97,15 +97,14 @@ export const areaField = (appendTo, { estimate, unit }) => {
 
 	const row = new AreaFrame({ appendTo });
 
-	const input = new Elem({
-		tag: 'input',
+	const input = new Input({
 		appendTo: row,
 		attributes: { type: 'number', step: '0.01', min: '0', placeholder: estimate ? `~${estimate}` : 'Size' },
 	});
 
 	input.elem.value = estimate || '';
 
-	const unitSelect = new Elem({ tag: 'select', appendTo: row });
+	const unitSelect = new Select({ appendTo: row });
 
 	for (const { value, label } of AREA_UNITS) {
 		const opt = document.createElement('option');
@@ -132,7 +131,7 @@ export const areaField = (appendTo, { estimate, unit }) => {
 export const checkboxRow = (appendTo, { label, checked, style }) => {
 	const id = `lbl-${Math.random().toString(36).slice(2)}`;
 	const row = new Row({ appendTo, style: { marginTop: '12px', ...style } });
-	const checkbox = new Elem({ tag: 'input', appendTo: row, attributes: { type: 'checkbox', id } });
+	const checkbox = new Input({ appendTo: row, attributes: { type: 'checkbox', id } });
 
 	checkbox.elem.checked = checked;
 
