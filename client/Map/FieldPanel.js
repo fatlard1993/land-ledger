@@ -12,6 +12,7 @@ import context from '../context';
 import EventDialog from '../Timeline/EventDialog';
 import SeasonCharts from '../Charts/SeasonCharts';
 import { scheduleStatus } from '../utils/maintenanceUtils';
+import { IconText, STATUS_ICONS } from '../statusIcons';
 import { buildingEmoji } from './BuildingDialog';
 import { equipmentEmoji } from './EquipmentDialog';
 import { detectPathEmoji, PATH_COLORS } from './PathDialog';
@@ -344,13 +345,13 @@ const FormButtons = styled(
 );
 
 const FIELD_STATUSES = [
-	{ value: '', label: '✓ Active' },
-	{ value: 'needs_maintenance', label: '🔩 Needs maintenance' },
-	{ value: 'needs_service', label: '🔧 Needs service' },
-	{ value: 'out_of_service', label: '⚠️ Out of service' },
-	{ value: 'fallow', label: '😴 Fallow' },
-	{ value: 'abandoned', label: '🏚️ Abandoned' },
-	{ value: 'destroyed', label: '☠️ Destroyed' },
+	{ value: '', label: 'Active' },
+	{ value: 'needs_maintenance', label: 'Needs maintenance' },
+	{ value: 'needs_service', label: 'Needs service' },
+	{ value: 'out_of_service', label: 'Out of service' },
+	{ value: 'fallow', label: 'Fallow' },
+	{ value: 'abandoned', label: 'Abandoned' },
+	{ value: 'destroyed', label: 'Destroyed' },
 ];
 
 const EDIT_FIELDS = [
@@ -724,11 +725,11 @@ export default class FieldPanel extends Component {
 		new SectionLabel({ appendTo: this._content, textContent: 'Path / Road' });
 
 		const PATH_STATUS_LABELS = {
-			needs_maintenance: '🔩 Needs maintenance',
-			needs_service: '🔧 Needs service',
-			out_of_service: '⚠️ Out of service',
-			closed: '🚫 Closed',
-			destroyed: '☠️ Destroyed',
+			needs_maintenance: 'Needs maintenance',
+			needs_service: 'Needs service',
+			out_of_service: 'Out of service',
+			closed: 'Closed',
+			destroyed: 'Destroyed',
 		};
 		const rows = [
 			p.status ? ['Status', PATH_STATUS_LABELS[p.status] || p.status] : null,
@@ -747,7 +748,13 @@ export default class FieldPanel extends Component {
 
 				swatch.elem.innerHTML = `<span style="display:inline-block;width:14px;height:14px;border-radius:3px;background:${colorSwatch};vertical-align:middle;margin-right:5px;"></span>${colorSwatch}`;
 			} else {
-				new Elem({ tag: 'span', appendTo: row, addClass: 'value', textContent: value });
+				new IconText({
+					tag: 'span',
+					appendTo: row,
+					addClass: 'value',
+					icon: label === 'Status' ? STATUS_ICONS[p.status] : undefined,
+					textContent: value,
+				});
 			}
 		}
 
@@ -843,12 +850,12 @@ export default class FieldPanel extends Component {
 
 		pathStatusSelect.setStyle(FIELD_STYLE);
 		[
-			{ value: '', label: '✓ Active' },
-			{ value: 'needs_maintenance', label: '🔩 Needs maintenance' },
-			{ value: 'needs_service', label: '🔧 Needs service' },
-			{ value: 'out_of_service', label: '⚠️ Out of service' },
-			{ value: 'closed', label: '🚫 Closed' },
-			{ value: 'destroyed', label: '☠️ Destroyed' },
+			{ value: '', label: 'Active' },
+			{ value: 'needs_maintenance', label: 'Needs maintenance' },
+			{ value: 'needs_service', label: 'Needs service' },
+			{ value: 'out_of_service', label: 'Out of service' },
+			{ value: 'closed', label: 'Closed' },
+			{ value: 'destroyed', label: 'Destroyed' },
 		].forEach(({ value, label }) => {
 			const o = document.createElement('option');
 			o.value = value;
@@ -939,20 +946,21 @@ export default class FieldPanel extends Component {
 		new SectionLabel({ appendTo: this._content, textContent: 'Property Line' });
 
 		const PARCEL_STATUS_LABELS = {
-			needs_maintenance: '🔩 Needs maintenance',
-			out_of_service: '⚠️ Out of service',
-			disputed: '⚖️ Disputed',
-			encumbered: '🔒 Encumbered',
-			destroyed: '☠️ Destroyed',
+			needs_maintenance: 'Needs maintenance',
+			out_of_service: 'Out of service',
+			disputed: 'Disputed',
+			encumbered: 'Encumbered',
+			destroyed: 'Destroyed',
 		};
 		if (p.status) {
 			const row = new DetailRow({ appendTo: this._content });
 
 			new Elem({ tag: 'span', appendTo: row, addClass: 'label', textContent: 'Status' });
-			new Elem({
+			new IconText({
 				tag: 'span',
 				appendTo: row,
 				addClass: 'value',
+				icon: STATUS_ICONS[p.status],
 				textContent: PARCEL_STATUS_LABELS[p.status] || p.status,
 			});
 		}
@@ -979,12 +987,12 @@ export default class FieldPanel extends Component {
 				key: 'status',
 				label: 'Status',
 				options: [
-					{ value: '', label: '✓ Active' },
-					{ value: 'needs_maintenance', label: '🔩 Needs maintenance' },
-					{ value: 'out_of_service', label: '⚠️ Out of service' },
-					{ value: 'disputed', label: '⚖️ Disputed' },
-					{ value: 'encumbered', label: '🔒 Encumbered' },
-					{ value: 'destroyed', label: '☠️ Destroyed' },
+					{ value: '', label: 'Active' },
+					{ value: 'needs_maintenance', label: 'Needs maintenance' },
+					{ value: 'out_of_service', label: 'Out of service' },
+					{ value: 'disputed', label: 'Disputed' },
+					{ value: 'encumbered', label: 'Encumbered' },
+					{ value: 'destroyed', label: 'Destroyed' },
 				],
 			},
 		]) {
@@ -1298,11 +1306,11 @@ export default class FieldPanel extends Component {
 				key: 'status',
 				label: 'Status',
 				options: [
-					{ value: '', label: '✓ Active' },
-					{ value: 'needs_maintenance', label: '🔩 Needs maintenance' },
-					{ value: 'needs_service', label: '🔧 Needs service' },
-					{ value: 'out_of_service', label: '⚠️ Out of service' },
-					{ value: 'destroyed', label: '☠️ Destroyed' },
+					{ value: '', label: 'Active' },
+					{ value: 'needs_maintenance', label: 'Needs maintenance' },
+					{ value: 'needs_service', label: 'Needs service' },
+					{ value: 'out_of_service', label: 'Out of service' },
+					{ value: 'destroyed', label: 'Destroyed' },
 				],
 			},
 		]) {
@@ -1420,10 +1428,10 @@ export default class FieldPanel extends Component {
 		const lng = formatCoordinate(item.lng);
 
 		const STATUS_LABELS = {
-			needs_maintenance: '🔩 Needs maintenance',
-			needs_service: '🔧 Needs service',
-			out_of_service: '⚠️ Out of service',
-			destroyed: '☠️ Destroyed',
+			needs_maintenance: 'Needs maintenance',
+			needs_service: 'Needs service',
+			out_of_service: 'Out of service',
+			destroyed: 'Destroyed',
 		};
 		const STATUS_COLORS = {
 			needs_maintenance: colors.light(colors.orange),
@@ -1445,7 +1453,14 @@ export default class FieldPanel extends Component {
 			const row = new DetailRow({ appendTo: this._content });
 			new Elem({ tag: 'span', appendTo: row, addClass: 'label', textContent: label });
 			const color = label === 'Status' ? STATUS_COLORS[item.status] || null : null;
-			new Elem({ tag: 'span', appendTo: row, addClass: 'value', style: color ? { color } : {}, textContent: value });
+			new IconText({
+				tag: 'span',
+				appendTo: row,
+				addClass: 'value',
+				style: color ? { color } : {},
+				icon: label === 'Status' ? STATUS_ICONS[item.status] : undefined,
+				textContent: value,
+			});
 		}
 
 		this._renderProperties(item.properties, this._content);
@@ -1583,11 +1598,11 @@ export default class FieldPanel extends Component {
 		});
 		addField('status', 'Status', {
 			options: [
-				{ value: '', label: '✓ Active' },
-				{ value: 'needs_maintenance', label: '🔩 Needs maintenance' },
-				{ value: 'needs_service', label: '🔧 Needs service' },
-				{ value: 'out_of_service', label: '⚠️ Out of service' },
-				{ value: 'destroyed', label: '☠️ Destroyed' },
+				{ value: '', label: 'Active' },
+				{ value: 'needs_maintenance', label: 'Needs maintenance' },
+				{ value: 'needs_service', label: 'Needs service' },
+				{ value: 'out_of_service', label: 'Out of service' },
+				{ value: 'destroyed', label: 'Destroyed' },
 			],
 		});
 		addField('appraisalValue', 'Appraised Value ($)', {
@@ -2051,7 +2066,13 @@ export default class FieldPanel extends Component {
 			const row = new DetailRow({ appendTo: this._content });
 
 			new Elem({ tag: 'span', appendTo: row, addClass: 'label', textContent: 'Status' });
-			new Elem({ tag: 'span', appendTo: row, addClass: 'value', textContent: fieldStatusLabel });
+			new IconText({
+				tag: 'span',
+				appendTo: row,
+				addClass: 'value',
+				icon: STATUS_ICONS[field.status],
+				textContent: fieldStatusLabel,
+			});
 		}
 
 		this._renderProperties(field.properties, this._content);

@@ -138,12 +138,12 @@ export default class PathDialog extends FormDialog {
 		this._statusSelect = new Select({
 			appendTo: this.body,
 			options: [
-				{ value: '', label: '✓ Active' },
-				{ value: 'needs_maintenance', label: '🔩 Needs maintenance' },
-				{ value: 'needs_service', label: '🔧 Needs service' },
-				{ value: 'out_of_service', label: '⚠️ Out of service' },
-				{ value: 'closed', label: '🚫 Closed' },
-				{ value: 'destroyed', label: '☠️ Destroyed' },
+				{ value: '', label: 'Active' },
+				{ value: 'needs_maintenance', label: 'Needs maintenance' },
+				{ value: 'needs_service', label: 'Needs service' },
+				{ value: 'out_of_service', label: 'Out of service' },
+				{ value: 'closed', label: 'Closed' },
+				{ value: 'destroyed', label: 'Destroyed' },
 			],
 			value: path.status || '',
 		});

@@ -483,7 +483,8 @@ export function openQuickLog() {
 						await createEvent({ body: payload });
 					}
 
-					submitBtn.elem.textContent = '✓ Logged';
+					submitBtn.options.icon = 'check';
+					submitBtn.elem.textContent = 'Logged';
 					submitBtn.setStyle({ backgroundColor: colors.success });
 					setTimeout(() => sheet.hide(), 800);
 				} catch {

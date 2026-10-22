@@ -1,4 +1,4 @@
-import { Card, Component, Dialog, Elem, EmptyState, styled, theme } from '@vanilla-bean/components';
+import { Card, Component, Dialog, Elem, EmptyState, Icon, styled, theme } from '@vanilla-bean/components';
 import Chart from 'chart.js/auto';
 import { analyzePrecisionLayers } from '../api/precisionLayers';
 import { FigureTable, SubLabel } from './panelParts';
@@ -218,13 +218,15 @@ export default class PrecisionAnalysisDialog extends Dialog {
 			cells.forEach((text, i) => {
 				const best = isBest && i === 3;
 
-				new Elem({
+				const td = new Elem({
 					tag: 'td',
 					appendTo: tr,
 					...(i !== 0 && { addClass: 'number' }),
 					style: best ? { color: colors.light(colors.success), fontWeight: '700' } : {},
-					textContent: String(best ? text + ' ★' : text),
+					textContent: String(text),
 				});
+
+				if (best) new Icon({ tag: 'span', appendTo: td, icon: 'star', style: { marginLeft: '4px' } });
 			});
 		}
 

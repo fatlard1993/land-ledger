@@ -103,13 +103,13 @@ export default class FieldDialog extends FormDialog {
 		this._statusSelect = new Select({
 			appendTo: this.body,
 			options: [
-				{ value: '', label: '✓ Active' },
-				{ value: 'needs_maintenance', label: '🔩 Needs maintenance' },
-				{ value: 'needs_service', label: '🔧 Needs service' },
-				{ value: 'out_of_service', label: '⚠️ Out of service' },
-				{ value: 'fallow', label: '😴 Fallow' },
-				{ value: 'abandoned', label: '🏚️ Abandoned' },
-				{ value: 'destroyed', label: '☠️ Destroyed' },
+				{ value: '', label: 'Active' },
+				{ value: 'needs_maintenance', label: 'Needs maintenance' },
+				{ value: 'needs_service', label: 'Needs service' },
+				{ value: 'out_of_service', label: 'Out of service' },
+				{ value: 'fallow', label: 'Fallow' },
+				{ value: 'abandoned', label: 'Abandoned' },
+				{ value: 'destroyed', label: 'Destroyed' },
 			],
 			value: field.status || '',
 		});

@@ -120,11 +120,11 @@ export default class EquipmentDialog extends FormDialog {
 					label: 'Status',
 					InputComponent: Select,
 					options: [
-						{ label: '✓ Active', value: '' },
-						{ label: '🔩 Needs maintenance', value: 'needs_maintenance' },
-						{ label: '🔧 Needs service', value: 'needs_service' },
-						{ label: '⚠️ Out of service', value: 'out_of_service' },
-						{ label: '☠️ Destroyed', value: 'destroyed' },
+						{ label: 'Active', value: '' },
+						{ label: 'Needs maintenance', value: 'needs_maintenance' },
+						{ label: 'Needs service', value: 'needs_service' },
+						{ label: 'Out of service', value: 'out_of_service' },
+						{ label: 'Destroyed', value: 'destroyed' },
 					],
 				},
 				{

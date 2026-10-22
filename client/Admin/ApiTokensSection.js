@@ -28,8 +28,10 @@ function showNewToken(container, data, { onRefresh }) {
 			// Where the copy is refused, the token is selected for copying by hand
 			if (!(await copyToClipboard(data.token))) return tokenVal.elem.select();
 
-			copyBtn.elem.textContent = 'Copied ✓';
+			copyBtn.options.icon = 'check';
+			copyBtn.elem.textContent = 'Copied';
 			setTimeout(() => {
+				copyBtn.options.icon = undefined;
 				copyBtn.elem.textContent = 'Copy';
 			}, 2000);
 		},

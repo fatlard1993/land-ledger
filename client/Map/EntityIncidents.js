@@ -3,6 +3,7 @@ import { formatDate, theme } from '@vanilla-bean/components';
 import { ActionHeader, SquareBadge } from '../Layout';
 import { formatDollar } from '../utils/format';
 import parseDetails from '../utils/parseDetails';
+import { IconText } from '../statusIcons';
 import IncidentDialog, { incidentEmoji, severityMeta } from '../Incidents/IncidentDialog';
 import {
 	getIncidents,
@@ -117,8 +118,14 @@ export async function renderIncidents(entityType, entity, refresh, appendTo, { l
 
 		if (rec.estimatedLoss) meta.push(`${formatDollar(rec.estimatedLoss)} loss`);
 		if (rec.insuranceClaim) meta.push(`Claim: ${rec.insuranceClaim}`);
-		if (rec.resolved) meta.push('✓ Resolved');
-		if (meta.length) new RowMeta({ appendTo: info, style: { marginTop: '2px' }, textContent: meta.join(' · ') });
+		if (meta.length || rec.resolved) {
+			const metaRow = new RowMeta({ appendTo: info, style: { marginTop: '2px' }, textContent: meta.join(' · ') });
+
+			if (rec.resolved) {
+				if (meta.length) metaRow.elem.append(' · ');
+				new IconText({ tag: 'span', appendTo: metaRow, icon: 'circle-check', textContent: 'Resolved' });
+			}
+		}
 
 		new RowAside({ appendTo: row, textContent: formatDate(rec.date) || '—' });
 

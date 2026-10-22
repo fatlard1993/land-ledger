@@ -14,6 +14,7 @@ import {
 import { getAccounts, createAccount, updateAccount, deleteAccount, setAuthEnabled, getAuthSettings } from '../api/auth';
 import { getAppSettings, updateAppSettings } from '../api';
 import { FormLabel } from '../Layout';
+import { IconText } from '../statusIcons';
 import { renderShareLinksSection } from './ShareLinksSection.js';
 import { renderApiTokensSection } from './ApiTokensSection.js';
 import { AdminSection, EmptyLine, Hint, ItemRow, Notice, SectionHead } from './parts';
@@ -148,8 +149,9 @@ export default class AccountsDialog extends Dialog {
 		if (this._adminPasskeyIsDefault) {
 			new Notice({
 				appendTo: this.body,
+				icon: 'triangle-exclamation',
 				textContent:
-					'⚠ The admin account is still using the default passkey ("admin"). Edit the Admin account below and set a strong passkey before enabling login.',
+					'The admin account is still using the default passkey ("admin"). Edit the Admin account below and set a strong passkey before enabling login.',
 			});
 		}
 
@@ -238,10 +240,10 @@ export default class AccountsDialog extends Dialog {
 		});
 
 		if (this._nassKeySet) {
-			new Elem({
-				tag: 'div',
+			new IconText({
 				style: { fontSize: '11px', color: colors.light(colors.success), marginTop: '4px' },
-				textContent: '✓ NASS key configured — county yield benchmarks active',
+				icon: 'circle-check',
+				textContent: 'NASS key configured — county yield benchmarks active',
 				appendTo: sec,
 			});
 		}

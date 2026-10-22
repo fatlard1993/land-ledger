@@ -1,4 +1,5 @@
 import { Component, Input, styled } from '@vanilla-bean/components';
+import { IconText } from '../statusIcons';
 
 // One settings group in the accounts dialog, ruled off from the one above
 export const AdminSection = styled(
@@ -129,7 +130,7 @@ export const SecretField = styled(
 );
 
 export const Notice = styled(
-	Component,
+	IconText,
 	({ colors, radius }) => `
 		margin-bottom: 10px;
 		padding: 10px 12px;

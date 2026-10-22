@@ -1,6 +1,7 @@
 import { Button, Card, Component, Dialog, Elem, formatDate, styled, theme } from '@vanilla-bean/components';
 
 import { ActionHeader } from '../Layout';
+import { IconText } from '../statusIcons';
 
 import { getHealthRecords, getBreedingRecords } from '../api/animals';
 import { animalLabel, ageLabel, STATUS_COLORS, speciesMeta } from './constants';
@@ -276,12 +277,12 @@ export default class AnimalPanel extends Dialog {
 				if (meta) new Elem({ tag: 'div', appendTo: info, addClass: 'meta', textContent: meta });
 
 				if (isWithdrawal) {
-					new Elem({
-						tag: 'div',
+					new IconText({
 						appendTo: info,
 						addClass: 'flag',
 						style: { color: colors.light(colors.warning) },
-						textContent: `⚠ Withdrawal until ${r.withdrawalDate}`,
+						icon: 'triangle-exclamation',
+						textContent: `Withdrawal until ${r.withdrawalDate}`,
 					});
 				}
 
@@ -344,12 +345,12 @@ export default class AnimalPanel extends Dialog {
 
 					if (upcoming) {
 						const daysLeft = Math.ceil((new Date(r.expectedDueDate) - new Date()) / 86_400_000);
-						new Elem({
-							tag: 'div',
+						new IconText({
 							appendTo: info,
 							addClass: 'flag',
 							style: { color: colors.light(colors.success) },
-							textContent: `📅 Due in ${daysLeft} day${daysLeft !== 1 ? 's' : ''}`,
+							icon: 'calendar-days',
+							textContent: `Due in ${daysLeft} day${daysLeft !== 1 ? 's' : ''}`,
 						});
 					}
 

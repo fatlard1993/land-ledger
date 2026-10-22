@@ -173,8 +173,10 @@ function showShareLink(container, data, { onRefresh }) {
 			// Where the copy is refused, the link is selected for copying by hand
 			if (!(await copyToClipboard(url))) return urlEl.elem.select();
 
-			copyBtn.elem.textContent = 'Copied ✓';
+			copyBtn.options.icon = 'check';
+			copyBtn.elem.textContent = 'Copied';
 			setTimeout(() => {
+				copyBtn.options.icon = undefined;
 				copyBtn.elem.textContent = 'Copy Link';
 			}, 2000);
 		},
@@ -247,8 +249,10 @@ export async function renderShareLinksSection(container, { onRefresh }) {
 				if (full) {
 					if (!(await copyToClipboard(`${window.location.origin}/shared/${full}`))) return;
 
-					copyBtn.elem.textContent = 'Copied ✓';
+					copyBtn.options.icon = 'check';
+					copyBtn.elem.textContent = 'Copied';
 					setTimeout(() => {
+						copyBtn.options.icon = undefined;
 						copyBtn.elem.textContent = 'Copy link';
 					}, 2000);
 				}

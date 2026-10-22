@@ -1,4 +1,4 @@
-import { Button, Card, Component, Elem, styled, theme } from '@vanilla-bean/components';
+import { Button, Card, Component, Elem, Icon, styled, theme } from '@vanilla-bean/components';
 import { centroidFromGeometry } from './geo';
 
 const { colors } = theme;
@@ -14,14 +14,14 @@ const evaluate = (date, day) => {
 	if (day.tempMin != null && day.tempMin <= 28) {
 		alerts.push({
 			type: 'hard_freeze',
-			icon: '❄️',
+			icon: 'snowflake',
 			color: colors.purple,
 			label: `Hard Freeze — low ${Math.round(day.tempMin)}°F`,
 		});
 	} else if (day.tempMin != null && day.tempMin <= 36) {
 		alerts.push({
 			type: 'frost',
-			icon: '🌡️',
+			icon: 'temperature-low',
 			color: colors.orange,
 			label: `Frost Warning — low ${Math.round(day.tempMin)}°F`,
 		});
@@ -30,14 +30,19 @@ const evaluate = (date, day) => {
 	if (day.precipitation != null && day.precipitation >= 0.75) {
 		alerts.push({
 			type: 'rain',
-			icon: '🌧️',
+			icon: 'cloud-showers-heavy',
 			color: colors.blue,
 			label: `Heavy Rain — ${day.precipitation.toFixed(2)}" forecast`,
 		});
 	}
 
 	if (day.windMax != null && day.windMax >= 25) {
-		alerts.push({ type: 'wind', icon: '💨', color: colors.gray, label: `High Wind — ${Math.round(day.windMax)} mph` });
+		alerts.push({
+			type: 'wind',
+			icon: 'wind',
+			color: colors.gray,
+			label: `High Wind — ${Math.round(day.windMax)} mph`,
+		});
 	}
 
 	return alerts.map(a => ({
@@ -182,11 +187,11 @@ function render(alerts) {
 function addAlertCard(container, alert) {
 	const card = new AlertCard({ appendTo: container, accent: alert.color });
 
-	new Elem({
+	new Icon({
 		tag: 'span',
 		appendTo: card,
-		style: { fontSize: '16px', flexShrink: '0' },
-		textContent: alert.icon,
+		style: { fontSize: '16px', flexShrink: '0', color: alert.color },
+		icon: alert.icon,
 	});
 
 	const body = new Component({

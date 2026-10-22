@@ -85,12 +85,12 @@ export default class ParcelDialog extends FormDialog {
 		this._statusSelect = new Select({
 			appendTo: this.body,
 			options: [
-				{ value: '', label: '✓ Active' },
-				{ value: 'needs_maintenance', label: '🔩 Needs maintenance' },
-				{ value: 'out_of_service', label: '⚠️ Out of service' },
-				{ value: 'disputed', label: '⚖️ Disputed' },
-				{ value: 'encumbered', label: '🔒 Encumbered' },
-				{ value: 'destroyed', label: '☠️ Destroyed' },
+				{ value: '', label: 'Active' },
+				{ value: 'needs_maintenance', label: 'Needs maintenance' },
+				{ value: 'out_of_service', label: 'Out of service' },
+				{ value: 'disputed', label: 'Disputed' },
+				{ value: 'encumbered', label: 'Encumbered' },
+				{ value: 'destroyed', label: 'Destroyed' },
 			],
 			value: parcel.status || '',
 		});

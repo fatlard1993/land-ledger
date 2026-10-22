@@ -326,10 +326,10 @@ export default class IncidentDialog extends FormDialog {
 				statusImpactSelect = new Elem({ tag: 'select', appendTo: divider });
 				[
 					{ value: '', label: '— no change —' },
-					{ value: 'needs_maintenance', label: '🔩 Needs maintenance' },
-					{ value: 'needs_service', label: '🔧 Needs service / attention' },
-					{ value: 'out_of_service', label: '⚠️ Out of service' },
-					{ value: 'destroyed', label: '☠️ Destroyed / total loss' },
+					{ value: 'needs_maintenance', label: 'Needs maintenance' },
+					{ value: 'needs_service', label: 'Needs service / attention' },
+					{ value: 'out_of_service', label: 'Out of service' },
+					{ value: 'destroyed', label: 'Destroyed / total loss' },
 				].forEach(({ value, label }) => {
 					const o = document.createElement('option');
 
