@@ -233,6 +233,7 @@ export default class Todo extends AsyncView {
 
 			todos.push({
 				urgency: status.urgency,
+				kind: 'maintenance',
 				icon: '🔧',
 				title: schedule.name || 'Maintenance',
 				entity: eq?.name || 'Equipment',
@@ -263,6 +264,7 @@ export default class Todo extends AsyncView {
 
 			todos.push({
 				urgency,
+				kind: 'maintenance',
 				icon: eq.emoji || '🚜',
 				title: label,
 				entity: eq.name || 'Equipment',
@@ -281,6 +283,7 @@ export default class Todo extends AsyncView {
 
 			todos.push({
 				urgency: status.urgency,
+				kind: 'feeding',
 				icon: '🐄',
 				title: `${schedule.feedType || 'Feeding'} due`,
 				entity: field?.name || 'Field',
@@ -350,6 +353,7 @@ export default class Todo extends AsyncView {
 
 			todos.push({
 				urgency,
+				kind: 'incident',
 				icon: incidentEmoji(incident.type),
 				title: incident.type || 'Incident',
 				entity: incident.entityName || '',
@@ -512,12 +516,12 @@ export default class Todo extends AsyncView {
 		}
 
 		// Sort within each tier: feeding > maintenance > incidents
-		const typeOrder = { '🐄': 0, '🔧': 1, '⚠️': 2 };
+		const kindOrder = { feeding: 0, maintenance: 1, incident: 2 };
 		const urgencyOrder = { [NOW]: 0, [SOON]: 1, [LATER]: 2 };
 
 		return todos.sort(
 			(a, b) =>
-				urgencyOrder[a.urgency] - urgencyOrder[b.urgency] || (typeOrder[a.icon] ?? 9) - (typeOrder[b.icon] ?? 9),
+				urgencyOrder[a.urgency] - urgencyOrder[b.urgency] || (kindOrder[a.kind] ?? 9) - (kindOrder[b.kind] ?? 9),
 		);
 	}
 
