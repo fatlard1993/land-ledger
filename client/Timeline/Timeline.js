@@ -24,7 +24,8 @@ import SeasonCharts from '../Charts/SeasonCharts';
 import TabularImportDialog from '../Import/TabularImportDialog';
 import ExportDialog from '../Export/ExportDialog';
 import { toDateOnly } from '../utils/dates';
-import EventDialog, { categoryMeta, eventEmoji } from './EventDialog';
+import { categoryMeta } from '../eventCategories';
+import EventDialog, { eventEmoji } from './EventDialog';
 
 const { colors } = theme;
 
@@ -718,7 +719,7 @@ export default class Timeline extends AsyncView {
 							tag: 'span',
 							appendTo: badges,
 							attributes: { title: 'Livestock' },
-							textContent: '🐄',
+							textContent: categoryMeta('livestock').emoji,
 						});
 					}
 
@@ -727,7 +728,7 @@ export default class Timeline extends AsyncView {
 							tag: 'span',
 							appendTo: badges,
 							attributes: { title: 'Cover crop' },
-							textContent: '🌱',
+							textContent: categoryMeta('cover_crop').emoji,
 						});
 					}
 

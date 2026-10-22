@@ -5,19 +5,9 @@ import { createApplicationLog } from './api/applicationLogs';
 import { CATEGORIES as APP_CATEGORIES } from './ApplicationLog/ApplicationLogDialog';
 import { FormLabel } from './Layout';
 import { toDateOnly } from './utils/dates';
+import { EVENT_CATEGORIES } from './eventCategories';
 
 // ── Constants ──────────────────────────────────────────────────────────────────
-
-const EVENT_TYPES = [
-	{ value: 'crop', label: 'Crop', icon: '🌽' },
-	{ value: 'harvest', label: 'Harvest', icon: '🌾' },
-	{ value: 'livestock', label: 'Livestock', icon: '🐄' },
-	{ value: 'cover_crop', label: 'Cover crop', icon: '🌿' },
-	{ value: 'input', label: 'Input', icon: '🧪' },
-	{ value: 'soil_test', label: 'Soil test', icon: '🔬' },
-	{ value: 'tillage', label: 'Tillage', icon: '🚜' },
-	{ value: 'observation', label: 'Observation', icon: '👁️' },
-];
 
 const LOG_TYPES = [
 	{ value: 'event', label: 'Field event', icon: 'calendar-plus', sub: 'Crop, livestock, harvest, input…' },
@@ -375,12 +365,12 @@ export function openQuickLog() {
 			let selectedCat = 'crop';
 			const catChips = [];
 
-			EVENT_TYPES.forEach(t => {
+			EVENT_CATEGORIES.forEach(t => {
 				const chip = new Button({
 					appendTo: catGrid,
 					variant: 'chip',
 					addClass: t.value === selectedCat ? 'active' : [],
-					textContent: `${t.icon} ${t.label}`,
+					textContent: t.label,
 					onPointerPress: () => {
 						selectedCat = t.value;
 						catChips.forEach(c => c.toggleClass('active', c === chip));

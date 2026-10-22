@@ -16,7 +16,8 @@ import { makePropertiesEditor } from '../utils/PropertiesEditor';
 import { formatDollar } from '../utils/format';
 
 import { getEvents, updateEvent, getMaintenance, getMaintenanceSchedules, updateEquipment } from '../api';
-import { categoryMeta, eventEmoji } from '../Timeline/EventDialog';
+import { eventEmoji } from '../Timeline/EventDialog';
+import { categoryMeta } from '../eventCategories';
 import { ActionHeader, FieldPanel as StyledPanel, DetailRow, FormLabel, TenureBadge } from '../Layout';
 import context from '../context';
 import EventDialog from '../Timeline/EventDialog';
@@ -1925,7 +1926,7 @@ export default class FieldPanel extends Component {
 			const renderEventBlock = (event, extraDetails = []) => {
 				const d = parseDetails(event.details);
 				const emoji = eventEmoji(event);
-				const label = event.name || categoryMeta(event.category).label.replace(/^[^\s]+\s/, '');
+				const label = event.name || categoryMeta(event.category).name;
 
 				const block = new EventBlock({ appendTo: this._content });
 

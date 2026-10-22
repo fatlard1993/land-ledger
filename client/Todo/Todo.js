@@ -32,7 +32,8 @@ import {
 import { PageView } from '../Layout';
 import { frequencyInterval, frequencyLabel } from '../Livestock/FeedingScheduleDialog';
 import { incidentEmoji, severityMeta } from '../Incidents/IncidentDialog';
-import { categoryMeta, eventEmoji } from '../Timeline/EventDialog';
+import { eventEmoji } from '../Timeline/EventDialog';
+import { categoryMeta } from '../eventCategories';
 import context from '../context';
 import { toDateOnly } from '../utils/dates';
 

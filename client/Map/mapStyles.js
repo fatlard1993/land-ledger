@@ -2,6 +2,8 @@
 
 import { theme } from '@vanilla-bean/components';
 
+import { EVENT_CATEGORIES } from '../eventCategories';
+
 const { colors } = theme;
 
 // Leaflet draws paths with CSS color strings
@@ -81,15 +83,7 @@ export const USE_FILLS = {
 	fallow: { fillColor: muted, fillOpacity: 0.2 },
 };
 
-export const USE_ICONS = {
-	livestock: '🐄',
-	crop: '🌽',
-	cover_crop: '🌱',
-	soil_test: '🔬',
-	input: '🧪',
-	tillage: '🚜',
-	observation: '👁️',
-};
+export const USE_ICONS = Object.fromEntries(EVENT_CATEGORIES.map(({ value, emoji }) => [value, emoji]));
 
 export const CURRENT_YEAR = new Date().getFullYear();
 

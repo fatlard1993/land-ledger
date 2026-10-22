@@ -19,7 +19,8 @@ import { getFields, getLeases, getEvents, createField, updateField, deleteField 
 import context from '../context';
 import { toSqm, convertArea, formatArea } from '../geo';
 import parseDetails from '../utils/parseDetails';
-import { eventEmoji, categoryMeta } from '../Timeline/EventDialog';
+import { eventEmoji } from '../Timeline/EventDialog';
+import { categoryMeta } from '../eventCategories';
 import { PageView, RecordCard } from '../Layout';
 import SeasonCharts from '../Charts/SeasonCharts';
 
@@ -470,7 +471,7 @@ export default class Fields extends AsyncView {
 						tag: 'span',
 						appendTo: row,
 						addClass: 'name',
-						textContent: event.name || categoryMeta(event.category)?.label?.replace(/^[^\s]+\s/, '') || event.category,
+						textContent: event.name || categoryMeta(event.category).name || event.category,
 					});
 
 					const meta = [];

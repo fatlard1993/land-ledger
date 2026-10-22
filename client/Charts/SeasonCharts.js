@@ -1,6 +1,7 @@
 import { Chart, registerables } from 'chart.js';
 import { Card, Component, Elem, SectionLabel, styled, theme } from '@vanilla-bean/components';
 
+import { categoryMeta } from '../eventCategories';
 import {
 	soilDataByField,
 	yieldDataByField,
@@ -215,7 +216,7 @@ export default class SeasonCharts extends Component {
 		const xLabels = fieldFilter
 			? years.map(y => {
 					const p = practices[fieldFilter]?.[y] || {};
-					const icons = [p.livestock && '🐄', p.coverCrop && '🌱'].filter(Boolean).join('');
+					const icons = [p.livestock && categoryMeta('livestock').emoji, p.coverCrop && categoryMeta('cover_crop').emoji].filter(Boolean).join('');
 
 					return icons ? `${y}\n${icons}` : String(y);
 				})
@@ -374,7 +375,7 @@ export default class SeasonCharts extends Component {
 		const practiceLabelsX = fieldFilter
 			? years.map(y => {
 					const p = practices[fieldFilter]?.[y] || {};
-					const icons = [p.livestock && '🐄', p.coverCrop && '🌱'].filter(Boolean).join('');
+					const icons = [p.livestock && categoryMeta('livestock').emoji, p.coverCrop && categoryMeta('cover_crop').emoji].filter(Boolean).join('');
 
 					return icons ? `${y}\n${icons}` : String(y);
 				})

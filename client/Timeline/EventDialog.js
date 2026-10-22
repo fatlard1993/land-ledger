@@ -1,5 +1,6 @@
-import { Button, Component, Elem, FormDialog, Input, parseDate, Select, styled, theme } from '@vanilla-bean/components';
+import { Button, Component, Elem, FormDialog, Input, parseDate, Select, styled } from '@vanilla-bean/components';
 
+import { EVENT_CATEGORIES, categoryMeta } from '../eventCategories';
 import { FormLabel } from '../Layout';
 import { getFields } from '../api';
 import { makeCropCombobox } from '../Charts/cropCombobox';
@@ -8,20 +9,6 @@ import { makePropertiesEditor } from '../utils/PropertiesEditor';
 import { toDateOnly } from '../utils/dates';
 import { buildHarvestSection } from './HarvestSection.js';
 import { buildCoverCropSection } from './CoverCropSection.js';
-
-const { colors } = theme;
-
-// Each category's emoji is part of its label and of the events logged under it; the color marks it in lists
-export const EVENT_CATEGORIES = [
-	{ value: 'crop', label: '🌽 Crop', color: colors.light(colors.yellow), primary: true },
-	{ value: 'livestock', label: '🐄 Stock', color: colors.orange, primary: true },
-	{ value: 'harvest', label: '🌾 Harvest', color: colors.yellow, primary: true },
-	{ value: 'cover_crop', label: '🌱 Cover Crop', color: colors.green },
-	{ value: 'input', label: '🧪 Input', color: colors.light(colors.purple) },
-	{ value: 'tillage', label: '🚜 Tillage', color: colors.dark(colors.orange) },
-	{ value: 'soil_test', label: '🔬 Soil Test', color: colors.blue },
-	{ value: 'observation', label: '👁️ Observation', color: colors.gray },
-];
 
 const CategoryGrid = styled(
 	Component,
@@ -81,8 +68,6 @@ const ResultsGrid = styled(
 		}
 	`,
 );
-
-export const categoryMeta = cat => EVENT_CATEGORIES.find(c => c.value === cat) || EVENT_CATEGORIES[0];
 
 export const detectEmoji = (category, name = '') => {
 	const n = name.toLowerCase();
@@ -145,12 +130,7 @@ export const detectEmoji = (category, name = '') => {
 		return '🌾';
 	}
 
-	if (category === 'soil_test') return '🔬';
-	if (category === 'input') return '🧪';
-	if (category === 'tillage') return '🚜';
-	if (category === 'observation') return '👁️';
-
-	return categoryMeta(category).label.split(' ')[0];
+	return categoryMeta(category).emoji;
 };
 
 export const eventEmoji = event => event?.emoji || detectEmoji(event?.category, event?.name);
