@@ -3,7 +3,7 @@ import { Button, Icon, Input, Notify, debounce, theme } from '@vanilla-bean/comp
 
 import { searchLocation } from '../api';
 
-const { colors } = theme;
+const { colors, radius, space } = theme;
 
 // Builds the search input + results dropdown and appends it to `container`
 // (should be the MapWrap element, a sibling of the Leaflet container).
@@ -27,7 +27,7 @@ export function buildSearchOverlay(container, map) {
 	const wrap = document.createElement('div');
 
 	Object.assign(wrap.style, {
-		marginTop: '10px',
+		marginTop: space.md,
 		width: 'min(380px, calc(100vw - 150px))',
 		pointerEvents: 'auto',
 		fontFamily: 'inherit',
@@ -39,7 +39,7 @@ export function buildSearchOverlay(container, map) {
 		display: 'flex',
 		alignItems: 'center',
 		background: `${colors.alpha(colors.black, 0.95)}`,
-		borderRadius: '6px',
+		borderRadius: radius.md,
 		border: `1px solid ${colors.border}`,
 		boxShadow: `0 2px 8px ${colors.alpha(colors.vantablack, 0.4)}`,
 		overflow: 'hidden',
@@ -47,7 +47,7 @@ export function buildSearchOverlay(container, map) {
 
 	const icon = new Icon({
 		icon: 'magnifying-glass',
-		style: { padding: '0 4px 0 10px', color: colors.gray, flexShrink: '0' },
+		style: { padding: `0 ${space.xs} 0 ${space.md}`, color: colors.gray, flexShrink: '0' },
 	}).elem;
 
 	const input = new Input({
@@ -60,7 +60,7 @@ export function buildSearchOverlay(container, map) {
 			outline: 'none',
 			color: `${colors.white}`,
 			fontSize: '14px',
-			padding: '9px 4px',
+			padding: `${space.sm} ${space.xs}`,
 			minWidth: '0',
 		},
 	}).elem;
@@ -86,7 +86,7 @@ export function buildSearchOverlay(container, map) {
 
 	Object.assign(dropdown.style, {
 		background: `${colors.alpha(colors.black, 0.95)}`,
-		borderRadius: '0 0 6px 6px',
+		borderRadius: `0 0 ${radius.md} ${radius.md}`,
 		border: `1px solid ${colors.border}`,
 		borderTop: 'none',
 		display: 'none',
@@ -139,7 +139,7 @@ export function buildSearchOverlay(container, map) {
 				const empty = document.createElement('div');
 
 				empty.textContent = 'No results';
-				Object.assign(empty.style, { padding: '10px 12px', color: `${colors.gray}`, fontSize: '13px' });
+				Object.assign(empty.style, { padding: space.md, color: `${colors.gray}`, fontSize: '13px' });
 				dropdown.append(empty);
 			} else {
 				results.forEach((r, i) => {
@@ -165,7 +165,7 @@ export function buildSearchOverlay(container, map) {
 					}
 
 					Object.assign(item.style, {
-						padding: '8px 12px',
+						padding: `${space.sm} ${space.md}`,
 						cursor: 'pointer',
 						borderBottom: `1px solid ${colors.border}`,
 					});

@@ -1,7 +1,9 @@
-import { Button, Elem, FormDialog, Input, Select } from '@vanilla-bean/components';
+import { Button, Elem, FormDialog, Input, Select, theme } from '@vanilla-bean/components';
 import { stayOpenFor } from '../utils/stayOpenFor';
 import { makePropertiesEditor } from '../utils/PropertiesEditor';
 import { Caption, checkboxRow, emojiField } from './dialogParts';
+
+const { space } = theme;
 
 // Stored on each path as its color, so these stay the literal values saved records hold
 export const PATH_COLORS = [
@@ -111,7 +113,7 @@ export default class PathDialog extends FormDialog {
 		const colorRow = new Elem({
 			tag: 'div',
 			appendTo: this.body,
-			style: { display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '4px', marginBottom: '8px' },
+			style: { display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: space.xs, marginBottom: space.sm },
 		});
 
 		for (const { value, label } of PATH_COLORS) {

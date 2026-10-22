@@ -9,15 +9,18 @@ import {
 	Notify,
 	Select,
 	styled,
+	theme,
 } from '@vanilla-bean/components';
 import { getFields } from '../api';
 import { previewPrecisionFile, importPrecisionLayer } from '../api/precisionLayers';
 import { FormLabel } from '../Layout';
 import { FigureTable } from './panelParts';
 
+const { space } = theme;
+
 const DropZone = styled(
 	Component,
-	({ colors, radius }) => `
+	({ colors, radius, space }) => `
 		border: 2px dashed ${colors.alpha(colors.white, 0.2)};
 		border-radius: ${radius.lg};
 		padding: 28px 16px;
@@ -27,7 +30,7 @@ const DropZone = styled(
 		transition: border-color 0.15s;
 
 		& .drop-icon {
-			margin-bottom: 6px;
+			margin-bottom: ${space.sm};
 			font-size: 28px;
 		}
 
@@ -36,7 +39,7 @@ const DropZone = styled(
 		}
 
 		& .drop-hint {
-			margin-top: 4px;
+			margin-top: ${space.xs};
 			font-size: 11px;
 		}
 
@@ -72,7 +75,7 @@ export default class PrecisionLayerImport extends Dialog {
 		new Note({
 			tag: 'p',
 			appendTo: this.body,
-			style: { margin: '0 0 10px' },
+			style: { margin: `0 0 ${space.md}` },
 			textContent:
 				'Import yield maps and as-applied maps from combine or planter monitors. Accepts CSV (with Lat/Lon columns) or GeoJSON with Point features.',
 		});
@@ -117,7 +120,7 @@ export default class PrecisionLayerImport extends Dialog {
 
 		new Note({
 			appendTo: this.body,
-			style: { marginBottom: '12px' },
+			style: { marginBottom: space.md },
 			textContent: `${file.name}  ·  ${preview.rowCount ?? '?'} rows  ·  ${preview.columns.length} columns`,
 		});
 
@@ -146,7 +149,7 @@ export default class PrecisionLayerImport extends Dialog {
 		// Sample preview table
 		if (preview.sample?.length) {
 			new FormLabel({ appendTo: body, textContent: 'Preview (first 3 rows)' });
-			const table = new FigureTable({ appendTo: body, style: { marginTop: '4px', fontSize: '11px' } });
+			const table = new FigureTable({ appendTo: body, style: { marginTop: space.xs, fontSize: '11px' } });
 			const thead = new Elem({ tag: 'thead', appendTo: table });
 			const hRow = new Elem({ tag: 'tr', appendTo: thead });
 			for (const col of preview.columns.slice(0, 6)) {
@@ -164,7 +167,7 @@ export default class PrecisionLayerImport extends Dialog {
 		// Type + field + season
 		const row1 = new Component({
 			appendTo: body,
-			style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' },
+			style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: space.md },
 		});
 		const c1 = new Component({ appendTo: row1 });
 		const c2 = new Component({ appendTo: row1 });
@@ -215,7 +218,7 @@ export default class PrecisionLayerImport extends Dialog {
 		const importBtn = new Button({
 			appendTo: body,
 			textContent: 'Import Layer',
-			style: { width: '100%', marginTop: '16px' },
+			style: { width: '100%', marginTop: space.lg },
 			onPointerPress: async () => {
 				const valueField = valueSelect.elem.value;
 				if (!valueField) {
@@ -258,7 +261,7 @@ export default class PrecisionLayerImport extends Dialog {
 			variant: 'flat',
 			icon: 'arrow-left',
 			textContent: 'Choose different file',
-			style: { width: '100%', marginTop: '6px', fontSize: '12px' },
+			style: { width: '100%', marginTop: space.sm, fontSize: '12px' },
 			onPointerPress: () => this._renderUpload(),
 		});
 	}

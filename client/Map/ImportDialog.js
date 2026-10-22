@@ -1,6 +1,8 @@
-import { Button, Component, Dialog, Elem, Icon, Input, Notify } from '@vanilla-bean/components';
+import { Button, Component, Dialog, Elem, Icon, Input, Notify, theme } from '@vanilla-bean/components';
 
 import { DropZone, Lead, PreviewList } from './dialogParts';
+
+const { space } = theme;
 
 export default class ImportDialog extends Dialog {
 	constructor(options = {}) {
@@ -72,7 +74,7 @@ export default class ImportDialog extends Dialog {
 		new Elem({
 			tag: 'p',
 			appendTo: this._previewSection,
-			style: { fontSize: '13px', margin: '12px 0 6px' },
+			style: { fontSize: '13px', margin: `${space.md} 0 ${space.sm}` },
 			textContent: `Found ${features.length} polygon${features.length !== 1 ? 's' : ''}:`,
 		});
 
@@ -88,7 +90,7 @@ export default class ImportDialog extends Dialog {
 		new Button({
 			appendTo: this._previewSection,
 			textContent: `Import All ${features.length} Fields`,
-			style: { marginTop: '2px', width: '100%' },
+			style: { marginTop: space.xs, width: '100%' },
 			onPointerPress: () => {
 				this.options.onImport?.(this._pendingFeatures);
 				this.close();

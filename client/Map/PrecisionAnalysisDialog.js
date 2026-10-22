@@ -3,15 +3,15 @@ import Chart from 'chart.js/auto';
 import { analyzePrecisionLayers } from '../api/precisionLayers';
 import { FigureTable, SubLabel } from './panelParts';
 
-const { colors } = theme;
+const { colors, space } = theme;
 
 // Chart.js reads its colors as CSS text
 const css = color => color.toRgbString();
 
 const Footnote = styled(
 	Component,
-	({ colors }) => `
-		margin-top: 8px;
+	({ colors, space }) => `
+		margin-top: ${space.sm};
 		font-size: 10px;
 		line-height: 1.5;
 		color: ${colors.gray};
@@ -81,11 +81,11 @@ export default class PrecisionAnalysisDialog extends Dialog {
 		const body = this.body;
 
 		// ── Summary header ───────────────────────────────────────────────────────
-		const summary = new Card({ appendTo: body, style: { marginBottom: '14px' } });
+		const summary = new Card({ appendTo: body, style: { marginBottom: space.md } });
 
 		new Component({
 			appendTo: summary,
-			style: { fontSize: '13px', fontWeight: '600', marginBottom: '4px' },
+			style: { fontSize: '13px', fontWeight: '600', marginBottom: space.xs },
 			textContent: `${r.pairCount.toLocaleString()} matched point pairs across field`,
 		});
 		new Component({
@@ -99,7 +99,7 @@ export default class PrecisionAnalysisDialog extends Dialog {
 			const best = r.bestZone;
 			new Component({
 				appendTo: summary,
-				style: { fontSize: '12px', color: colors.light(colors.success), marginTop: '6px', fontWeight: '500' },
+				style: { fontSize: '12px', color: colors.light(colors.success), marginTop: space.sm, fontWeight: '500' },
 				textContent: `Highest yield at zone ${best.zoneIndex}: avg rate ${formatN(best.appliedMean, 0)} ${appliedLayer.valueUnit ?? ''} → ${formatN(best.yieldMean)} ${yieldLayer.valueUnit ?? ''}`,
 			});
 		}
@@ -109,7 +109,7 @@ export default class PrecisionAnalysisDialog extends Dialog {
 
 		const canvasWrap = new Component({
 			appendTo: body,
-			style: { position: 'relative', height: '220px', marginBottom: '14px' },
+			style: { position: 'relative', height: '220px', marginBottom: space.md },
 		});
 		const canvas = document.createElement('canvas');
 		canvasWrap.elem.append(canvas);
@@ -226,7 +226,7 @@ export default class PrecisionAnalysisDialog extends Dialog {
 					textContent: String(text),
 				});
 
-				if (best) new Icon({ tag: 'span', appendTo: td, icon: 'star', style: { marginLeft: '4px' } });
+				if (best) new Icon({ tag: 'span', appendTo: td, icon: 'star', style: { marginLeft: space.xs } });
 			});
 		}
 

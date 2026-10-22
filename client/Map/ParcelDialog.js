@@ -1,10 +1,12 @@
-import { Button, FormDialog, Select } from '@vanilla-bean/components';
+import { Button, FormDialog, Select, theme } from '@vanilla-bean/components';
 import { makePropertiesEditor } from '../utils/PropertiesEditor';
 import { watchFormConflicts } from '../utils/watchFormConflicts.js';
 
 import { geodesicAreaSqm, convertArea, AREA_UNITS } from '../geo';
 import { stayOpenFor } from '../utils/stayOpenFor';
 import { areaField, Caption, checkboxRow } from './dialogParts';
+
+const { space } = theme;
 
 const withoutCallbacks = ({ onSave: _onSave, onDelete: _onDelete, ...options }) => options;
 
@@ -58,7 +60,7 @@ export default class ParcelDialog extends FormDialog {
 			this._showLabelEl = checkboxRow(parent, {
 				label: 'Show name label on map',
 				checked: defaultOn,
-				style: { marginBottom: '4px' },
+				style: { marginBottom: space.xs },
 			});
 		};
 

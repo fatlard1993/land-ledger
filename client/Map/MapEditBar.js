@@ -21,7 +21,7 @@ const Bar = styled(
 	({ colors, radius, space }) => `
 		display: flex;
 		align-items: center;
-		gap: 10px;
+		gap: ${space.md};
 		padding: ${space.sm} ${space.md};
 		pointer-events: auto;
 		background: ${colors.alpha(colors.black, 0.95)};

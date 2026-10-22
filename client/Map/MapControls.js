@@ -1,7 +1,7 @@
 import L from 'leaflet';
 import { Dialog, Elem, Icon, Input, Notify, theme } from '@vanilla-bean/components';
 
-const { colors } = theme;
+const { colors, space } = theme;
 
 // A button in a Leaflet bar, drawn like the bar's own zoom buttons
 const barButton = (parent, { icon, title }) => {
@@ -226,7 +226,7 @@ export function createMapControls(
 			new Elem({
 				tag: 'p',
 				appendTo: dialog.body,
-				style: { fontSize: '13px', color: colors.gray, margin: '0 0 8px' },
+				style: { fontSize: '13px', color: colors.gray, margin: `0 0 ${space.sm}` },
 				textContent:
 					"Paste your county's ArcGIS FeatureServer layer URL. The property-line search button will query it for parcels in your map view.",
 			});
@@ -235,7 +235,7 @@ export function createMapControls(
 				appendTo: dialog.body,
 				type: 'url',
 				placeholder: 'https://services3.arcgis.com/.../FeatureServer/19',
-				style: { marginBottom: '8px' },
+				style: { marginBottom: space.sm },
 			});
 
 			input.elem.value = current.parcelServiceUrl || '';
