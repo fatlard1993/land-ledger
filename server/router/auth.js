@@ -5,37 +5,13 @@ import { requestMatch } from '@vanilla-bean/components/app';
 import settingsDb from '../database/settings';
 import { createSession, digest, getSession, destroySession, sessionCookie, requireRole } from '../auth';
 
-// ── Login rate limiting ────────────────────────────────────────────────────────
-// Tracks failed login attempts globally with a rolling window.
-// Sufficient for a self-hosted single-server app where the attack surface
-// is the LAN — protects against automated scripts on any network path.
-let _loginFailures = 0;
-let _loginWindowStart = null;
-const LOGIN_MAX_FAILURES = 20;
-const LOGIN_WINDOW_MS = 15 * 60 * 1000; // 15 minutes
+// ── Login delay ────────────────────────────────────────────────────────────────
+// Each address's wrong passkeys add a growing delay before its next try, so a script on the LAN
+// can't grind through guesses while everyone else still signs in
+const failures = new Map();
+const MAX_PENALTY_MS = 10_000;
 
-function recordLoginFailure() {
-	const now = Date.now();
-
-	if (_loginWindowStart === null || now - _loginWindowStart > LOGIN_WINDOW_MS) {
-		_loginFailures = 0;
-		_loginWindowStart = now;
-	}
-
-	_loginFailures++;
-}
-
-function loginIsLocked() {
-	if (_loginWindowStart === null) return false;
-
-	if (Date.now() - _loginWindowStart > LOGIN_WINDOW_MS) {
-		_loginFailures = 0;
-		_loginWindowStart = null;
-		return false;
-	}
-
-	return _loginFailures >= LOGIN_MAX_FAILURES;
-}
+const penalty = address => Math.min(250 * 2 ** (failures.get(address) || 0) - 250, MAX_PENALTY_MS);
 
 // ── Public endpoints ───────────────────────────────────────────────────────────
 
@@ -57,8 +33,10 @@ const handleMe = request => {
 };
 
 // POST /auth/login — accepts { passkey }, sets session cookie on success.
-const handleLogin = async request => {
-	if (loginIsLocked()) return new Response('Too many failed attempts — try again later', { status: 429 });
+const handleLogin = async (request, server) => {
+	const address = server?.requestIP(request)?.address || 'unknown';
+
+	await Bun.sleep(penalty(address));
 
 	let passkey;
 
@@ -86,12 +64,14 @@ const handleLogin = async request => {
 	}
 
 	if (!matched) {
-		recordLoginFailure();
+		failures.set(address, (failures.get(address) || 0) + 1);
 		// Constant-time failure — sleep briefly so wrong passkeys don't return noticeably faster
 		await Bun.sleep(200);
 
 		return new Response('Invalid passkey', { status: 401 });
 	}
+
+	failures.delete(address);
 
 	const token = await createSession(matched);
 
@@ -313,9 +293,9 @@ const handleRevokeToken = async (request, id) => {
 
 // ── Router ─────────────────────────────────────────────────────────────────────
 
-const authRouter = async request => {
+const authRouter = async (request, server) => {
 	if (requestMatch('GET', '/auth/me', request)) return handleMe(request);
-	if (requestMatch('POST', '/auth/login', request)) return handleLogin(request);
+	if (requestMatch('POST', '/auth/login', request)) return handleLogin(request, server);
 	if (requestMatch('POST', '/auth/logout', request)) return handleLogout(request);
 
 	if (requestMatch('GET', '/auth/settings', request)) return handleGetSettings(request);

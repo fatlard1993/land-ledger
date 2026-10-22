@@ -42,14 +42,14 @@ const FINANCIAL_PREFIXES = ['/revenue', '/budget-items', '/loans'];
 // land-ledger's routes sit at the root, so the page is served only where nothing else answered
 const APP = { api: false };
 
-const router = async request => {
+const router = async (request, server) => {
 	// ── App shell ────────────────────────────────────────────────────────────
 	const { pathname } = new URL(request.url);
 
 	if (pathname === '/' || pathname === '/index.html') return serveApp(request, APP);
 
 	// ── Public routes (no auth required) ────────────────────────────────────
-	const pub = await dispatch(request, [apiDocsRoutes, authRoutes, sharedRoutes, serveStatic]);
+	const pub = await dispatch(request, [apiDocsRoutes, r => authRoutes(r, server), sharedRoutes, serveStatic]);
 	if (pub) return pub;
 
 	// ── Body size guard ──────────────────────────────────────────────────────
