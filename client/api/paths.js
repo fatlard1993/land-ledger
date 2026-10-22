@@ -1,9 +1,13 @@
-import { GET, POST, DELETE } from '@vanilla-bean/hypertether';
+import { resource } from '@vanilla-bean/hypertether';
 import { versionedUpdate } from './versionedUpdate.js';
 
-export const getPaths = async options => await GET('/paths', { apiId: 'paths', ...options });
-export const createPath = async options => await POST('/paths', { invalidates: ['paths'], ...options });
+const paths = resource('/paths');
+
+export const getPaths = paths.list;
+
+export const createPath = paths.create;
+
 export const updatePath = async (id, options) =>
 	await versionedUpdate('/paths/:id', { invalidates: ['paths'], urlParameters: { id }, ...options });
-export const deletePath = async (id, options) =>
-	await DELETE('/paths/:id', { invalidates: ['paths'], urlParameters: { id }, ...options });
+
+export const deletePath = paths.delete;

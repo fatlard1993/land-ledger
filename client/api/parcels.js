@@ -1,7 +1,16 @@
-import { GET, POST, DELETE } from '@vanilla-bean/hypertether';
+import { resource } from '@vanilla-bean/hypertether';
 import { versionedUpdate } from './versionedUpdate.js';
 
-export const getParcels = async options => await GET('/parcels', { apiId: 'parcels', ...options });
+const parcels = resource('/parcels');
+
+export const getParcels = parcels.list;
+
+export const createParcel = parcels.create;
+
+export const updateParcel = async (id, options) =>
+	await versionedUpdate('/parcels/:id', { invalidates: ['parcels'], urlParameters: { id }, ...options });
+
+export const deleteParcel = parcels.delete;
 
 export const getParcelBoundaries = async ({ south, west, north, east }) => {
 	const params = new URLSearchParams({ south, west, north, east });
@@ -11,8 +20,3 @@ export const getParcelBoundaries = async ({ south, west, north, east }) => {
 
 	return res.json();
 };
-export const createParcel = async options => await POST('/parcels', { invalidates: ['parcels'], ...options });
-export const updateParcel = async (id, options) =>
-	await versionedUpdate('/parcels/:id', { invalidates: ['parcels'], urlParameters: { id }, ...options });
-export const deleteParcel = async (id, options) =>
-	await DELETE('/parcels/:id', { invalidates: ['parcels'], urlParameters: { id }, ...options });

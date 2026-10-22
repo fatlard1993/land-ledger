@@ -1,7 +1,8 @@
-import { GET, DELETE } from '@vanilla-bean/hypertether';
+import { resource } from '@vanilla-bean/hypertether';
 
-export const getPrecisionLayers = async options =>
-	await GET('/precision-layers', { apiId: 'precision-layers', ...options });
+const precisionLayers = resource('/precision-layers');
+
+export const getPrecisionLayers = precisionLayers.list;
 
 export const getPrecisionLayerPoints = async id => {
 	const res = await fetch(`/precision-layers/${id}/points`);
@@ -10,8 +11,7 @@ export const getPrecisionLayerPoints = async id => {
 	return data.points ?? null;
 };
 
-export const deletePrecisionLayer = async (id, options) =>
-	await DELETE('/precision-layers/:id', { invalidates: ['precision-layers'], urlParameters: { id }, ...options });
+export const deletePrecisionLayer = precisionLayers.delete;
 
 export const analyzePrecisionLayers = async ({ appliedLayerId, yieldLayerId }) => {
 	const res = await fetch('/precision-layers/analyze', {

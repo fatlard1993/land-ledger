@@ -1,24 +1,39 @@
-import { GET, POST, DELETE } from '@vanilla-bean/hypertether';
+import { resource } from '@vanilla-bean/hypertether';
 import { versionedUpdate } from './versionedUpdate.js';
 
-export const getAnimals = async o => await GET('/animals', { apiId: 'animals', ...o });
-export const createAnimal = async o => await POST('/animals', { invalidates: ['animals'], ...o });
-export const updateAnimal = async (id, o) =>
-	await versionedUpdate('/animals/:id', { invalidates: ['animals'], urlParameters: { id }, ...o });
-export const deleteAnimal = async (id, o) =>
-	await DELETE('/animals/:id', { invalidates: ['animals'], urlParameters: { id }, ...o });
+const animals = resource('/animals');
 
-export const getHealthRecords = async o => await GET('/health-records', { apiId: 'health-records', ...o });
-export const createHealthRecord = async o => await POST('/health-records', { invalidates: ['health-records'], ...o });
-export const updateHealthRecord = async (id, o) =>
-	await versionedUpdate('/health-records/:id', { invalidates: ['health-records'], urlParameters: { id }, ...o });
-export const deleteHealthRecord = async (id, o) =>
-	await DELETE('/health-records/:id', { invalidates: ['health-records'], urlParameters: { id }, ...o });
+export const getAnimals = animals.list;
 
-export const getBreedingRecords = async o => await GET('/breeding-records', { apiId: 'breeding-records', ...o });
-export const createBreedingRecord = async o =>
-	await POST('/breeding-records', { invalidates: ['breeding-records'], ...o });
-export const updateBreedingRecord = async (id, o) =>
-	await versionedUpdate('/breeding-records/:id', { invalidates: ['breeding-records'], urlParameters: { id }, ...o });
-export const deleteBreedingRecord = async (id, o) =>
-	await DELETE('/breeding-records/:id', { invalidates: ['breeding-records'], urlParameters: { id }, ...o });
+export const createAnimal = animals.create;
+
+export const updateAnimal = async (id, options) =>
+	await versionedUpdate('/animals/:id', { invalidates: ['animals'], urlParameters: { id }, ...options });
+
+export const deleteAnimal = animals.delete;
+
+const healthRecords = resource('/health-records');
+
+export const getHealthRecords = healthRecords.list;
+
+export const createHealthRecord = healthRecords.create;
+
+export const updateHealthRecord = async (id, options) =>
+	await versionedUpdate('/health-records/:id', { invalidates: ['health-records'], urlParameters: { id }, ...options });
+
+export const deleteHealthRecord = healthRecords.delete;
+
+const breedingRecords = resource('/breeding-records');
+
+export const getBreedingRecords = breedingRecords.list;
+
+export const createBreedingRecord = breedingRecords.create;
+
+export const updateBreedingRecord = async (id, options) =>
+	await versionedUpdate('/breeding-records/:id', {
+		invalidates: ['breeding-records'],
+		urlParameters: { id },
+		...options,
+	});
+
+export const deleteBreedingRecord = breedingRecords.delete;
