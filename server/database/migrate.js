@@ -16,6 +16,26 @@
 //   archiveDb.markAllDirty();
 //   await archiveDb.write();
 
+import archiveDb from './archive.js';
+
 export async function runMigrations() {
-	// No pending migrations.
+	await numericSeasons();
+}
+
+// Events created through the API or a CSV import before season was typed hold it as text ("2026")
+async function numericSeasons() {
+	let changed = false;
+
+	for (const event of Object.values(archiveDb.db.data.events)) {
+		if (typeof event.season !== 'string' || event.season.trim() === '' || !Number.isFinite(Number(event.season)))
+			continue;
+
+		event.season = Number(event.season);
+		changed = true;
+	}
+
+	if (!changed) return;
+
+	archiveDb.markAllDirty();
+	await archiveDb.write();
 }

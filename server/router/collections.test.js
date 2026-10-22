@@ -6,6 +6,7 @@ import { serve } from '@vanilla-bean/components/app';
 
 import database from '../database/database';
 import archiveDb from '../database/archive';
+import { runMigrations } from '../database/migrate';
 import router from './router';
 import { withExpectedDueDate, withWithdrawalDate } from './collections';
 
@@ -63,6 +64,26 @@ describe('collections', () => {
 		expect((await call('GET', '/fields/__proto__')).status).toBe(404);
 		expect((await call('PATCH', '/fields/toString', { name: 'x' })).status).toBe(404);
 		expect((await call('DELETE', '/incidents/constructor')).status).toBe(404);
+	});
+});
+
+describe('event seasons', () => {
+	test('a season sent as text is stored as the year number the client compares by', async () => {
+		const created = (await call('POST', '/events', { fieldId: 'f1', date: '2026-05-02', season: '2026' })).body;
+
+		expect(created.season).toBe(2026);
+		expect((await call('PATCH', `/events/${created.id}`, { season: '2025' })).body.season).toBe(2025);
+		expect((await call('POST', '/events', { fieldId: 'f1', date: '2026-05-02', season: 'spring' })).status).toBe(400);
+	});
+
+	test('seasons stored as text before are made numbers on startup', async () => {
+		archiveDb.db.data.events.old = { id: 'old', date: '2024-10-02', season: '2024' };
+		archiveDb.db.data.events.unset = { id: 'unset', date: '2024-10-02', season: '' };
+
+		await runMigrations();
+
+		expect(archiveDb.db.data.events.old.season).toBe(2024);
+		expect(archiveDb.db.data.events.unset.season).toBe('');
 	});
 });
 
