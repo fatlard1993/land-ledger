@@ -1,6 +1,8 @@
-import { Button, Card, Component, copyToClipboard, Elem, Input, SectionLabel } from '@vanilla-bean/components';
+import { Button, Card, Component, copyToClipboard, Elem, Input, SectionLabel, theme } from '@vanilla-bean/components';
 
 import { AdminSection, EmptyLine, ItemRow, Reveal, SecretField, SectionHead } from './parts';
+
+const { space } = theme;
 
 function showNewToken(container, data, { onRefresh }) {
 	const reveal = new Reveal();
@@ -55,7 +57,7 @@ function openTokenForm(container, { onRefresh }) {
 		return;
 	}
 
-	const form = new Card({ style: { marginTop: '8px' } });
+	const form = new Card({ style: { marginTop: space.sm } });
 
 	form.elem.dataset.tokenForm = '1';
 	container.append(form.elem);
@@ -64,7 +66,7 @@ function openTokenForm(container, { onRefresh }) {
 
 	const row = new Elem({
 		tag: 'div',
-		style: { display: 'flex', gap: '6px', marginTop: '8px' },
+		style: { display: 'flex', gap: space.sm, marginTop: space.sm },
 		appendTo: form,
 	});
 

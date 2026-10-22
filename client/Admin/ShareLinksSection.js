@@ -1,8 +1,10 @@
-import { Button, Card, Component, copyToClipboard, Elem, Input, SectionLabel } from '@vanilla-bean/components';
+import { Button, Card, Component, copyToClipboard, Elem, Input, SectionLabel, theme } from '@vanilla-bean/components';
 
 import { FormLabel } from '../Layout';
 import { IconText } from '../statusIcons';
 import { AdminSection, EmptyLine, Hint, ItemRow, Reveal, SecretField, SectionHead } from './parts';
+
+const { space } = theme;
 
 const PURPOSES = {
 	certification: { label: 'Organic / GAP cert', icon: 'leaf' },
@@ -46,7 +48,7 @@ function openShareForm(container, { onRefresh }) {
 		},
 	};
 
-	const form = new Card({ style: { marginTop: '10px' } });
+	const form = new Card({ style: { marginTop: space.md } });
 
 	form.elem.dataset.shareForm = '1';
 	container.append(form.elem);
@@ -58,7 +60,7 @@ function openShareForm(container, { onRefresh }) {
 
 	const chipRow = new Elem({
 		tag: 'div',
-		style: { display: 'flex', flexWrap: 'wrap', gap: '5px', marginBottom: '8px' },
+		style: { display: 'flex', flexWrap: 'wrap', gap: space.sm, marginBottom: space.sm },
 		appendTo: form,
 	});
 
@@ -90,7 +92,7 @@ function openShareForm(container, { onRefresh }) {
 	const dateRangeRow = new Elem({
 		tag: 'div',
 		// minmax(0, …): a plain 1fr won't go below a date input's intrinsic width, which is wider than half a phone
-		style: { display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '8px', marginBottom: '4px' },
+		style: { display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: space.sm, marginBottom: space.xs },
 		appendTo: form,
 	});
 
@@ -102,7 +104,7 @@ function openShareForm(container, { onRefresh }) {
 
 	const buttons = new Elem({
 		tag: 'div',
-		style: { display: 'flex', gap: '6px', marginTop: '8px' },
+		style: { display: 'flex', gap: space.sm, marginTop: space.sm },
 		appendTo: form,
 	});
 

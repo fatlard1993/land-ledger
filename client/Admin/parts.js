@@ -4,9 +4,9 @@ import { IconText } from '../statusIcons';
 // One settings group in the accounts dialog, ruled off from the one above
 export const AdminSection = styled(
 	Component,
-	({ colors }) => `
-		margin-top: 18px;
-		padding-top: 14px;
+	({ colors, space }) => `
+		margin-top: ${space.lg};
+		padding-top: ${space.md};
 		border-top: 1px solid ${colors.border};
 	`,
 );
@@ -14,12 +14,12 @@ export const AdminSection = styled(
 // A section's label with its action at the other end
 export const SectionHead = styled(
 	Component,
-	() => `
+	({ space }) => `
 		display: flex;
 		justify-content: space-between;
 		align-items: center;
-		gap: 8px;
-		margin-bottom: 8px;
+		gap: ${space.sm};
+		margin-bottom: ${space.sm};
 
 		& > [role='heading'] {
 			margin: 0;
@@ -29,8 +29,8 @@ export const SectionHead = styled(
 
 export const Hint = styled(
 	Component,
-	({ colors }) => `
-		margin-bottom: 8px;
+	({ colors, space }) => `
+		margin-bottom: ${space.sm};
 		font-size: 11px;
 		line-height: 1.5;
 		color: ${colors.gray};
@@ -39,8 +39,8 @@ export const Hint = styled(
 
 export const EmptyLine = styled(
 	Component,
-	({ colors }) => `
-		padding: 6px 0;
+	({ colors, space }) => `
+		padding: ${space.sm} 0;
 		font-size: 12px;
 		color: ${colors.gray};
 	`,
@@ -49,11 +49,11 @@ export const EmptyLine = styled(
 // A listed account, token or link: its name and facts, then its actions
 export const ItemRow = styled(
 	Component,
-	({ colors }) => `
+	({ colors, space }) => `
 		display: flex;
 		align-items: center;
-		gap: 8px;
-		padding: 7px 0;
+		gap: ${space.sm};
+		padding: ${space.sm} 0;
 		border-bottom: 1px solid ${colors.border};
 		font-size: 12px;
 
@@ -87,15 +87,15 @@ export const ItemRow = styled(
 // Shown once, right after a secret is made: what it is, and how to keep it
 export const Reveal = styled(
 	Component,
-	({ colors, radius }) => `
-		margin-top: 10px;
-		padding: 12px;
+	({ colors, radius, space }) => `
+		margin-top: ${space.md};
+		padding: ${space.md};
 		border: 1px solid ${colors.alpha(colors.success, 0.4)};
 		border-radius: ${radius.md};
 		background: ${colors.alpha(colors.success, 0.15)};
 
 		& .title {
-			margin-bottom: 6px;
+			margin-bottom: ${space.sm};
 			font-size: 11px;
 			font-weight: 700;
 			letter-spacing: 0.06em;
@@ -104,15 +104,15 @@ export const Reveal = styled(
 		}
 
 		& .note {
-			margin-bottom: 8px;
+			margin-bottom: ${space.sm};
 			font-size: 11px;
 			color: ${colors.muted};
 		}
 
 		& .actions {
 			display: flex;
-			gap: 6px;
-			margin-top: 6px;
+			gap: ${space.sm};
+			margin-top: ${space.sm};
 		}
 	`,
 );
@@ -131,9 +131,9 @@ export const SecretField = styled(
 
 export const Notice = styled(
 	IconText,
-	({ colors, radius }) => `
-		margin-bottom: 10px;
-		padding: 10px 12px;
+	({ colors, radius, space }) => `
+		margin-bottom: ${space.md};
+		padding: ${space.md};
 		border: 1px solid ${colors.alpha(colors.warning, 0.35)};
 		border-radius: ${radius.md};
 		background: ${colors.alpha(colors.warning, 0.12)};

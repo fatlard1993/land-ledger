@@ -30,7 +30,7 @@ import { renderShareLinksSection } from './ShareLinksSection.js';
 import { renderApiTokensSection } from './ApiTokensSection.js';
 import { AdminSection, EmptyLine, Hint, ItemRow, Notice, Reveal, SectionHead } from './parts';
 
-const { colors } = theme;
+const { colors, space } = theme;
 
 const ROLES = [
 	{ key: 'admin', label: 'Admin', sub: 'Full access + account management' },
@@ -40,13 +40,13 @@ const ROLES = [
 
 const AuthToggleRow = styled(
 	Component,
-	({ colors }) => `
+	({ colors, space }) => `
 		display: flex;
 		align-items: center;
 		justify-content: space-between;
-		gap: 12px;
-		padding-bottom: 14px;
-		margin-bottom: 14px;
+		gap: ${space.md};
+		padding-bottom: ${space.md};
+		margin-bottom: ${space.md};
 		border-bottom: 1px solid ${colors.border};
 
 		& .title {
@@ -56,7 +56,7 @@ const AuthToggleRow = styled(
 		}
 
 		& .sub {
-			margin-top: 2px;
+			margin-top: ${space.xs};
 			font-size: 11px;
 			color: ${colors.gray};
 		}
@@ -66,11 +66,11 @@ const AuthToggleRow = styled(
 // A role to grant, as a pill holding its checkbox
 const RoleChip = styled(
 	Component,
-	({ colors, radius }) => `
+	({ colors, radius, space }) => `
 		display: flex;
 		align-items: center;
-		gap: 5px;
-		padding: 5px 10px;
+		gap: ${space.sm};
+		padding: ${space.sm} ${space.md};
 		border: 1px solid ${colors.border};
 		border-radius: ${radius.pill};
 		background: ${colors.alpha(colors.white, 0.05)};
@@ -128,7 +128,7 @@ export default class AccountsDialog extends Dialog {
 
 	// Sign-in off: the routes are open, so the admin passkey can be set and a session made before it goes on
 	_renderTurnOn() {
-		const sec = new Component({ appendTo: this.body, style: { marginBottom: '14px' } });
+		const sec = new Component({ appendTo: this.body, style: { marginBottom: space.md } });
 		const head = new AuthToggleRow({ appendTo: sec, style: { borderBottom: 'none', marginBottom: '0' } });
 		const info = new Component({ appendTo: head });
 
@@ -142,7 +142,7 @@ export default class AccountsDialog extends Dialog {
 
 		const fields = new Component({
 			appendTo: sec,
-			style: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '10px' },
+			style: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: space.md },
 		});
 		const passkeyWrap = new Elem({ tag: 'div', appendTo: fields });
 
@@ -167,7 +167,7 @@ export default class AccountsDialog extends Dialog {
 
 		const buttons = new Component({
 			appendTo: sec,
-			style: { display: 'flex', justifyContent: 'flex-end', marginTop: '10px' },
+			style: { display: 'flex', justifyContent: 'flex-end', marginTop: space.md },
 		});
 		const turnOn = new Button({ appendTo: buttons, icon: 'lock', textContent: 'Turn on sign-in' });
 
@@ -223,7 +223,7 @@ export default class AccountsDialog extends Dialog {
 
 	_renderAuthToggle() {
 		if (this._justTurnedOn) {
-			const done = new Reveal({ appendTo: this.body, style: { marginTop: '0', marginBottom: '14px' } });
+			const done = new Reveal({ appendTo: this.body, style: { marginTop: '0', marginBottom: space.md } });
 
 			new Component({ appendTo: done, addClass: 'title', textContent: 'Sign-in is on' });
 			new Component({
@@ -329,7 +329,7 @@ export default class AccountsDialog extends Dialog {
 	_renderNassSection() {
 		const sec = new AdminSection({ appendTo: this.body });
 
-		new SectionLabel({ appendTo: sec, textContent: 'USDA NASS API Key', style: { margin: '0 0 3px' } });
+		new SectionLabel({ appendTo: sec, textContent: 'USDA NASS API Key', style: { margin: `0 0 ${space.xs}` } });
 
 		const sub = new Hint({ appendTo: sec, style: { marginBottom: '0' } });
 
@@ -337,7 +337,7 @@ export default class AccountsDialog extends Dialog {
 
 		const row = new Elem({
 			tag: 'div',
-			style: { display: 'flex', gap: '6px', marginTop: '6px' },
+			style: { display: 'flex', gap: space.sm, marginTop: space.sm },
 			appendTo: sec,
 		});
 
@@ -368,7 +368,7 @@ export default class AccountsDialog extends Dialog {
 
 		if (this._nassKeySet) {
 			new IconText({
-				style: { fontSize: '11px', color: colors.light(colors.success), marginTop: '4px' },
+				style: { fontSize: '11px', color: colors.light(colors.success), marginTop: space.xs },
 				icon: 'circle-check',
 				textContent: 'NASS key configured — county yield benchmarks active',
 				appendTo: sec,
@@ -377,7 +377,7 @@ export default class AccountsDialog extends Dialog {
 	}
 
 	_renderRow(container, account) {
-		const row = new ItemRow({ appendTo: container, style: { gap: '10px', padding: '9px 0' } });
+		const row = new ItemRow({ appendTo: container, style: { gap: space.md, padding: `${space.sm} 0` } });
 
 		const info = new Component({ appendTo: row, addClass: 'info' });
 
@@ -424,12 +424,12 @@ export default class AccountsDialog extends Dialog {
 	_renderForm(container, existing) {
 		const isNew = !existing;
 
-		const card = new Card({ appendTo: container, style: { marginBottom: '8px' } });
+		const card = new Card({ appendTo: container, style: { marginBottom: space.sm } });
 
 		// Name + passkey side by side
 		const fields = new Component({
 			appendTo: card,
-			style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '10px' },
+			style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: space.md, marginBottom: space.md },
 		});
 
 		const nameWrap = new Elem({ tag: 'div', appendTo: fields });
@@ -451,7 +451,7 @@ export default class AccountsDialog extends Dialog {
 		// Role chips
 		const rolesWrap = new Component({
 			appendTo: card,
-			style: { display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '12px' },
+			style: { display: 'flex', gap: space.sm, flexWrap: 'wrap', marginBottom: space.md },
 		});
 
 		const callbacks = {};
@@ -478,7 +478,7 @@ export default class AccountsDialog extends Dialog {
 		// Save / Cancel
 		const buttons = new Component({
 			appendTo: card,
-			style: { display: 'flex', justifyContent: 'flex-end', gap: '8px' },
+			style: { display: 'flex', justifyContent: 'flex-end', gap: space.sm },
 		});
 
 		new Button({
