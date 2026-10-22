@@ -2,7 +2,7 @@ import { Button, Icon, formatDate, theme } from '@vanilla-bean/components';
 
 import { ActionHeader } from '../Layout';
 import { formatDollar } from '../utils/format';
-import MaintenanceDialog from '../Equipment/MaintenanceDialog';
+import MaintenanceDialog, { WORK_TYPES } from '../Equipment/MaintenanceDialog';
 import MaintenanceScheduleDialog from '../Equipment/MaintenanceScheduleDialog';
 import {
 	createMaintenance,
@@ -14,6 +14,7 @@ import {
 	updateEquipment,
 } from '../api';
 import { scheduleStatus } from '../utils/maintenanceUtils';
+import { IconText } from '../statusIcons';
 import {
 	EmptyNote,
 	HeaderActions,
@@ -183,10 +184,14 @@ export async function renderMaintenanceSection(equipment, maintenance, schedules
 		const row = new PanelRow({ appendTo, addClass: 'interactive' });
 		const left = new RowMain({ appendTo: row });
 
-		const wtIcons = { maintenance: '🔩', repair: '🔧', enhancement: '⬆️' };
-		const wtLabel = wtIcons[rec.workType] ? `${wtIcons[rec.workType]} ` : '';
+		const title = new RowTitle({ appendTo: left });
 
-		new RowTitle({ appendTo: left, textContent: `${wtLabel}${rec.type || 'Service Record'}` });
+		new IconText({
+			tag: 'span',
+			appendTo: title,
+			icon: WORK_TYPES.find(w => w.value === rec.workType)?.icon,
+			textContent: rec.type || 'Service Record',
+		});
 
 		const meta = [];
 

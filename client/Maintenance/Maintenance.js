@@ -14,6 +14,7 @@ import AsyncView from '../AsyncView';
 import { getMaintenance, getEquipment, updateMaintenance, deleteMaintenance } from '../api';
 import context from '../context';
 import { PageView, RecordCard } from '../Layout';
+import { IconText } from '../statusIcons';
 import MaintenanceDialog, { WORK_TYPES } from '../Equipment/MaintenanceDialog';
 
 const { colors } = theme;
@@ -140,11 +141,11 @@ export default class Maintenance extends AsyncView {
 
 		const titleRow = new TitleRow({ appendTo: card });
 
-		new Elem({
-			tag: 'div',
+		new IconText({
 			appendTo: titleRow,
 			addClass: 'card-title',
-			textContent: `${wt.label.split(' ')[0]} ${rec.type || wt.label}`,
+			icon: wt.icon,
+			textContent: rec.type || wt.label,
 		});
 
 		if (rec.cost) {

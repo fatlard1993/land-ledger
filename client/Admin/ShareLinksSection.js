@@ -1,14 +1,15 @@
 import { Button, Card, Component, copyToClipboard, Elem, Input, SectionLabel } from '@vanilla-bean/components';
 
 import { FormLabel } from '../Layout';
+import { IconText } from '../statusIcons';
 import { AdminSection, EmptyLine, Hint, ItemRow, Reveal, SecretField, SectionHead } from './parts';
 
 const PURPOSES = {
-	certification: '🌿 Organic / GAP cert',
-	audit: '📋 Regulatory audit',
-	loan: '🏦 Lender / loan',
-	consultant: '🌾 Crop consultant',
-	custom: '🔗 Custom',
+	certification: { label: 'Organic / GAP cert', icon: 'leaf' },
+	audit: { label: 'Regulatory audit', icon: 'clipboard-list' },
+	loan: { label: 'Lender / loan', icon: 'building-columns' },
+	consultant: { label: 'Crop consultant', icon: 'wheat-awn' },
+	custom: { label: 'Custom', icon: 'link' },
 };
 
 function openShareForm(container, { onRefresh }) {
@@ -20,22 +21,26 @@ function openShareForm(container, { onRefresh }) {
 
 	const TEMPLATES = {
 		certification: {
-			label: '🌿 Organic / GAP Certification',
+			label: 'Organic / GAP Certification',
+			icon: 'leaf',
 			collections: ['applicationLogs', 'events', 'fields'],
 			note: 'Application records with EPA numbers + crop history',
 		},
 		audit: {
-			label: '📋 Regulatory Audit',
+			label: 'Regulatory Audit',
+			icon: 'clipboard-list',
 			collections: ['applicationLogs', 'events', 'fields', 'incidents'],
 			note: 'Full compliance documentation package',
 		},
 		loan: {
-			label: '🏦 Lender / Loan Application',
+			label: 'Lender / Loan Application',
+			icon: 'building-columns',
 			collections: ['fields', 'equipment', 'revenue', 'loans', 'budgetItems'],
 			note: 'Asset registry, revenue history, outstanding debt',
 		},
 		consultant: {
-			label: '🌾 Crop Consultant',
+			label: 'Crop Consultant',
+			icon: 'wheat-awn',
 			collections: ['events', 'fields'],
 			note: 'Crop history, soil tests, yield data',
 		},
@@ -65,6 +70,7 @@ function openShareForm(container, { onRefresh }) {
 	const chips = {};
 	for (const [key, tpl] of Object.entries(TEMPLATES)) {
 		const chip = new Button({
+			icon: tpl.icon,
 			textContent: tpl.label,
 			variant: 'chip',
 			appendTo: chipRow,
@@ -230,9 +236,10 @@ export async function renderShareLinksSection(container, { onRefresh }) {
 		const viewed = s.lastViewed ? `viewed ${s.viewCount}× · last ${s.lastViewed.slice(0, 10)}` : 'never viewed';
 		const expires = s.expiresAt ? `expires ${s.expiresAt}` : 'no expiry';
 
-		new Component({
+		new IconText({
 			addClass: 'meta',
-			textContent: `${PURPOSES[s.purpose] ?? s.purpose}  ·  ${expires}  ·  ${viewed}`,
+			icon: PURPOSES[s.purpose]?.icon,
+			textContent: `${PURPOSES[s.purpose]?.label ?? s.purpose}  ·  ${expires}  ·  ${viewed}`,
 			appendTo: rowInfo,
 		});
 

@@ -1,4 +1,4 @@
-import { Button, Component, Dialog, formatDate, Input, theme } from '@vanilla-bean/components';
+import { Button, Component, Dialog, formatDate, Icon, Input, theme } from '@vanilla-bean/components';
 
 import {
 	getFeedingSchedules,
@@ -255,11 +255,11 @@ export async function renderFeedingSection(field, livestockEvents, refresh, cont
 			style: { display: 'flex', gap: '7px', padding: '3px 0', color: colors.muted, alignItems: 'center' },
 		});
 
-		new Component({
+		new Icon({
 			tag: 'span',
 			appendTo: row,
 			style: { flexShrink: '0' },
-			textContent: log.type === 'treat' ? '🍬' : '✓',
+			icon: log.type === 'treat' ? 'candy-cane' : 'check',
 		});
 		new Component({
 			tag: 'span',

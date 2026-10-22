@@ -2,6 +2,7 @@ import { SectionLabel, theme } from '@vanilla-bean/components';
 
 import LeaseDialog, { rateLabel } from '../Leases/LeaseDialog';
 import { getLeases, getLoans, updateLease, deleteLease, updateLoan, deleteLoan } from '../api';
+import { IconText } from '../statusIcons';
 import { PanelRow, RowMain, RowMeta, RowTitle } from './panelParts';
 
 const { colors } = theme;
@@ -40,9 +41,16 @@ export async function renderLeases(entityType, entity, refresh, appendTo) {
 		const row = new PanelRow({ appendTo, addClass: 'interactive' });
 		const left = new RowMain({ appendTo: row });
 
-		const lessorIcon = isLessor ? '📥' : '📤';
-		const roleIcon = isLoan ? '🏦' : lessorIcon;
-		new RowTitle({ appendTo: left, textContent: `${roleIcon} ${counterparty}` });
+		// Rent coming in to a lessor, going out from a tenant
+		const lessorIcon = isLessor ? 'arrow-right-to-bracket' : 'arrow-right-from-bracket';
+		const title = new RowTitle({ appendTo: left });
+
+		new IconText({
+			tag: 'span',
+			appendTo: title,
+			icon: isLoan ? 'building-columns' : lessorIcon,
+			textContent: counterparty,
+		});
 
 		const meta = [];
 

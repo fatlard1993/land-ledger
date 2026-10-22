@@ -102,7 +102,7 @@ const CAPTION_STYLE = { marginTop: '0' };
 
 const COLLECTIONS = {
 	events: {
-		label: '📅 Events / Timeline',
+		label: 'Events / Timeline',
 		fields: [
 			{ value: 'date', label: 'Date', patterns: /^date$|^sample.?date$|^dated?$/i },
 			{ value: 'season', label: 'Season (year)', patterns: /^year$|^season$/i },
@@ -112,7 +112,7 @@ const COLLECTIONS = {
 		],
 	},
 	supplies: {
-		label: '📦 Supplies / Inventory',
+		label: 'Supplies / Inventory',
 		fields: [
 			{ value: 'name', label: 'Item Name', patterns: /^name$|^item$|^product$/i },
 			{ value: 'category', label: 'Category', patterns: /^category$|^type$/i },
@@ -123,7 +123,7 @@ const COLLECTIONS = {
 		],
 	},
 	revenue: {
-		label: '💵 Revenue',
+		label: 'Revenue',
 		fields: [
 			{ value: 'date', label: 'Date', patterns: /^date$/i },
 			{ value: 'amount', label: 'Amount ($)', patterns: /^amount$|^total$|^revenue$/i },
@@ -133,7 +133,7 @@ const COLLECTIONS = {
 		],
 	},
 	maintenance: {
-		label: '🔧 Maintenance Records',
+		label: 'Maintenance Records',
 		fields: [
 			{ value: 'date', label: 'Date', patterns: /^date$|^service.?date$/i },
 			{ value: 'type', label: 'Work Type', patterns: /^type$|^work.?type$|^service.?type$/i },

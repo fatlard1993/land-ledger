@@ -8,9 +8,9 @@ import { keepOpenIfFailed } from '../utils/keepOpenIfFailed';
 const { colors } = theme;
 
 export const WORK_TYPES = [
-	{ value: 'maintenance', label: '🔩 Maintenance' },
-	{ value: 'repair', label: '🔧 Repair' },
-	{ value: 'enhancement', label: '⬆️ Enhancement' },
+	{ value: 'maintenance', label: 'Maintenance', icon: 'screwdriver-wrench' },
+	{ value: 'repair', label: 'Repair', icon: 'wrench' },
+	{ value: 'enhancement', label: 'Enhancement', icon: 'arrow-up' },
 ];
 
 const TYPE_SUGGESTIONS = {
@@ -155,8 +155,9 @@ export default class MaintenanceDialog extends FormDialog {
 			this.form.inputElements.type.options.suggestions = TYPE_SUGGESTIONS[this._workType] || [];
 		};
 
-		for (const { value, label } of WORK_TYPES) {
+		for (const { value, label, icon } of WORK_TYPES) {
 			const btn = new Button({
+				icon,
 				textContent: label,
 				variant: 'chip',
 				style: { flex: '1' },
