@@ -16,7 +16,7 @@ export default {
 		} catch (error) {
 			if (error.cause?.code === 'EADDRINUSE') {
 				console.error(`\nPort ${port} is already in use.`);
-				console.error(`Set LAND_LEDGER_PORT=<port> or use --port <port> to choose a different port.\n`);
+				console.error(`Use --port <port> to choose a different port.\n`);
 				process.exit(1);
 			}
 			throw error;
