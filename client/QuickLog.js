@@ -502,25 +502,26 @@ const QuickLogFAB = styled(
 		bottom: calc(${safeArea.bottom} + 68px);
 		right: calc(16px + ${safeArea.right});
 		z-index: 9500;
-		width: 54px;
-		height: 54px;
 		border-radius: 50%;
 		border: none;
 		background: ${colors.dark(colors.green)};
 		color: ${colors.white};
 		font-size: 22px;
 		cursor: pointer;
-		display: flex;
-		align-items: center;
-		justify-content: center;
 		box-shadow: 0 3px 12px ${colors.alpha(colors.vantablack, 0.5)};
 		transition: transform 0.1s, background 0.15s;
 		font-family: inherit;
 
+		/* Past the library's 32px icon-only button */
+		&.icon {
+			width: 54px;
+			height: 54px;
+		}
+
 		&:active { transform: scale(0.92); }
 
 		/* Phones only: BottomNav turns into the left rail at this same breakpoint */
-		@media ${media.wide} { display: none; }
+		@media ${media.wide} { &.icon { display: none; } }
 
 		/* Out of the way of an open sheet's own buttons */
 		:root:has(.quick-log.open, .field-panel-outer.open) & { display: none; }
