@@ -73,6 +73,31 @@ describe('turning sign-in on from the Admin panel', () => {
 		expect(context.currentUser).toBeNull();
 	});
 
+	test('the button spins while the passkey is hashed', async () => {
+		server = serve();
+
+		const { fetch } = server;
+		const answer = fetch.getMockImplementation();
+		let hashed;
+
+		fetch.mockImplementation((url, init) =>
+			url === '/auth/accounts/admin' && init?.method === 'PATCH'
+				? new Promise(resolve => (hashed = () => resolve(answer(url, init))))
+				: answer(url, init),
+		);
+
+		const dialog = await turnOn('north-forty');
+		const button = [...dialog.body.elem.querySelectorAll('button')].find(b => b.textContent.includes('Turn on sign-in'));
+
+		const waiting = { disabled: button.disabled, spinning: button.classList.contains('icon-animation-spin-pulse') };
+
+		hashed();
+		await settle();
+
+		expect(waiting).toEqual({ disabled: true, spinning: true });
+		expect(dialog.body.elem.textContent).toContain('Sign-in is on');
+	});
+
 	test('passkeys that differ change nothing', async () => {
 		server = serve();
 

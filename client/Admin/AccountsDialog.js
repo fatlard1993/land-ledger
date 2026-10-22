@@ -173,7 +173,7 @@ export default class AccountsDialog extends Dialog {
 
 		const fail = textContent => {
 			new Notify({ type: 'error', textContent, timeout: 5000 });
-			turnOn.options.disabled = false;
+			Object.assign(turnOn.options, { disabled: false, icon: 'lock', iconAnimation: undefined });
 		};
 
 		turnOn.onPointerPress(async () => {
@@ -190,7 +190,8 @@ export default class AccountsDialog extends Dialog {
 				return;
 			}
 
-			turnOn.options.disabled = true;
+			// Hashing the passkey takes seconds on a small server
+			Object.assign(turnOn.options, { disabled: true, icon: 'spinner', iconAnimation: 'spin-pulse' });
 
 			try {
 				await updateAccount('admin', { passkey });
@@ -508,8 +509,8 @@ export default class AccountsDialog extends Dialog {
 					return;
 				}
 
-				saveBtn.elem.disabled = true;
-				saveBtn.elem.textContent = '…';
+				// A new passkey is hashed, which takes seconds on a small server
+				Object.assign(saveBtn.options, { disabled: true, icon: 'spinner', iconAnimation: 'spin-pulse' });
 
 				try {
 					if (isNew) {
@@ -531,8 +532,7 @@ export default class AccountsDialog extends Dialog {
 					this._draw();
 				} catch (err) {
 					new Notify({ type: 'error', textContent: err.message || 'Save failed', timeout: 4000 });
-					saveBtn.elem.disabled = false;
-					saveBtn.elem.textContent = isNew ? 'Create' : 'Save';
+					Object.assign(saveBtn.options, { disabled: false, icon: undefined, iconAnimation: undefined });
 				}
 			},
 		});

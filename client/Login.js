@@ -119,8 +119,8 @@ export function mountLoginScreen(onSuccess) {
 			return;
 		}
 
-		btn.options.disabled = true;
-		btn.options.textContent = '…';
+		// The passkey is checked against each account's hash, which takes seconds on a small server
+		Object.assign(btn.options, { disabled: true, icon: 'spinner', iconAnimation: 'spin-pulse' });
 		errorElem.options.textContent = '';
 
 		try {
@@ -135,8 +135,7 @@ export function mountLoginScreen(onSuccess) {
 		} catch {
 			errorElem.options.textContent = 'Could not reach server';
 		} finally {
-			btn.options.disabled = false;
-			btn.options.textContent = 'Continue';
+			Object.assign(btn.options, { disabled: false, icon: undefined, iconAnimation: undefined });
 		}
 	};
 
