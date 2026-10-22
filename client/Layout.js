@@ -46,6 +46,11 @@ export const NavItem = styled(
 		flex: 1;
 		min-width: 0;
 		height: 100%;
+		padding: 0;
+		border: none;
+		background: none;
+		font: inherit;
+		text-decoration: none;
 		cursor: pointer;
 		color: ${colors.muted};
 		-webkit-tap-highlight-color: transparent;

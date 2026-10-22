@@ -86,12 +86,7 @@ export default class Nav extends BottomNav {
 		const items = [BASE_ITEMS[0], BASE_ITEMS[1], ...middle, BASE_ITEMS[2], BASE_ITEMS[3]];
 
 		for (const { path, icon, label } of items) {
-			const item = new NavItem({
-				appendTo: this,
-				onPointerPress: () => {
-					window.location.hash = path === '/' ? '' : path;
-				},
-			});
+			const item = new NavItem({ tag: 'a', appendTo: this, attributes: { href: `#${path}` } });
 
 			new Icon({ appendTo: item, addClass: 'nav-icon', icon });
 			new Elem({ tag: 'span', appendTo: item, addClass: 'nav-label', textContent: label });
@@ -102,6 +97,7 @@ export default class Nav extends BottomNav {
 		// Admin controls — accounts, and turning sign-in on or off
 		if (isAdmin) {
 			const adminItem = new NavItem({
+				tag: 'button',
 				appendTo: this,
 				title: 'Manage accounts & auth',
 				onPointerPress: async () => {
@@ -118,6 +114,7 @@ export default class Nav extends BottomNav {
 		// Logout — visible whenever auth is enabled and user is logged in
 		if (user) {
 			const logoutItem = new NavItem({
+				tag: 'button',
 				appendTo: this,
 				title: `Signed in as ${user.name} — tap to sign out`,
 				onPointerPress: async () => {
