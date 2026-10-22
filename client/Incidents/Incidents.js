@@ -10,12 +10,12 @@ import IncidentDialog, { incidentEmoji, severityMeta } from './IncidentDialog';
 
 const TitleRow = styled(
 	Component,
-	() => `
+	({ space }) => `
 		display: flex;
 		justify-content: space-between;
 		align-items: flex-start;
-		gap: 8px;
-		margin-bottom: 4px;
+		gap: ${space.sm};
+		margin-bottom: ${space.xs};
 	`,
 );
 
@@ -31,8 +31,8 @@ const Severity = styled(
 
 const Description = styled(
 	Component,
-	({ colors }) => `
-		margin-top: 4px;
+	({ colors, space }) => `
+		margin-top: ${space.xs};
 		overflow: hidden;
 		font-size: 12px;
 		color: ${colors.gray};
@@ -43,8 +43,8 @@ const Description = styled(
 
 const Loss = styled(
 	Component,
-	({ colors }) => `
-		margin-top: 2px;
+	({ colors, space }) => `
+		margin-top: ${space.xs};
 		font-size: 12px;
 		color: ${colors.light(colors.orange)};
 	`,

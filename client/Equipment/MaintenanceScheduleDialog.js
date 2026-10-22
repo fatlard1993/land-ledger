@@ -6,7 +6,7 @@ import { toNum } from '../utils/format.js';
 import { watchFormConflicts } from '../utils/watchFormConflicts.js';
 import { stayOpenFor } from '../utils/stayOpenFor';
 
-const { colors } = theme;
+const { colors, space } = theme;
 
 const COMMON_SCHEDULES = [
 	{
@@ -75,7 +75,7 @@ export default class MaintenanceScheduleDialog extends FormDialog {
 				},
 				{
 					type: 'group',
-					style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' },
+					style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: space.sm },
 					inputs: [
 						{
 							key: 'intervalUsage',
@@ -95,7 +95,7 @@ export default class MaintenanceScheduleDialog extends FormDialog {
 				},
 				{
 					type: 'group',
-					style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' },
+					style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: space.sm },
 					inputs: [
 						{ key: 'lastDoneDate', label: 'Last Done Date', type: 'date' },
 						{
@@ -162,7 +162,7 @@ export default class MaintenanceScheduleDialog extends FormDialog {
 		new Elem({
 			tag: 'div',
 			appendTo: this.intro,
-			style: { fontSize: '11px', color: colors.gray, marginTop: '10px', marginBottom: '2px' },
+			style: { fontSize: '11px', color: colors.gray, marginTop: space.md, marginBottom: space.xs },
 			textContent: 'Set one or both interval types — whichever comes first triggers the reminder',
 		});
 

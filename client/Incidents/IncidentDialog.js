@@ -46,7 +46,7 @@ export const INCIDENT_TYPES = [
 	'Other',
 ];
 
-const { colors } = theme;
+const { colors, space } = theme;
 
 // Hex, so a reader can append an alpha pair (`${color}22`); light enough to read as text on the dark ground
 export const SEVERITY_LEVELS = [
@@ -59,7 +59,7 @@ export const SEVERITY_LEVELS = [
 const Divider = styled(
 	Component,
 	({ colors, space }) => `
-		margin-top: 14px;
+		margin-top: ${space.md};
 		padding-top: ${space.md};
 		border-top: 1px solid ${colors.border};
 	`,
@@ -73,10 +73,10 @@ const LossGrid = styled(
 		grid-template-columns: 1fr 80px 80px;
 		gap: ${space.sm};
 		align-items: center;
-		margin-bottom: 6px;
+		margin-bottom: ${space.sm};
 
 		&.header {
-			margin-bottom: 2px;
+			margin-bottom: ${space.xs};
 			font-size: 10px;
 			letter-spacing: 0.04em;
 			text-transform: uppercase;
@@ -169,7 +169,7 @@ export default class IncidentDialog extends FormDialog {
 			inputs: [
 				{
 					type: 'group',
-					style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' },
+					style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: space.sm },
 					inputs: [
 						{ key: 'date', label: 'Date', type: 'date' },
 						{
@@ -195,7 +195,7 @@ export default class IncidentDialog extends FormDialog {
 				},
 				{
 					type: 'group',
-					style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' },
+					style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: space.sm },
 					inputs: [
 						{
 							key: 'estimatedLoss',
@@ -347,7 +347,7 @@ export default class IncidentDialog extends FormDialog {
 				const restoreRow = new Elem({
 					tag: 'div',
 					appendTo: divider,
-					style: { display: 'flex', alignItems: 'center', gap: '8px' },
+					style: { display: 'flex', alignItems: 'center', gap: space.sm },
 				});
 
 				restoreEl = new Input({ appendTo: restoreRow });

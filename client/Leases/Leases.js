@@ -31,15 +31,15 @@ import { entityIcon } from '../utils/icons';
 
 import LeaseDialog, { rateLabel } from './LeaseDialog';
 
-const { colors } = theme;
+const { colors, space } = theme;
 
 const TitleRow = styled(
 	Component,
-	() => `
+	({ space }) => `
 		display: flex;
 		justify-content: space-between;
-		gap: 8px;
-		margin-bottom: 4px;
+		gap: ${space.sm};
+		margin-bottom: ${space.xs};
 	`,
 );
 
@@ -66,7 +66,7 @@ export default class Leases extends AsyncView {
 	_buildView() {
 		this.toolbar = new Toolbar({ appendTo: this, variant: 'bar', heading: 'Leases', gap: 8 });
 
-		const addButtons = new Component({ appendTo: this.toolbar, style: { display: 'flex', gap: '6px' } });
+		const addButtons = new Component({ appendTo: this.toolbar, style: { display: 'flex', gap: space.sm } });
 
 		new Button({
 			appendTo: addButtons,
@@ -300,7 +300,7 @@ export default class Leases extends AsyncView {
 				new Elem({
 					tag: 'div',
 					appendTo: card,
-					style: { fontSize: '12px', color: urgentColor, marginTop: '4px' },
+					style: { fontSize: '12px', color: urgentColor, marginTop: space.xs },
 					textContent: days <= 0 ? 'Renewal past due!' : `Renewal in ${days} days`,
 				});
 			}

@@ -6,7 +6,7 @@ import { watchFormConflicts } from '../utils/watchFormConflicts.js';
 import { stayOpenFor } from '../utils/stayOpenFor';
 import { toDateOnly } from '../utils/dates';
 
-const { colors } = theme;
+const { colors, space } = theme;
 
 export const WORK_TYPES = [
 	{ value: 'maintenance', label: 'Maintenance', icon: 'screwdriver-wrench' },
@@ -85,7 +85,7 @@ export default class MaintenanceDialog extends FormDialog {
 				{ key: 'type', label: 'Description', placeholder: 'What was done / what needs doing' },
 				{
 					type: 'group',
-					style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' },
+					style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: space.sm },
 					inputs: [
 						{ key: 'date', label: 'Date', type: 'date' },
 						{
@@ -99,7 +99,7 @@ export default class MaintenanceDialog extends FormDialog {
 				},
 				{
 					type: 'group',
-					style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' },
+					style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: space.sm },
 					inputs: [
 						{ key: 'cost', label: 'Cost ($)', type: 'number', attributes: { step: '0.01' }, placeholder: 'Optional' },
 						{ key: 'parts', label: 'Parts / Supplies', placeholder: 'e.g. Napa 1234' },
@@ -140,7 +140,7 @@ export default class MaintenanceDialog extends FormDialog {
 		// Work type selector
 		const typeRow = new Component({
 			appendTo: this.intro,
-			style: { display: 'flex', gap: '6px', marginBottom: '4px' },
+			style: { display: 'flex', gap: space.sm, marginBottom: space.xs },
 		});
 		const typeButtons = [];
 
@@ -185,7 +185,7 @@ export default class MaintenanceDialog extends FormDialog {
 		if (!isEdit && equipment.id) {
 			const checkRow = new Component({
 				appendTo: this.body,
-				style: { display: 'flex', alignItems: 'center', gap: '8px', marginTop: '12px' },
+				style: { display: 'flex', alignItems: 'center', gap: space.sm, marginTop: space.md },
 			});
 			const cbId = `maintenance-hrs-${Math.random().toString(36).slice(2)}`;
 			const cb = new Input({ type: 'checkbox', appendTo: checkRow, attributes: { id: cbId } });

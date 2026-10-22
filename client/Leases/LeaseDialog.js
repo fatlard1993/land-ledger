@@ -7,12 +7,12 @@ import { getFields, getBuildings, getEquipment } from '../api';
 import { toDateOnly } from '../utils/dates';
 import { entityIcon } from '../utils/icons';
 
-const { colors } = theme;
+const { colors, space } = theme;
 
 const Hint = styled(
 	Component,
-	({ colors }) => `
-		padding: 2px 0 4px;
+	({ colors, space }) => `
+		padding: ${space.xs} 0 ${space.xs};
 		font-size: 11px;
 		color: ${colors.gray};
 	`,
@@ -21,8 +21,8 @@ const Hint = styled(
 // The asset a lease or loan was opened from, named in place of a picker
 const PresetEntity = styled(
 	Component,
-	({ colors }) => `
-		padding: 6px 0 2px;
+	({ colors, space }) => `
+		padding: ${space.sm} 0 ${space.xs};
 		font-size: 13px;
 		color: ${colors.muted};
 	`,
@@ -144,7 +144,7 @@ export default class LeaseDialog extends FormDialog {
 		if (showRoleToggle) {
 			const toggleRow = new Component({
 				appendTo: this.body,
-				style: { display: 'flex', gap: '8px', marginBottom: '4px' },
+				style: { display: 'flex', gap: space.sm, marginBottom: space.xs },
 			});
 
 			const toggleButtons = [];
@@ -314,7 +314,7 @@ export default class LeaseDialog extends FormDialog {
 		// Rate
 		const rateTypeRow = new Component({
 			appendTo: container,
-			style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginTop: '4px' },
+			style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: space.sm, marginTop: space.xs },
 		});
 
 		const rateTypeCol = new Component({ appendTo: rateTypeRow });
@@ -366,7 +366,7 @@ export default class LeaseDialog extends FormDialog {
 		// Dates — each column stacked
 		const dateRow = new Component({
 			appendTo: container,
-			style: { display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px', marginTop: '4px' },
+			style: { display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: space.sm, marginTop: space.xs },
 		});
 		const startEl = makeCol(dateRow, 'Start Date', { type: 'date', value: lease.startDate || '' });
 		const endEl = makeCol(dateRow, 'End Date', { type: 'date', value: lease.endDate || '' });
@@ -421,7 +421,7 @@ export default class LeaseDialog extends FormDialog {
 		// Lender
 		const lenderRow = new Component({
 			appendTo: container,
-			style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginTop: '4px' },
+			style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: space.sm, marginTop: space.xs },
 		});
 		const lenderEl = makeCol(lenderRow, 'Lender / Bank', {
 			placeholder: 'e.g. Farm Credit, USDA FSA',
@@ -435,7 +435,7 @@ export default class LeaseDialog extends FormDialog {
 		// Loan terms
 		const termsRow = new Component({
 			appendTo: container,
-			style: { display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px', marginTop: '4px' },
+			style: { display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: space.sm, marginTop: space.xs },
 		});
 		const principalEl = makeCol(termsRow, 'Original Loan Amount ($)', {
 			type: 'number',
@@ -459,7 +459,7 @@ export default class LeaseDialog extends FormDialog {
 		// Monthly payment — auto-calc
 		const paymentRow = new Component({
 			appendTo: container,
-			style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' },
+			style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: space.sm },
 		});
 		const paymentEl = makeCol(paymentRow, 'Monthly Payment ($)', {
 			type: 'number',
@@ -500,7 +500,7 @@ export default class LeaseDialog extends FormDialog {
 		// Escrow
 		const escrowRow = new Component({
 			appendTo: container,
-			style: { display: 'flex', alignItems: 'center', gap: '8px', marginTop: '10px' },
+			style: { display: 'flex', alignItems: 'center', gap: space.sm, marginTop: space.md },
 		});
 		const escrowCb = new Input({
 			appendTo: escrowRow,
@@ -521,7 +521,7 @@ export default class LeaseDialog extends FormDialog {
 		// Dates
 		const dateRow = new Component({
 			appendTo: container,
-			style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginTop: '4px' },
+			style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: space.sm, marginTop: space.xs },
 		});
 		const startEl = makeCol(dateRow, 'Origination Date', { type: 'date', value: lease.startDate || '' });
 		const maturityEl = makeCol(dateRow, 'Maturity Date', { type: 'date', value: lease.maturityDate || '' });
