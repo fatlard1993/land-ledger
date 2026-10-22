@@ -30,7 +30,7 @@ wrapFetch();
 // or 401 (null) when auth is on but no session exists.
 const me = await getMe();
 
-initOfflineQueue(onQueueState, me?.enabled ? me.id : null);
+initOfflineQueue(onQueueState, me);
 
 if (me === null) {
 	// Auth enabled, no session — show login screen only.

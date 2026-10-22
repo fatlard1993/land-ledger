@@ -23,6 +23,7 @@ import {
 } from '../api/auth';
 import { getAppSettings, updateAppSettings } from '../api';
 import context from '../context';
+import { setQueueOwner } from '../offlineQueue';
 import { FormLabel } from '../Layout';
 import { IconText } from '../statusIcons';
 import { renderShareLinksSection } from './ShareLinksSection.js';
@@ -211,6 +212,7 @@ export default class AccountsDialog extends Dialog {
 			const me = await getMe();
 
 			context.currentUser = me?.enabled ? { id: me.id, name: me.name, roles: me.roles } : null;
+			setQueueOwner(me);
 			this._authEnabled = true;
 			this._adminPasskeyIsDefault = false;
 			this._justTurnedOn = true;
@@ -259,6 +261,7 @@ export default class AccountsDialog extends Dialog {
 				new Notify({ type: 'error', textContent: 'Could not update auth setting', timeout: 3000 });
 			} else {
 				this._authEnabled = toggle.elem.checked;
+				setQueueOwner(await getMe());
 				new Notify({
 					type: 'success',
 					textContent: toggle.elem.checked ? 'Login required — users will need to sign in' : 'Login disabled',

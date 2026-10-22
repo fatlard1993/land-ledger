@@ -4,6 +4,8 @@ const DEFAULT_QUEUE_KEY = 'land-ledger-offline-queue';
 
 let _onStateChange = null;
 let _queueKey = DEFAULT_QUEUE_KEY;
+// Signed out with sign-in on: every write would come back 401, so nothing is replayed until someone signs in
+let _paused = false;
 
 // ── Queue storage ──────────────────────────────────────────────────────────────
 
@@ -100,7 +102,7 @@ async function detectConflicts(entry) {
 let _flushing = false;
 
 async function flushQueue() {
-	if (_flushing) return;
+	if (_flushing || _paused) return;
 
 	const pending = queue.get();
 
@@ -157,8 +159,8 @@ async function flushQueue() {
 				body: entry.body ?? undefined,
 			});
 
-			// 2xx / 4xx = consumed (4xx = bad request, no point retrying)
-			if (res.status < 500) {
+			// 2xx / 4xx = consumed (4xx = bad request, no point retrying); a 401 waits for the next sign-in
+			if (res.status < 500 && res.status !== 401) {
 				// PATCH to a gone record — the edit is discarded; tell the user
 				if (res.status === 404 && entry.method === 'PATCH') {
 					new Notify({
@@ -220,13 +222,15 @@ function serializeHeaders(headers) {
 // ── Fetch interception ─────────────────────────────────────────────────────────
 
 const MUTATIONS = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);
+const SESSION_URLS = new Set(['/auth/login', '/auth/logout']);
 
 window.fetch = async (url, options = {}) => {
 	const method = (options.method || 'GET').toUpperCase();
 	const urlStr = typeof url === 'string' ? url : url.toString();
 
-	// Only intercept same-origin API mutations — pass through GETs, external URLs, SW
-	if (!MUTATIONS.has(method) || !urlStr.startsWith('/')) {
+	// Only intercept same-origin API mutations — pass through GETs, external URLs, SW, and signing in or out, which
+	// a 202 would answer as done
+	if (!MUTATIONS.has(method) || !urlStr.startsWith('/') || SESSION_URLS.has(urlStr)) {
 		return originalFetch(url, options);
 	}
 
@@ -282,11 +286,45 @@ window.addEventListener('offline', () => {
 	_onStateChange?.({ pending: queue.get().length, syncing: false, synced: null });
 });
 
+// ── Owner ──────────────────────────────────────────────────────────────────────
+// Each account queues under its own key. Writes queued with sign-in off belong to whoever signs in next on this
+// device, and with sign-in off every route is open, so every account's queue replays under the shared key.
+
+const queueKeys = () =>
+	Object.keys(localStorage).filter(key => key === DEFAULT_QUEUE_KEY || key.startsWith(`${DEFAULT_QUEUE_KEY}-`));
+
+/**
+ * Point the queue at the account /auth/me answered with, taking over the queues that account may now replay
+ * @param {object|null} me - The /auth/me response: null when signed out with sign-in on
+ */
+export function setQueueOwner(me) {
+	_paused = me === null;
+
+	if (_paused) return;
+
+	_queueKey = me.enabled ? `${DEFAULT_QUEUE_KEY}-${me.id}` : DEFAULT_QUEUE_KEY;
+
+	const adopted = me.enabled ? [DEFAULT_QUEUE_KEY] : queueKeys().filter(key => key !== DEFAULT_QUEUE_KEY);
+	const entries = adopted.flatMap(key => {
+		const stored = localStorage.getItem(key);
+
+		localStorage.removeItem(key);
+
+		try {
+			return JSON.parse(stored || '[]');
+		} catch {
+			return [];
+		}
+	});
+
+	if (entries.length) queue.save([...queue.get(), ...entries].sort((a, b) => a.timestamp - b.timestamp));
+}
+
 // ── Init ───────────────────────────────────────────────────────────────────────
 
-export function initOfflineQueue(onStateChange, userId = null) {
+export function initOfflineQueue(onStateChange, me) {
 	_onStateChange = onStateChange;
-	if (userId) _queueKey = `${DEFAULT_QUEUE_KEY}-${userId}`;
+	setQueueOwner(me);
 
 	// Emit initial state on load
 	const pending = queue.get();
