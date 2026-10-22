@@ -1,4 +1,4 @@
-import { Component, theme } from '@vanilla-bean/components';
+import { theme } from '@vanilla-bean/components';
 
 const { colors } = theme;
 
@@ -39,11 +39,6 @@ export const ageLabel = birthDate => {
 	const mos = Math.floor((days % 365) / 30);
 	return mos > 0 ? `${yrs}y ${mos}mo` : `${yrs}y`;
 };
-
-export const formGrid = (parent, cols) =>
-	new Component({ appendTo: parent, style: { display: 'grid', gridTemplateColumns: cols, gap: '10px' } });
-
-export const formCol = parent => new Component({ appendTo: parent });
 
 // Text colors for an animal's status on the dark ground
 export const STATUS_COLORS = {

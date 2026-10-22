@@ -5,8 +5,6 @@ const events = resource('/events');
 
 export const getEvents = events.list;
 
-export const getEvent = events.read;
-
 export const createEvent = events.create;
 
 export const updateEvent = async (id, options) =>

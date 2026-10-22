@@ -58,9 +58,6 @@ const TYPE_SUGGESTIONS = {
 	],
 };
 
-/** @deprecated Use TYPE_SUGGESTIONS.maintenance directly — this alias predates the unified work-log dialog */
-export const MAINTENANCE_TYPES = TYPE_SUGGESTIONS.maintenance;
-
 const withoutCallbacks = ({ onSave: _onSave, onDelete: _onDelete, ...options }) => options;
 
 export default class MaintenanceDialog extends FormDialog {

@@ -5,8 +5,6 @@ const loans = resource('/loans');
 
 export const getLoans = loans.list;
 
-export const getLoan = loans.read;
-
 export const createLoan = loans.create;
 
 export const updateLoan = async (id, options) =>

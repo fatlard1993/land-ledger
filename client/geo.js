@@ -7,8 +7,6 @@ export const AREA_UNITS = [
 	{ value: 'ha', label: 'ha', decimals: 2 },
 ];
 
-export const areaUnitLabel = unit => AREA_UNITS.find(u => u.value === unit)?.label || unit;
-
 // Returns area in square metres (base unit for all conversions).
 // Delegates to Turf's spherical excess algorithm, which handles polygon holes
 // and MultiPolygon correctly.

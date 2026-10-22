@@ -5,8 +5,6 @@ const leases = resource('/leases');
 
 export const getLeases = leases.list;
 
-export const getLease = leases.read;
-
 export const createLease = leases.create;
 
 export const updateLease = async (id, options) =>

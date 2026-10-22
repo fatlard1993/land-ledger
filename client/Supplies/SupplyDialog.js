@@ -68,8 +68,6 @@ export const detectSupplyEmoji = (category, stored) => {
 	return '📦';
 };
 
-export const supplyLabel = supply => `${detectSupplyEmoji(supply.category, supply.emoji)} ${supply.name}`;
-
 const withoutCallbacks = ({ onSave: _onSave, onDelete: _onDelete, ...options }) => options;
 
 export default class SupplyDialog extends FormDialog {
