@@ -1,4 +1,4 @@
-import { SectionLabel, theme } from '@vanilla-bean/components';
+import { formatDate, SectionLabel, theme } from '@vanilla-bean/components';
 
 import LeaseDialog, { rateLabel } from '../Leases/LeaseDialog';
 import { getLeases, getLoans, updateLease, deleteLease, updateLoan, deleteLoan } from '../api';
@@ -57,10 +57,10 @@ export async function renderLeases(entityType, entity, refresh, appendTo) {
 		if (rate) meta.push(rate);
 		if (isLoan) {
 			if (lease.loanNumber) meta.push(`#${lease.loanNumber}`);
-			if (lease.maturityDate) meta.push(`Matures ${new Date(lease.maturityDate).toLocaleDateString()}`);
+			if (lease.maturityDate) meta.push(`Matures ${formatDate(lease.maturityDate)}`);
 		} else {
-			if (lease.startDate) meta.push(`From ${new Date(lease.startDate).toLocaleDateString()}`);
-			if (lease.endDate) meta.push(`→ ${new Date(lease.endDate).toLocaleDateString()}`);
+			if (lease.startDate) meta.push(`From ${formatDate(lease.startDate)}`);
+			if (lease.endDate) meta.push(`→ ${formatDate(lease.endDate)}`);
 		}
 		if (meta.length)
 			new RowMeta({

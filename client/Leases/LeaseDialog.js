@@ -1,9 +1,10 @@
-import { Button, Component, Elem, FormDialog, Input, Select, styled, theme } from '@vanilla-bean/components';
+import { Button, Component, Elem, FormDialog, Input, parseDate, Select, styled, theme } from '@vanilla-bean/components';
 import { keepOpenIfFailed } from '../utils/keepOpenIfFailed';
 import { makePropertiesEditor } from '../utils/PropertiesEditor';
 import { FormLabel } from '../Layout';
 
 import { getFields, getBuildings, getEquipment } from '../api';
+import { toDateOnly } from '../utils/dates';
 
 const { colors } = theme;
 
@@ -542,10 +543,10 @@ export default class LeaseDialog extends FormDialog {
 		// Auto-fill maturity from start + term
 		const recalculateMaturity = () => {
 			if (startEl.elem.value && termEl.elem.value && !maturityEl.elem.value) {
-				const d = new Date(startEl.elem.value);
+				const d = parseDate(startEl.elem.value);
 
 				d.setFullYear(d.getFullYear() + Number(termEl.elem.value));
-				maturityEl.elem.value = d.toISOString().slice(0, 10);
+				maturityEl.elem.value = toDateOnly(d);
 			}
 		};
 

@@ -2,8 +2,9 @@ import { Elem, FormDialog, Notify, Select, theme } from '@vanilla-bean/component
 
 import { createHealthRecord, updateHealthRecord, deleteHealthRecord } from '../api/animals';
 import { watchFormConflicts } from '../utils/watchFormConflicts.js';
-import { animalLabel } from './constants';
 import { keepOpenIfFailed } from '../utils/keepOpenIfFailed';
+import { toDateOnly } from '../utils/dates';
+import { animalLabel } from './constants';
 
 const { colors } = theme;
 
@@ -19,7 +20,7 @@ export default class HealthRecordDialog extends FormDialog {
 			size: 'large',
 			header: isNew ? `Add Health Record — ${animalLabel(animal)}` : 'Edit Health Record',
 			data: {
-				date: rec.date || new Date().toISOString().slice(0, 10),
+				date: rec.date || toDateOnly(),
 				type: rec.type || 'treatment',
 				drug: rec.drug || '',
 				dose: rec.dose || '',
@@ -119,7 +120,7 @@ export default class HealthRecordDialog extends FormDialog {
 			if (dateVal && days > 0) {
 				const d = new Date(`${dateVal}T12:00:00`);
 				d.setDate(d.getDate() + days);
-				withdrawalDisplay.options.textContent = `Withdrawal until: ${d.toISOString().slice(0, 10)}`;
+				withdrawalDisplay.options.textContent = `Withdrawal until: ${toDateOnly(d)}`;
 				withdrawalDisplay.options.style = { color: colors.light(colors.warning) };
 			} else {
 				withdrawalDisplay.options.textContent = '';

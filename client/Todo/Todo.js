@@ -5,6 +5,7 @@ import {
 	Elem,
 	EmptyState,
 	formatDate,
+	parseDate,
 	SectionLabel,
 	styled,
 	theme,
@@ -33,6 +34,7 @@ import { frequencyInterval, frequencyLabel } from '../Livestock/FeedingScheduleD
 import { incidentEmoji, severityMeta } from '../Incidents/IncidentDialog';
 import { categoryMeta, eventEmoji } from '../Timeline/EventDialog';
 import context from '../context';
+import { toDateOnly } from '../utils/dates';
 
 const { colors } = theme;
 
@@ -123,7 +125,7 @@ const feedStatus = (schedule, logs) => {
 
 	if (!lastLog) return { urgency: NOW, label: 'Never recorded', daysSince: null };
 
-	const daysSince = daysBetween(new Date(lastLog.date), TODAY());
+	const daysSince = daysBetween(parseDate(lastLog.date), TODAY());
 
 	if (daysSince >= interval)
 		return {
@@ -144,7 +146,7 @@ const feedStatus = (schedule, logs) => {
 // ── Date urgency (leases, renewals) ──────────────────────────────────────────
 const dateUrgency = (dateStr, soonThreshold = 30, laterThreshold = 90) => {
 	if (!dateStr) return null;
-	const days = Math.ceil(daysBetween(TODAY(), new Date(dateStr)));
+	const days = Math.ceil(daysBetween(TODAY(), parseDate(dateStr)));
 
 	if (days < 0) return { urgency: NOW, daysUntil: days };
 	if (days <= soonThreshold) return { urgency: SOON, daysUntil: days };
@@ -294,7 +296,7 @@ export default class Todo extends AsyncView {
 								amountPerHead: schedule.amountPerHead,
 								amountUnit: schedule.amountUnit,
 								type: 'scheduled',
-								date: new Date().toISOString().slice(0, 10),
+								date: toDateOnly(),
 							},
 						});
 						this._build();
@@ -399,12 +401,12 @@ export default class Todo extends AsyncView {
 		}
 
 		// ── Future planned events ────────────────────────────────────────────────
-		const todayStr = new Date().toISOString().slice(0, 10);
+		const todayStr = toDateOnly();
 
 		for (const event of Object.values(this._events?.body || {})) {
 			if (!event.date || event.date <= todayStr) continue;
 
-			const daysUntil = Math.ceil((new Date(event.date) - new Date()) / 86_400_000);
+			const daysUntil = Math.ceil((parseDate(event.date) - new Date()) / 86_400_000);
 
 			let urgency;
 			if (daysUntil <= 7) {
@@ -447,7 +449,7 @@ export default class Todo extends AsyncView {
 		for (const r of Object.values(this._healthRecords?.body || {})) {
 			if (!r.withdrawalDate || r.withdrawalDate < todayStr) continue;
 			const animal = animalMap[r.animalId];
-			const daysLeft = Math.ceil((new Date(r.withdrawalDate) - new Date()) / 86_400_000);
+			const daysLeft = Math.ceil((parseDate(r.withdrawalDate) - new Date()) / 86_400_000);
 
 			let urgency;
 			if (daysLeft <= 3) {
@@ -476,7 +478,7 @@ export default class Todo extends AsyncView {
 			if (r.expectedDueDate < todayStr) continue;
 
 			const dam = animalMap[r.damId];
-			const daysUntil = Math.ceil((new Date(r.expectedDueDate) - new Date()) / 86_400_000);
+			const daysUntil = Math.ceil((parseDate(r.expectedDueDate) - new Date()) / 86_400_000);
 
 			let urgency;
 			if (daysUntil <= 7) {

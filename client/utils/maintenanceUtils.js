@@ -1,3 +1,5 @@
+import { parseDate } from '@vanilla-bean/components';
+
 // Shared schedule-status computation — used by FieldPanel (panel display) and
 // Todo (overdue alerts). Returns { status, label } for all configured schedules.
 // Returns null only when no intervals are configured at all (free-choice schedule).
@@ -22,7 +24,7 @@ export function scheduleStatus(schedule, currentUsage, unit = '', today = new Da
 	}
 
 	if (schedule.intervalDays) {
-		const lastDate = schedule.lastDoneDate ? new Date(schedule.lastDoneDate) : null;
+		const lastDate = schedule.lastDoneDate ? parseDate(schedule.lastDoneDate) : null;
 		const nextDue = lastDate ? new Date(lastDate.getTime() + Number(schedule.intervalDays) * 86_400_000) : today;
 		const daysUntil = Math.ceil((nextDue - today) / 86_400_000);
 		const buffer = Math.max(1, Math.ceil(Number(schedule.intervalDays) * 0.1));

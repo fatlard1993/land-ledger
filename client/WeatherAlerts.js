@@ -1,10 +1,11 @@
 import { Button, Card, Component, Elem, Icon, styled, theme } from '@vanilla-bean/components';
 import { centroidFromGeometry } from './geo';
+import { toDateOnly } from './utils/dates';
 
 const { colors } = theme;
 
 const DISMISSED_KEY = 'land-ledger-weather-dismissed';
-const TODAY = new Date().toISOString().slice(0, 10);
+const TODAY = toDateOnly();
 
 // ── Alert definitions ──────────────────────────────────────────────────────────
 
@@ -111,7 +112,7 @@ export async function mountWeatherAlerts() {
 
 	end.setDate(end.getDate() + 4);
 
-	const endStr = end.toISOString().slice(0, 10);
+	const endStr = toDateOnly(end);
 
 	let forecast;
 

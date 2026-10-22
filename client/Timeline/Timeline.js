@@ -3,8 +3,9 @@ import {
 	Component,
 	Elem,
 	EmptyState,
-	Icon,
 	formatDate,
+	Icon,
+	parseDate,
 	Select,
 	styled,
 	Tabs,
@@ -22,6 +23,7 @@ import SeasonCharts from '../Charts/SeasonCharts';
 
 import TabularImportDialog from '../Import/TabularImportDialog';
 import ExportDialog from '../Export/ExportDialog';
+import { toDateOnly } from '../utils/dates';
 import EventDialog, { categoryMeta, eventEmoji } from './EventDialog';
 
 const { colors } = theme;
@@ -354,8 +356,8 @@ export default class Timeline extends AsyncView {
 			.filter(e => !this._fieldFilter || e.fieldId === this._fieldFilter)
 			.sort((a, b) => {
 				// Per-field view: oldest first (journal/longitudinal); all-fields: newest first
-				if (this._fieldFilter) return new Date(a.date) - new Date(b.date);
-				return new Date(b.date) - new Date(a.date);
+				if (this._fieldFilter) return parseDate(a.date) - parseDate(b.date);
+				return parseDate(b.date) - parseDate(a.date);
 			});
 
 		if (!allEvents.length) {
@@ -373,7 +375,7 @@ export default class Timeline extends AsyncView {
 		const field = this._fieldFilter ? this.fields?.body?.[this._fieldFilter] : null;
 
 		for (const event of allEvents) {
-			const season = event.season || new Date(event.date).getFullYear() || CURRENT_YEAR;
+			const season = event.season || parseDate(event.date)?.getFullYear() || CURRENT_YEAR;
 
 			if (season !== lastSeason) {
 				const seasonHeader = new SeasonHeader({ appendTo: this.content });
@@ -416,7 +418,7 @@ export default class Timeline extends AsyncView {
 		}
 
 		const start = `${year}-01-01`;
-		const today = new Date().toISOString().slice(0, 10);
+		const today = toDateOnly();
 		const end = year < CURRENT_YEAR ? `${year}-12-31` : today;
 
 		let data;
@@ -537,7 +539,7 @@ export default class Timeline extends AsyncView {
 
 		const main = new Elem({ tag: 'div', appendTo: row, addClass: 'event-main' });
 
-		const isFuture = event.date && event.date > new Date().toISOString().slice(0, 10);
+		const isFuture = event.date && event.date > toDateOnly();
 		const nameText = (isFuture ? '~ ' : '') + (event.name || meta.label);
 		const nameEl = new Elem({ tag: 'div', appendTo: main, addClass: 'event-name', textContent: nameText });
 

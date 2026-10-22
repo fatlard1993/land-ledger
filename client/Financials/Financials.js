@@ -3,6 +3,7 @@ import {
 	Component,
 	Elem,
 	EmptyState,
+	parseDate,
 	SectionLabel,
 	Select,
 	styled,
@@ -244,7 +245,7 @@ export default class Financials extends AsyncView {
 		const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
 		// Only count entries with a date in the selected year — no projections
-		const eventDate = e => (e.date ? new Date(e.date) : null);
+		const eventDate = e => (e.date ? parseDate(e.date) : null);
 		const inYear = d => d && d.getFullYear() === yr;
 
 		const fieldList = Object.values(this._fields?.body || {});
@@ -254,7 +255,7 @@ export default class Financials extends AsyncView {
 
 		// Revenue table entries (building income, equipment hire, inventory sales)
 		for (const r of Object.values(this._rev?.body || {})) {
-			const d = r.date ? new Date(r.date) : null;
+			const d = r.date ? parseDate(r.date) : null;
 
 			if (!inYear(d)) continue;
 
@@ -282,7 +283,7 @@ export default class Financials extends AsyncView {
 
 		// Maintenance costs
 		for (const m of Object.values(this._maintenance?.body || {})) {
-			const d = m.date ? new Date(m.date) : null;
+			const d = m.date ? parseDate(m.date) : null;
 
 			if (!inYear(d)) continue;
 
@@ -300,7 +301,7 @@ export default class Financials extends AsyncView {
 		}, {});
 
 		for (const log of Object.values(this._feedingLogs?.body || {})) {
-			const d = log.date ? new Date(log.date) : null;
+			const d = log.date ? parseDate(log.date) : null;
 
 			if (!inYear(d)) continue;
 
@@ -517,7 +518,7 @@ export default class Financials extends AsyncView {
 			const incByType = new Map();
 
 			for (const r of Object.values(this._rev?.body || {})) {
-				const d = r.date ? new Date(r.date) : null;
+				const d = r.date ? parseDate(r.date) : null;
 
 				if (!inYear(d)) continue;
 
@@ -568,14 +569,14 @@ export default class Financials extends AsyncView {
 			}
 
 			const maintenanceTotal = Object.values(this._maintenance?.body || {})
-				.filter(m => inYear(m.date ? new Date(m.date) : null))
+				.filter(m => inYear(m.date ? parseDate(m.date) : null))
 				.reduce((s, m) => s + (Number(m.cost) || 0), 0);
 
 			if (maintenanceTotal > 0) expByType.set('🔧 Maintenance', maintenanceTotal);
 
 			// Feeding costs
 			const feedTotal = Object.values(this._feedingLogs?.body || {})
-				.filter(l => inYear(l.date ? new Date(l.date) : null))
+				.filter(l => inYear(l.date ? parseDate(l.date) : null))
 				.reduce((s, log) => {
 					const schedule = log.scheduleId ? scheduleMap[log.scheduleId] : null;
 					const supply = schedule?.supplyId ? supplyMap[schedule.supplyId] : null;
@@ -806,8 +807,8 @@ export default class Financials extends AsyncView {
 	_renderBudgetCard(yr, _lastMonth, _MONTHS) {
 		const allBudget = Object.values(this._budget?.body || {});
 		const activeItems = allBudget.filter(b => {
-			if (b.startDate && new Date(b.startDate).getFullYear() > yr) return false;
-			if (b.endDate && new Date(b.endDate).getFullYear() < yr) return false;
+			if (b.startDate && parseDate(b.startDate).getFullYear() > yr) return false;
+			if (b.endDate && parseDate(b.endDate).getFullYear() < yr) return false;
 
 			return true;
 		});

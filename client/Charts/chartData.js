@@ -1,6 +1,6 @@
 // Derive chart data from Events (not Seasons)
 
-import { theme } from '@vanilla-bean/components';
+import { parseDate, theme } from '@vanilla-bean/components';
 
 import parseDetails from '../utils/parseDetails';
 
@@ -30,7 +30,7 @@ export const soilDataByField = events => {
 		if (!['organicMatter', 'soilRespiration', 'pH', 'brayP', 'potassium', 'cec', 'nitrate'].some(k => d[k] != null))
 			continue;
 
-		const year = event.season || (event.date ? new Date(event.date).getFullYear() : null);
+		const year = event.season || (event.date ? parseDate(event.date).getFullYear() : null);
 
 		if (!year) continue;
 
@@ -68,7 +68,7 @@ export const yieldDataByField = events => {
 
 		if (d.quantity == null) continue;
 
-		const year = event.season || (event.date ? new Date(event.date).getFullYear() : null);
+		const year = event.season || (event.date ? parseDate(event.date).getFullYear() : null);
 
 		if (!year) continue;
 
@@ -93,7 +93,7 @@ export const economicsByField = events => {
 
 	for (const event of events) {
 		const d = parseDetails(event.details);
-		const year = event.season || (event.date ? new Date(event.date).getFullYear() : null);
+		const year = event.season || (event.date ? parseDate(event.date).getFullYear() : null);
 
 		if (!year) continue;
 
@@ -123,7 +123,7 @@ export const practicesByFieldYear = events => {
 	const data = {};
 
 	for (const event of events) {
-		const year = event.season || (event.date ? new Date(event.date).getFullYear() : null);
+		const year = event.season || (event.date ? parseDate(event.date).getFullYear() : null);
 
 		if (!year) continue;
 
@@ -140,6 +140,6 @@ export const practicesByFieldYear = events => {
 export const allYears = events =>
 	[
 		...new Set(
-			events.map(event => event.season || (event.date ? new Date(event.date).getFullYear() : null)).filter(Boolean),
+			events.map(event => event.season || (event.date ? parseDate(event.date).getFullYear() : null)).filter(Boolean),
 		),
 	].sort((a, b) => a - b);

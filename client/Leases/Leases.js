@@ -5,6 +5,7 @@ import {
 	EmptyState,
 	formatDate,
 	Icon,
+	parseDate,
 	SectionLabel,
 	styled,
 	theme,
@@ -57,7 +58,7 @@ const EntityName = styled(
 const daysUntil = dateStr => {
 	if (!dateStr) return null;
 
-	return Math.ceil((new Date(dateStr) - new Date()) / 86_400_000);
+	return Math.ceil((parseDate(dateStr) - new Date()) / 86_400_000);
 };
 
 const entityIcon = type => ({ field: '📋', building: '🏚️', equipment: '🚜' })[type] || '📋';

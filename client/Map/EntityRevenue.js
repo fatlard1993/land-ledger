@@ -5,6 +5,7 @@ import { makePropertiesEditor } from '../utils/PropertiesEditor';
 import { createRevenue, updateSupply, getSupplies } from '../api';
 import { salePriceForSupply } from '../Supplies/SupplyDialog';
 import { FormLabel } from '../Layout';
+import { toDateOnly } from '../utils/dates';
 import { SubLabel } from './panelParts';
 
 const { colors } = theme;
@@ -52,7 +53,7 @@ export function openSellDialog(entityType, entity, onComplete, hide) {
 						entityType,
 						entityId: entity.id,
 						entityName: entity.name || '',
-						date: dateEl.elem.value || new Date().toISOString().slice(0, 10),
+						date: dateEl.elem.value || toDateOnly(),
 						amount: Number(priceEl.elem.value),
 						type: 'sale',
 						description: `Sale of ${entityLabel}`,
@@ -81,7 +82,7 @@ export function openSellDialog(entityType, entity, onComplete, hide) {
 
 	new FormLabel({ appendTo: dialog.body, textContent: 'Sale Date' });
 	const dateEl = new Input({ appendTo: dialog.body, type: 'date' });
-	dateEl.elem.value = new Date().toISOString().slice(0, 10);
+	dateEl.elem.value = toDateOnly();
 
 	new FormLabel({ appendTo: dialog.body, textContent: 'Buyer (optional)' });
 	const buyerEl = new Input({ appendTo: dialog.body, placeholder: 'Buyer name or business' });
@@ -155,7 +156,7 @@ export function openRevenueDialog(entityType, entity, existingRecord, onSave, on
 
 	new FormLabel({ appendTo: row, textContent: 'Date' });
 	const dateEl = new Input({ appendTo: row, type: 'date' });
-	dateEl.elem.value = rec.date || new Date().toISOString().slice(0, 10);
+	dateEl.elem.value = rec.date || toDateOnly();
 
 	new FormLabel({ appendTo: dialog.body, textContent: 'Description' });
 	const descEl = new Input({ appendTo: dialog.body, placeholder: 'What was the space used for?' });
@@ -397,7 +398,7 @@ export function openInventorySaleDialog(supply, building, refresh) {
 
 	new FormLabel({ appendTo: grid, textContent: 'Date' });
 	const dateEl = new Input({ appendTo: grid, type: 'date' });
-	dateEl.elem.value = new Date().toISOString().slice(0, 10);
+	dateEl.elem.value = toDateOnly();
 
 	// Live revenue preview
 	const preview = new Preview({

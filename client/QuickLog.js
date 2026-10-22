@@ -4,6 +4,7 @@ import { getFields, getBuildings, createEvent } from './api';
 import { createApplicationLog } from './api/applicationLogs';
 import { CATEGORIES as APP_CATEGORIES } from './ApplicationLog/ApplicationLogDialog';
 import { FormLabel } from './Layout';
+import { toDateOnly } from './utils/dates';
 
 // ── Constants ──────────────────────────────────────────────────────────────────
 
@@ -363,7 +364,7 @@ export function openQuickLog() {
 
 			getPayload = () => ({
 				fieldId: locationSelect.elem.value || null,
-				date: new Date().toISOString().slice(0, 10),
+				date: toDateOnly(),
 				category: 'observation',
 				name: 'Observation',
 				notes: noteText.elem.value.trim(),
@@ -396,7 +397,7 @@ export function openQuickLog() {
 
 			getPayload = () => ({
 				fieldId: locationSelect.elem.value || null,
-				date: new Date().toISOString().slice(0, 10),
+				date: toDateOnly(),
 				season: new Date().getFullYear(),
 				category: selectedCat,
 				name: nameInput.elem.value.trim(),
@@ -449,7 +450,7 @@ export function openQuickLog() {
 
 			getPayload = () => ({
 				fieldId: locationSelect.elem.value || null,
-				date: new Date().toISOString().slice(0, 10),
+				date: toDateOnly(),
 				category: selectedCat,
 				product: productInput.elem.value.trim(),
 				rate: rateInput.elem.value ? Number(rateInput.elem.value) : null,

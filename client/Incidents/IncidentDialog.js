@@ -14,6 +14,7 @@ import { makePropertiesEditor } from '../utils/PropertiesEditor';
 import { toNum } from '../utils/format.js';
 import { watchFormConflicts } from '../utils/watchFormConflicts.js';
 import { keepOpenIfFailed } from '../utils/keepOpenIfFailed';
+import { toDateOnly } from '../utils/dates';
 
 export const INCIDENT_TYPES = [
 	'Crop Damage — Hail',
@@ -154,7 +155,7 @@ export default class IncidentDialog extends FormDialog {
 				{ alwaysItem: 'Cancel' },
 			]),
 			data: {
-				date: incident.date || new Date().toISOString().slice(0, 10),
+				date: incident.date || toDateOnly(),
 				severity: incident.severity || 'minor',
 				type: incident.type || '',
 				description: incident.description || '',

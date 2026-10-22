@@ -1,6 +1,6 @@
 import L from 'leaflet';
 import '@geoman-io/leaflet-geoman-free';
-import { Notify, theme } from '@vanilla-bean/components';
+import { Notify, parseDate, theme } from '@vanilla-bean/components';
 
 import AsyncView from '../AsyncView';
 
@@ -528,7 +528,7 @@ export default class MapView extends AsyncView {
 		// Active livestock on the field right now
 		const livestock = fieldEvents.find(
 			e =>
-				e.category === 'livestock' && e.date && new Date(e.date) <= now && (!e.endDate || new Date(e.endDate) >= now),
+				e.category === 'livestock' && e.date && parseDate(e.date) <= now && (!e.endDate || parseDate(e.endDate) >= now),
 		);
 		if (livestock) return { category: 'livestock', name: livestock.name, emoji: eventEmoji(livestock) };
 

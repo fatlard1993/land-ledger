@@ -1,4 +1,4 @@
-import { Button, Component, Dialog, formatDate, Icon, Input, theme } from '@vanilla-bean/components';
+import { Button, Component, Dialog, formatDate, Icon, Input, parseDate, theme } from '@vanilla-bean/components';
 
 import {
 	getFeedingSchedules,
@@ -12,7 +12,7 @@ import {
 import { frequencyLabel, frequencyInterval } from '../Livestock/FeedingScheduleDialog';
 import FeedingScheduleDialog from '../Livestock/FeedingScheduleDialog';
 import { ActionHeader, FormLabel } from '../Layout';
-import { daysAgoLabel } from '../utils/dates';
+import { daysAgoLabel, toDateOnly } from '../utils/dates';
 import {
 	EmptyNote,
 	HeaderActions,
@@ -52,7 +52,7 @@ export function openTreatDialog(field, totalHead, refresh) {
 						amountUnit: unitEl.elem.value || 'lbs/hd',
 						headCount: totalHead || null,
 						type: 'treat',
-						date: dateEl.elem.value || new Date().toISOString().slice(0, 10),
+						date: dateEl.elem.value || toDateOnly(),
 						notes: notesEl.elem.value,
 					},
 				});
@@ -98,7 +98,7 @@ export function openTreatDialog(field, totalHead, refresh) {
 
 	new FormLabel({ appendTo: rowEl, textContent: 'Date' });
 	const dateEl = new Input({ appendTo: rowEl, type: 'date' });
-	dateEl.elem.value = new Date().toISOString().slice(0, 10);
+	dateEl.elem.value = toDateOnly();
 
 	new FormLabel({ appendTo: dialog.body, textContent: 'Notes' });
 	const notesEl = new Input({ appendTo: dialog.body, type: 'text', placeholder: 'Optional — why, weather, etc.' });
@@ -161,7 +161,7 @@ export async function renderFeedingSection(field, livestockEvents, refresh, cont
 		if (interval === null) return false;
 		const lastLog = logs.find(l => l.scheduleId === schedule.id);
 		if (!lastLog) return true;
-		return (Date.now() - new Date(lastLog.date)) / 86_400_000 >= interval;
+		return (Date.now() - parseDate(lastLog.date)) / 86_400_000 >= interval;
 	};
 
 	if (!schedules.length) {
@@ -211,7 +211,7 @@ export async function renderFeedingSection(field, livestockEvents, refresh, cont
 							amountUnit: schedule.amountUnit,
 							headCount: totalHead || null,
 							type: 'scheduled',
-							date: new Date().toISOString().slice(0, 10),
+							date: toDateOnly(),
 						},
 					});
 					refresh();

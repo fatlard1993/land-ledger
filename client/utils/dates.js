@@ -17,3 +17,7 @@ export const daysAgoLabel = (value, today) => {
 
 	return `${days}d ago`;
 };
+
+// A day as YYYY-MM-DD where the reader is; toISOString gives the UTC day, which is tomorrow on a US evening
+export const toDateOnly = (date = new Date()) =>
+	[date.getFullYear(), date.getMonth() + 1, date.getDate()].map(n => String(n).padStart(2, '0')).join('-');

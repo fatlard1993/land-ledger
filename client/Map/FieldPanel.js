@@ -1,4 +1,14 @@
-import { Button, Component, Dialog, Elem, SectionLabel, styled, theme } from '@vanilla-bean/components';
+import {
+	Button,
+	Component,
+	Dialog,
+	Elem,
+	formatDate,
+	parseDate,
+	SectionLabel,
+	styled,
+	theme,
+} from '@vanilla-bean/components';
 
 import { geodesicAreaSqm, convertArea, formatArea, AREA_UNITS } from '../geo';
 import parseDetails from '../utils/parseDetails';
@@ -1234,7 +1244,7 @@ export default class FieldPanel extends Component {
 			});
 
 			const eventMeta = [
-				event.date ? new Date(event.date).toLocaleDateString() : null,
+				event.date ? formatDate(event.date) : null,
 				d.species || null,
 				d.headCount ? `${d.headCount} hd` : null,
 				d.quantity ? `${d.quantity} ${d.unit || ''}`.trim() : null,
@@ -1842,7 +1852,7 @@ export default class FieldPanel extends Component {
 		const byYear = new Map();
 
 		for (const event of fieldEvents) {
-			const yr = event.season || (event.date ? new Date(event.date).getFullYear() : null);
+			const yr = event.season || (event.date ? parseDate(event.date).getFullYear() : null);
 
 			if (!yr) continue;
 			if (!byYear.has(yr)) byYear.set(yr, []);
@@ -1933,7 +1943,7 @@ export default class FieldPanel extends Component {
 						tag: 'span',
 						appendTo: titleRow,
 						addClass: 'date',
-						textContent: new Date(event.date).toLocaleDateString(),
+						textContent: formatDate(event.date),
 					});
 
 				const details = [...extraDetails];
@@ -2092,7 +2102,7 @@ export default class FieldPanel extends Component {
 
 		// Charts derived from Events — show when 2+ years of event data exist
 		const fieldYears = new Set(
-			fieldEvents.map(e => e.season || (e.date ? new Date(e.date).getFullYear() : null)).filter(Boolean),
+			fieldEvents.map(e => e.season || (e.date ? parseDate(e.date).getFullYear() : null)).filter(Boolean),
 		);
 
 		if (fieldYears.size >= 2) {

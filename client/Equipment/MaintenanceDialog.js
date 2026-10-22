@@ -4,6 +4,7 @@ import { makePropertiesEditor } from '../utils/PropertiesEditor';
 import { toNum } from '../utils/format.js';
 import { watchFormConflicts } from '../utils/watchFormConflicts.js';
 import { keepOpenIfFailed } from '../utils/keepOpenIfFailed';
+import { toDateOnly } from '../utils/dates';
 
 const { colors } = theme;
 
@@ -77,7 +78,7 @@ export default class MaintenanceDialog extends FormDialog {
 			header: isEdit ? 'Edit Service Record' : `Log Work — ${equipment.name || 'Equipment'}`,
 			data: {
 				type: record.type || '',
-				date: record.date || new Date().toISOString().slice(0, 10),
+				date: record.date || toDateOnly(),
 				usageAtService: record.usageAtService != null ? record.usageAtService : '',
 				cost: record.cost != null ? record.cost : '',
 				parts: record.parts || '',

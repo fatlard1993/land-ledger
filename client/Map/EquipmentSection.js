@@ -1,4 +1,4 @@
-import { Button, Icon, formatDate, theme } from '@vanilla-bean/components';
+import { Button, formatDate, Icon, theme } from '@vanilla-bean/components';
 
 import { ActionHeader } from '../Layout';
 import { formatDollar } from '../utils/format';
@@ -15,6 +15,7 @@ import {
 } from '../api';
 import { scheduleStatus } from '../utils/maintenanceUtils';
 import { IconText } from '../statusIcons';
+import { toDateOnly } from '../utils/dates';
 import {
 	EmptyNote,
 	HeaderActions,
@@ -153,7 +154,7 @@ export async function renderMaintenanceSection(equipment, maintenance, schedules
 		new MaintenanceDialog({
 			equipment: item,
 			workType: 'maintenance',
-			record: { type: schedule.name, date: new Date().toISOString().slice(0, 10) },
+			record: { type: schedule.name, date: toDateOnly() },
 			onSave: async data => {
 				const result = await createMaintenance({ body: data });
 

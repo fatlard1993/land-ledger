@@ -2,6 +2,7 @@ import { Component, styled } from '@vanilla-bean/components';
 
 import { getWeather } from '../api';
 import { centroidFromGeometry } from '../geo';
+import { toDateOnly } from '../utils/dates';
 
 const Strip = styled(
 	Component,
@@ -120,9 +121,8 @@ export async function renderWeatherStrip(field, container) {
 
 	end.setDate(end.getDate() + 6);
 
-	const format = d => d.toISOString().slice(0, 10);
-	const startStr = format(today);
-	const endStr = format(end);
+	const startStr = toDateOnly(today);
+	const endStr = toDateOnly(end);
 
 	let data;
 

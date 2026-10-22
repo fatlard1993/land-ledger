@@ -5,6 +5,7 @@ import { createApplicationLog, updateApplicationLog, deleteApplicationLog } from
 import { watchFormConflicts } from '../utils/watchFormConflicts.js';
 import { toNum } from '../utils/format.js';
 import { keepOpenIfFailed } from '../utils/keepOpenIfFailed';
+import { toDateOnly } from '../utils/dates';
 
 const { colors } = theme;
 
@@ -51,7 +52,7 @@ export default class ApplicationLogDialog extends FormDialog {
 			size: 'large',
 			header: isNew ? 'Log Application' : 'Edit Application Record',
 			data: {
-				date: rec.date || new Date().toISOString().slice(0, 10),
+				date: rec.date || toDateOnly(),
 				fieldId: rec.fieldId || '',
 				acresTreated: rec.acresTreated || '',
 				category: rec.category || 'herbicide',

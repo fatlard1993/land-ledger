@@ -2,7 +2,7 @@ import { afterAll, beforeAll, describe, expect, test } from 'bun:test';
 
 import { formatDate, parseDate } from '@vanilla-bean/components';
 
-import { daysAgo, daysAgoLabel } from './dates';
+import { daysAgo, daysAgoLabel, toDateOnly } from './dates';
 
 // Chicago, where UTC midnight is the evening before; restored after, since the time zone is process-wide
 describe('dates, west of Greenwich', () => {
@@ -38,5 +38,10 @@ describe('dates, west of Greenwich', () => {
 		expect(daysAgoLabel('2026-10-17', lateToday)).toBe('yesterday');
 		expect(daysAgoLabel('2026-10-11', lateToday)).toBe('7d ago');
 		expect(daysAgo('2026-11-01', new Date(2026, 10, 2, 9))).toBe(1);
+	});
+
+	test('today as a date-only value is the local day, late in the evening', () => {
+		expect(toDateOnly(new Date(2026, 9, 18, 21, 0))).toBe('2026-10-18');
+		expect(toDateOnly(new Date(2026, 0, 5))).toBe('2026-01-05');
 	});
 });

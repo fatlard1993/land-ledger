@@ -2,8 +2,9 @@ import { Elem, FormDialog, Notify, Select, theme } from '@vanilla-bean/component
 
 import { createBreedingRecord, updateBreedingRecord, deleteBreedingRecord } from '../api/animals';
 import { watchFormConflicts } from '../utils/watchFormConflicts.js';
-import { animalLabel, speciesMeta } from './constants';
 import { keepOpenIfFailed } from '../utils/keepOpenIfFailed';
+import { toDateOnly } from '../utils/dates';
+import { animalLabel, speciesMeta } from './constants';
 
 const { colors } = theme;
 
@@ -20,7 +21,7 @@ export default class BreedingDialog extends FormDialog {
 			size: 'large',
 			header: isNew ? `Add Breeding Record — ${animalLabel(dam)}` : 'Edit Breeding Record',
 			data: {
-				breedingDate: rec.breedingDate || new Date().toISOString().slice(0, 10),
+				breedingDate: rec.breedingDate || toDateOnly(),
 				expectedDueDate: rec.expectedDueDate || '',
 				sire: rec.sire || '',
 				status: rec.status || 'pending',
@@ -135,7 +136,7 @@ export default class BreedingDialog extends FormDialog {
 				if (dateVal) {
 					const d = new Date(`${dateVal}T12:00:00`);
 					d.setDate(d.getDate() + gestation);
-					const computed = d.toISOString().slice(0, 10);
+					const computed = toDateOnly(d);
 					dueDisplay.options.textContent = `Auto-computed: ${computed}`;
 				} else {
 					dueDisplay.options.textContent = '';

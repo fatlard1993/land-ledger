@@ -4,7 +4,9 @@ import {
 	Component,
 	Elem,
 	EmptyState,
+	formatDate,
 	Icon,
+	parseDate,
 	SectionLabel,
 	styled,
 	theme,
@@ -266,7 +268,7 @@ const renewalColor = days => (days <= 30 ? colors.light(colors.danger) : colors.
 const daysUntil = dateStr => {
 	if (!dateStr) return null;
 
-	return Math.ceil((new Date(dateStr) - new Date()) / 86_400_000);
+	return Math.ceil((parseDate(dateStr) - new Date()) / 86_400_000);
 };
 
 export default class Fields extends AsyncView {
@@ -427,7 +429,7 @@ export default class Fields extends AsyncView {
 
 		// Charts — requires ≥1 season of data
 		const years = new Set(
-			fieldEvents.map(e => e.season || (e.date ? new Date(e.date).getFullYear() : null)).filter(Boolean),
+			fieldEvents.map(e => e.season || (e.date ? parseDate(e.date).getFullYear() : null)).filter(Boolean),
 		);
 
 		if (years.size >= 1) {
@@ -444,7 +446,7 @@ export default class Fields extends AsyncView {
 		const byYear = new Map();
 
 		for (const event of fieldEvents) {
-			const yr = event.season || (event.date ? new Date(event.date).getFullYear() : null);
+			const yr = event.season || (event.date ? parseDate(event.date).getFullYear() : null);
 
 			if (!yr) continue;
 			if (!byYear.has(yr)) byYear.set(yr, []);
@@ -490,7 +492,7 @@ export default class Fields extends AsyncView {
 							tag: 'span',
 							appendTo: row,
 							addClass: 'date',
-							textContent: new Date(event.date).toLocaleDateString(),
+							textContent: formatDate(event.date),
 						});
 				}
 			}
@@ -552,7 +554,10 @@ export default class Fields extends AsyncView {
 			// Active livestock (by date range)
 			for (const event of fieldEvents.filter(
 				e =>
-					e.category === 'livestock' && e.date && new Date(e.date) <= now && (!e.endDate || new Date(e.endDate) >= now),
+					e.category === 'livestock' &&
+					e.date &&
+					parseDate(e.date) <= now &&
+					(!e.endDate || parseDate(e.endDate) >= now),
 			)) {
 				const details = parseDetails(event.details);
 				const icon = eventEmoji(event);
@@ -692,7 +697,10 @@ export default class Fields extends AsyncView {
 		const activeUses = [
 			...fieldEvents.filter(
 				e =>
-					e.category === 'livestock' && e.date && new Date(e.date) <= now && (!e.endDate || new Date(e.endDate) >= now),
+					e.category === 'livestock' &&
+					e.date &&
+					parseDate(e.date) <= now &&
+					(!e.endDate || parseDate(e.endDate) >= now),
 			),
 			...fieldEvents
 				.filter(e => e.category === 'crop' && e.season === CURRENT_YEAR)

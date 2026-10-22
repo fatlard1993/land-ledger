@@ -1,15 +1,16 @@
-import { Button, Card, Component, Dialog, Elem, formatDate, styled, theme } from '@vanilla-bean/components';
+import { Button, Card, Component, Dialog, Elem, formatDate, parseDate, styled, theme } from '@vanilla-bean/components';
 
 import { ActionHeader } from '../Layout';
 import { IconText } from '../statusIcons';
 
 import { getHealthRecords, getBreedingRecords } from '../api/animals';
+import { toDateOnly } from '../utils/dates';
 import { animalLabel, ageLabel, STATUS_COLORS, speciesMeta } from './constants';
 import AnimalDialog from './AnimalDialog';
 import HealthRecordDialog from './HealthRecordDialog';
 import BreedingDialog from './BreedingDialog';
 
-const TODAY = new Date().toISOString().slice(0, 10);
+const TODAY = toDateOnly();
 
 const { colors } = theme;
 
@@ -344,7 +345,7 @@ export default class AnimalPanel extends Dialog {
 					if (parts.length) new Elem({ tag: 'div', appendTo: info, addClass: 'meta', textContent: parts.join(' · ') });
 
 					if (upcoming) {
-						const daysLeft = Math.ceil((new Date(r.expectedDueDate) - new Date()) / 86_400_000);
+						const daysLeft = Math.ceil((parseDate(r.expectedDueDate) - new Date()) / 86_400_000);
 						new IconText({
 							appendTo: info,
 							addClass: 'flag',

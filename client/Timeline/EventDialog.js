@@ -1,10 +1,11 @@
-import { Button, Component, Elem, FormDialog, Input, Select, styled, theme } from '@vanilla-bean/components';
+import { Button, Component, Elem, FormDialog, Input, parseDate, Select, styled, theme } from '@vanilla-bean/components';
 
 import { FormLabel } from '../Layout';
 import { getFields } from '../api';
 import { makeCropCombobox } from '../Charts/cropCombobox';
 import { keepOpenIfFailed } from '../utils/keepOpenIfFailed';
 import { makePropertiesEditor } from '../utils/PropertiesEditor';
+import { toDateOnly } from '../utils/dates';
 import { buildHarvestSection } from './HarvestSection.js';
 import { buildCoverCropSection } from './CoverCropSection.js';
 
@@ -359,7 +360,7 @@ export default class EventDialog extends FormDialog {
 
 		this._getters.emoji = () => emojiPreview.elem.value || null;
 
-		const today = new Date().toISOString().slice(0, 10);
+		const today = toDateOnly();
 
 		new FormLabel({ appendTo: form, textContent: 'Date' });
 		const dateIn = new Input({ appendTo: form, attributes: { type: 'date' } });
@@ -368,9 +369,9 @@ export default class EventDialog extends FormDialog {
 
 		this._getters.date = () => dateIn.elem.value;
 		this._getters.season = () => {
-			const d = new Date(dateIn.elem.value);
+			const d = parseDate(dateIn.elem.value);
 
-			return isNaN(d) ? new Date().getFullYear() : d.getFullYear();
+			return d ? d.getFullYear() : new Date().getFullYear();
 		};
 
 		dateIn.elem.addEventListener('change', () => this._refreshCalculations?.());

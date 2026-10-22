@@ -1,4 +1,4 @@
-import { Component, Elem, SectionLabel, styled, theme } from '@vanilla-bean/components';
+import { Component, Elem, parseDate, SectionLabel, styled, theme } from '@vanilla-bean/components';
 
 import { DetailRow } from '../Layout';
 import parseDetails from '../utils/parseDetails';
@@ -24,12 +24,12 @@ export function renderEconomics(field, events, container) {
 	const acreage = Number(field.acreage) || 0;
 	const currentYear = new Date().getFullYear();
 
-	const seasonYears = [...new Set(events.map(e => e.season || new Date(e.date).getFullYear()).filter(Boolean))].sort(
+	const seasonYears = [...new Set(events.map(e => e.season || parseDate(e.date)?.getFullYear()).filter(Boolean))].sort(
 		(a, b) => b - a,
 	);
 
 	const year = seasonYears[0] || currentYear;
-	const seasonEvents = events.filter(e => (e.season || new Date(e.date).getFullYear()) === year);
+	const seasonEvents = events.filter(e => (e.season || parseDate(e.date)?.getFullYear()) === year);
 
 	const sumCostPerAcre = events =>
 		events.reduce((sum, e) => {
@@ -152,7 +152,7 @@ export function renderEconomics(field, events, container) {
 	// OM% trend across all soil tests for this field
 	const allSoilTests = events
 		.filter(e => e.category === 'soil_test')
-		.map(e => ({ date: new Date(e.date), om: Number(parseDetails(e.details).organicMatter) }))
+		.map(e => ({ date: parseDate(e.date), om: Number(parseDetails(e.details).organicMatter) }))
 		.filter(e => e.om > 0)
 		.sort((a, b) => a.date - b.date);
 

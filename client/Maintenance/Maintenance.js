@@ -3,6 +3,7 @@ import {
 	Elem,
 	EmptyState,
 	formatDate,
+	parseDate,
 	SectionLabel,
 	styled,
 	theme,
@@ -93,7 +94,7 @@ export default class Maintenance extends AsyncView {
 		const byYear = new Map();
 
 		for (const rec of allRecords) {
-			const year = rec.date ? new Date(rec.date).getFullYear() : 'Unknown';
+			const year = rec.date ? parseDate(rec.date).getFullYear() : 'Unknown';
 
 			if (!byYear.has(year)) byYear.set(year, []);
 			byYear.get(year).push(rec);

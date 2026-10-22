@@ -4,6 +4,7 @@ import {
 	Elem,
 	EmptyState,
 	formatDate,
+	parseDate,
 	SectionLabel,
 	styled,
 	theme,
@@ -218,7 +219,7 @@ export default class Feeding extends AsyncView {
 			const byYear = new Map();
 
 			for (const log of allLogs) {
-				const year = log.date ? new Date(log.date).getFullYear() : 'Unknown';
+				const year = log.date ? parseDate(log.date).getFullYear() : 'Unknown';
 
 				if (!byYear.has(year)) byYear.set(year, []);
 				byYear.get(year).push(log);
