@@ -1,11 +1,11 @@
 import { requestMatch } from '@vanilla-bean/components/app';
+import { parseDate } from '@vanilla-bean/components/utils/date';
 import weatherDb from '../database/weather';
+import { addDays, toDateOnly } from '../utils/dates';
 
 // Dates older than this many days are served from the archive API (ERA5 reanalysis) and cached.
 // More recent dates are always fetched fresh from the forecast API.
 const ARCHIVE_CUTOFF_DAYS = 14;
-
-const toDateStr = d => d.toISOString().slice(0, 10);
 
 // Snap to the nearest ERA5 grid point (0.25° ≈ 27km).
 // Weather data is spatially uniform at farm scale — every field on the same
@@ -13,24 +13,12 @@ const toDateStr = d => d.toISOString().slice(0, 10);
 const snapToGrid = (v, step = 0.25) => Math.round(v / step) * step;
 const locationKey = (lat, lng) => `${snapToGrid(lat).toFixed(2)},${snapToGrid(lng).toFixed(2)}`;
 
-const cutoffDate = () => {
-	const d = new Date();
-
-	d.setDate(d.getDate() - ARCHIVE_CUTOFF_DAYS);
-
-	return toDateStr(d);
-};
+const cutoffDate = () => addDays(toDateOnly(), -ARCHIVE_CUTOFF_DAYS);
 
 const dateRange = (start, end) => {
 	const dates = [];
-	// Use UTC noon to avoid DST edge cases when advancing by day
-	const cur = new Date(`${start}T12:00:00Z`);
-	const endDate = new Date(`${end}T12:00:00Z`);
 
-	while (cur <= endDate) {
-		dates.push(toDateStr(cur));
-		cur.setUTCDate(cur.getUTCDate() + 1);
-	}
+	for (let day = start; day <= end; day = addDays(day, 1)) dates.push(day);
 
 	return dates;
 };
@@ -92,7 +80,7 @@ const weatherRouter = async request => {
 
 	// Validate dates and cap range to 2 years to prevent runaway iteration / SSRF
 	const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
-	if (!ISO_DATE.test(start) || !ISO_DATE.test(end))
+	if (!ISO_DATE.test(start) || !ISO_DATE.test(end) || !parseDate(start) || !parseDate(end))
 		return new Response('start and end must be YYYY-MM-DD', { status: 400 });
 	if (start > end) return new Response('start must be before end', { status: 400 });
 	const MAX_RANGE_DAYS = 730;

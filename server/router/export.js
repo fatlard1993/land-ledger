@@ -4,6 +4,7 @@ import { collectionDBs } from '../database/database';
 import archiveDb from '../database/archive';
 import settingsDb from '../database/settings';
 import { requireRole } from '../auth';
+import { toDateOnly } from '../utils/dates';
 
 // ── Collections available for each format ──────────────────────────────────────
 
@@ -139,7 +140,7 @@ export function toCSVWithTemplate(rows, mapping) {
 
 // ── Date stamp helper ──────────────────────────────────────────────────────────
 
-const today = () => new Date().toISOString().slice(0, 10);
+const today = () => toDateOnly();
 
 // ── Router ─────────────────────────────────────────────────────────────────────
 

@@ -1,10 +1,14 @@
 import { timingSafeEqual } from 'crypto';
 
 import { requestMatch } from '@vanilla-bean/components/app';
+import { formatDate } from '@vanilla-bean/components/utils/date';
 
 import settingsDb from '../database/settings';
 import { collectionDBs } from '../database/database';
 import archiveDb from '../database/archive';
+import { toDateOnly } from '../utils/dates';
+
+const DATE_ONLY = /^\d{4}-\d{2}-\d{2}$/;
 
 // ── Token resolution ────────────────────────────────────────────────────────────
 
@@ -23,8 +27,10 @@ function resolveShareToken(rawToken) {
 	);
 }
 
+// A link that expires on a day is good through the end of it
 export function isExpired(share) {
 	if (!share.expiresAt) return false;
+	if (DATE_ONLY.test(share.expiresAt)) return share.expiresAt < toDateOnly();
 	return new Date(share.expiresAt) < new Date();
 }
 
@@ -93,14 +99,8 @@ function assembleData(share) {
 
 // ── HTML report builder ─────────────────────────────────────────────────────────
 
-const format = d => {
-	if (!d) return '—';
-	try {
-		return new Date(`${d}T12:00:00`).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
-	} catch {
-		return d;
-	}
-};
+// Text that isn't a date comes back as it was, so it is escaped like any other value
+const format = d => escHtml(formatDate(d, { locale: 'en-US', year: 'numeric', month: 'short', day: 'numeric' }) || null);
 
 export const escHtml = s =>
 	String(s ?? '—')

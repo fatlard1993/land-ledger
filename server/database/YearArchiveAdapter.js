@@ -1,5 +1,7 @@
 import { readFile, readdir } from 'fs/promises';
 import { dirname, basename, join } from 'path';
+import { parseDate } from '@vanilla-bean/components/utils/date';
+
 import { writeJSON } from './jsonFile.js';
 
 // ── Collections stored in the archive ─────────────────────────────────────────
@@ -29,10 +31,8 @@ export function yearFromRecord(record) {
 	const dateStr = record.date || record.breedingDate;
 
 	if (dateStr) {
-		try {
-			const y = new Date(`${String(dateStr).slice(0, 10)}T12:00:00`).getFullYear();
-			if (y > 1900 && y < 2200) return y;
-		} catch {}
+		const y = parseDate(dateStr)?.getFullYear();
+		if (y > 1900 && y < 2200) return y;
 	}
 
 	return new Date().getFullYear();

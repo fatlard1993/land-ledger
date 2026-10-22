@@ -22,6 +22,7 @@ import {
 	revenue,
 	supplies,
 } from '../database';
+import { addDays } from '../utils/dates';
 
 // Gestation in days by species — used to compute expectedDueDate
 const GESTATION = {
@@ -33,14 +34,6 @@ const GESTATION = {
 	alpaca: 345,
 	llama: 345,
 	donkey: 365,
-};
-
-const addDays = (date, days) => {
-	const d = new Date(`${date}T12:00:00`);
-
-	d.setDate(d.getDate() + days);
-
-	return d.toISOString().slice(0, 10);
 };
 
 // A breeding date without a due date gets one, from the dam's species
