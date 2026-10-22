@@ -12,7 +12,7 @@
         "@turf/union": "^7.3.5",
         "@vanilla-bean/components": "^5.0.0",
         "@vanilla-bean/hypertether": "^1.1.1",
-        "argi": "github:fatlard1993/argi#fcac703",
+        "argi-cli": "^1.0.0",
         "chart.js": "^4.5.1",
         "leaflet": "^1.9.4",
         "lowdb": "^7.0.1",
@@ -178,7 +178,7 @@
 
     "are-docs-informative": ["are-docs-informative@0.0.2", "", {}, "sha512-ixiS0nLNNG5jNQzgZJNoUpBKdo9yTYZMGJ+QgT2jmjR7G7+QHRCc4v6LQ3NgE7EBJq+o0ams3waJwkrlBom8Ig=="],
 
-    "argi": ["argi@github:fatlard1993/argi#fcac703", { "dependencies": { "find-root": "^1.1.0" } }, "fatlard1993-argi-fcac703", "sha512-MJeHxG/MuIGou+NJwvAJkYjCTvn+zBZkNq4BSNAYPUpVPmucto8TlfgCCj3JbPntGJTrvWaY6uOfPzF9e0YYSA=="],
+    "argi-cli": ["argi-cli@1.0.0", "", {}, "sha512-0iupCg+eh7zx/yoz2fAQZ8PfLDboRPpzs5PFHWb9Wfdmr/n6e9Pe9oJ6bPhyg4aU2A4DoJiNSAFHIp0C6/iA0A=="],
 
     "aria-query": ["aria-query@5.3.0", "", { "dependencies": { "dequal": "^2.0.3" } }, "sha512-b0P0sZPKtyu8HkeRAfCq0IfURZK+SuwMjY1UXGBU27wpAiTwQAIlq56IbIO+ytk/JjS1fMR14ee5WBBfKi5J6A=="],
 
@@ -323,8 +323,6 @@
     "fdir": ["fdir@6.5.0", "", { "peerDependencies": { "picomatch": "^3 || ^4" }, "optionalPeers": ["picomatch"] }, "sha512-tIbYtZbucOs0BRGqPJkshJUYdL+SDH7dVM8gjy+ERp3WAUjLEFJE+02kanyHtwjWOnwrKYBiwAmM0p4kLJAnXg=="],
 
     "file-entry-cache": ["file-entry-cache@8.0.0", "", { "dependencies": { "flat-cache": "^4.0.0" } }, "sha512-XXTUwCvisa5oacNGRP9SfNtYBNAMi+RPwBFmblZEF7N7swHYQS6/Zfk7SRwx4D5j3CH211YNRco1DEMNVfZCnQ=="],
-
-    "find-root": ["find-root@1.1.0", "", {}, "sha512-NKfW6bec6GfKc0SGx1e07QZY9PE99u0Bft/0rzSD5k3sO/vwkVUpDUKVm5Gpp5Ue3YfShPFTX2070tDs5kB9Ng=="],
 
     "find-up": ["find-up@5.0.0", "", { "dependencies": { "locate-path": "^6.0.0", "path-exists": "^4.0.0" } }, "sha512-78/PXT1wlLLDgTzDs7sjq9hzz0vXD+zn+7wypEe4fXQxCmdmqfGsEPQxmiCSQI3ajFV91bVSsvNtrJRiW6nGng=="],
 

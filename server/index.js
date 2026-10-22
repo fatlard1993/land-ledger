@@ -5,7 +5,7 @@ import path from 'path';
 import { existsSync } from 'fs';
 
 import { devConsole } from '@vanilla-bean/components/app';
-import Argi from 'argi';
+import Argi from 'argi-cli';
 
 import database from './database';
 import archiveDb from './database/archive';
