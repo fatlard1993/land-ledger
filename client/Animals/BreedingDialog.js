@@ -6,7 +6,7 @@ import { stayOpenFor } from '../utils/stayOpenFor';
 import { toDateOnly } from '../utils/dates';
 import { animalLabel, speciesMeta } from './constants';
 
-const { colors } = theme;
+const { colors, space } = theme;
 
 const withoutCallbacks = ({ onSave: _onSave, onDelete: _onDelete, ...options }) => options;
 
@@ -34,7 +34,7 @@ export default class BreedingDialog extends FormDialog {
 				// Row 1 — breeding date (due date display added separately below)
 				{
 					type: 'group',
-					style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' },
+					style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: space.sm },
 					inputs: [
 						{
 							key: 'breedingDate',
@@ -67,7 +67,7 @@ export default class BreedingDialog extends FormDialog {
 				// Birth outcome fields — conditional on status === 'delivered'
 				{
 					type: 'group',
-					style: { display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px' },
+					style: { display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: space.sm },
 					inputs: [
 						{
 							key: 'actualBirthDate',
@@ -118,7 +118,7 @@ export default class BreedingDialog extends FormDialog {
 		const dueDisplay = new Elem({
 			tag: 'div',
 			appendTo: this.body,
-			style: { fontSize: '12px', color: colors.light(colors.success), padding: '2px 0 6px' },
+			style: { fontSize: '12px', color: colors.light(colors.success), padding: `${space.xs} 0 ${space.sm}` },
 		});
 
 		if (gestation) {

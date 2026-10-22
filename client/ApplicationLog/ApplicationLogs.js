@@ -9,7 +9,7 @@ import ExportDialog from '../Export/ExportDialog';
 
 import ApplicationLogDialog, { CATEGORIES } from './ApplicationLogDialog';
 
-const { colors } = theme;
+const { colors, radius, space } = theme;
 
 const catMeta = val => CATEGORIES.find(c => c.value === val) || CATEGORIES.at(-1);
 
@@ -89,8 +89,8 @@ export default class ApplicationLogs extends AsyncView {
 							color: meta.color,
 							background: `${meta.color}22`,
 							border: `1px solid ${meta.color}44`,
-							borderRadius: '4px',
-							padding: '2px 6px',
+							borderRadius: radius.sm,
+							padding: `${space.xs} ${space.sm}`,
 							fontSize: '11px',
 							fontWeight: '500',
 							display: 'inline-block',
@@ -125,7 +125,7 @@ export default class ApplicationLogs extends AsyncView {
 			appendTo: this.content,
 			columns,
 			data,
-			styles: ({ colors }) => `
+			styles: ({ colors, space }) => `
 				width: 100%;
 				border-collapse: collapse;
 
@@ -134,13 +134,13 @@ export default class ApplicationLogs extends AsyncView {
 					text-transform: uppercase;
 					letter-spacing: .06em;
 					color: ${colors.gray};
-					padding: 4px 0 6px;
+					padding: ${space.xs} 0 ${space.sm};
 					border-bottom: 1px solid ${colors.border};
 					text-align: left;
 					font-weight: 500;
 				}
 				td {
-					padding: 8px 0;
+					padding: ${space.sm} 0;
 					border-bottom: 1px solid ${colors.border};
 					vertical-align: middle;
 					font-size: 12px;

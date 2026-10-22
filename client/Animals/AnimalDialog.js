@@ -1,10 +1,12 @@
-import { FormDialog, Select } from '@vanilla-bean/components';
+import { FormDialog, Select, theme } from '@vanilla-bean/components';
 
 import { getFields } from '../api';
 import { createAnimal, updateAnimal, deleteAnimal } from '../api/animals';
 import { watchFormConflicts } from '../utils/watchFormConflicts.js';
 import { stayOpenFor } from '../utils/stayOpenFor';
 import { SPECIES } from './constants';
+
+const { space } = theme;
 
 const withoutCallbacks = ({ onSave: _onSave, onDelete: _onDelete, ...options }) => options;
 
@@ -33,7 +35,7 @@ export default class AnimalDialog extends FormDialog {
 				// Row 1 — tag + name
 				{
 					type: 'group',
-					style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' },
+					style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: space.sm },
 					inputs: [
 						{
 							key: 'tagId',
@@ -47,7 +49,7 @@ export default class AnimalDialog extends FormDialog {
 				// Row 2 — species + sex + status
 				{
 					type: 'group',
-					style: { display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px' },
+					style: { display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: space.sm },
 					inputs: [
 						{
 							key: 'species',
@@ -83,7 +85,7 @@ export default class AnimalDialog extends FormDialog {
 				// Row 3 — birthDate + fieldId
 				{
 					type: 'group',
-					style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' },
+					style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: space.sm },
 					inputs: [
 						{ key: 'birthDate', label: 'Date of birth', type: 'date' },
 						{
@@ -97,7 +99,7 @@ export default class AnimalDialog extends FormDialog {
 				// Row 4 — parentage
 				{
 					type: 'group',
-					style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' },
+					style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: space.sm },
 					inputs: [
 						{ key: 'dam', label: 'Dam (tag ID or name)', placeholder: 'Optional' },
 						{ key: 'sire', label: 'Sire (tag ID or name)', placeholder: 'Optional' },

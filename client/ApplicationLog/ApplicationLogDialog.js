@@ -7,7 +7,7 @@ import { toNum } from '../utils/format.js';
 import { stayOpenFor } from '../utils/stayOpenFor';
 import { toDateOnly } from '../utils/dates';
 
-const { colors } = theme;
+const { colors, space } = theme;
 
 // Hex, so a reader can append an alpha pair (`${color}22`) for a tint; light enough to read as text on the dark ground
 export const CATEGORIES = [
@@ -77,7 +77,7 @@ export default class ApplicationLogDialog extends FormDialog {
 				// Row 1 — date, field, acres
 				{
 					type: 'group',
-					style: { display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px' },
+					style: { display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: space.sm },
 					inputs: [
 						{
 							key: 'date',
@@ -98,7 +98,7 @@ export default class ApplicationLogDialog extends FormDialog {
 				// Row 2 — category, product
 				{
 					type: 'group',
-					style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' },
+					style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: space.sm },
 					inputs: [
 						{
 							key: 'category',
@@ -117,7 +117,7 @@ export default class ApplicationLogDialog extends FormDialog {
 				// Row 3 — EPA reg, active ingredients
 				{
 					type: 'group',
-					style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' },
+					style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: space.sm },
 					inputs: [
 						{ key: 'epaRegNumber', label: 'EPA Reg. # (NNNNN-NNNNN)', placeholder: '12345-67890' },
 						{ key: 'activeIngredients', label: 'Active ingredient(s)', placeholder: 'e.g. Glyphosate 48.7%' },
@@ -126,7 +126,7 @@ export default class ApplicationLogDialog extends FormDialog {
 				// Row 4 — rate, rateUnit, totalApplied, totalUnit
 				{
 					type: 'group',
-					style: { display: 'grid', gridTemplateColumns: '120px 140px 1fr 1fr', gap: '8px' },
+					style: { display: 'grid', gridTemplateColumns: '120px 140px 1fr 1fr', gap: space.sm },
 					inputs: [
 						{
 							key: 'rate',
@@ -170,7 +170,7 @@ export default class ApplicationLogDialog extends FormDialog {
 				// Row 5 — REI + PHI (pesticide categories only)
 				{
 					type: 'group',
-					style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' },
+					style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: space.sm },
 					inputs: [
 						{
 							key: 'rei',
@@ -191,7 +191,7 @@ export default class ApplicationLogDialog extends FormDialog {
 				// Row 6 — operator name, license
 				{
 					type: 'group',
-					style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' },
+					style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: space.sm },
 					inputs: [
 						{ key: 'operatorName', label: 'Certified applicator name', placeholder: 'Full name' },
 						{ key: 'operatorLicense', label: 'License / cert. number', placeholder: 'License #' },
@@ -200,7 +200,7 @@ export default class ApplicationLogDialog extends FormDialog {
 				// Row 7 — wind speed, temperature
 				{
 					type: 'group',
-					style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' },
+					style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: space.sm },
 					inputs: [
 						{ key: 'windSpeed', label: 'Wind speed (mph)', type: 'number', placeholder: '0–10 ideal' },
 						{ key: 'temperature', label: 'Temperature (°F)', type: 'number', placeholder: '' },

@@ -9,17 +9,17 @@ import { ageLabel, speciesMeta, STATUS_COLORS } from './constants';
 import AnimalDialog from './AnimalDialog';
 import AnimalPanel from './AnimalPanel';
 
-const { colors } = theme;
+const { colors, space } = theme;
 
 // One animal per row; a phone keeps the tag, name, species and status
 const AnimalRow = styled(
 	Component,
-	({ colors, media }) => `
+	({ colors, media, space }) => `
 		display: grid;
 		grid-template-columns: 80px 1fr 90px 100px 80px 70px;
-		gap: 6px;
+		gap: ${space.sm};
 		align-items: center;
-		padding: 8px 0;
+		padding: ${space.sm} 0;
 		border-bottom: 1px solid ${colors.border};
 		font-size: 12px;
 		color: ${colors.muted};
@@ -42,7 +42,7 @@ const AnimalRow = styled(
 		& .status { font-size: 11px; font-weight: 600; }
 
 		&.header {
-			padding: 3px 0 6px;
+			padding: ${space.xs} 0 ${space.sm};
 			font-size: 10px;
 			letter-spacing: 0.06em;
 			text-transform: uppercase;
@@ -116,7 +116,7 @@ export default class Animals extends AsyncView {
 		if (presentSpecies.length > 1) {
 			const chipRow = new Component({
 				appendTo: this.content,
-				style: { display: 'flex', gap: '6px', flexWrap: 'wrap', marginBottom: '2px' },
+				style: { display: 'flex', gap: space.sm, flexWrap: 'wrap', marginBottom: space.xs },
 			});
 
 			const makeChip = (value, label) =>
@@ -141,7 +141,7 @@ export default class Animals extends AsyncView {
 		// ── Summary bar ───────────────────────────────────────────────────────────
 		const summaryRow = new Component({
 			appendTo: this.content,
-			style: { display: 'flex', gap: '12px', flexWrap: 'wrap', marginBottom: '2px' },
+			style: { display: 'flex', gap: space.md, flexWrap: 'wrap', marginBottom: space.xs },
 		});
 		const speciesCounts = {};
 		for (const a of active) speciesCounts[a.species || 'other'] = (speciesCounts[a.species || 'other'] || 0) + 1;

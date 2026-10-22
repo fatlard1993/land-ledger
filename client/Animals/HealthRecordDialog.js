@@ -6,7 +6,7 @@ import { stayOpenFor } from '../utils/stayOpenFor';
 import { toDateOnly } from '../utils/dates';
 import { animalLabel } from './constants';
 
-const { colors } = theme;
+const { colors, space } = theme;
 
 const withoutCallbacks = ({ onSave: _onSave, onDelete: _onDelete, ...options }) => options;
 
@@ -33,7 +33,7 @@ export default class HealthRecordDialog extends FormDialog {
 				// Row 1 — date + type
 				{
 					type: 'group',
-					style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' },
+					style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: space.sm },
 					inputs: [
 						{
 							key: 'date',
@@ -64,7 +64,7 @@ export default class HealthRecordDialog extends FormDialog {
 				// Row 2 — dose + route
 				{
 					type: 'group',
-					style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' },
+					style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: space.sm },
 					inputs: [
 						{ key: 'dose', label: 'Dose', placeholder: 'e.g. 2mL, 5cc' },
 						{
@@ -107,7 +107,7 @@ export default class HealthRecordDialog extends FormDialog {
 		const withdrawalDisplay = new Elem({
 			tag: 'div',
 			appendTo: this.body,
-			style: { fontSize: '13px', color: colors.light(colors.warning), fontWeight: '600', padding: '4px 0 8px' },
+			style: { fontSize: '13px', color: colors.light(colors.warning), fontWeight: '600', padding: `${space.xs} 0 ${space.sm}` },
 		});
 
 		const updateWithdrawal = () => {

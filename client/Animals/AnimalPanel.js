@@ -12,7 +12,7 @@ import BreedingDialog from './BreedingDialog';
 
 const TODAY = toDateOnly();
 
-const { colors } = theme;
+const { colors, space } = theme;
 
 const BREEDING_STATUS_COLORS = {
 	pending: colors.light(colors.warning),
@@ -23,11 +23,11 @@ const BREEDING_STATUS_COLORS = {
 
 const PresenceChip = styled(
 	Component,
-	({ colors, radius }) => `
+	({ colors, radius, space }) => `
 		align-items: center;
-		gap: 6px;
-		margin-bottom: 12px;
-		padding: 4px 10px;
+		gap: ${space.sm};
+		margin-bottom: ${space.md};
+		padding: ${space.xs} ${space.md};
 		border: 1px solid ${colors.alpha(colors.warning, 0.35)};
 		border-radius: ${radius.pill};
 		background: ${colors.alpha(colors.warning, 0.15)};
@@ -40,7 +40,7 @@ const PresenceChip = styled(
 
 const SummaryCell = styled(
 	Component,
-	({ colors }) => `
+	({ colors, space }) => `
 		& .label {
 			font-size: 10px;
 			letter-spacing: 0.06em;
@@ -49,7 +49,7 @@ const SummaryCell = styled(
 		}
 
 		& .value {
-			margin-top: 2px;
+			margin-top: ${space.xs};
 			font-size: 13px;
 			font-weight: 600;
 			color: ${colors.muted};
@@ -60,11 +60,11 @@ const SummaryCell = styled(
 // A health or breeding record: its marker, then what it was and when
 const RecordRow = styled(
 	Component,
-	({ colors }) => `
+	({ colors, space }) => `
 		display: flex;
 		align-items: flex-start;
-		gap: 8px;
-		padding: 6px 0;
+		gap: ${space.sm};
+		padding: ${space.sm} 0;
 		border-bottom: 1px solid ${colors.border};
 		cursor: pointer;
 
@@ -92,7 +92,7 @@ const RecordRow = styled(
 		}
 
 		& .flag {
-			margin-top: 2px;
+			margin-top: ${space.xs};
 			font-size: 11px;
 			font-weight: 600;
 		}
@@ -101,8 +101,8 @@ const RecordRow = styled(
 
 const Empty = styled(
 	Component,
-	({ colors }) => `
-		padding: 5px 0 12px;
+	({ colors, space }) => `
+		padding: ${space.sm} 0 ${space.md};
 		font-size: 12px;
 		color: ${colors.gray};
 	`,
@@ -199,7 +199,7 @@ export default class AnimalPanel extends Dialog {
 		// ── Animal summary ───────────────────────────────────────────────────────
 		const summary = new Card({
 			appendTo: this.body,
-			style: { display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px', marginBottom: '14px' },
+			style: { display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: space.sm, marginBottom: space.md },
 		});
 
 		const summaryRow = (label, value, color) => {
@@ -225,7 +225,7 @@ export default class AnimalPanel extends Dialog {
 
 		const editRow = new Component({
 			appendTo: this.body,
-			style: { display: 'flex', justifyContent: 'flex-end', marginBottom: '12px' },
+			style: { display: 'flex', justifyContent: 'flex-end', marginBottom: space.md },
 		});
 		new Button({
 			appendTo: editRow,
@@ -262,7 +262,7 @@ export default class AnimalPanel extends Dialog {
 		if (!health.length) {
 			new Empty({ appendTo: this.body, textContent: 'No records yet' });
 		} else {
-			const healthList = new Component({ appendTo: this.body, style: { marginBottom: '14px' } });
+			const healthList = new Component({ appendTo: this.body, style: { marginBottom: space.md } });
 
 			for (const r of health) {
 				const isWithdrawal = r.withdrawalDate && r.withdrawalDate > TODAY;
