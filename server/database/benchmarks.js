@@ -1,34 +1,16 @@
-import { Low } from 'lowdb';
-import { jsonFile } from './jsonFile.js';
+import { cacheFile } from './cacheFile.js';
 
-const benchmarksDb = {
-	db: null,
-	default: { countyYields: {} },
-	_writeQueue: Promise.resolve(),
-	async init({ path }) {
-		benchmarksDb.db = new Low(jsonFile(path), benchmarksDb.default);
-		await benchmarksDb.db.read();
-		benchmarksDb.db.data = { ...benchmarksDb.default, ...(benchmarksDb.db.data || {}) };
-		await benchmarksDb.db.write();
-	},
-	write() {
-		benchmarksDb._writeQueue = benchmarksDb._writeQueue
-			.catch(() => {})
-			.then(() => benchmarksDb.db.write())
-			.catch(error => console.error('Benchmarks cache write failed:', error));
-		return benchmarksDb._writeQueue;
-	},
+const benchmarksDb = Object.assign(cacheFile({ key: 'countyYields', label: 'Benchmarks' }), {
 	get(key) {
-		return benchmarksDb.db?.data?.countyYields?.[key] ?? null;
+		return benchmarksDb.entries?.[key] ?? null;
 	},
 	async set(key, value) {
 		if (!benchmarksDb.db) return;
-		benchmarksDb.db.data.countyYields[key] = { ...value, fetchedAt: new Date().toISOString() };
+
+		benchmarksDb.entries[key] = { ...value, fetchedAt: new Date().toISOString() };
+
 		await benchmarksDb.write();
 	},
-	flush() {
-		return benchmarksDb._writeQueue;
-	},
-};
+});
 
 export default benchmarksDb;
