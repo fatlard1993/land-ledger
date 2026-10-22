@@ -1,4 +1,4 @@
-import { Button, Component, Elem, FormDialog, Input, parseDate, Select, styled } from '@vanilla-bean/components';
+import { Button, Component, Elem, FormDialog, Input, parseDate, Select, styled, theme } from '@vanilla-bean/components';
 
 import { EVENT_CATEGORIES, categoryMeta } from '../eventCategories';
 import { FormLabel } from '../Layout';
@@ -10,18 +10,20 @@ import { toDateOnly } from '../utils/dates';
 import { buildHarvestSection } from './HarvestSection.js';
 import { buildCoverCropSection } from './CoverCropSection.js';
 
+const { space } = theme;
+
 const CategoryGrid = styled(
 	Component,
-	() => `
+	({ space }) => `
 		display: grid;
 		grid-template-columns: repeat(4, 1fr);
-		gap: 5px;
-		margin-bottom: 6px;
+		gap: ${space.sm};
+		margin-bottom: ${space.sm};
 
 		/* A long label ends in an ellipsis */
 		& > .vbc-button {
 			min-width: 0;
-			padding: 6px 4px;
+			padding: ${space.sm} ${space.xs};
 			overflow: hidden;
 		}
 	`,
@@ -29,16 +31,16 @@ const CategoryGrid = styled(
 
 const EmojiRow = styled(
 	Component,
-	({ colors }) => `
+	({ colors, space }) => `
 		display: flex;
 		align-items: center;
-		gap: 8px;
-		margin-bottom: 4px;
+		gap: ${space.sm};
+		margin-bottom: ${space.xs};
 
 		& > input {
 			flex-shrink: 0;
 			width: 52px;
-			padding: 4px;
+			padding: ${space.xs};
 			font-size: 22px;
 			text-align: center;
 			cursor: text;
@@ -53,18 +55,18 @@ const EmojiRow = styled(
 
 const ResultsGrid = styled(
 	Component,
-	() => `
+	({ space }) => `
 		display: grid;
 		grid-template-columns: 1fr 1fr;
-		gap: 6px 10px;
-		margin-top: 4px;
+		gap: ${space.sm} ${space.md};
+		margin-top: ${space.xs};
 
 		& label {
 			margin-top: 0;
 		}
 
 		& input {
-			margin-top: 2px;
+			margin-top: ${space.xs};
 		}
 	`,
 );
@@ -239,7 +241,7 @@ export default class EventDialog extends FormDialog {
 			acreage: f.acreage,
 		}));
 
-		const form = new Component({ appendTo: this.body, style: { paddingBottom: '8px' } });
+		const form = new Component({ appendTo: this.body, style: { paddingBottom: space.sm } });
 
 		new FormLabel({ appendTo: form, textContent: 'Field' });
 		const fieldSelect = new Select({ appendTo: form });
@@ -752,7 +754,7 @@ export default class EventDialog extends FormDialog {
 
 		const row1 = new Component({
 			appendTo: container,
-			style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' },
+			style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: space.sm },
 		});
 
 		new FormLabel({ appendTo: row1, textContent: 'Head Count' });

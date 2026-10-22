@@ -27,17 +27,17 @@ import { toDateOnly } from '../utils/dates';
 import { categoryMeta } from '../eventCategories';
 import EventDialog, { eventEmoji } from './EventDialog';
 
-const { colors } = theme;
+const { colors, space } = theme;
 
 const CURRENT_YEAR = new Date().getFullYear();
 
 const EventRow = styled(
 	Component,
-	({ colors }) => `
+	({ colors, space }) => `
 		display: flex;
 		align-items: flex-start;
-		gap: 10px;
-		padding: 8px 0;
+		gap: ${space.md};
+		padding: ${space.sm} 0;
 		border-bottom: 1px solid ${colors.border};
 		cursor: pointer;
 		transition: background 0.1s;
@@ -55,7 +55,7 @@ const EventRow = styled(
 			justify-content: center;
 			font-size: 13px;
 			flex-shrink: 0;
-			margin-top: 2px;
+			margin-top: ${space.xs};
 		}
 
 		& .event-main {
@@ -81,7 +81,7 @@ const EventRow = styled(
 			color: ${colors.gray};
 			margin-top: 1px;
 			display: flex;
-			gap: 8px;
+			gap: ${space.sm};
 			flex-wrap: wrap;
 		}
 	`,
@@ -89,12 +89,12 @@ const EventRow = styled(
 
 const SeasonHeader = styled(
 	Component,
-	({ colors }) => `
+	({ colors, space }) => `
 		display: flex;
 		flex-wrap: wrap;
 		align-items: baseline;
-		gap: 4px 10px;
-		padding: 14px 0 4px;
+		gap: ${space.xs} ${space.md};
+		padding: ${space.md} 0 ${space.xs};
 		color: ${colors.gray};
 
 		& > .season {
@@ -111,12 +111,12 @@ const SeasonHeader = styled(
 
 const FilterBar = styled(
 	Component,
-	() => `
+	({ space }) => `
 		display: flex;
 		flex-wrap: wrap;
 		align-items: center;
-		gap: 6px;
-		margin-bottom: 8px;
+		gap: ${space.sm};
+		margin-bottom: ${space.sm};
 
 		& > select {
 			flex: 1;
@@ -129,13 +129,13 @@ const FilterBar = styled(
 // A field-by-season grid that scrolls sideways inside itself on a narrow screen
 const YieldTable = styled(
 	Component,
-	({ colors }) => `
+	({ colors, space }) => `
 		width: 100%;
 		border-collapse: collapse;
 		font-size: 12px;
 
 		& th {
-			padding: 6px 8px;
+			padding: ${space.sm} ${space.sm};
 			color: ${colors.gray};
 			font-weight: 600;
 			border-bottom: 2px solid ${colors.border};
@@ -148,7 +148,7 @@ const YieldTable = styled(
 		}
 
 		& td {
-			padding: 6px 8px;
+			padding: ${space.sm} ${space.sm};
 			border-bottom: 1px solid ${colors.border};
 			text-align: center;
 			vertical-align: top;
@@ -180,8 +180,8 @@ const YieldTable = styled(
 			display: flex;
 			flex-wrap: wrap;
 			justify-content: center;
-			gap: 3px;
-			margin-top: 3px;
+			gap: ${space.xs};
+			margin-top: ${space.xs};
 			font-size: 12px;
 			cursor: default;
 		}
@@ -197,8 +197,8 @@ const YieldTable = styled(
 
 const Footnote = styled(
 	Component,
-	({ colors }) => `
-		margin-top: 12px;
+	({ colors, space }) => `
+		margin-top: ${space.md};
 		font-size: 11px;
 		line-height: 1.6;
 		color: ${colors.gray};
@@ -645,7 +645,7 @@ export default class Timeline extends AsyncView {
 
 		const tableWrap = new Component({
 			appendTo: this.content,
-			style: { overflowX: 'auto', marginTop: '8px' },
+			style: { overflowX: 'auto', marginTop: space.sm },
 		});
 
 		const table = new YieldTable({ appendTo: tableWrap });

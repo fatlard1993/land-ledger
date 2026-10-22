@@ -1,6 +1,8 @@
-import { Component, Input } from '@vanilla-bean/components';
+import { Component, Input, theme } from '@vanilla-bean/components';
 
 import { FormLabel } from '../Layout';
+
+const { space } = theme;
 
 const OUTPUT_SUGGESTIONS = [
 	'Corn',
@@ -43,7 +45,7 @@ export function buildHarvestSection(container, prev, g, { onEmojiRefresh } = {})
 	// Yield / acre — the key field for county benchmark comparison
 	const yieldRow = new Component({
 		appendTo: container,
-		style: { display: 'grid', gridTemplateColumns: '1fr 80px', gap: '8px' },
+		style: { display: 'grid', gridTemplateColumns: '1fr 80px', gap: space.sm },
 	});
 
 	new FormLabel({ appendTo: yieldRow, textContent: 'Yield / Acre' });
@@ -65,7 +67,7 @@ export function buildHarvestSection(container, prev, g, { onEmojiRefresh } = {})
 
 	const row1 = new Component({
 		appendTo: container,
-		style: { display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '8px' },
+		style: { display: 'grid', gridTemplateColumns: '2fr 1fr', gap: space.sm },
 	});
 
 	new FormLabel({ appendTo: row1, textContent: 'Total quantity (optional)' });
@@ -95,7 +97,7 @@ export function buildHarvestSection(container, prev, g, { onEmojiRefresh } = {})
 
 	const row2 = new Component({
 		appendTo: container,
-		style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' },
+		style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: space.sm },
 	});
 
 	new FormLabel({ appendTo: row2, textContent: 'Price / Unit ($)' });

@@ -42,10 +42,10 @@ const { colors } = theme;
 // A thing to do: its marker, what and where, then why it's due; the stripe says how soon
 const TodoCard = styled(
 	Card,
-	({ colors }) => `
+	({ colors, space }) => `
 		display: flex;
 		align-items: flex-start;
-		gap: 10px;
+		gap: ${space.md};
 
 		& > .marker {
 			flex-shrink: 0;
@@ -63,7 +63,7 @@ const TodoCard = styled(
 			display: flex;
 			justify-content: space-between;
 			align-items: flex-start;
-			gap: 8px;
+			gap: ${space.sm};
 		}
 
 		& .title {
@@ -79,12 +79,12 @@ const TodoCard = styled(
 		}
 
 		& .detail {
-			margin-top: 2px;
+			margin-top: ${space.xs};
 			font-size: 12px;
 		}
 
 		& .detail2 {
-			margin-top: 2px;
+			margin-top: ${space.xs};
 			overflow: hidden;
 			font-size: 11px;
 			color: ${colors.gray};

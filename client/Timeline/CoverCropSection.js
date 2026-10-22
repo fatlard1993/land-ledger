@@ -1,7 +1,9 @@
-import { Button, Component, Input, Select, styled } from '@vanilla-bean/components';
+import { Button, Component, Input, Select, styled, theme } from '@vanilla-bean/components';
 
 import { FormLabel } from '../Layout';
 import { makePropertiesEditor } from '../utils/PropertiesEditor';
+
+const { space } = theme;
 
 export const COVER_CROP_SPECIES = [
 	'Cereal Rye',
@@ -51,12 +53,12 @@ export const SEEDING_METHODS = [
 // 16px keeps a phone from zooming in on focus
 const MixRow = styled(
 	Component,
-	() => `
+	({ space }) => `
 		display: grid;
 		grid-template-columns: 1fr 80px 70px 30px;
 		align-items: center;
-		gap: 4px;
-		margin-bottom: 4px;
+		gap: ${space.xs};
+		margin-bottom: ${space.xs};
 
 		& input, & select {
 			margin-top: 0;
@@ -64,7 +66,7 @@ const MixRow = styled(
 		}
 
 		& select {
-			padding-inline: 4px;
+			padding-inline: ${space.xs};
 		}
 	`,
 );
@@ -128,7 +130,7 @@ export function buildCoverCropSection(container, prev, g) {
 		variant: 'flat',
 		icon: 'plus',
 		textContent: 'Add species',
-		style: { margin: '4px 0' },
+		style: { margin: `${space.xs} 0` },
 		onPointerPress: () => addSpeciesRow(),
 	});
 
@@ -158,7 +160,7 @@ export function buildCoverCropSection(container, prev, g) {
 
 	const costRow = new Component({
 		appendTo: container,
-		style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' },
+		style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: space.sm },
 	});
 
 	new FormLabel({ appendTo: costRow, textContent: 'Seed Cost/Acre ($)' });
