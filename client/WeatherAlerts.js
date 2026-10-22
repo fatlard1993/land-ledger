@@ -1,4 +1,4 @@
-import { Button, Card, Component, Elem, Icon, styled, theme } from '@vanilla-bean/components';
+import { Button, Card, Component, Elem, formatDate, Icon, readStorage, styled, theme, writeStorage } from '@vanilla-bean/components';
 import { centroidFromGeometry } from './geo';
 import { toDateOnly } from './utils/dates';
 
@@ -50,11 +50,7 @@ const evaluate = (date, day) => {
 		...a,
 		date,
 		key: `${a.type}_${date}`,
-		dayLabel: new Date(`${date}T12:00:00`).toLocaleDateString('en-US', {
-			weekday: 'short',
-			month: 'short',
-			day: 'numeric',
-		}),
+		dayLabel: formatDate(date, { weekday: 'short', month: 'short', day: 'numeric' }),
 	}));
 };
 
@@ -67,21 +63,11 @@ const evaluate = (date, day) => {
 const dateFromKey = k => k.slice(k.lastIndexOf('_') + 1);
 const isCurrent = k => dateFromKey(k) >= TODAY;
 
-const dismissed = new Set(
-	(() => {
-		try {
-			return JSON.parse(localStorage.getItem(DISMISSED_KEY) || '[]').filter(isCurrent);
-		} catch {
-			return [];
-		}
-	})(),
-);
+const dismissed = new Set(readStorage(DISMISSED_KEY, []).filter(isCurrent));
 
 const dismiss = key => {
 	dismissed.add(key);
-	try {
-		localStorage.setItem(DISMISSED_KEY, JSON.stringify([...dismissed].filter(isCurrent)));
-	} catch {}
+	writeStorage(DISMISSED_KEY, [...dismissed].filter(isCurrent));
 };
 
 // ── Mount ─────────────────────────────────────────────────────────────────────
