@@ -1,6 +1,6 @@
 import { Elem, Icon } from '@vanilla-bean/components';
 
-import { BottomNav, NavItem } from './Layout';
+import { BottomNav, NavItem, NavLink } from './Layout';
 import context from './context';
 import { logout } from './api/auth';
 
@@ -86,7 +86,7 @@ export default class Nav extends BottomNav {
 		const items = [BASE_ITEMS[0], BASE_ITEMS[1], ...middle, BASE_ITEMS[2], BASE_ITEMS[3]];
 
 		for (const { path, icon, label } of items) {
-			const item = new NavItem({ tag: 'a', appendTo: this, attributes: { href: `#${path}` } });
+			const item = new NavLink({ appendTo: this, href: `#${path}`, tooltip: false });
 
 			new Icon({ appendTo: item, addClass: 'nav-icon', icon });
 			new Elem({ tag: 'span', appendTo: item, addClass: 'nav-label', textContent: label });

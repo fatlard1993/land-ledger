@@ -13,4 +13,13 @@ describe('Nav', () => {
 
 		nav.destroy();
 	});
+
+	test('its links carry no tooltip', () => {
+		const nav = new Nav({ appendTo: document.body });
+
+		expect(nav.elem.querySelectorAll('a').length).toBeGreaterThan(0);
+		expect(nav.elem.querySelectorAll('a.has-tooltip').length).toBe(0);
+
+		nav.destroy();
+	});
 });

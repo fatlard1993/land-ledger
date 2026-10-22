@@ -1,4 +1,4 @@
-import { Card, Component, Content, SectionLabel, styled } from '@vanilla-bean/components';
+import { Card, Component, Content, Link, SectionLabel, styled } from '@vanilla-bean/components';
 
 // Clear of the home indicator below, and of a landscape notch beside the rail
 export const BottomNav = styled(
@@ -35,46 +35,49 @@ export const BottomNav = styled(
 	`,
 );
 
-export const NavItem = styled(
-	Component,
-	({ colors, media }) => `
-		display: flex;
-		flex-direction: column;
-		align-items: center;
-		justify-content: center;
-		gap: 4px;
-		flex: 1;
-		min-width: 0;
-		height: 100%;
-		padding: 0;
-		border: none;
-		background: none;
-		font: inherit;
-		text-decoration: none;
-		cursor: pointer;
-		color: ${colors.muted};
-		-webkit-tap-highlight-color: transparent;
-		transition: color 0.15s;
+const navItem = ({ colors, media }) => `
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: 4px;
+	flex: 1;
+	min-width: 0;
+	height: 100%;
+	padding: 0;
+	border: none;
+	background: none;
+	font: inherit;
+	text-decoration: none;
+	cursor: pointer;
+	color: ${colors.muted};
+	-webkit-tap-highlight-color: transparent;
+	transition: color 0.15s;
 
-		& .nav-icon { font-size: 18px; }
-		& .nav-label {
-			max-width: 100%;
-			overflow: hidden;
-			font-size: 10px;
-			text-overflow: ellipsis;
-			white-space: nowrap;
-		}
+	& .nav-icon { font-size: 18px; }
+	& .nav-label {
+		max-width: 100%;
+		overflow: hidden;
+		font-size: 10px;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
 
-		&:hover { color: ${colors.white}; }
-		&.active { color: ${colors.light(colors.green)}; }
+	&:visited { color: ${colors.muted}; }
+	&:hover { color: ${colors.white}; }
+	&.active { color: ${colors.light(colors.green)}; }
 
-		@media ${media.wide} {
-			flex: none;
-			width: 100%;
-			height: 56px;
-		}
-	`,
-);
+	@media ${media.wide} {
+		flex: none;
+		width: 100%;
+		height: 56px;
+	}
+`;
+
+export const NavItem = styled(Component, navItem);
+
+// A route in the nav: a link, without the tooltip a Link carries elsewhere
+export const NavLink = styled(Link, navItem);
 
 // A view's scrolling body: its records in a column, centered in 960px on a wide screen
 export class PageView extends styled(
