@@ -27,6 +27,7 @@ import {
 } from '../api';
 import context from '../context';
 import { PageView, RecordCard } from '../Layout';
+import { entityIcon } from '../utils/icons';
 
 import LeaseDialog, { rateLabel } from './LeaseDialog';
 
@@ -60,8 +61,6 @@ const daysUntil = dateStr => {
 
 	return Math.ceil((parseDate(dateStr) - new Date()) / 86_400_000);
 };
-
-const entityIcon = type => ({ field: '📋', building: '🏚️', equipment: '🚜' })[type] || '📋';
 
 export default class Leases extends AsyncView {
 	_buildView() {

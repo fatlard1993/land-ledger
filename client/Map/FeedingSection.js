@@ -13,6 +13,7 @@ import { frequencyLabel, frequencyInterval } from '../Livestock/FeedingScheduleD
 import FeedingScheduleDialog from '../Livestock/FeedingScheduleDialog';
 import { ActionHeader, FormLabel } from '../Layout';
 import { daysAgoLabel, toDateOnly } from '../utils/dates';
+import { feedIcon } from '../utils/icons';
 import {
 	EmptyNote,
 	HeaderActions,
@@ -26,16 +27,6 @@ import {
 } from './panelParts';
 
 const { colors } = theme;
-
-const feedIcon = ft => {
-	if (/hay|straw|forage/i.test(ft)) return '🌾';
-	if (/silage|haylage/i.test(ft)) return '🌽';
-	if (/grain|corn|oat|barley/i.test(ft)) return '🌾';
-	if (/mineral|salt/i.test(ft)) return '🧂';
-	if (/supplement|protein|cake/i.test(ft)) return '💊';
-	if (/pasture/i.test(ft)) return '🌿';
-	return '🍽️';
-};
 
 export function openTreatDialog(field, totalHead, refresh) {
 	const dialog = new Dialog({

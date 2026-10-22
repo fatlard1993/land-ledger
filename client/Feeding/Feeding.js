@@ -24,6 +24,7 @@ import {
 } from '../api';
 import context from '../context';
 import { PageView, RecordCard } from '../Layout';
+import { feedIcon } from '../utils/icons';
 import FeedingScheduleDialog, { frequencyLabel } from '../Livestock/FeedingScheduleDialog';
 
 const { colors } = theme;
@@ -90,16 +91,6 @@ const DeleteButton = styled(
 );
 
 const missing = { color: colors.gray, fontStyle: 'italic' };
-
-const feedIcon = ft => {
-	if (/hay|straw|forage/i.test(ft)) return '🌾';
-	if (/silage|haylage/i.test(ft)) return '🌽';
-	if (/grain|corn|oat|barley/i.test(ft)) return '🌾';
-	if (/mineral|salt/i.test(ft)) return '🧂';
-	if (/supplement|protein|cake/i.test(ft)) return '💊';
-	if (/pasture/i.test(ft)) return '🌿';
-	return '🍽️';
-};
 
 export default class Feeding extends AsyncView {
 	_buildView() {

@@ -5,6 +5,7 @@ import { FormLabel } from '../Layout';
 
 import { getFields, getBuildings, getEquipment } from '../api';
 import { toDateOnly } from '../utils/dates';
+import { entityIcon } from '../utils/icons';
 
 const { colors } = theme;
 
@@ -190,17 +191,10 @@ export default class LeaseDialog extends FormDialog {
 		// Entity section
 		if (preEntity) {
 			// Pre-set — just show a label
-			{
-				let entityIcon;
-				if (preEntityType === 'field') {
-					entityIcon = '📋';
-				} else if (preEntityType === 'building') {
-					entityIcon = '🏚️';
-				} else {
-					entityIcon = '🚜';
-				}
-				new PresetEntity({ appendTo: container, textContent: `${entityIcon} ${preEntity.name || 'Selected asset'}` });
-			}
+			new PresetEntity({
+				appendTo: container,
+				textContent: `${entityIcon(preEntityType)} ${preEntity.name || 'Selected asset'}`,
+			});
 
 			this._entityId = preEntity.id;
 			this._entityType = preEntityType;
@@ -213,9 +207,9 @@ export default class LeaseDialog extends FormDialog {
 				new FormLabel({ appendTo: container, textContent: 'Asset Type' });
 				const typeSelect = new Select({ appendTo: container });
 				for (const { value: v, label: l } of [
-					{ value: 'field', label: '📋 Field' },
-					{ value: 'building', label: '🏚️ Building' },
-					{ value: 'equipment', label: '🚜 Equipment' },
+					{ value: 'field', label: `${entityIcon('field')} Field` },
+					{ value: 'building', label: `${entityIcon('building')} Building` },
+					{ value: 'equipment', label: `${entityIcon('equipment')} Equipment` },
 				]) {
 					const o = document.createElement('option');
 					o.value = v;
@@ -404,17 +398,10 @@ export default class LeaseDialog extends FormDialog {
 	async _buildLoanBody(container, lease, preEntity, preEntityType) {
 		// Entity label
 		if (preEntity) {
-			let loanEntityIcon;
-			if (preEntityType === 'field') {
-				loanEntityIcon = '📋';
-			} else if (preEntityType === 'building') {
-				loanEntityIcon = '🏚️';
-			} else if (preEntityType === 'parcel') {
-				loanEntityIcon = '📐';
-			} else {
-				loanEntityIcon = '🚜';
-			}
-			new PresetEntity({ appendTo: container, textContent: `${loanEntityIcon} ${preEntity.name || 'Selected asset'}` });
+			new PresetEntity({
+				appendTo: container,
+				textContent: `${entityIcon(preEntityType)} ${preEntity.name || 'Selected asset'}`,
+			});
 
 			this._entityId = preEntity.id;
 			this._entityType = preEntityType;

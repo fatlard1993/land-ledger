@@ -5,6 +5,7 @@ import AsyncView from '../AsyncView';
 import { getIncidents, updateIncident, deleteIncident } from '../api';
 import context from '../context';
 import { PageView, RecordCard } from '../Layout';
+import { entityIcon } from '../utils/icons';
 import IncidentDialog, { incidentEmoji, severityMeta } from './IncidentDialog';
 
 const TitleRow = styled(
@@ -48,8 +49,6 @@ const Loss = styled(
 		color: ${colors.light(colors.orange)};
 	`,
 );
-
-const entityIcon = type => ({ field: '📋', building: '🏚️', equipment: '🚜' })[type] || '📋';
 
 export default class Incidents extends AsyncView {
 	_buildView() {
