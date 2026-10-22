@@ -61,7 +61,8 @@ export default class Nav extends BottomNav {
 
 		// Role helpers — when auth is disabled, currentUser is null and all gating is off
 		const canFinancials = !user || user.roles.admin || user.roles.financials;
-		const isAdmin = user?.roles.admin;
+		// With auth off every route is open, so the Admin panel is too: it is where sign-in gets turned on
+		const isAdmin = !user || user.roles.admin;
 
 		const showLeases = context.hasLeases;
 		const showSupplies = context.hasSupplies;
@@ -98,7 +99,7 @@ export default class Nav extends BottomNav {
 			this._itemMap.set(path, item);
 		}
 
-		// Admin controls — only visible when auth is enabled and user is admin
+		// Admin controls — accounts, and turning sign-in on or off
 		if (isAdmin) {
 			const adminItem = new NavItem({
 				appendTo: this,

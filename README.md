@@ -85,14 +85,16 @@ There are no accounts, no sync, and no third-party services required for core fu
 
 ### Authentication
 
-Auth is disabled by default — all routes are open. Turning it on requires a passkey to open the app. The first time, do it through the API: give the default `admin` account a new passkey (its first passkey is `admin`), then switch auth on:
+Auth is disabled by default — all routes are open. Turning it on requires a passkey to open the app. To turn it on, open **Admin** in the nav, choose a passkey for the `admin` account under **Sign-in is off**, and press **Turn on sign-in**. The app sets the passkey, signs this device in as Admin with it, and only then turns sign-in on, so the device doing it stays in. Everywhere else, open the app and enter that passkey.
+
+The API does the same, for a headless install: give the default `admin` account a new passkey (its first passkey is `admin`), then switch auth on:
 
 ```bash
 curl -X PATCH localhost:7450/auth/accounts/admin -H 'Content-Type: application/json' -d '{"passkey":"<new passkey>"}'
 curl -X PATCH localhost:7450/auth/settings -H 'Content-Type: application/json' -d '{"authEnabled":true}'
 ```
 
-Once auth is on and you sign in as an admin, **Admin** appears in the nav. The Admin panel turns auth back off and manages:
+Once auth is on, **Admin** stays in the nav for admins only. The Admin panel turns auth back off and manages:
 
 - **Accounts** — name, passkey (bcrypt-hashed), and role flags (Admin / Financials / Farmhand)
 - **API tokens** — long-lived bearer tokens for external integrations (`Authorization: Bearer ll_live_...`)

@@ -2,6 +2,8 @@
 // Single passkey field; no username. First matching account wins.
 import { Button, Card, Component, Icon, Input, styled } from '@vanilla-bean/components';
 
+import { login } from './api/auth';
+
 const LoginOverlay = styled(
 	Component,
 	({ colors }) => `
@@ -122,13 +124,7 @@ export function mountLoginScreen(onSuccess) {
 		errorElem.options.textContent = '';
 
 		try {
-			const res = await fetch('/auth/login', {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ passkey }),
-			});
-
-			if (res.ok) {
+			if (await login(passkey)) {
 				overlay.destroy();
 				onSuccess();
 			} else {

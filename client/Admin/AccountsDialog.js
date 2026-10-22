@@ -11,13 +11,23 @@ import {
 	theme,
 } from '@vanilla-bean/components';
 
-import { getAccounts, createAccount, updateAccount, deleteAccount, setAuthEnabled, getAuthSettings } from '../api/auth';
+import {
+	getAccounts,
+	createAccount,
+	updateAccount,
+	deleteAccount,
+	setAuthEnabled,
+	getAuthSettings,
+	getMe,
+	login,
+} from '../api/auth';
 import { getAppSettings, updateAppSettings } from '../api';
+import context from '../context';
 import { FormLabel } from '../Layout';
 import { IconText } from '../statusIcons';
 import { renderShareLinksSection } from './ShareLinksSection.js';
 import { renderApiTokensSection } from './ApiTokensSection.js';
-import { AdminSection, EmptyLine, Hint, ItemRow, Notice, SectionHead } from './parts';
+import { AdminSection, EmptyLine, Hint, ItemRow, Notice, Reveal, SectionHead } from './parts';
 
 const { colors } = theme;
 
@@ -109,7 +119,119 @@ export default class AccountsDialog extends Dialog {
 	_draw() {
 		this.body.empty();
 
-		// ── Auth toggle ──────────────────────────────────────────────────────────
+		if (this._authEnabled) this._renderAuthToggle();
+		else this._renderTurnOn();
+
+		this._renderAccounts();
+	}
+
+	// Sign-in off: the routes are open, so the admin passkey can be set and a session made before it goes on
+	_renderTurnOn() {
+		const sec = new Component({ appendTo: this.body, style: { marginBottom: '14px' } });
+		const head = new AuthToggleRow({ appendTo: sec, style: { borderBottom: 'none', marginBottom: '0' } });
+		const info = new Component({ appendTo: head });
+
+		new Component({ appendTo: info, addClass: 'title', textContent: 'Sign-in is off' });
+		new Component({
+			appendTo: info,
+			addClass: 'sub',
+			textContent:
+				'Anyone who can reach this server can open the app. Set a passkey for the Admin account, then turn sign-in on; this device stays signed in as Admin.',
+		});
+
+		const fields = new Component({
+			appendTo: sec,
+			style: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '10px' },
+		});
+		const passkeyWrap = new Elem({ tag: 'div', appendTo: fields });
+
+		new FormLabel({ appendTo: passkeyWrap, textContent: 'Admin passkey' });
+
+		const passkeyEl = new Input({
+			appendTo: passkeyWrap,
+			type: 'password',
+			placeholder: 'Choose a passkey',
+			autocomplete: 'new-password',
+		});
+		const confirmWrap = new Elem({ tag: 'div', appendTo: fields });
+
+		new FormLabel({ appendTo: confirmWrap, textContent: 'Passkey again' });
+
+		const confirmEl = new Input({
+			appendTo: confirmWrap,
+			type: 'password',
+			placeholder: 'Type it again',
+			autocomplete: 'new-password',
+		});
+
+		const buttons = new Component({
+			appendTo: sec,
+			style: { display: 'flex', justifyContent: 'flex-end', marginTop: '10px' },
+		});
+		const turnOn = new Button({ appendTo: buttons, icon: 'lock', textContent: 'Turn on sign-in' });
+
+		const fail = textContent => {
+			new Notify({ type: 'error', textContent, timeout: 5000 });
+			turnOn.options.disabled = false;
+		};
+
+		turnOn.onPointerPress(async () => {
+			const passkey = passkeyEl.elem.value;
+
+			if (!passkey) {
+				passkeyEl.elem.focus();
+				return;
+			}
+			if (passkey !== confirmEl.elem.value) {
+				new Notify({ type: 'error', textContent: 'The passkeys differ', timeout: 3000 });
+				confirmEl.elem.value = '';
+				confirmEl.elem.focus();
+				return;
+			}
+
+			turnOn.options.disabled = true;
+
+			try {
+				await updateAccount('admin', { passkey });
+			} catch (error) {
+				fail(error.message || 'Could not set the admin passkey');
+				return;
+			}
+
+			// Signed in before the switch, so a failure here leaves sign-in off rather than this device locked out
+			if (!(await login(passkey).catch(() => false))) {
+				fail('Could not sign in with the new passkey; sign-in is still off');
+				return;
+			}
+			if (!(await setAuthEnabled(true))) {
+				fail('Could not turn on sign-in; it is still off');
+				return;
+			}
+
+			const me = await getMe();
+
+			context.currentUser = me?.enabled ? { id: me.id, name: me.name, roles: me.roles } : null;
+			this._authEnabled = true;
+			this._adminPasskeyIsDefault = false;
+			this._justTurnedOn = true;
+			this._draw();
+		});
+	}
+
+	_renderAuthToggle() {
+		if (this._justTurnedOn) {
+			const done = new Reveal({ appendTo: this.body, style: { marginTop: '0', marginBottom: '14px' } });
+
+			new Component({ appendTo: done, addClass: 'title', textContent: 'Sign-in is on' });
+			new Component({
+				appendTo: done,
+				addClass: 'note',
+				style: { marginBottom: '0' },
+				textContent:
+					'This device is signed in as Admin. Everywhere else, open the app and enter the admin passkey. Add accounts below for anyone else.',
+			});
+		}
+
 		const toggleRow = new AuthToggleRow({ appendTo: this.body });
 
 		const info = new Component({ appendTo: toggleRow });
@@ -154,7 +276,9 @@ export default class AccountsDialog extends Dialog {
 					'The admin account is still using the default passkey ("admin"). Edit the Admin account below and set a strong passkey before enabling login.',
 			});
 		}
+	}
 
+	_renderAccounts() {
 		// ── Accounts header ──────────────────────────────────────────────────────
 		const header = new SectionHead({ appendTo: this.body });
 

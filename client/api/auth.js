@@ -7,6 +7,17 @@ export const getMe = async () => {
 	return res.json();
 };
 
+// Signs in, setting the session cookie; false for a wrong passkey
+export const login = async passkey => {
+	const res = await fetch('/auth/login', {
+		method: 'POST',
+		headers: { 'Content-Type': 'application/json' },
+		body: JSON.stringify({ passkey }),
+	});
+
+	return res.ok;
+};
+
 export const logout = async () => {
 	await fetch('/auth/logout', { method: 'POST' });
 };
