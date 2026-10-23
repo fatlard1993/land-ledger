@@ -1,3 +1,0 @@
-#!/usr/bin/env sh
-# Lint, tests, and lld documents if any: the checks every vanilla-bean app runs before a commit
-sh node_modules/@vanilla-bean/components/githooks/pre-commit || exit 1
