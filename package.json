@@ -36,7 +36,7 @@
 		"@turf/centroid": "^7.3.5",
 		"@turf/dissolve": "^7.3.5",
 		"@turf/union": "^7.3.5",
-		"@vanilla-bean/components": "^6.2.0",
+		"@vanilla-bean/components": "^6.3.0",
 		"@vanilla-bean/hypertether": "^1.2.0",
 		"argi-cli": "^1.0.0",
 		"chart.js": "^4.5.1",
