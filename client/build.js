@@ -15,18 +15,7 @@ const serviceWorker = {
 	},
 };
 
-// The bundler hashes the favicon's name and leaves the manifest's icon path as written, so the manifest's icon is a copy at
-// a fixed name
-const manifestIcon = {
-	name: 'manifest icon',
-	setup(build) {
-		build.onEnd(async ({ success }) => {
-			if (success) await Bun.write(`${import.meta.dir}/build/icon.svg`, Bun.file(`${import.meta.dir}/favicon.svg`));
-		});
-	},
-};
-
-export const buildOptions = { plugins: [serviceWorker, manifestIcon] };
+export const buildOptions = { plugins: [serviceWorker] };
 
 if (import.meta.main) {
 	const { success } = await buildClient({ ...buildOptions, drop: ['console'] });
