@@ -606,7 +606,7 @@ export default class MapView extends AsyncView {
 		const layer = this._fieldRenderer.getLayer(field.id);
 
 		if (!layer) {
-			new Notify({ type: 'error', textContent: 'Field layer not found — try reloading', timeout: 4000 });
+			new Notify({ intent: 'danger', textContent: 'Field layer not found — try reloading', timeout: 4000 });
 
 			return;
 		}
@@ -637,7 +637,7 @@ export default class MapView extends AsyncView {
 
 				this._detectAndPatchLocation(field.id, updatedGeometry);
 				this._updateLabels();
-				new Notify({ type: 'success', textContent: 'Boundary saved', timeout: 3000 });
+				new Notify({ intent: 'success', textContent: 'Boundary saved', timeout: 3000 });
 			},
 			onCancel: () => {
 				layer.eachLayer(l => l.pm.disable());
@@ -881,7 +881,7 @@ export default class MapView extends AsyncView {
 
 		if (failures.length) {
 			new Notify({
-				type: 'error',
+				intent: 'danger',
 				textContent: `Some items could not be deleted: ${failures.join(', ')}. Reload to see current state.`,
 				timeout: 8000,
 			});
@@ -943,7 +943,7 @@ export default class MapView extends AsyncView {
 		const layer = this._buildingRenderer.getLayer(building.id);
 
 		if (!layer) {
-			new Notify({ type: 'error', textContent: 'Building layer not found — try reloading', timeout: 4000 });
+			new Notify({ intent: 'danger', textContent: 'Building layer not found — try reloading', timeout: 4000 });
 			return;
 		}
 
@@ -1417,7 +1417,7 @@ export default class MapView extends AsyncView {
 		this._renderFieldLayers();
 		this._updateLabels();
 		new Notify({
-			type: 'success',
+			intent: 'success',
 			textContent: `Imported ${features.length} field${features.length !== 1 ? 's' : ''}`,
 			timeout: 3000,
 		});

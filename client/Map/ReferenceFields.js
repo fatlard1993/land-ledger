@@ -31,7 +31,7 @@ export async function loadReferenceFields({ map, referenceLayer, fields, refBtn,
 
 	if (zoom < 12) {
 		referenceLayer.clearLayers();
-		new Notify({ type: 'success', textContent: 'Zoom in to county level to load field outlines', timeout: 3000 });
+		new Notify({ intent: 'success', textContent: 'Zoom in to county level to load field outlines', timeout: 3000 });
 
 		return;
 	}
@@ -53,7 +53,7 @@ export async function loadReferenceFields({ map, referenceLayer, fields, refBtn,
 		referenceLayer.clearLayers();
 
 		if (tooZoomed) {
-			new Notify({ type: 'success', textContent: 'Zoom in further to load field outlines', timeout: 3000 });
+			new Notify({ intent: 'success', textContent: 'Zoom in further to load field outlines', timeout: 3000 });
 
 			return;
 		}
@@ -84,13 +84,13 @@ export async function loadReferenceFields({ map, referenceLayer, fields, refBtn,
 
 		if (count === 0) {
 			new Notify({
-				type: 'success',
+				intent: 'success',
 				textContent: `No field outlines found here via ${source === 'clu' ? 'CLU' : 'OpenStreetMap'} — try zooming into a more detailed area`,
 				timeout: 3000,
 			});
 		} else {
 			new Notify({
-				type: 'success',
+				intent: 'success',
 				textContent: `Loaded ${count} field outline${count !== 1 ? 's' : ''} — tap one to use as a starting boundary`,
 				timeout: 3000,
 			});
@@ -98,7 +98,7 @@ export async function loadReferenceFields({ map, referenceLayer, fields, refBtn,
 	} catch (error) {
 		console.error('Reference field load failed:', error); // eslint-disable-line no-console
 		new Notify({
-			type: 'error',
+			intent: 'danger',
 			textContent: 'Could not reach field outline service — try again in a moment',
 			timeout: 4000,
 		});

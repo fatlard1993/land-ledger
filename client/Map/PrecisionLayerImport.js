@@ -107,7 +107,7 @@ export default class PrecisionLayerImport extends Dialog {
 		try {
 			preview = await previewPrecisionFile(file);
 		} catch (err) {
-			new Notify({ type: 'error', textContent: err.message || 'Could not parse file', timeout: 5000 });
+			new Notify({ intent: 'danger', textContent: err.message || 'Could not parse file', timeout: 5000 });
 			this._renderUpload();
 			return;
 		}
@@ -222,7 +222,7 @@ export default class PrecisionLayerImport extends Dialog {
 			onPointerPress: async () => {
 				const valueField = valueSelect.elem.value;
 				if (!valueField) {
-					new Notify({ type: 'warning', textContent: 'Select a value column', timeout: 3000 });
+					new Notify({ intent: 'warning', textContent: 'Select a value column', timeout: 3000 });
 					return;
 				}
 
@@ -241,7 +241,7 @@ export default class PrecisionLayerImport extends Dialog {
 					});
 
 					new Notify({
-						type: 'success',
+						intent: 'success',
 						textContent: `Imported ${result.originalCount?.toLocaleString()} points (stored ${result.points?.length?.toLocaleString()} after sampling) · mean ${result.stats?.mean} ${result.stats?.cv !== undefined ? `· CV ${result.stats.cv}%` : ''}`,
 						timeout: 6000,
 					});
@@ -249,7 +249,7 @@ export default class PrecisionLayerImport extends Dialog {
 					this.options.onImport?.(result);
 					this.close();
 				} catch (err) {
-					new Notify({ type: 'error', textContent: err.message || 'Import failed', timeout: 5000 });
+					new Notify({ intent: 'danger', textContent: err.message || 'Import failed', timeout: 5000 });
 					importBtn.elem.disabled = false;
 					importBtn.elem.textContent = 'Import Layer';
 				}

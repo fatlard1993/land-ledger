@@ -2,8 +2,8 @@
 //
 // When a livesync:change event fires for the watched entity, fetches the current
 // server state and diffs it against the form's current field values. For each
-// field that diverged, appends a "Server has: X" validator to input.options.validations
-// and calls validate() — making VBC render the field-level error UI as normal.
+// field that diverged, appends a "Server has: X" check to input.options.validate
+// and calls validate(), so the message shows below the field as any field's error does.
 // A banner above the form offers "Accept all" (copies server values into the form
 // and clears the injected validators) or "Dismiss" (clears validators, keeps user values).
 //
@@ -37,7 +37,7 @@ export function watchFormConflicts(form, collection, id) {
 
 	// Track injected state so we can cleanly remove it
 	const _active = new Map(); // key → serverValue
-	const _origV = new Map(); // key → original input.options.validations
+	const _origV = new Map(); // key → original input.options.validate
 
 	let _banner = null;
 	let _serverRecord = null;
@@ -46,7 +46,7 @@ export function watchFormConflicts(form, collection, id) {
 		for (const [key] of _active) {
 			const input = form.inputElements[key];
 			if (!input) continue;
-			input.options.validations = _origV.get(key);
+			input.options.validate = _origV.get(key);
 			input.validate();
 		}
 		_active.clear();
@@ -92,15 +92,15 @@ export function watchFormConflicts(form, collection, id) {
 
 		if (!changed.size) return;
 
-		// Append conflict validators to each affected field
+		// Append a conflict check to each affected field
 		for (const [key, serverValue] of changed) {
 			const input = form.inputElements[key];
 			if (!input) continue;
 			_active.set(key, serverValue);
-			_origV.set(key, input.options.validations);
-			input.options.validations = [
-				...(input.options.validations || []),
-				[() => false, `Server has: ${formatVal(serverValue)}`],
+			_origV.set(key, input.options.validate);
+			input.options.validate = [
+				...[input.options.validate].flat().filter(Boolean),
+				() => `Server has: ${formatVal(serverValue)}`,
 			];
 			input.validate();
 		}

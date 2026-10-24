@@ -164,7 +164,7 @@ async function flushQueue() {
 				// PATCH to a gone record — the edit is discarded; tell the user
 				if (res.status === 404 && entry.method === 'PATCH') {
 					new Notify({
-						type: 'warning',
+						intent: 'warning',
 						textContent: 'A queued edit was discarded — the record was deleted while you were offline.',
 						timeout: 6000,
 					});
@@ -175,7 +175,7 @@ async function flushQueue() {
 						const json = await res.clone().json();
 						if (json._conflict) {
 							new Notify({
-								type: 'warning',
+								intent: 'warning',
 								textContent:
 									'A queued edit was discarded — the same record was changed on another device while you were offline.',
 								timeout: 6000,
@@ -246,7 +246,11 @@ window.fetch = async (url, options = {}) => {
 			body: options.body ?? null,
 			snapshot,
 		});
-		new Notify({ type: 'warning', textContent: 'Offline — change queued, will sync when reconnected', timeout: 4000 });
+		new Notify({
+			intent: 'warning',
+			textContent: 'Offline — change queued, will sync when reconnected',
+			timeout: 4000,
+		});
 		return new Response(null, { status: 202 });
 	}
 
@@ -265,7 +269,7 @@ window.fetch = async (url, options = {}) => {
 				snapshot,
 			});
 			new Notify({
-				type: 'warning',
+				intent: 'warning',
 				textContent: 'Offline — change queued, will sync when reconnected',
 				timeout: 4000,
 			});

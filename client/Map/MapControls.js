@@ -212,7 +212,7 @@ export function createMapControls(
 						const url = input.elem.value.trim();
 						await updateAppSettings({ parcelServiceUrl: url });
 						new Notify({
-							type: 'success',
+							intent: 'success',
 							textContent: url
 								? 'Parcel service saved — use the property-line search button to detect'
 								: 'Parcel service cleared',

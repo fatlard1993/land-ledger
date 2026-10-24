@@ -237,11 +237,11 @@ export function buildSearchOverlay(container, map) {
 
 function locateMe(map) {
 	if (!navigator.geolocation) {
-		new Notify({ type: 'error', textContent: 'Geolocation is not available in this browser', timeout: 4000 });
+		new Notify({ intent: 'danger', textContent: 'Geolocation is not available in this browser', timeout: 4000 });
 		return;
 	}
 
-	new Notify({ type: 'success', textContent: 'Finding your location…', timeout: 3000 });
+	new Notify({ intent: 'success', textContent: 'Finding your location…', timeout: 3000 });
 
 	navigator.geolocation.getCurrentPosition(
 		({ coords }) => {
@@ -249,7 +249,7 @@ function locateMe(map) {
 		},
 		() => {
 			new Notify({
-				type: 'error',
+				intent: 'danger',
 				textContent: 'Could not get your location — check browser permissions',
 				timeout: 4000,
 			});

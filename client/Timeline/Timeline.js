@@ -221,7 +221,7 @@ export default class Timeline extends AsyncView {
 				{ id: 'insights', label: 'Insights' },
 			],
 			selected: this._view,
-			onChange: view => this._switchView(view),
+			onChange: ({ value }) => this._switchView(value),
 		});
 
 		new Button({

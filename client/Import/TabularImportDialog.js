@@ -219,7 +219,7 @@ export default class TabularImportDialog extends Dialog {
 			this._buildMapping();
 			this._renderMapper();
 		} catch (error) {
-			new Notify({ type: 'error', textContent: error.message || 'Could not parse file', timeout: 5000 });
+			new Notify({ intent: 'danger', textContent: error.message || 'Could not parse file', timeout: 5000 });
 			this._renderUpload();
 		}
 	}
@@ -442,13 +442,13 @@ export default class TabularImportDialog extends Dialog {
 
 			if (errors > 0) {
 				new Notify({
-					type: 'warning',
+					intent: 'warning',
 					textContent: `Imported ${created} record${created !== 1 ? 's' : ''} — ${errors} row${errors !== 1 ? 's' : ''} failed`,
 					timeout: 6000,
 				});
 			} else {
 				new Notify({
-					type: 'success',
+					intent: 'success',
 					textContent: `Imported ${created} record${created !== 1 ? 's' : ''}`,
 					timeout: 4000,
 				});
@@ -459,7 +459,7 @@ export default class TabularImportDialog extends Dialog {
 			// Offer to save the mapping as a reusable template
 			this._renderSaveTemplate();
 		} catch (error) {
-			new Notify({ type: 'error', textContent: error.message || 'Import failed', timeout: 5000 });
+			new Notify({ intent: 'danger', textContent: error.message || 'Import failed', timeout: 5000 });
 			this._importBtn.elem.disabled = false;
 			this._updateImportBtn();
 		}
@@ -504,9 +504,9 @@ export default class TabularImportDialog extends Dialog {
 
 				try {
 					await saveImportTemplate({ name, collection: this._collection, mapping: this._mapping });
-					new Notify({ type: 'success', textContent: `Template "${name}" saved`, timeout: 3000 });
+					new Notify({ intent: 'success', textContent: `Template "${name}" saved`, timeout: 3000 });
 				} catch {
-					new Notify({ type: 'error', textContent: 'Could not save template', timeout: 3000 });
+					new Notify({ intent: 'danger', textContent: 'Could not save template', timeout: 3000 });
 				}
 
 				this._finishAndRefresh();

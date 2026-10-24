@@ -13,10 +13,10 @@ function showToast() {
 	if (_toast?.elem.isConnected) return;
 
 	_toast = new Notify({
-		type: 'info',
+		intent: 'info',
 		timeout: 8_000,
 		content: 'Updated on another device',
-		actions: [{ textContent: 'Refresh', onPress: () => location.reload() }],
+		actions: [{ textContent: 'Refresh', onPointerPress: () => location.reload() }],
 	});
 }
 

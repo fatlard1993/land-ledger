@@ -56,7 +56,7 @@ export default class ImportDialog extends Dialog {
 			const polygons = features.filter(f => f.geometry?.type === 'Polygon' || f.geometry?.type === 'MultiPolygon');
 
 			if (!polygons.length) {
-				new Notify({ type: 'error', textContent: 'No polygon features found in this file', timeout: 4000 });
+				new Notify({ intent: 'danger', textContent: 'No polygon features found in this file', timeout: 4000 });
 
 				return;
 			}
@@ -64,7 +64,11 @@ export default class ImportDialog extends Dialog {
 			this._pendingFeatures = polygons;
 			this._renderPreview(polygons);
 		} catch {
-			new Notify({ type: 'error', textContent: 'Could not parse file — make sure it is valid GeoJSON', timeout: 4000 });
+			new Notify({
+				intent: 'danger',
+				textContent: 'Could not parse file — make sure it is valid GeoJSON',
+				timeout: 4000,
+			});
 		}
 	}
 

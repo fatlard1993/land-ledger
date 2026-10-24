@@ -172,7 +172,7 @@ export default class AccountsDialog extends Dialog {
 		const turnOn = new Button({ appendTo: buttons, icon: 'lock', textContent: 'Turn on sign-in' });
 
 		const fail = textContent => {
-			new Notify({ type: 'error', textContent, timeout: 5000 });
+			new Notify({ intent: 'danger', textContent, timeout: 5000 });
 			Object.assign(turnOn.options, { disabled: false, icon: 'lock', iconAnimation: undefined });
 		};
 
@@ -184,7 +184,7 @@ export default class AccountsDialog extends Dialog {
 				return;
 			}
 			if (passkey !== confirmEl.elem.value) {
-				new Notify({ type: 'error', textContent: 'The passkeys differ', timeout: 3000 });
+				new Notify({ intent: 'danger', textContent: 'The passkeys differ', timeout: 3000 });
 				confirmEl.elem.value = '';
 				confirmEl.elem.focus();
 				return;
@@ -258,12 +258,12 @@ export default class AccountsDialog extends Dialog {
 
 			if (!ok) {
 				toggle.elem.checked = !toggle.elem.checked;
-				new Notify({ type: 'error', textContent: 'Could not update auth setting', timeout: 3000 });
+				new Notify({ intent: 'danger', textContent: 'Could not update auth setting', timeout: 3000 });
 			} else {
 				this._authEnabled = toggle.elem.checked;
 				setQueueOwner(await getMe());
 				new Notify({
-					type: 'success',
+					intent: 'success',
 					textContent: toggle.elem.checked ? 'Login required — users will need to sign in' : 'Login disabled',
 					timeout: 3000,
 				});
@@ -357,7 +357,7 @@ export default class AccountsDialog extends Dialog {
 				await updateAppSettings({ nassApiKey: key }).catch(() => {});
 				this._nassKeySet = !!key;
 				new Notify({
-					type: 'success',
+					intent: 'success',
 					textContent: key ? 'NASS key saved — county benchmarks now available' : 'NASS key cleared',
 					timeout: 3000,
 				});
@@ -411,10 +411,10 @@ export default class AccountsDialog extends Dialog {
 					try {
 						await deleteAccount(account.id);
 						this._accounts = this._accounts.filter(a => a.id !== account.id);
-						new Notify({ type: 'success', textContent: `Deleted "${account.name}"`, timeout: 3000 });
+						new Notify({ intent: 'success', textContent: `Deleted "${account.name}"`, timeout: 3000 });
 						this._draw();
 					} catch (err) {
-						new Notify({ type: 'error', textContent: err.message || 'Delete failed', timeout: 4000 });
+						new Notify({ intent: 'danger', textContent: err.message || 'Delete failed', timeout: 4000 });
 					}
 				},
 			});
@@ -530,7 +530,7 @@ export default class AccountsDialog extends Dialog {
 					this._editingId = null;
 					this._draw();
 				} catch (err) {
-					new Notify({ type: 'error', textContent: err.message || 'Save failed', timeout: 4000 });
+					new Notify({ intent: 'danger', textContent: err.message || 'Save failed', timeout: 4000 });
 					Object.assign(saveBtn.options, { disabled: false, icon: undefined, iconAnimation: undefined });
 				}
 			},

@@ -52,7 +52,7 @@ export function createParcelDetection({
 		const zoom = map.getZoom();
 
 		if (zoom < 13) {
-			new Notify({ type: 'success', textContent: 'Zoom in to county level to detect property lines', timeout: 3000 });
+			new Notify({ intent: 'success', textContent: 'Zoom in to county level to detect property lines', timeout: 3000 });
 
 			return;
 		}
@@ -73,7 +73,7 @@ export function createParcelDetection({
 
 			if (result.error) {
 				new Notify({
-					type: 'error',
+					intent: 'danger',
 					textContent: 'Could not load parcel boundaries — check your network or county service URL',
 					timeout: 4000,
 				});
@@ -84,7 +84,7 @@ export function createParcelDetection({
 			const { features, tooZoomed, source } = result;
 
 			if (tooZoomed) {
-				new Notify({ type: 'success', textContent: 'Zoom in further to detect property lines', timeout: 3000 });
+				new Notify({ intent: 'success', textContent: 'Zoom in further to detect property lines', timeout: 3000 });
 
 				return;
 			}
@@ -142,7 +142,7 @@ export function createParcelDetection({
 				);
 			} else {
 				new Notify({
-					type: 'success',
+					intent: 'success',
 					textContent: `Found ${count} parcel${count !== 1 ? 's' : ''} — tap to select, then commit`,
 					timeout: 4000,
 				});
@@ -309,7 +309,7 @@ export function createParcelDetection({
 		onRenderParcels();
 		onUpdateLabels();
 		new Notify({
-			type: 'success',
+			intent: 'success',
 			textContent: `Imported ${features.length} property line${features.length !== 1 ? 's' : ''}`,
 			timeout: 3000,
 		});

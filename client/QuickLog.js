@@ -1,4 +1,15 @@
-import { BottomSheet, Button, Component, Elem, formatDate, Icon, Input, Select, styled, theme } from '@vanilla-bean/components';
+import {
+	BottomSheet,
+	Button,
+	Component,
+	Elem,
+	formatDate,
+	Icon,
+	Input,
+	Select,
+	styled,
+	theme,
+} from '@vanilla-bean/components';
 import { pointInPolygon } from './geo';
 import { getFields, getBuildings, createEvent } from './api';
 import { createApplicationLog } from './api/applicationLogs';
@@ -167,15 +178,17 @@ let _sheet = null;
 
 export function openQuickLog() {
 	if (_sheet) {
-		_sheet.hide();
 		_sheet.destroy();
 		_sheet = null;
 	}
 
+	// However it closes (its button, Escape, the dimmed page, a drag), it's gone once it has slid away
 	const sheet = new BottomSheet({
 		addClass: 'quick-log',
 		onClose: () => {
-			_sheet = null;
+			if (_sheet === sheet) _sheet = null;
+
+			setTimeout(() => sheet.destroy(), 400);
 		},
 	});
 	_sheet = sheet;
@@ -203,7 +216,7 @@ export function openQuickLog() {
 		variant: 'flat',
 		icon: 'xmark',
 		title: 'Close',
-		onPointerPress: () => sheet.hide(),
+		onPointerPress: () => sheet.close(),
 	});
 
 	// ── Body ───────────────────────────────────────────────────────────────────
@@ -477,7 +490,7 @@ export function openQuickLog() {
 					submitBtn.options.icon = 'check';
 					submitBtn.elem.textContent = 'Logged';
 					submitBtn.setStyle({ backgroundColor: colors.success });
-					setTimeout(() => sheet.hide(), 800);
+					setTimeout(() => sheet.close(), 800);
 				} catch {
 					submitBtn.elem.disabled = false;
 					submitBtn.elem.textContent = 'Log It';
@@ -490,7 +503,7 @@ export function openQuickLog() {
 		requestAnimationFrame(() => formArea.elem.querySelector('input, textarea')?.focus());
 	};
 
-	sheet.show();
+	sheet.open();
 }
 
 // ── Floating action button ─────────────────────────────────────────────────────
@@ -524,7 +537,7 @@ const QuickLogFAB = styled(
 		@media ${media.wide} { &.icon { display: none; } }
 
 		/* Out of the way of an open sheet's own buttons */
-		:root:has(.quick-log.open, .field-panel-outer.open) & { display: none; }
+		:root:has(.quick-log[open], .field-panel-outer.open) & { display: none; }
 	`,
 );
 
