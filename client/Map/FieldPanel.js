@@ -737,7 +737,9 @@ export default class FieldPanel extends Component {
 		this._editBoundaryBtn.options.onPointerPress = callbacks.onEditPath;
 
 		this._deleteBtn.options.onPointerPress = async () => {
-			if (await Dialog.confirm({ header: `Delete "${p.name || 'this path'}"?`, confirmLabel: 'Delete' }))
+			if (
+				await Dialog.confirm({ header: `Delete "${p.name || 'this path'}"?`, confirmLabel: 'Delete', intent: 'danger' })
+			)
 				callbacks.onDelete?.();
 		};
 
@@ -965,7 +967,7 @@ export default class FieldPanel extends Component {
 			);
 
 		this._deleteBtn.options.onPointerPress = async () => {
-			if (await Dialog.confirm({ header: `Delete this property line?`, confirmLabel: 'Delete' }))
+			if (await Dialog.confirm({ header: `Delete this property line?`, confirmLabel: 'Delete', intent: 'danger' }))
 				callbacks.onDelete?.();
 		};
 
@@ -1170,7 +1172,13 @@ export default class FieldPanel extends Component {
 		this._editBoundaryBtn.options.onPointerPress = callbacks.onEditBoundary;
 
 		this._deleteBtn.options.onPointerPress = async () => {
-			if (await Dialog.confirm({ header: `Delete "${b.name || 'this building'}"?`, confirmLabel: 'Delete' }))
+			if (
+				await Dialog.confirm({
+					header: `Delete "${b.name || 'this building'}"?`,
+					confirmLabel: 'Delete',
+					intent: 'danger',
+				})
+			)
 				callbacks.onDelete?.();
 		};
 
@@ -1440,7 +1448,13 @@ export default class FieldPanel extends Component {
 			);
 
 		this._deleteBtn.options.onPointerPress = async () => {
-			if (await Dialog.confirm({ header: `Delete "${item.name || 'this equipment'}"?`, confirmLabel: 'Delete' }))
+			if (
+				await Dialog.confirm({
+					header: `Delete "${item.name || 'this equipment'}"?`,
+					confirmLabel: 'Delete',
+					intent: 'danger',
+				})
+			)
 				callbacks.onDelete?.();
 		};
 
@@ -1696,7 +1710,13 @@ export default class FieldPanel extends Component {
 		this._editBoundaryBtn.options.onPointerPress = callbacks.onEditBoundary;
 
 		this._deleteBtn.options.onPointerPress = async () => {
-			if (await Dialog.confirm({ header: `Delete "${field.name || 'this field'}"?`, confirmLabel: 'Delete' }))
+			if (
+				await Dialog.confirm({
+					header: `Delete "${field.name || 'this field'}"?`,
+					confirmLabel: 'Delete',
+					intent: 'danger',
+				})
+			)
 				callbacks.onDelete?.();
 		};
 
