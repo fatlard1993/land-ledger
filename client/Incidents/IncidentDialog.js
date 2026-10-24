@@ -105,18 +105,7 @@ export const incidentEmoji = type => {
 
 const withoutCallbacks = ({ onSave: _onSave, onDelete: _onDelete, ...options }) => options;
 
-// Four buttons outgrow a phone's width: they wrap rather than run off the dialog's edge
-const WrappingFormDialog = styled(
-	FormDialog,
-	({ space }) => `
-		& .footer {
-			flex-wrap: wrap;
-			padding-block: ${space.xs};
-		}
-	`,
-);
-
-export default class IncidentDialog extends WrappingFormDialog {
+export default class IncidentDialog extends FormDialog {
 	constructor(options = {}) {
 		const isEdit = !!options.incident?.id;
 		const incident = options.incident || {};
