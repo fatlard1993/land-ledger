@@ -284,7 +284,7 @@ const EmojiRow = styled(
 // A number with its unit beside it, drawn as one field
 const AreaField = styled(
 	Component,
-	({ colors, radius, space }) => `
+	({ colors, focusRing, radius, space }) => `
 		display: flex;
 		align-items: center;
 		overflow: hidden;
@@ -292,9 +292,9 @@ const AreaField = styled(
 		border-radius: ${radius.sm};
 		background: ${colors.alpha(colors.white, 0.06)};
 
-		&:focus-within {
-			border-color: ${colors.light(colors.blue)};
-			box-shadow: 0 0 0 2px ${colors.alpha(colors.blue, 0.35)};
+		/* The one focus ring, round the whole field */
+		&:has(:focus-visible) {
+			${focusRing()}
 		}
 
 		& > input,

@@ -38,7 +38,7 @@ const Row = styled(
 // One field's frame around the size, its unit and the recalculate button
 const AreaFrame = styled(
 	Component,
-	({ colors, radius, space }) => `
+	({ colors, focusRing, radius, space }) => `
 		display: flex;
 		align-items: center;
 		overflow: hidden;
@@ -46,9 +46,9 @@ const AreaFrame = styled(
 		border: 1px solid ${colors.border};
 		border-radius: ${radius.sm};
 
-		&:focus-within {
-			border-color: ${colors.light(colors.blue)};
-			box-shadow: 0 0 0 2px ${colors.alpha(colors.blue, 0.35)};
+		/* The one focus ring, round the whole field */
+		&:has(:focus-visible) {
+			${focusRing()}
 		}
 
 		& input, & select {
