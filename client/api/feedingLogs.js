@@ -1,4 +1,4 @@
-import { resource } from '@vanilla-bean/hypertether';
+import { resource } from '@vanilla-bean/components';
 
 const feedingLogs = resource('/feeding-logs', { apiId: 'feedingLogs' });
 

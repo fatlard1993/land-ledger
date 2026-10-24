@@ -2,6 +2,7 @@ import {
 	Component,
 	conditionalList,
 	Elem,
+	failureReason,
 	FormDialog,
 	Input,
 	SectionLabel,
@@ -9,8 +10,6 @@ import {
 	styled,
 	theme,
 } from '@vanilla-bean/components';
-
-import { failureReason } from '@vanilla-bean/hypertether';
 
 import { FormLabel } from '../Layout';
 import { makePropertiesEditor } from '../utils/PropertiesEditor';

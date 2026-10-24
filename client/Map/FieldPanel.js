@@ -3,6 +3,7 @@ import {
 	Component,
 	Dialog,
 	Elem,
+	failureReason,
 	formatDate,
 	Input,
 	parseDate,
@@ -11,7 +12,6 @@ import {
 	styled,
 	theme,
 } from '@vanilla-bean/components';
-import { failureReason } from '@vanilla-bean/hypertether';
 
 import { geodesicAreaSqm, convertArea, formatArea, AREA_UNITS } from '../geo';
 import parseDetails from '../utils/parseDetails';

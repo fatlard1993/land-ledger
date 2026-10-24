@@ -37,7 +37,6 @@
 		"@turf/dissolve": "^7.3.5",
 		"@turf/union": "^7.3.5",
 		"@vanilla-bean/components": "^7.0.0",
-		"@vanilla-bean/hypertether": "^1.2.0",
 		"argi-cli": "^1.0.0",
 		"chart.js": "^4.5.1",
 		"leaflet": "^1.9.4",
