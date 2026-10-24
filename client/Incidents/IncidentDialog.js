@@ -151,11 +151,12 @@ export default class IncidentDialog extends FormDialog {
 		super({
 			size: 'large',
 			header: isEdit ? `Edit Incident Report` : `Report Incident${entityLabel ? ` — ${entityLabel}` : ''}`,
+			// FormDialog acts on the buttons marked with its data-action; Mark Resolved is this dialog's own
 			buttons: conditionalList([
-				{ alwaysItem: 'Save' },
+				{ alwaysItem: { textContent: 'Save', 'data-action': 'save' } },
 				{ if: isEdit && !incident.resolved, thenItem: 'Mark Resolved' },
-				{ if: isEdit, thenItem: 'Delete' },
-				{ alwaysItem: 'Cancel' },
+				{ if: isEdit, thenItem: { textContent: 'Delete', 'data-action': 'delete' } },
+				{ alwaysItem: { textContent: 'Cancel', 'data-action': 'cancel' } },
 			]),
 			data: {
 				date: incident.date || toDateOnly(),
