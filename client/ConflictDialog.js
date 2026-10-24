@@ -19,6 +19,16 @@ const formatVal = v => {
 	return String(v);
 };
 
+// Blank and missing read the same in every form, so a field that is only one against the other is no conflict
+const isBlank = v => v == null || v === '';
+const sameValue = (a, b) => (isBlank(a) && isBlank(b)) || JSON.stringify(a) === JSON.stringify(b);
+
+const OFFLINE = {
+	header: count => `Sync Conflicts — ${count} record${count !== 1 ? 's' : ''}`,
+	intro:
+		'These queued changes conflict with edits made on the server while you were offline. Choose which value to keep for each conflicting field.',
+};
+
 const entityLabel = snapshot => {
 	if (!snapshot) return null;
 	return snapshot.name || snapshot.description || snapshot.type || null;
@@ -101,7 +111,24 @@ const Row = styled(
 // Returns a Promise that resolves to:
 //   null                    — user cancelled; keep all entries in queue
 //   [{ entry, body }]       — resolved entries; body is null if the PATCH should be skipped
-export function showConflictDialog(conflicts) {
+// A field whose two values read the same is dropped; with none left to choose, it resolves to mine without asking
+export function showConflictDialog(conflicts, { header = OFFLINE.header, intro = OFFLINE.intro } = {}) {
+	const unchanged = [];
+
+	conflicts = conflicts.flatMap(conflict => {
+		const conflictingFields = conflict.conflictingFields.filter(
+			({ ourValue, serverValue }) => !sameValue(ourValue, serverValue),
+		);
+
+		if (conflictingFields.length) return [{ ...conflict, conflictingFields }];
+
+		unchanged.push({ entry: conflict.entry, body: conflict.entry.body });
+
+		return [];
+	});
+
+	if (!conflicts.length) return Promise.resolve(unchanged);
+
 	return new Promise(resolve => {
 		// decisions[entryTimestamp][fieldKey] = 'mine' | 'theirs'
 		const decisions = new Map();
@@ -116,7 +143,7 @@ export function showConflictDialog(conflicts) {
 
 		const dialog = new Dialog({
 			size: 'large',
-			header: `Sync Conflicts — ${conflicts.length} record${conflicts.length !== 1 ? 's' : ''}`,
+			header: header(conflicts.length),
 			buttons: ['Apply', 'Cancel'],
 			onButtonPress: ({ button }) => {
 				if (button === 'Apply') {
@@ -135,7 +162,7 @@ export function showConflictDialog(conflicts) {
 						};
 					});
 
-					resolve(resolved);
+					resolve([...unchanged, ...resolved]);
 				} else {
 					resolve(null);
 				}
@@ -147,8 +174,7 @@ export function showConflictDialog(conflicts) {
 
 		new Intro({
 			appendTo: dialog.body,
-			textContent:
-				'These queued changes conflict with edits made on the server while you were offline. Choose which value to keep for each conflicting field.',
+			textContent: intro,
 		});
 
 		// rowUpdaters[i] = { applyChoice } — called to update a single row in place
@@ -253,13 +279,19 @@ export function showConflictDialog(conflicts) {
 export const resolveConflict =
 	path =>
 	async ({ current, changes, fields }) => {
-		const resolved = await showConflictDialog([
+		const resolved = await showConflictDialog(
+			[
+				{
+					entry: { timestamp: Date.now(), url: path, method: 'PATCH', body: JSON.stringify(changes), snapshot: null },
+					current,
+					conflictingFields: fields.map(({ key, ours, theirs }) => ({ key, ourValue: ours, serverValue: theirs })),
+				},
+			],
 			{
-				entry: { timestamp: Date.now(), url: path, method: 'PATCH', body: JSON.stringify(changes), snapshot: null },
-				current,
-				conflictingFields: fields.map(({ key, ours, theirs }) => ({ key, ourValue: ours, serverValue: theirs })),
+				header: () => 'Changed Since You Opened It',
+				intro: 'Someone saved this record after you opened it. Choose which value to keep for each field that differs.',
 			},
-		]);
+		);
 
 		if (!resolved) return undefined;
 
