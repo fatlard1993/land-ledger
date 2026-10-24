@@ -211,7 +211,22 @@ export default class Timeline extends AsyncView {
 	_fieldFilter = null;
 
 	_buildView() {
-		this.toolbar = new Toolbar({ appendTo: this, variant: 'bar', heading: 'Timeline', gap: 8, wrap: false });
+		this.toolbar = new Toolbar({
+			appendTo: this,
+			variant: 'bar',
+			heading: 'Timeline',
+			gap: 8,
+			// A phone's row holds the controls or the title, not both: the title gets a row of its own above them
+			styles: ({ media }) => `
+				@media ${media.phone} {
+					flex-wrap: wrap;
+
+					& > .heading {
+						flex-basis: 100%;
+					}
+				}
+			`,
+		});
 
 		this._viewTabs = new Tabs({
 			appendTo: this.toolbar,
