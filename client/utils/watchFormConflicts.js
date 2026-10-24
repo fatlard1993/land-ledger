@@ -68,16 +68,19 @@ export function watchFormConflicts(form, collection, id) {
 	};
 
 	const applyConflicts = async () => {
+		let record;
+
 		try {
 			const res = await fetch(`/${collection}/${id}`);
 			if (!res.ok) return;
-			_serverRecord = await res.json();
+			record = await res.json();
 		} catch {
 			return;
 		}
 
-		// Wipe any previous conflict state before re-diffing
+		// Wipe any previous conflict state before re-diffing; that forgets the last record, so this one is kept after
 		clearAll();
+		_serverRecord = record;
 
 		const changed = new Map();
 
