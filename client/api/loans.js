@@ -1,13 +1,13 @@
-import { resource } from '@vanilla-bean/hypertether';
-import { versionedUpdate } from './versionedUpdate.js';
+import { crudResource } from '@vanilla-bean/components';
 
-const loans = resource('/loans');
+import { resolveConflict } from '../ConflictDialog.js';
+
+const loans = crudResource('/loans');
 
 export const getLoans = loans.list;
 
 export const createLoan = loans.create;
 
-export const updateLoan = async (id, options) =>
-	await versionedUpdate('/loans/:id', { invalidates: ['loans'], urlParameters: { id }, ...options });
+export const updateLoan = (id, options) => loans.update(id, { onConflict: resolveConflict('/loans'), ...options });
 
 export const deleteLoan = loans.delete;

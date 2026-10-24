@@ -247,3 +247,22 @@ export function showConflictDialog(conflicts) {
 		}
 	});
 }
+
+// An update's onConflict for a record at `path`: the user picks mine or the server's for each field that differs, and
+// the fields to send come back (crudResource sends them over the stored version), or nothing when they cancel
+export const resolveConflict =
+	path =>
+	async ({ current, changes, fields }) => {
+		const resolved = await showConflictDialog([
+			{
+				entry: { timestamp: Date.now(), url: path, method: 'PATCH', body: JSON.stringify(changes), snapshot: null },
+				current,
+				conflictingFields: fields.map(({ key, ours, theirs }) => ({ key, ourValue: ours, serverValue: theirs })),
+			},
+		]);
+
+		if (!resolved) return undefined;
+
+		// Every field deferred to the server: sending nothing over the stored version answers with the stored record
+		return resolved[0].body === null ? {} : JSON.parse(resolved[0].body);
+	};

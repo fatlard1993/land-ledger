@@ -1,13 +1,14 @@
-import { resource } from '@vanilla-bean/hypertether';
-import { versionedUpdate } from './versionedUpdate.js';
+import { crudResource } from '@vanilla-bean/components';
 
-const buildings = resource('/buildings');
+import { resolveConflict } from '../ConflictDialog.js';
+
+const buildings = crudResource('/buildings');
 
 export const getBuildings = buildings.list;
 
 export const createBuilding = buildings.create;
 
-export const updateBuilding = async (id, options) =>
-	await versionedUpdate('/buildings/:id', { invalidates: ['buildings'], urlParameters: { id }, ...options });
+export const updateBuilding = (id, options) =>
+	buildings.update(id, { onConflict: resolveConflict('/buildings'), ...options });
 
 export const deleteBuilding = buildings.delete;

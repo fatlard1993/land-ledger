@@ -1,13 +1,13 @@
-import { resource } from '@vanilla-bean/hypertether';
-import { versionedUpdate } from './versionedUpdate.js';
+import { crudResource } from '@vanilla-bean/components';
 
-const events = resource('/events');
+import { resolveConflict } from '../ConflictDialog.js';
+
+const events = crudResource('/events');
 
 export const getEvents = events.list;
 
 export const createEvent = events.create;
 
-export const updateEvent = async (id, options) =>
-	await versionedUpdate('/events/:id', { invalidates: ['events'], urlParameters: { id }, ...options });
+export const updateEvent = (id, options) => events.update(id, { onConflict: resolveConflict('/events'), ...options });
 
 export const deleteEvent = events.delete;

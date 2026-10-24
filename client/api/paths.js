@@ -1,13 +1,13 @@
-import { resource } from '@vanilla-bean/hypertether';
-import { versionedUpdate } from './versionedUpdate.js';
+import { crudResource } from '@vanilla-bean/components';
 
-const paths = resource('/paths');
+import { resolveConflict } from '../ConflictDialog.js';
+
+const paths = crudResource('/paths');
 
 export const getPaths = paths.list;
 
 export const createPath = paths.create;
 
-export const updatePath = async (id, options) =>
-	await versionedUpdate('/paths/:id', { invalidates: ['paths'], urlParameters: { id }, ...options });
+export const updatePath = (id, options) => paths.update(id, { onConflict: resolveConflict('/paths'), ...options });
 
 export const deletePath = paths.delete;

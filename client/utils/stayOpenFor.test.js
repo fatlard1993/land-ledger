@@ -10,7 +10,9 @@ describe('stayOpenFor', () => {
 	});
 
 	test('a conflict backed out of stays open with nothing to show', () => {
-		expect(stayOpenFor({ status: 'success', body: null, success: false })).toBe(false);
+		const conflict = { current: { _v: 3 }, changes: { name: 'North' }, fields: [{ key: 'name' }] };
+
+		expect(stayOpenFor({ status: 'error', response: { status: 409 }, conflict })).toBe(false);
 	});
 
 	test('a saved or queued write carries on', () => {

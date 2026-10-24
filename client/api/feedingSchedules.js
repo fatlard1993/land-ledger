@@ -1,17 +1,14 @@
-import { resource } from '@vanilla-bean/hypertether';
-import { versionedUpdate } from './versionedUpdate.js';
+import { crudResource } from '@vanilla-bean/components';
 
-const feedingSchedules = resource('/feeding-schedules', { apiId: 'feedingSchedules' });
+import { resolveConflict } from '../ConflictDialog.js';
+
+const feedingSchedules = crudResource('/feeding-schedules', { apiId: 'feedingSchedules' });
 
 export const getFeedingSchedules = feedingSchedules.list;
 
 export const createFeedingSchedule = feedingSchedules.create;
 
-export const updateFeedingSchedule = async (id, options) =>
-	await versionedUpdate('/feeding-schedules/:id', {
-		invalidates: ['feedingSchedules'],
-		urlParameters: { id },
-		...options,
-	});
+export const updateFeedingSchedule = (id, options) =>
+	feedingSchedules.update(id, { onConflict: resolveConflict('/feeding-schedules'), ...options });
 
 export const deleteFeedingSchedule = feedingSchedules.delete;

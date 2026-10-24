@@ -1,13 +1,13 @@
-import { resource } from '@vanilla-bean/hypertether';
-import { versionedUpdate } from './versionedUpdate.js';
+import { crudResource } from '@vanilla-bean/components';
 
-const leases = resource('/leases');
+import { resolveConflict } from '../ConflictDialog.js';
+
+const leases = crudResource('/leases');
 
 export const getLeases = leases.list;
 
 export const createLease = leases.create;
 
-export const updateLease = async (id, options) =>
-	await versionedUpdate('/leases/:id', { invalidates: ['leases'], urlParameters: { id }, ...options });
+export const updateLease = (id, options) => leases.update(id, { onConflict: resolveConflict('/leases'), ...options });
 
 export const deleteLease = leases.delete;

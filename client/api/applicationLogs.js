@@ -1,17 +1,14 @@
-import { resource } from '@vanilla-bean/hypertether';
-import { versionedUpdate } from './versionedUpdate.js';
+import { crudResource } from '@vanilla-bean/components';
 
-const applicationLogs = resource('/application-logs');
+import { resolveConflict } from '../ConflictDialog.js';
+
+const applicationLogs = crudResource('/application-logs');
 
 export const getApplicationLogs = applicationLogs.list;
 
 export const createApplicationLog = applicationLogs.create;
 
-export const updateApplicationLog = async (id, options) =>
-	await versionedUpdate('/application-logs/:id', {
-		invalidates: ['application-logs'],
-		urlParameters: { id },
-		...options,
-	});
+export const updateApplicationLog = (id, options) =>
+	applicationLogs.update(id, { onConflict: resolveConflict('/application-logs'), ...options });
 
 export const deleteApplicationLog = applicationLogs.delete;
