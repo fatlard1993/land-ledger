@@ -62,6 +62,9 @@ FRESH_INSTALL=true
 if [ -d "$APP/.git" ]; then
 	FRESH_INSTALL=false
 	say "Updating…"
+	# bun install rewrites a lockfile that lags package.json, and the pull then refuses to overwrite it. Nothing here
+	# is edited by hand, so the lockfile goes back to what was cloned.
+	git -C "$APP" checkout -- bun.lock
 	git -C "$APP" pull --ff-only
 else
 	say "Cloning…"
