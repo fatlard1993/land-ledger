@@ -784,7 +784,12 @@ export default class EventDialog extends FormDialog {
 		const fieldId = this._getters.fieldId?.();
 		const date = this._getters.date?.();
 
-		if (!fieldId || !date) return null;
+		// FormDialog shows nothing when onSave answers false, so the dialog says what's missing on its failure line
+		if (!fieldId || !date) {
+			this.failure.elem.textContent = fieldId ? 'Choose a date' : 'Choose a field';
+
+			return null;
+		}
 
 		const category = this._getters.category?.();
 		const name = this._detailGetters?.name?.() || '';
