@@ -363,7 +363,7 @@ export default class TabularImportDialog extends Dialog {
 			new Elem({ tag: 'div', appendTo: row, addClass: 'col-source', textContent: col, title: col });
 			new Elem({ tag: 'div', appendTo: row, addClass: 'col-arrow', textContent: '→' });
 
-			const selectEl = new Select({ appendTo: row });
+			const selectEl = new Select({ appendTo: row, attributes: { 'aria-label': `Import ${col} as` } });
 
 			// Known fields for this collection
 			const knownGroup = document.createElement('optgroup');
@@ -485,6 +485,7 @@ export default class TabularImportDialog extends Dialog {
 			appendTo: this.body,
 			type: 'text',
 			placeholder: 'e.g. Waypoint Analytical Soil Test',
+			attributes: { 'aria-label': 'Template name' },
 			style: { marginBottom: space.md },
 		});
 

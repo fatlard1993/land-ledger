@@ -18,8 +18,18 @@ export const makePropertiesEditor = (container, initialProperties = {}) => {
 			appendTo: rowsEl,
 		});
 
-		const keyInput = new Input({ appendTo: row, style: { flex: '1' }, placeholder: 'Key' });
-		const valueInput = new Input({ appendTo: row, style: { flex: '2' }, placeholder: 'Value' });
+		const keyInput = new Input({
+			appendTo: row,
+			style: { flex: '1' },
+			placeholder: 'Key',
+			attributes: { 'aria-label': 'Property name' },
+		});
+		const valueInput = new Input({
+			appendTo: row,
+			style: { flex: '2' },
+			placeholder: 'Value',
+			attributes: { 'aria-label': 'Property value' },
+		});
 
 		keyInput.elem.value = key;
 		valueInput.elem.value = value;

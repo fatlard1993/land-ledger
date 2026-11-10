@@ -53,6 +53,7 @@ export function buildSearchOverlay(container, map) {
 	const input = new Input({
 		type: 'text',
 		placeholder: 'Search location…',
+		attributes: { 'aria-label': 'Search location' },
 		style: {
 			flex: '1',
 			background: 'transparent',

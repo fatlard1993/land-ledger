@@ -109,12 +109,18 @@ export const areaField = (appendTo, { estimate, unit }) => {
 
 	const input = new Input({
 		appendTo: row,
-		attributes: { type: 'number', step: '0.01', min: '0', placeholder: estimate ? `~${estimate}` : 'Size' },
+		attributes: {
+			type: 'number',
+			step: '0.01',
+			min: '0',
+			placeholder: estimate ? `~${estimate}` : 'Size',
+			'aria-label': 'Area',
+		},
 	});
 
 	input.elem.value = estimate || '';
 
-	const unitSelect = new Select({ appendTo: row });
+	const unitSelect = new Select({ appendTo: row, attributes: { 'aria-label': 'Area unit' } });
 
 	for (const { value, label } of AREA_UNITS) {
 		const opt = document.createElement('option');

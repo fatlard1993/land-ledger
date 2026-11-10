@@ -239,6 +239,7 @@ export function createMapControls(
 				appendTo: dialog.body,
 				type: 'url',
 				placeholder: 'https://services3.arcgis.com/.../FeatureServer/19',
+				attributes: { 'aria-label': 'Parcel service URL' },
 				style: { marginBottom: space.sm },
 			});
 

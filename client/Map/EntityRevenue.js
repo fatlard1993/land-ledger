@@ -265,15 +265,15 @@ export function openRevenueDialog(entityType, entity, existingRecord, onSave, on
 				},
 			});
 
-			const select = new LineSelect({ appendTo: lineRow });
+			const select = new LineSelect({ appendTo: lineRow, attributes: { 'aria-label': 'Inventory item' } });
 
 			buildSupplyOptions(select.elem, '');
 
-			const qtyI = new LineInput({ appendTo: lineRow });
+			const qtyI = new LineInput({ appendTo: lineRow, attributes: { 'aria-label': 'Quantity' } });
 
 			Object.assign(qtyI.elem, { type: 'number', step: '0.1', min: '0.01', placeholder: 'Qty' });
 
-			const priceI = new LineInput({ appendTo: lineRow });
+			const priceI = new LineInput({ appendTo: lineRow, attributes: { 'aria-label': 'Price per unit' } });
 
 			Object.assign(priceI.elem, { type: 'number', step: '0.01', placeholder: '$/unit' });
 

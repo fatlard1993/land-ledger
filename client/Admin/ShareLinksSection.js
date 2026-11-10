@@ -96,8 +96,8 @@ function openShareForm(container, { onRefresh }) {
 		appendTo: form,
 	});
 
-	const startInput = new Input({ appendTo: dateRangeRow, type: 'date' });
-	const endInput = new Input({ appendTo: dateRangeRow, type: 'date' });
+	const startInput = new Input({ appendTo: dateRangeRow, type: 'date', attributes: { 'aria-label': 'Records from' } });
+	const endInput = new Input({ appendTo: dateRangeRow, type: 'date', attributes: { 'aria-label': 'Records to' } });
 
 	new FormLabel({ appendTo: form, textContent: 'Link expiry date (optional)' });
 	const expInput = new Input({ appendTo: form, type: 'date' });

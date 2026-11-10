@@ -322,7 +322,7 @@ export default class Timeline extends AsyncView {
 
 		const bar = new FilterBar({ appendTo: this.content });
 
-		const filterSelect = new Select({ appendTo: bar });
+		const filterSelect = new Select({ appendTo: bar, attributes: { 'aria-label': 'Field' } });
 
 		const allOpt = document.createElement('option');
 

@@ -1066,7 +1066,7 @@ export default class FieldPanel extends Component {
 		const defaultArea = p.acreage || (sqm ? convertArea(sqm, currentUnit) : '') || '';
 		const unitMeta = AREA_UNITS.find(u => u.value === currentUnit) || AREA_UNITS[1];
 
-		const areaInput = new Input({ appendTo: areaRow });
+		const areaInput = new Input({ appendTo: areaRow, attributes: { 'aria-label': 'Area' } });
 
 		Object.assign(areaInput.elem, {
 			type: 'number',
@@ -1077,7 +1077,7 @@ export default class FieldPanel extends Component {
 		});
 		areaInput.setStyle(FIELD_STYLE);
 
-		const unitSelect = new Select({ appendTo: areaRow });
+		const unitSelect = new Select({ appendTo: areaRow, attributes: { 'aria-label': 'Area unit' } });
 
 		for (const { value: unitValue, label } of AREA_UNITS) {
 			const opt = document.createElement('option');
@@ -1630,11 +1630,13 @@ export default class FieldPanel extends Component {
 		const usageInput = new Input({
 			appendTo: usageRow,
 			style: { ...FIELD_STYLE, flex: '1', minWidth: '0' },
+			attributes: { 'aria-label': 'Usage' },
 		});
 		Object.assign(usageInput.elem, { type: 'number', step: '0.1', placeholder: 'Amount', value: item.usage || '' });
 		const unitInput = new Input({
 			appendTo: usageRow,
 			style: { ...FIELD_STYLE, width: '72px', flexShrink: '0' },
+			attributes: { 'aria-label': 'Usage unit' },
 		});
 		Object.assign(unitInput.elem, { type: 'text', placeholder: 'hrs', value: item.usageUnit || '' });
 		getters['usage'] = () => usageInput.elem.value;
@@ -1778,7 +1780,7 @@ export default class FieldPanel extends Component {
 				const defaultAcreage = field[key] || (sqm ? convertArea(sqm, currentUnit) : '') || '';
 				const unitMeta = AREA_UNITS.find(u => u.value === currentUnit) || AREA_UNITS[1];
 
-				const input = new Input({ appendTo: wrap });
+				const input = new Input({ appendTo: wrap, attributes: { 'aria-label': 'Area' } });
 
 				Object.assign(input.elem, {
 					type: 'number',
@@ -1790,7 +1792,7 @@ export default class FieldPanel extends Component {
 				input.setStyle(FIELD_STYLE);
 
 				// Unit selector
-				const unitSelect = new Select({ appendTo: wrap });
+				const unitSelect = new Select({ appendTo: wrap, attributes: { 'aria-label': 'Area unit' } });
 
 				for (const { value: unitValue, label } of AREA_UNITS) {
 					const opt = document.createElement('option');

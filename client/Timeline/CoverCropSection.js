@@ -90,6 +90,7 @@ export function buildCoverCropSection(container, prev, g) {
 			type: 'text',
 			placeholder: 'Species',
 			value: rowData.name || '',
+			attributes: { 'aria-label': 'Species' },
 			suggestions: COVER_CROP_SPECIES,
 		});
 
@@ -98,13 +99,14 @@ export function buildCoverCropSection(container, prev, g) {
 			type: 'number',
 			placeholder: 'Rate',
 			value: rowData.rate || '',
-			attributes: { step: '0.1' },
+			attributes: { step: '0.1', 'aria-label': 'Seeding rate' },
 		});
 
 		const unitEl = new Select({
 			appendTo: row,
 			options: RATE_UNITS,
 			value: rowData.unit || 'lbs/ac',
+			attributes: { 'aria-label': 'Rate unit' },
 		});
 
 		new Button({

@@ -344,6 +344,7 @@ export default class AccountsDialog extends Dialog {
 		const input = new Input({
 			type: 'password',
 			placeholder: this._nassKeySet ? '(key is set — enter new key to replace)' : 'Paste your NASS API key',
+			attributes: { 'aria-label': 'NASS API key' },
 			style: { flex: '1' },
 			appendTo: row,
 		});

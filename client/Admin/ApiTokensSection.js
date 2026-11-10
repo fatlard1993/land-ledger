@@ -62,7 +62,11 @@ function openTokenForm(container, { onRefresh }) {
 	form.elem.dataset.tokenForm = '1';
 	container.append(form.elem);
 
-	const input = new Input({ appendTo: form, placeholder: 'Token name (e.g. JD Operations, Home Automation)' });
+	const input = new Input({
+		appendTo: form,
+		placeholder: 'Token name (e.g. JD Operations, Home Automation)',
+		attributes: { 'aria-label': 'Token name' },
+	});
 
 	const row = new Elem({
 		tag: 'div',

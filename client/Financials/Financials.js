@@ -205,6 +205,7 @@ export default class Financials extends AsyncView {
 			options: [YEAR, YEAR - 1, YEAR - 2].map(y => ({ label: String(y), value: String(y) })),
 			value: String(YEAR),
 			style: { width: 'auto' },
+			attributes: { 'aria-label': 'Year' },
 		});
 
 		this.content = new PageView({ appendTo: this });
