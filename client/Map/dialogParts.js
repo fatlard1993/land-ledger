@@ -1,12 +1,14 @@
 import { Component, Input, Select, styled, theme } from '@vanilla-bean/components';
 
 import { AREA_UNITS } from '../geo';
+import { labelNextField } from '../Layout';
 
 const { space } = theme;
 
 // The pieces the map's hand-built entity dialogs share
 
-export const Caption = styled(
+// A caption over a field, naming the field after it
+export class Caption extends styled(
 	Component,
 	({ colors, space }) => `
 		display: block;
@@ -15,7 +17,13 @@ export const Caption = styled(
 		color: ${colors.muted};
 	`,
 	{ tag: 'label' },
-);
+) {
+	constructor(options, ...children) {
+		super(options, ...children);
+
+		labelNextField(this);
+	}
+}
 
 const Hint = styled(
 	Component,

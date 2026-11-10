@@ -265,15 +265,28 @@ export default class SupplyDialog extends FormDialog {
 		});
 
 		const markupLabelStyle = { marginTop: '0' };
+		// Both captions sit above both fields in the grid, so each names its field outright
+		const markupId = `${this.uniqueId}-markup`;
+		const calcId = `${this.uniqueId}-calc`;
 
-		new FormLabel({ appendTo: markupWrap, textContent: 'Markup (%)', style: markupLabelStyle });
-		new FormLabel({ appendTo: markupWrap, textContent: 'Calculated price', style: markupLabelStyle });
+		new FormLabel({
+			appendTo: markupWrap,
+			textContent: 'Markup (%)',
+			style: markupLabelStyle,
+			attributes: { for: markupId },
+		});
+		new FormLabel({
+			appendTo: markupWrap,
+			textContent: 'Calculated price',
+			style: markupLabelStyle,
+			attributes: { for: calcId },
+		});
 
-		const markupInput = new Input({ appendTo: markupWrap });
+		const markupInput = new Input({ appendTo: markupWrap, attributes: { id: markupId } });
 
 		Object.assign(markupInput.elem, { type: 'number', step: '1', min: '0', value: this._markupPct, placeholder: '50' });
 
-		const calcDisplay = new Input({ appendTo: markupWrap, style: { opacity: '0.6' } });
+		const calcDisplay = new Input({ appendTo: markupWrap, style: { opacity: '0.6' }, attributes: { id: calcId } });
 
 		Object.assign(calcDisplay.elem, { type: 'text', readOnly: true, placeholder: '—' });
 

@@ -295,8 +295,44 @@ export const SquareBadge = styled(
 	`,
 );
 
-// A caption over a field in a hand-built form, in SectionLabel's small uppercase voice
-export const FormLabel = styled(
+const FIELDS = 'input:not([type=hidden]), select, textarea';
+
+/**
+ * Points a caption `<label>` at the field placed after it, giving the field an id when it has none. The field arrives
+ * once the code that made the label carries on, sometimes after an await, so the label waits for its next sibling: a
+ * field, or a wrapper holding exactly one. A label with its own `for`, or followed by another label or by several
+ * fields, is left as it is.
+ * @param {Component} label - The caption, already where it goes
+ */
+export const labelNextField = label => {
+	const parent = label.elem.parentElement;
+
+	if (!parent || label.elem.htmlFor) return;
+
+	const link = () => {
+		const next = label.elem.nextElementSibling;
+
+		if (!next) return false;
+		if (next.tagName === 'LABEL') return true;
+
+		const fields = next.matches(FIELDS) ? [next] : [...next.querySelectorAll(FIELDS)];
+
+		if (fields.length === 1 && !label.elem.htmlFor) {
+			fields[0].id ||= `${label.uniqueId}-field`;
+			label.elem.htmlFor = fields[0].id;
+		}
+
+		return true;
+	};
+
+	const observer = new MutationObserver(() => link() && observer.disconnect());
+
+	observer.observe(parent, { childList: true });
+	label.addCleanup('labelNextField', () => observer.disconnect());
+};
+
+// A caption over a field in a hand-built form, in SectionLabel's small uppercase voice, naming the field after it
+export class FormLabel extends styled(
 	Component,
 	({ colors, space }) => `
 		display: block;
@@ -307,4 +343,10 @@ export const FormLabel = styled(
 		color: ${colors.muted};
 	`,
 	{ tag: 'label' },
-);
+) {
+	constructor(options, ...children) {
+		super(options, ...children);
+
+		labelNextField(this);
+	}
+}
