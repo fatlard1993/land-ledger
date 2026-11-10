@@ -374,7 +374,7 @@ export function openQuickLog() {
 			});
 		} else if (logType === 'event') {
 			new FormLabel({ appendTo: formArea, textContent: 'Type' });
-			const catGrid = new ChipRow({ appendTo: formArea });
+			const catGrid = new ChipRow({ appendTo: formArea, attributes: { role: 'group', 'aria-label': 'Type' } });
 			let selectedCat = 'crop';
 			const catChips = [];
 
@@ -383,10 +383,14 @@ export function openQuickLog() {
 					appendTo: catGrid,
 					variant: 'chip',
 					addClass: t.value === selectedCat ? 'active' : [],
+					attributes: { 'aria-pressed': String(t.value === selectedCat) },
 					textContent: t.label,
 					onPointerPress: () => {
 						selectedCat = t.value;
-						catChips.forEach(c => c.toggleClass('active', c === chip));
+						catChips.forEach(c => {
+							c.toggleClass('active', c === chip);
+							c.elem.setAttribute('aria-pressed', String(c === chip));
+						});
 					},
 				});
 				catChips.push(chip);
@@ -408,7 +412,7 @@ export function openQuickLog() {
 			});
 		} else if (logType === 'application') {
 			new FormLabel({ appendTo: formArea, textContent: 'Category' });
-			const catGrid = new ChipRow({ appendTo: formArea });
+			const catGrid = new ChipRow({ appendTo: formArea, attributes: { role: 'group', 'aria-label': 'Category' } });
 			let selectedCat = 'herbicide';
 			const catChips = [];
 
@@ -417,10 +421,14 @@ export function openQuickLog() {
 					appendTo: catGrid,
 					variant: 'chip',
 					addClass: ['tinted', ...(c.value === selectedCat ? ['active'] : [])],
+					attributes: { 'aria-pressed': String(c.value === selectedCat) },
 					textContent: c.label,
 					onPointerPress: () => {
 						selectedCat = c.value;
-						catChips.forEach(ch => ch.toggleClass('active', ch === chip));
+						catChips.forEach(ch => {
+							ch.toggleClass('active', ch === chip);
+							ch.elem.setAttribute('aria-pressed', String(ch === chip));
+						});
 					},
 				});
 				chip.elem.style.setProperty('--tint', String(c.color));
