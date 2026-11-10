@@ -1,4 +1,4 @@
-import { Button, Component, Dialog, Input, Select, styled, theme } from '@vanilla-bean/components';
+import { Button, Component, FormDialog, Input, Select, styled, theme } from '@vanilla-bean/components';
 
 import { formatDollar } from '../utils/format';
 import { makePropertiesEditor } from '../utils/PropertiesEditor';
@@ -6,6 +6,7 @@ import { createRevenue, updateSupply, getSupplies } from '../api';
 import { salePriceForSupply } from '../Supplies/SupplyDialog';
 import { FormLabel } from '../Layout';
 import { toDateOnly } from '../utils/dates';
+import { stayOpenFor } from '../utils/stayOpenFor';
 import { SubLabel } from './panelParts';
 
 const { colors, space } = theme;
@@ -37,17 +38,21 @@ const LineSelect = styled(Select, () => 'padding: 6px 8px; font-size: 13px;');
 export function openSellDialog(entityType, entity, onComplete, hide) {
 	const entityLabel = entity.name || entityType;
 
-	const dialog = new Dialog({
+	// The body is built by hand below, so the form holds no inputs and saving collects from the body
+	const dialog = new FormDialog({
 		size: 'large',
 		header: `Sell ${entityLabel}`,
-		buttons: ['Record Sale & Remove', 'Cancel'],
-		onButtonPress: async ({ button }) => {
-			if (button === 'Record Sale & Remove') {
-				if (!priceEl.elem.value) {
-					priceEl.elem.style.border = `1px solid ${colors.danger}`;
-					return;
-				}
+		inputs: [],
+		saveLabel: 'Record Sale & Remove',
+		onSave: async () => {
+			if (!priceEl.elem.value) {
+				priceEl.elem.style.border = `1px solid ${colors.danger}`;
+				dialog.failure.elem.textContent = 'Enter the sale price';
 
+				return false;
+			}
+
+			const stay = stayOpenFor(
 				await createRevenue({
 					body: {
 						entityType,
@@ -61,14 +66,13 @@ export function openSellDialog(entityType, entity, onComplete, hide) {
 							.filter(Boolean)
 							.join('\n'),
 					},
-				});
+				}),
+			);
 
-				dialog.close();
-				hide();
-				onComplete();
-			} else {
-				dialog.close();
-			}
+			if (stay !== undefined) return stay;
+
+			hide();
+			onComplete();
 		},
 	});
 
@@ -97,12 +101,19 @@ export function openRevenueDialog(entityType, entity, existingRecord, onSave, on
 	const rec = existingRecord || {};
 	const INCOME_TYPES = incomeTypes.length ? incomeTypes : ['Rental', 'Event hosting', 'Other'];
 
-	const dialog = new Dialog({
+	// The body is built by hand below, so the form holds no inputs and saving collects from the body
+	const dialog = new FormDialog({
 		size: 'large',
 		header: existingRecord ? 'Edit Income Record' : `Record Income — ${entity.name || ''}`,
-		buttons: existingRecord ? ['Save', 'Delete', 'Cancel'] : ['Save', 'Cancel'],
-		onButtonPress: async ({ button }) => {
-			if (button === 'Save' && amountEl.elem.value) {
+		inputs: [],
+		onSave: async () => {
+			if (!amountEl.elem.value) {
+				dialog.failure.elem.textContent = 'Enter an amount';
+
+				return false;
+			}
+
+			const stay = stayOpenFor(
 				await onSave({
 					entityType,
 					entityId: entity.id,
@@ -112,27 +123,30 @@ export function openRevenueDialog(entityType, entity, existingRecord, onSave, on
 					type: typeEl.elem.value,
 					description: descEl.elem.value,
 					properties: collectProps(),
-				});
+				}),
+			);
 
-				// Decrement inventory for each line item
-				const lineItems = dialog._getLineItems?.() || [];
-				const allSupplies = dialog._allSupplies?.() || [];
+			if (stay !== undefined) return stay;
 
-				for (const line of lineItems) {
-					const supply = allSupplies.find(s => s.id === line.supplyId);
+			// Decrement inventory for each line item
+			const lineItems = dialog._getLineItems?.() || [];
+			const allSupplies = dialog._allSupplies?.() || [];
 
-					if (supply) {
-						const newStock = Math.max(0, (Number(supply.currentStock) || 0) - Number(line.qty));
+			for (const line of lineItems) {
+				const supply = allSupplies.find(s => s.id === line.supplyId);
 
-						await updateSupply(supply.id, { body: { currentStock: newStock, _v: supply._v } }).catch(() => {});
-					}
+				if (supply) {
+					const newStock = Math.max(0, (Number(supply.currentStock) || 0) - Number(line.qty));
+
+					await updateSupply(supply.id, { body: { currentStock: newStock, _v: supply._v } }).catch(() => {});
 				}
-			} else if (button === 'Delete') {
-				await onDelete?.();
 			}
-
-			dialog.close();
 		},
+		...(existingRecord &&
+			onDelete && {
+				onDelete: async () => stayOpenFor(await onDelete()),
+				confirmDelete: { header: 'Delete this income record?' },
+			}),
 	});
 
 	// Type

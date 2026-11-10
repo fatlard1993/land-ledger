@@ -1,5 +1,5 @@
 import L from 'leaflet';
-import { Dialog, Elem, Icon, Input, Notify, theme } from '@vanilla-bean/components';
+import { Elem, FormDialog, Icon, Input, Notify, theme } from '@vanilla-bean/components';
 
 const { colors, space } = theme;
 
@@ -203,23 +203,27 @@ export function createMapControls(
 
 			const current = await getAppSettings();
 
-			const dialog = new Dialog({
+			// The body is built by hand below, so the form holds no inputs and saving reads the URL field
+			const dialog = new FormDialog({
 				header: 'Parcel Data Source',
 				size: 'large',
-				buttons: ['Save', 'Cancel'],
-				onButtonPress: async ({ button }) => {
-					if (button === 'Save') {
-						const url = input.elem.value.trim();
-						await updateAppSettings({ parcelServiceUrl: url });
-						new Notify({
-							intent: 'success',
-							textContent: url
-								? 'Parcel service saved — use the property-line search button to detect'
-								: 'Parcel service cleared',
-							timeout: 3000,
-						});
+				inputs: [],
+				onSave: async () => {
+					const url = input.elem.value.trim();
+
+					if (!(await updateAppSettings({ parcelServiceUrl: url }))) {
+						dialog.failure.elem.textContent = 'Could not save the parcel service';
+
+						return false;
 					}
-					dialog.close();
+
+					new Notify({
+						intent: 'success',
+						textContent: url
+							? 'Parcel service saved — use the property-line search button to detect'
+							: 'Parcel service cleared',
+						timeout: 3000,
+					});
 				},
 			});
 

@@ -156,7 +156,10 @@ export async function renderEntityRevenue(entityType, entity, refresh, appendTo)
 				entity,
 				null,
 				async d => {
-					await createRevenue({ body: d });
+					const result = await createRevenue({ body: d });
+
+					if (result?.status === 'error') return result;
+
 					refresh();
 				},
 				null,
@@ -191,11 +194,17 @@ export async function renderEntityRevenue(entityType, entity, refresh, appendTo)
 				entity,
 				rec,
 				async d => {
-					await updateRevenue(rec.id, { body: { ...d, _v: rec._v } });
+					const result = await updateRevenue(rec.id, { body: { ...d, _v: rec._v } });
+
+					if (result?.status === 'error' || result?.conflict) return result;
+
 					refresh();
 				},
 				async () => {
-					await deleteRevenue(rec.id);
+					const result = await deleteRevenue(rec.id);
+
+					if (result?.status === 'error') return result;
+
 					refresh();
 				},
 				INCOME_TYPES_BY_TYPE[entityType],

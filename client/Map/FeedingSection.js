@@ -1,4 +1,4 @@
-import { Button, Component, Dialog, formatDate, Icon, Input, parseDate, theme } from '@vanilla-bean/components';
+import { Button, Component, formatDate, FormDialog, Icon, Input, parseDate, theme } from '@vanilla-bean/components';
 
 import {
 	getFeedingSchedules,
@@ -13,6 +13,7 @@ import { frequencyLabel, frequencyInterval } from '../Livestock/FeedingScheduleD
 import FeedingScheduleDialog from '../Livestock/FeedingScheduleDialog';
 import { ActionHeader, FormLabel } from '../Layout';
 import { daysAgoLabel, toDateOnly } from '../utils/dates';
+import { stayOpenFor } from '../utils/stayOpenFor';
 import { feedIcon } from '../utils/icons';
 import { IconText } from '../statusIcons';
 import {
@@ -30,12 +31,20 @@ import {
 const { colors, space } = theme;
 
 export function openTreatDialog(field, totalHead, refresh) {
-	const dialog = new Dialog({
+	// The body is built by hand below, so the form holds no inputs and saving collects from the body
+	const dialog = new FormDialog({
 		size: 'large',
 		header: 'Log Treat / Extra Feeding',
-		buttons: ['Log', 'Cancel'],
-		onButtonPress: async ({ button }) => {
-			if (button === 'Log' && feedTypeEl.elem.value) {
+		inputs: [],
+		saveLabel: 'Log',
+		onSave: async () => {
+			if (!feedTypeEl.elem.value) {
+				dialog.failure.elem.textContent = 'Fill in what they got';
+
+				return false;
+			}
+
+			const stay = stayOpenFor(
 				await createFeedingLog({
 					body: {
 						fieldId: field.id,
@@ -47,10 +56,12 @@ export function openTreatDialog(field, totalHead, refresh) {
 						date: dateEl.elem.value || toDateOnly(),
 						notes: notesEl.elem.value,
 					},
-				});
-				refresh();
-			}
-			dialog.close();
+				}),
+			);
+
+			if (stay !== undefined) return stay;
+
+			refresh();
 		},
 	});
 
