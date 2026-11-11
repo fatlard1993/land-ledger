@@ -14,6 +14,16 @@ describe("an incident report's buttons", () => {
 		document.body.innerHTML = '';
 	});
 
+	test('Delete and the way out come first, then the actions, Save last', async () => {
+		const dialog = new IncidentDialog({ appendTo: document.body, incident, onSave: () => {}, onDelete: () => {} });
+
+		await settle();
+
+		const order = [...dialog.elem.querySelectorAll('.footer button')].map(button => button.textContent.trim());
+
+		expect(order).toEqual(['Delete', 'Cancel', 'Mark Resolved', 'Save']);
+	});
+
 	test('Save hands the record to onSave and closes', async () => {
 		const onSave = mock(() => ({ status: 'success', body: {} }));
 		const dialog = new IncidentDialog({ appendTo: document.body, incident, onSave, onDelete: () => {} });

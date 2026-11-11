@@ -144,7 +144,7 @@ export function showConflictDialog(conflicts, { header = OFFLINE.header, intro =
 		const dialog = new Dialog({
 			size: 'large',
 			header: header(conflicts.length),
-			buttons: ['Apply', 'Cancel'],
+			buttons: ['Cancel', 'Apply'],
 			onButtonPress: ({ button }) => {
 				if (button === 'Apply') {
 					const resolved = conflicts.map(({ entry, conflictingFields }) => {

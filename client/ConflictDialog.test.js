@@ -62,6 +62,10 @@ describe('a stale update', () => {
 
 		expect(dialog.textContent).toContain('South Forty');
 		expect(dialog.textContent).toContain('North Forty');
+		expect([...dialog.querySelectorAll('.footer button')].map(button => button.textContent.trim())).toEqual([
+			'Cancel',
+			'Apply',
+		]);
 
 		press(dialog, 'Apply');
 

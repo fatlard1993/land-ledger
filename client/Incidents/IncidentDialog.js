@@ -150,12 +150,13 @@ export default class IncidentDialog extends FormDialog {
 		super({
 			size: 'large',
 			header: isEdit ? `Edit Incident Report` : `Report Incident${entityLabel ? ` — ${entityLabel}` : ''}`,
-			// FormDialog acts on the buttons marked with its data-action; Mark Resolved is this dialog's own
+			// FormDialog acts on the buttons marked with its data-action; Mark Resolved is this dialog's own. The way out
+			// comes before the actions and Save is last, as in every dialog
 			buttons: conditionalList([
-				{ alwaysItem: { textContent: 'Save', 'data-action': 'save' } },
-				{ if: isEdit && !incident.resolved, thenItem: 'Mark Resolved' },
 				{ if: isEdit, thenItem: { textContent: 'Delete', 'data-action': 'delete' } },
 				{ alwaysItem: { textContent: 'Cancel', 'data-action': 'cancel' } },
+				{ if: isEdit && !incident.resolved, thenItem: 'Mark Resolved' },
+				{ alwaysItem: { textContent: 'Save', 'data-action': 'save' } },
 			]),
 			data: {
 				date: incident.date || toDateOnly(),
