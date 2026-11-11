@@ -30,6 +30,16 @@ const serve = () => {
 const conflictDialog = () =>
 	[...document.querySelectorAll('dialog')].find(elem => elem.textContent.includes('Changed Since You Opened It'));
 
+// The dialog opens a moment after the conflict comes back, and how long that takes depends on the machine: a press
+// on a dialog not yet open closes nothing, so the dialog stays and opens after. Wait for it, not for a fixed time.
+const asked = async () => {
+	for (const started = Date.now(); Date.now() - started < 2000; await settle()) {
+		if (conflictDialog()?.open) return;
+	}
+
+	throw new Error('No conflict dialog opened');
+};
+
 const press = (root, label) =>
 	[...root.querySelectorAll('button')].find(button => button.textContent.trim() === label).click();
 
@@ -46,7 +56,7 @@ describe('a stale update', () => {
 
 		const pending = updateField('f1', { body: { name: 'South Forty', acreage: 40, _v: 2 } });
 
-		await settle();
+		await asked();
 
 		const dialog = conflictDialog();
 
@@ -67,7 +77,7 @@ describe('a stale update', () => {
 
 		const pending = updateField('f1', { body: { name: 'South Forty', _v: 2 } });
 
-		await settle();
+		await asked();
 		press(conflictDialog(), "Server's");
 		press(conflictDialog(), 'Apply');
 
@@ -82,7 +92,7 @@ describe('a stale update', () => {
 
 		const pending = updateField('f1', { body: { name: 'South Forty', _v: 2 } });
 
-		await settle();
+		await asked();
 		press(conflictDialog(), 'Cancel');
 
 		const result = await pending;
@@ -96,7 +106,7 @@ describe('a stale update', () => {
 
 		const pending = updateField('f1', { body: { name: 'South Forty', notes: '', _v: 2 } });
 
-		await settle();
+		await asked();
 		press(conflictDialog(), 'Apply');
 		await pending;
 
@@ -117,7 +127,7 @@ describe('a stale update', () => {
 
 		const pending = updateField('f1', { body: { name: 'South Forty', notes: '', _v: 2 } });
 
-		await settle();
+		await asked();
 
 		const rows = [...conflictDialog().querySelectorAll('.key')].map(key => key.textContent);
 
