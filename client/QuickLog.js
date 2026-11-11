@@ -182,13 +182,11 @@ export function openQuickLog() {
 		_sheet = null;
 	}
 
-	// However it closes (its button, Escape, the dimmed page, a drag), it's gone once it has slid away
 	const sheet = new BottomSheet({
 		addClass: 'quick-log',
+		removeOnClose: true,
 		onClose: () => {
 			if (_sheet === sheet) _sheet = null;
-
-			setTimeout(() => sheet.destroy(), 400);
 		},
 	});
 	_sheet = sheet;
