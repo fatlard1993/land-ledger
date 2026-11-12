@@ -106,3 +106,69 @@ describe('turning sign-in on from the Admin panel', () => {
 		expect(server.calls.filter(call => !call.startsWith('GET'))).toEqual([]);
 	});
 });
+
+describe('deleting an account', () => {
+	let calls;
+	let fetch;
+
+	afterEach(() => {
+		fetch.mockRestore();
+		document.body.innerHTML = '';
+	});
+
+	// An account takes its sessions and passkey hash with it, so the delete asks first
+	const pressDelete = async () => {
+		calls = [];
+		fetch = spyOn(globalThis, 'fetch').mockImplementation(async (url, { method = 'GET' } = {}) => {
+			calls.push(`${method} ${url}`);
+
+			if (url === '/auth/settings') return Response.json({ authEnabled: true, adminPasskeyIsDefault: false });
+			if (url === '/auth/accounts' && method === 'GET')
+				return Response.json([
+					{ id: 'admin', name: 'Admin', roles: { admin: true } },
+					{ id: 'hand', name: 'Hired Hand', roles: {} },
+				]);
+			if (method === 'DELETE') return new Response(null, { status: 204 });
+			if (url === '/auth/tokens' || url === '/auth/shares') return Response.json([]);
+
+			return Response.json({});
+		});
+
+		const dialog = new AccountsDialog({ appendTo: document.body });
+
+		await settle();
+		dialog.body.elem.querySelector('button[title="Delete account"]').click();
+		await settle();
+
+		return dialog;
+	};
+
+	const confirmDialog = () => [...document.querySelectorAll('dialog[open]')].find(d => d.textContent.includes('Delete "'));
+	const buttonIn = (dialog, text) => [...dialog.querySelectorAll('button')].find(b => b.textContent === text);
+	const deletes = () => calls.filter(call => call.startsWith('DELETE'));
+
+	test('asks first, as a danger, and a cancel keeps it', async () => {
+		await pressDelete();
+
+		const confirm = confirmDialog();
+
+		expect(confirm.classList.contains('intent-danger')).toBe(true);
+		expect(confirm.textContent).toContain('Delete "Hired Hand"?');
+		expect(deletes()).toEqual([]);
+
+		buttonIn(confirm, 'Cancel').click();
+		await settle();
+
+		expect(deletes()).toEqual([]);
+	});
+
+	test('Delete deletes it', async () => {
+		const dialog = await pressDelete();
+
+		buttonIn(confirmDialog(), 'Delete').click();
+		await settle();
+
+		expect(deletes()).toEqual(['DELETE /auth/accounts/hand']);
+		expect(dialog.body.elem.textContent).not.toContain('Hired Hand');
+	});
+});

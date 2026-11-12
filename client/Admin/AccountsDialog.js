@@ -409,6 +409,17 @@ export default class AccountsDialog extends Dialog {
 				variant: 'flat',
 				addClass: 'danger',
 				onPointerPress: async () => {
+					// Its sessions and passkey hash go with it; nothing on the client can put them back
+					if (
+						!(await Dialog.confirm({
+							header: `Delete "${account.name}"?`,
+							body: 'They are signed out and can no longer sign in.',
+							confirmLabel: 'Delete',
+							intent: 'danger',
+						}))
+					)
+						return;
+
 					try {
 						await deleteAccount(account.id);
 						this._accounts = this._accounts.filter(a => a.id !== account.id);

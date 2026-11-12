@@ -1,4 +1,4 @@
-import { Button, Component, theme } from '@vanilla-bean/components';
+import { Button, Component, Dialog, theme } from '@vanilla-bean/components';
 import { ActionHeader } from '../Layout';
 import { getPrecisionLayers, getPrecisionLayerPoints, deletePrecisionLayer } from '../api/precisionLayers';
 import PrecisionLayerImport from './PrecisionLayerImport';
@@ -146,6 +146,17 @@ export async function renderPrecisionLayersSection(field, container, callbacks =
 			title: 'Delete layer',
 			style: { color: colors.light(colors.danger) },
 			onPointerPress: async () => {
+				// The uploaded points go with it, and the client doesn't hold them to put back
+				if (
+					!(await Dialog.confirm({
+						header: `Delete "${layer.label || TYPE_LABELS[layer.type] || 'this layer'}"?`,
+						body: 'Its uploaded points are deleted with it.',
+						confirmLabel: 'Delete',
+						intent: 'danger',
+					}))
+				)
+					return;
+
 				await deletePrecisionLayer(layer.id);
 				callbacks.onRefresh?.();
 			},
