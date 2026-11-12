@@ -49,11 +49,7 @@ export function openTreatDialog(field, totalHead, refresh) {
 		inputs: [],
 		saveLabel: 'Log',
 		onSave: async () => {
-			if (!feedTypeEl.elem.value) {
-				dialog.failure.elem.textContent = 'Fill in what they got';
-
-				return false;
-			}
+			if (!feedTypeEl.elem.value) return 'Fill in what they got';
 
 			const stay = stayOpenFor(
 				await createFeedingLog({

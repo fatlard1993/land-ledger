@@ -47,9 +47,8 @@ export function openSellDialog(entityType, entity, onComplete, hide) {
 		onSave: async () => {
 			if (!priceEl.elem.value) {
 				priceEl.elem.style.border = `1px solid ${colors.danger}`;
-				dialog.failure.elem.textContent = 'Enter the sale price';
 
-				return false;
+				return 'Enter the sale price';
 			}
 
 			const stay = stayOpenFor(
@@ -107,11 +106,7 @@ export function openRevenueDialog(entityType, entity, existingRecord, onSave, on
 		header: existingRecord ? 'Edit Income Record' : `Record Income — ${entity.name || ''}`,
 		inputs: [],
 		onSave: async () => {
-			if (!amountEl.elem.value) {
-				dialog.failure.elem.textContent = 'Enter an amount';
-
-				return false;
-			}
+			if (!amountEl.elem.value) return 'Enter an amount';
 
 			const stay = stayOpenFor(
 				await onSave({

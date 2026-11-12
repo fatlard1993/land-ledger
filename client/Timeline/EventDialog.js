@@ -173,18 +173,18 @@ export default class EventDialog extends FormDialog {
 	constructor(options = {}) {
 		const isEdit = !!options.event?.id;
 
-		// The body is built by hand below, so the form holds no inputs and saving collects from the body; a body that
-		// doesn't validate collects nothing and keeps the dialog open
+		// The body is built by hand below, so the form holds no inputs and saving collects from the body; a body missing
+		// its field or date answers with what's missing, which keeps the dialog open and shows on its failure line
 		super({
 			size: 'large',
 			header: isEdit ? 'Edit Event' : 'Log Event',
 			inputs: [],
 			onSave: async () => {
-				const data = this._collectData();
+				const missing = this._missing();
 
-				if (!data) return false;
+				if (missing) return missing;
 
-				return stayOpenFor(await options.onSave?.(data));
+				return stayOpenFor(await options.onSave?.(this._collectData()));
 			},
 			...(isEdit &&
 				options.onDelete && {
@@ -780,17 +780,16 @@ export default class EventDialog extends FormDialog {
 		});
 	}
 
+	_missing() {
+		if (!this._getters.fieldId?.()) return 'Choose a field';
+		if (!this._getters.date?.()) return 'Choose a date';
+
+		return '';
+	}
+
 	_collectData() {
 		const fieldId = this._getters.fieldId?.();
 		const date = this._getters.date?.();
-
-		// FormDialog shows nothing when onSave answers false, so the dialog says what's missing on its failure line
-		if (!fieldId || !date) {
-			this.failure.elem.textContent = fieldId ? 'Choose a date' : 'Choose a field';
-
-			return null;
-		}
-
 		const category = this._getters.category?.();
 		const name = this._detailGetters?.name?.() || '';
 		const emojiOverride = this._getters.emoji?.();

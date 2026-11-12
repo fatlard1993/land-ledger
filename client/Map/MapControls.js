@@ -211,11 +211,7 @@ export function createMapControls(
 				onSave: async () => {
 					const url = input.elem.value.trim();
 
-					if (!(await updateAppSettings({ parcelServiceUrl: url }))) {
-						dialog.failure.elem.textContent = 'Could not save the parcel service';
-
-						return false;
-					}
+					if (!(await updateAppSettings({ parcelServiceUrl: url }))) return 'Could not save the parcel service';
 
 					new Notify({
 						intent: 'success',
