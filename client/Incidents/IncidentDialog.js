@@ -2,7 +2,6 @@ import {
 	Component,
 	conditionalList,
 	Elem,
-	failureReason,
 	FormDialog,
 	Input,
 	SectionLabel,
@@ -217,16 +216,12 @@ export default class IncidentDialog extends FormDialog {
 				onDelete: async () => stayOpenFor(await options.onDelete?.()),
 				confirmDelete: { header: `Delete this ${incident.type || 'incident'} report?` },
 			}),
-			// Mark Resolved is a button of this dialog's own; FormDialog passes it through
-			onButtonPress: async ({ button, closeDialog }) => {
+			// Mark Resolved is a button of this dialog's own; it saves through save(action), so it takes Save's checks, busy
+			// state, failure line and close
+			onButtonPress: ({ button }) => {
 				if (button !== 'Mark Resolved') return;
 
-				const result = await options.onSave?.(payloadFor({ ...this.form.options.data }, 'Mark Resolved'));
-
-				const stay = stayOpenFor(result);
-
-				if (stay === undefined) closeDialog();
-				else if (stay) this.failure.elem.textContent = failureReason(stay);
+				this.save(async d => stayOpenFor(await options.onSave?.(payloadFor(d, 'Mark Resolved'))));
 			},
 			...withoutCallbacks(options),
 		});

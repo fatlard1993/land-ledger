@@ -48,6 +48,19 @@ describe("an incident report's buttons", () => {
 		expect(onSave.mock.calls[0][0]).toMatchObject({ resolved: true });
 	});
 
+	test("Mark Resolved's refusal shows on the failure line and keeps the dialog open", async () => {
+		const onSave = mock(() => ({ status: 'error', response: { status: 409 }, body: { error: 'Already resolved' } }));
+		const dialog = new IncidentDialog({ appendTo: document.body, incident, onSave, onDelete: () => {} });
+
+		await settle();
+		press(dialog, 'Mark Resolved');
+		await settle();
+
+		expect(onSave).toHaveBeenCalledTimes(1);
+		expect(dialog.failure.elem.textContent).toBe('Already resolved');
+		expect(dialog.elem.isConnected).toBe(true);
+	});
+
 	test('Delete asks first, then hands over to onDelete', async () => {
 		const onDelete = mock(() => ({ status: 'success', body: {} }));
 		const dialog = new IncidentDialog({ appendTo: document.body, incident, onSave: () => {}, onDelete });
