@@ -1,4 +1,15 @@
-import { Button, Component, formatDate, FormDialog, Icon, Input, parseDate, theme } from '@vanilla-bean/components';
+import {
+	Button,
+	Component,
+	failureReason,
+	formatDate,
+	FormDialog,
+	Icon,
+	Input,
+	Notify,
+	parseDate,
+	theme,
+} from '@vanilla-bean/components';
 
 import {
 	getFeedingSchedules,
@@ -290,8 +301,37 @@ export async function renderFeedingSection(field, livestockEvents, refresh, cont
 			appendTo: row,
 			style: { flexShrink: '0', width: '22px', height: '22px', color: colors.gray },
 			onPointerPress: async () => {
-				await deleteFeedingLog(log.id);
+				const result = await deleteFeedingLog(log.id);
+
+				if (result?.status === 'error') {
+					new Notify({ intent: 'danger', textContent: failureReason(result) });
+
+					return;
+				}
+
 				refresh();
+
+				// Nothing points at a log, so putting its fields back under a new id restores it as it was
+				const { id, _v, ...body } = log;
+
+				new Notify({
+					intent: 'success',
+					timeout: 10000,
+					textContent: 'Deleted the log entry',
+					actions: [
+						{
+							textContent: 'Undo',
+							onPointerPress: async () => {
+								const restored = await createFeedingLog({ body });
+
+								// A throw keeps the toast and its Undo, and says why
+								if (restored?.status === 'error') throw new Error(failureReason(restored));
+
+								refresh();
+							},
+						},
+					],
+				});
 			},
 		});
 	}
