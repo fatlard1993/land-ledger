@@ -140,24 +140,14 @@ export function buildCoverCropSection(container, prev, g) {
 	new FormLabel({ appendTo: container, textContent: 'Seeding Method' });
 	const seedingMethodSelect = new Select({ appendTo: container });
 
-	for (const { value: v, label: l } of SEEDING_METHODS) {
-		const o = document.createElement('option');
-		o.value = v;
-		o.textContent = l;
-		seedingMethodSelect.elem.append(o);
-	}
+	seedingMethodSelect.options.options = SEEDING_METHODS;
 
 	seedingMethodSelect.options.value = prev.seedingMethod || 'drilled';
 
 	new FormLabel({ appendTo: container, textContent: 'Termination Method' });
 	const terminationSelect = new Select({ appendTo: container });
 
-	for (const { value: v, label: l } of TERMINATION_METHODS) {
-		const o = document.createElement('option');
-		o.value = v;
-		o.textContent = l;
-		terminationSelect.elem.append(o);
-	}
+	terminationSelect.options.options = TERMINATION_METHODS;
 
 	terminationSelect.options.value = prev.terminationMethod || 'roller_crimper';
 

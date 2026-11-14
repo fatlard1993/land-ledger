@@ -4,7 +4,6 @@ import {
 	Elem,
 	EmptyState,
 	formatDate,
-	Icon,
 	parseDate,
 	Select,
 	styled,
@@ -241,21 +240,21 @@ export default class Timeline extends AsyncView {
 
 		new Button({
 			appendTo: this.toolbar,
-			append: new Icon({ icon: 'plus' }),
+			icon: 'plus',
 			title: 'Log event',
 			onPointerPress: () => this._openEventDialog(),
 		});
 
 		new Button({
 			appendTo: this.toolbar,
-			append: new Icon({ icon: 'file-import' }),
+			icon: 'file-import',
 			title: 'Import CSV / JSON',
 			onPointerPress: () => new TabularImportDialog({ initialCollection: 'events' }),
 		});
 
 		new Button({
 			appendTo: this.toolbar,
-			append: new Icon({ icon: 'file-export' }),
+			icon: 'file-export',
 			title: 'Export data',
 			onPointerPress: () => new ExportDialog(),
 		});

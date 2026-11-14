@@ -122,13 +122,7 @@ export const areaField = (appendTo, { estimate, unit }) => {
 
 	const unitSelect = new Select({ appendTo: row, attributes: { 'aria-label': 'Area unit' } });
 
-	for (const { value, label } of AREA_UNITS) {
-		const opt = document.createElement('option');
-
-		opt.value = value;
-		opt.textContent = label;
-		unitSelect.elem.append(opt);
-	}
+	unitSelect.options.options = AREA_UNITS;
 
 	unitSelect.options.value = unit;
 

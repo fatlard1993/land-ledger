@@ -261,8 +261,8 @@ export function showConflictDialog(conflicts, { header = OFFLINE.header, intro =
 				const applyChoice = choice => {
 					perField[key] = choice;
 
-					mineBtn.toggleClass('active', choice === 'mine');
-					theirsBtn.toggleClass('active', choice === 'theirs');
+					mineBtn.options.pressed = choice === 'mine';
+					theirsBtn.options.pressed = choice === 'theirs';
 					myValueCell.toggleClass('kept', choice === 'mine');
 					serverValueCell.toggleClass('kept', choice === 'theirs');
 				};

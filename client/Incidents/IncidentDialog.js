@@ -237,7 +237,7 @@ export default class IncidentDialog extends FormDialog {
 		if (liveEvents.length > 0) {
 			const lossDiv = new Divider({ appendTo: this.body });
 
-			new SectionLabel({ appendTo: lossDiv, textContent: 'Stock Loss', style: { marginTop: 0 } });
+			new SectionLabel({ appendTo: lossDiv, textContent: 'Stock Loss' });
 
 			// Parse existing losses keyed by eventId for pre-fill on edit
 			const existingLosses = {};
@@ -325,19 +325,13 @@ export default class IncidentDialog extends FormDialog {
 			if (!isEdit) {
 				new FormLabel({ appendTo: divider, textContent: 'Entity Status After This Incident', style: { marginTop: 0 } });
 				statusImpactSelect = new Select({ appendTo: divider });
-				[
+				statusImpactSelect.options.options = [
 					{ value: '', label: '— no change —' },
 					{ value: 'needs_maintenance', label: 'Needs maintenance' },
 					{ value: 'needs_service', label: 'Needs service / attention' },
 					{ value: 'out_of_service', label: 'Out of service' },
 					{ value: 'destroyed', label: 'Destroyed / total loss' },
-				].forEach(({ value, label }) => {
-					const o = document.createElement('option');
-
-					o.value = value;
-					o.textContent = label;
-					statusImpactSelect.elem.append(o);
-				});
+				];
 			} else if (isEdit && !incident.resolved) {
 				// On "Mark Resolved" — offer to restore to service
 				const restoreRow = new Elem({

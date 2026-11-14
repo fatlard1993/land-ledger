@@ -477,7 +477,7 @@ export default class AccountsDialog extends Dialog {
 
 			// Admin account always keeps its admin role
 			if (existing?.id === 'admin' && key === 'admin') {
-				cb.elem.disabled = true;
+				cb.options.disabled = true;
 				chip.addClass('locked');
 			}
 

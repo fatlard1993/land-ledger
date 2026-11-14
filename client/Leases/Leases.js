@@ -4,7 +4,6 @@ import {
 	Elem,
 	EmptyState,
 	formatDate,
-	Icon,
 	parseDate,
 	SectionLabel,
 	styled,
@@ -84,7 +83,7 @@ export default class Leases extends AsyncView {
 
 		new Button({
 			appendTo: addButtons,
-			append: new Icon({ icon: 'plus' }),
+			icon: 'plus',
 			title: 'Add lease (default)',
 			onPointerPress: () =>
 				new LeaseDialog({

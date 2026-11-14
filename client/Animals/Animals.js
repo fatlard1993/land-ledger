@@ -1,4 +1,4 @@
-import { Button, Component, Elem, EmptyState, Icon, styled, theme, Toolbar } from '@vanilla-bean/components';
+import { Button, Component, Elem, EmptyState, styled, theme, Toolbar } from '@vanilla-bean/components';
 
 import AsyncView from '../AsyncView';
 import { getAnimals, getFields } from '../api';
@@ -67,7 +67,7 @@ export default class Animals extends AsyncView {
 		this.toolbar = new Toolbar({ appendTo: this, variant: 'bar', heading: 'Animals', gap: 8, wrap: false });
 		new Button({
 			appendTo: this.toolbar,
-			append: new Icon({ icon: 'plus' }),
+			icon: 'plus',
 			title: 'Add animal',
 			onPointerPress: () =>
 				new AnimalDialog({

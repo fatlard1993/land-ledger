@@ -306,15 +306,11 @@ export default class TabularImportDialog extends Dialog {
 		// Collection picker
 		new FormLabel({ appendTo: this.body, style: CAPTION_STYLE, textContent: 'Import into' });
 
-		const collectionSelect = new Select({ appendTo: this.body, style: { marginBottom: space.md } });
-
-		for (const [key, { label }] of Object.entries(COLLECTIONS)) {
-			const opt = document.createElement('option');
-
-			opt.value = key;
-			opt.textContent = label;
-			collectionSelect.elem.append(opt);
-		}
+		const collectionSelect = new Select({
+			appendTo: this.body,
+			style: { marginBottom: space.md },
+			options: Object.entries(COLLECTIONS).map(([key, { label }]) => ({ value: key, label })),
+		});
 
 		collectionSelect.options.value = this._collection;
 
@@ -417,7 +413,7 @@ export default class TabularImportDialog extends Dialog {
 			count > 0
 				? `Import ${count} Record${count !== 1 ? 's' : ''} (${mapped} column${mapped !== 1 ? 's' : ''} mapped)`
 				: 'No rows to import';
-		this._importBtn.elem.disabled = count === 0;
+		this._importBtn.options.disabled = count === 0;
 	}
 
 	_finishAndRefresh() {
@@ -428,7 +424,7 @@ export default class TabularImportDialog extends Dialog {
 	async _doImport() {
 		if (!this._rows.length) return;
 
-		this._importBtn.elem.disabled = true;
+		this._importBtn.options.disabled = true;
 		this._importBtn.elem.textContent = 'Importing…';
 
 		try {
@@ -460,7 +456,7 @@ export default class TabularImportDialog extends Dialog {
 			this._renderSaveTemplate();
 		} catch (error) {
 			new Notify({ intent: 'danger', textContent: error.message || 'Import failed', timeout: 5000 });
-			this._importBtn.elem.disabled = false;
+			this._importBtn.options.disabled = false;
 			this._updateImportBtn();
 		}
 	}

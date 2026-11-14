@@ -247,12 +247,7 @@ export default class EventDialog extends FormDialog {
 		new FormLabel({ appendTo: form, textContent: 'Field' });
 		const fieldSelect = new Select({ appendTo: form });
 
-		for (const { value: v, label: l } of fieldOptions) {
-			const o = document.createElement('option');
-			o.value = v;
-			o.textContent = l;
-			fieldSelect.elem.append(o);
-		}
+		fieldSelect.options.options = fieldOptions.map(({ value, label }) => ({ value, label }));
 
 		fieldSelect.elem.value = this._fieldId || fieldOptions[0]?.value || '';
 
@@ -468,12 +463,7 @@ export default class EventDialog extends FormDialog {
 			new FormLabel({ appendTo: container, textContent: 'Type' });
 			const typeSelect = new Select({ appendTo: container });
 
-			for (const { value: v, label: l } of INPUT_TYPES) {
-				const o = document.createElement('option');
-				o.value = v;
-				o.textContent = l;
-				typeSelect.elem.append(o);
-			}
+			typeSelect.options.options = INPUT_TYPES;
 
 			typeSelect.options.value = prev.inputType || 'herbicide';
 
@@ -570,12 +560,7 @@ export default class EventDialog extends FormDialog {
 			new FormLabel({ appendTo: container, textContent: 'Type' });
 			const typeSelect = new Select({ appendTo: container });
 
-			for (const { value: v, label: l } of TILLAGE_TYPES) {
-				const o = document.createElement('option');
-				o.value = v;
-				o.textContent = l;
-				typeSelect.elem.append(o);
-			}
+			typeSelect.options.options = TILLAGE_TYPES;
 
 			typeSelect.options.value = prev.type || 'no_till';
 
@@ -619,24 +604,14 @@ export default class EventDialog extends FormDialog {
 			new FormLabel({ appendTo: container, textContent: 'Timing' });
 			const timingEl = new Select({ appendTo: container });
 
-			for (const { value: v, label: l } of TIMING_OPTS) {
-				const o = document.createElement('option');
-				o.value = v;
-				o.textContent = l;
-				timingEl.elem.append(o);
-			}
+			timingEl.options.options = TIMING_OPTS;
 
 			timingEl.options.value = prev.timing || 'pre-season';
 
 			new FormLabel({ appendTo: container, textContent: 'Sample Depth' });
 			const depthEl = new Select({ appendTo: container });
 
-			for (const { value: v, label: l } of DEPTH_OPTS) {
-				const o = document.createElement('option');
-				o.value = v;
-				o.textContent = l;
-				depthEl.elem.append(o);
-			}
+			depthEl.options.options = DEPTH_OPTS;
 
 			depthEl.options.value = prev.sampleDepth || '0-6 in';
 
@@ -714,12 +689,7 @@ export default class EventDialog extends FormDialog {
 			new FormLabel({ appendTo: container, textContent: 'Type' });
 			const typeEl = new Select({ appendTo: container });
 
-			for (const { value: v, label: l } of OBS_TYPES) {
-				const o = document.createElement('option');
-				o.value = v;
-				o.textContent = l;
-				typeEl.elem.append(o);
-			}
+			typeEl.options.options = OBS_TYPES;
 
 			typeEl.options.value = prev.type || 'weed_pressure';
 

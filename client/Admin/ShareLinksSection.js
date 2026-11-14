@@ -80,10 +80,10 @@ function openShareForm(container, { onRefresh }) {
 				selectedPurpose = key;
 				selectedCollections = TEMPLATES[key].collections;
 				noteEl.elem.textContent = TEMPLATES[key].note;
-				for (const [k, c] of Object.entries(chips)) c.toggleClass('active', k === key);
+				for (const [k, c] of Object.entries(chips)) c.options.pressed = k === key;
 			},
 		});
-		chip.toggleClass('active', key === selectedPurpose);
+		chip.options.pressed = key === selectedPurpose;
 		chips[key] = chip;
 	}
 

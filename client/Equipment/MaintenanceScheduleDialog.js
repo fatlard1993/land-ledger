@@ -142,21 +142,11 @@ export default class MaintenanceScheduleDialog extends FormDialog {
 		if (!isEdit) {
 			new FormLabel({ appendTo: this.intro, textContent: 'Start from template (optional)' });
 			// A bare select takes the theme's field look
-			tplSelect = new Select({ appendTo: this.intro, style: { cursor: 'pointer' } });
-
-			const blankOpt = document.createElement('option');
-
-			blankOpt.value = '';
-			blankOpt.textContent = '— blank —';
-			tplSelect.elem.append(blankOpt);
-
-			for (const t of COMMON_SCHEDULES) {
-				const opt = document.createElement('option');
-
-				opt.value = t.name;
-				opt.textContent = t.name;
-				tplSelect.elem.append(opt);
-			}
+			tplSelect = new Select({
+				appendTo: this.intro,
+				style: { cursor: 'pointer' },
+				options: [{ value: '', label: '— blank —' }, ...COMMON_SCHEDULES.map(t => t.name)],
+			});
 		}
 
 		new Elem({

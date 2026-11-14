@@ -484,7 +484,7 @@ export function openQuickLog() {
 					return;
 				}
 
-				submitBtn.elem.disabled = true;
+				submitBtn.options.disabled = true;
 				submitBtn.elem.textContent = 'Saving…';
 
 				try {
@@ -499,7 +499,7 @@ export function openQuickLog() {
 					submitBtn.setStyle({ backgroundColor: colors.success });
 					setTimeout(() => sheet.close(), 800);
 				} catch {
-					submitBtn.elem.disabled = false;
+					submitBtn.options.disabled = false;
 					submitBtn.elem.textContent = 'Log It';
 					submitBtn.setStyle({ backgroundColor: colors.dark(colors.danger) });
 					setTimeout(() => submitBtn.setStyle({ backgroundColor: '' }), 2000);

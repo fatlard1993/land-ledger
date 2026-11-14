@@ -129,12 +129,7 @@ export default class PrecisionLayerImport extends Dialog {
 		// Value column
 		new FormLabel({ appendTo: body, textContent: 'Data value column *' });
 		const valueSelect = new Select({ appendTo: body });
-		for (const { value: v, label: l } of preview.columns.map(c => ({ value: c, label: c }))) {
-			const o = document.createElement('option');
-			o.value = v;
-			o.textContent = l;
-			valueSelect.elem.append(o);
-		}
+		valueSelect.options.options = preview.columns.map(c => ({ value: c, label: c }));
 		valueSelect.options.value = preview.columns[0] || '';
 
 		// Auto-select the most likely value column
@@ -174,17 +169,12 @@ export default class PrecisionLayerImport extends Dialog {
 
 		new FormLabel({ appendTo: c1, textContent: 'Layer type' });
 		const typeSelect = new Select({ appendTo: c1 });
-		for (const { value: v, label: l } of [
+		typeSelect.options.options = [
 			{ value: 'yield', label: 'Yield map' },
 			{ value: 'as-applied', label: 'As-applied map' },
 			{ value: 'soil-ec', label: 'Soil EC map' },
 			{ value: 'other', label: 'Other data layer' },
-		]) {
-			const o = document.createElement('option');
-			o.value = v;
-			o.textContent = l;
-			typeSelect.elem.append(o);
-		}
+		];
 		typeSelect.options.value = 'yield';
 
 		new FormLabel({ appendTo: c2, textContent: 'Season' });
@@ -226,7 +216,7 @@ export default class PrecisionLayerImport extends Dialog {
 					return;
 				}
 
-				importBtn.elem.disabled = true;
+				importBtn.options.disabled = true;
 				importBtn.elem.textContent = 'Importing…';
 
 				try {
@@ -250,7 +240,7 @@ export default class PrecisionLayerImport extends Dialog {
 					this.close();
 				} catch (err) {
 					new Notify({ intent: 'danger', textContent: err.message || 'Import failed', timeout: 5000 });
-					importBtn.elem.disabled = false;
+					importBtn.options.disabled = false;
 					importBtn.elem.textContent = 'Import Layer';
 				}
 			},

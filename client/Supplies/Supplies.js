@@ -4,7 +4,6 @@ import {
 	Component,
 	Elem,
 	EmptyState,
-	Icon,
 	SectionLabel,
 	styled,
 	theme,
@@ -45,21 +44,21 @@ export default class Supplies extends AsyncView {
 		this.toolbar = new Toolbar({ appendTo: this, variant: 'bar', heading: 'Supplies', gap: 8, wrap: false });
 		new Button({
 			appendTo: this.toolbar,
-			append: new Icon({ icon: 'file-import' }),
+			icon: 'file-import',
 			title: 'Import CSV / JSON',
 			onPointerPress: () => new TabularImportDialog({ initialCollection: 'supplies' }),
 		});
 
 		new Button({
 			appendTo: this.toolbar,
-			append: new Icon({ icon: 'file-export' }),
+			icon: 'file-export',
 			title: 'Export data',
 			onPointerPress: () => new ExportDialog(),
 		});
 
 		new Button({
 			appendTo: this.toolbar,
-			append: new Icon({ icon: 'plus' }),
+			icon: 'plus',
 			title: 'Add supply item',
 			onPointerPress: () =>
 				new SupplyDialog({

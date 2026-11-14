@@ -886,19 +886,14 @@ export default class FieldPanel extends Component {
 		const pathStatusSelect = new Select({ appendTo: this._content });
 
 		pathStatusSelect.setStyle(FIELD_STYLE);
-		[
+		pathStatusSelect.options.options = [
 			{ value: '', label: 'Active' },
 			{ value: 'needs_maintenance', label: 'Needs maintenance' },
 			{ value: 'needs_service', label: 'Needs service' },
 			{ value: 'out_of_service', label: 'Out of service' },
 			{ value: 'closed', label: 'Closed' },
 			{ value: 'destroyed', label: 'Destroyed' },
-		].forEach(({ value, label }) => {
-			const o = document.createElement('option');
-			o.value = value;
-			o.textContent = label;
-			pathStatusSelect.elem.append(o);
-		});
+		];
 		pathStatusSelect.options.value = p.status || '';
 
 		const pathLabelCb = this._mkLabelToggle(p.showLabel === true);
@@ -1041,12 +1036,7 @@ export default class FieldPanel extends Component {
 				const select = new Select({ appendTo: this._content });
 
 				select.setStyle(FIELD_STYLE);
-				options.forEach(({ value, label: optionLabel }) => {
-					const o = document.createElement('option');
-					o.value = value;
-					o.textContent = optionLabel;
-					select.elem.append(o);
-				});
+				select.options.options = options;
 				select.options.value = p[key] || '';
 				getters[key] = () => select.options.value;
 			} else {
@@ -1077,12 +1067,7 @@ export default class FieldPanel extends Component {
 
 		const unitSelect = new Select({ appendTo: areaRow, attributes: { 'aria-label': 'Area unit' } });
 
-		for (const { value: unitValue, label } of AREA_UNITS) {
-			const opt = document.createElement('option');
-			opt.value = unitValue;
-			opt.textContent = label;
-			unitSelect.elem.append(opt);
-		}
+		unitSelect.options.options = AREA_UNITS;
 
 		unitSelect.options.value = currentUnit;
 		unitSelect.elem.addEventListener('change', () => {
@@ -1364,12 +1349,7 @@ export default class FieldPanel extends Component {
 				const select = new Select({ appendTo: this._content });
 
 				select.setStyle(FIELD_STYLE);
-				options.forEach(({ value, label: optionLabel }) => {
-					const o = document.createElement('option');
-					o.value = value;
-					o.textContent = optionLabel;
-					select.elem.append(o);
-				});
+				select.options.options = options;
 				select.options.value = b[key] || '';
 				getters[key] = () => select.options.value;
 			} else {
@@ -1586,13 +1566,7 @@ export default class FieldPanel extends Component {
 				const select = new Select({ appendTo: this._content });
 
 				select.setStyle(FIELD_STYLE);
-				for (const { value, label: optionLabel } of options) {
-					const opt = document.createElement('option');
-
-					opt.value = value;
-					opt.textContent = optionLabel;
-					select.elem.append(opt);
-				}
+				select.options.options = options;
 				select.elem.value = item[key] || '';
 				getters[key] = () => select.elem.value;
 			} else {
@@ -1764,13 +1738,7 @@ export default class FieldPanel extends Component {
 
 				select.setStyle(FIELD_STYLE);
 
-				for (const { value, label: optLabel } of options) {
-					const opt = document.createElement('option');
-
-					opt.value = value;
-					opt.textContent = optLabel;
-					select.elem.append(opt);
-				}
+				select.options.options = options;
 
 				select.options.value = field[key] || options[0].value;
 				inputGetters[key] = () => select.options.value;
@@ -1791,13 +1759,7 @@ export default class FieldPanel extends Component {
 				// Unit selector
 				const unitSelect = new Select({ appendTo: wrap, attributes: { 'aria-label': 'Area unit' } });
 
-				for (const { value: unitValue, label } of AREA_UNITS) {
-					const opt = document.createElement('option');
-
-					opt.value = unitValue;
-					opt.textContent = label;
-					unitSelect.elem.append(opt);
-				}
+				unitSelect.options.options = AREA_UNITS;
 
 				unitSelect.options.value = currentUnit;
 

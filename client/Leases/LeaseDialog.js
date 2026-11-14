@@ -159,13 +159,13 @@ export default class LeaseDialog extends FormDialog {
 					style: { flex: '1' },
 					onPointerPress: async () => {
 						role = value;
-						for (const [b, v] of toggleButtons) b.toggleClass('active', role === v);
+						for (const [b, v] of toggleButtons) b.options.pressed = role === v;
 
 						await rebuildBody();
 					},
 				});
 
-				btn.toggleClass('active', role === value);
+				btn.options.pressed = role === value;
 				toggleButtons.push([btn, value]);
 
 				return btn;
@@ -207,16 +207,11 @@ export default class LeaseDialog extends FormDialog {
 			if (isLessor) {
 				new FormLabel({ appendTo: container, textContent: 'Asset Type' });
 				const typeSelect = new Select({ appendTo: container });
-				for (const { value: v, label: l } of [
+				typeSelect.options.options = [
 					{ value: 'field', label: `${entityIcon('field')} Field` },
 					{ value: 'building', label: `${entityIcon('building')} Building` },
 					{ value: 'equipment', label: `${entityIcon('equipment')} Equipment` },
-				]) {
-					const o = document.createElement('option');
-					o.value = v;
-					o.textContent = l;
-					typeSelect.elem.append(o);
-				}
+				];
 				typeSelect.options.value = entityType;
 
 				const entityPickerWrap = new Component({ appendTo: container });
@@ -250,12 +245,7 @@ export default class LeaseDialog extends FormDialog {
 					}
 
 					const select = new Select({ appendTo: entityPickerWrap });
-					for (const { value: v, label: l } of items.map(i => ({ value: i.id, label: i.name || `Unnamed ${type}` }))) {
-						const o = document.createElement('option');
-						o.value = v;
-						o.textContent = l;
-						select.elem.append(o);
-					}
+					select.options.options = items.map(i => ({ value: i.id, label: i.name || `Unnamed ${type}` }));
 					select.elem.value = lease.entityId || items[0]?.id || '';
 					this._entityId = select.elem.value;
 					this._entityType = type;
@@ -278,12 +268,7 @@ export default class LeaseDialog extends FormDialog {
 				const fieldsData = await getFields();
 				const fields = Object.values(fieldsData?.body || {});
 				const fieldSelect = new Select({ appendTo: container });
-				for (const { value: v, label: l } of fields.map(f => ({ value: f.id, label: f.name || 'Unnamed' }))) {
-					const o = document.createElement('option');
-					o.value = v;
-					o.textContent = l;
-					fieldSelect.elem.append(o);
-				}
+				fieldSelect.options.options = fields.map(f => ({ value: f.id, label: f.name || 'Unnamed' }));
 				fieldSelect.elem.value = lease.entityId || fields[0]?.id || '';
 				this._entityId = fieldSelect.elem.value;
 				this._entityType = 'field';
@@ -324,12 +309,7 @@ export default class LeaseDialog extends FormDialog {
 
 		const rateOpts = isLessor ? RATE_TYPES : RATE_TYPES.filter(r => ['cash_per_acre', 'crop_share'].includes(r.value));
 		const typeSelect = new Select({ appendTo: rateTypeCol });
-		for (const { value: v, label: l } of rateOpts) {
-			const o = document.createElement('option');
-			o.value = v;
-			o.textContent = l;
-			typeSelect.elem.append(o);
-		}
+		typeSelect.options.options = rateOpts;
 		typeSelect.options.value = lease.type || (isLessor ? 'monthly' : 'cash_per_acre');
 
 		const rateAmtCol = new Component({ appendTo: rateTypeRow });

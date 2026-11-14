@@ -1,4 +1,4 @@
-import { Button, EmptyState, formatDate, Icon, Table, theme, Toolbar } from '@vanilla-bean/components';
+import { Button, EmptyState, formatDate, Table, theme, Toolbar } from '@vanilla-bean/components';
 
 import AsyncView from '../AsyncView';
 
@@ -19,14 +19,14 @@ export default class ApplicationLogs extends AsyncView {
 
 		new Button({
 			appendTo: this.toolbar,
-			append: new Icon({ icon: 'file-export' }),
+			icon: 'file-export',
 			title: 'Export application records',
 			onPointerPress: () => new ExportDialog(),
 		});
 
 		new Button({
 			appendTo: this.toolbar,
-			append: new Icon({ icon: 'plus' }),
+			icon: 'plus',
 			title: 'Log application',
 			onPointerPress: () => this._openDialog(),
 		});

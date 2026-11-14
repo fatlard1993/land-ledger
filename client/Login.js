@@ -106,6 +106,7 @@ export function mountLoginScreen(onSuccess) {
 		appendTo: card,
 		type: 'password',
 		placeholder: 'Passkey',
+		attributes: { 'aria-label': 'Passkey' },
 		autocomplete: 'current-password',
 	});
 

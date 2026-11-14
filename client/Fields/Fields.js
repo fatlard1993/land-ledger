@@ -5,7 +5,6 @@ import {
 	Elem,
 	EmptyState,
 	formatDate,
-	Icon,
 	parseDate,
 	SectionLabel,
 	styled,
@@ -295,13 +294,13 @@ export default class Fields extends AsyncView {
 
 		new Button({
 			appendTo: this.toolbar,
-			append: new Icon({ icon: 'file-export' }),
+			icon: 'file-export',
 			title: 'Export data',
 			onPointerPress: () => new ExportDialog(),
 		});
 		new Button({
 			appendTo: this.toolbar,
-			append: new Icon({ icon: 'plus' }),
+			icon: 'plus',
 			title: 'Add field',
 			onPointerPress: () =>
 				new FieldDialog({
@@ -383,7 +382,7 @@ export default class Fields extends AsyncView {
 
 		new Button({
 			appendTo: this.toolbar,
-			append: new Icon({ icon: 'pencil' }),
+			icon: 'pencil',
 			title: 'Edit field',
 			onPointerPress: () =>
 				new FieldDialog({
