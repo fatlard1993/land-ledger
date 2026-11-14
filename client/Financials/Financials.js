@@ -51,6 +51,8 @@ const signColor = n => {
 };
 
 const CardLabel = styled(SectionLabel, ({ space }) => `margin: 0 0 ${space.md};`);
+// Beside the row's figures or controls, which space it
+const RowLabel = styled(SectionLabel, () => 'margin: 0;');
 
 const BarRow = styled(
 	Component,
@@ -357,7 +359,7 @@ export default class Financials extends AsyncView {
 				style: { display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: space.sm },
 			});
 
-			new CardLabel({ appendTo: nwHeader, style: { margin: '0' }, textContent: 'Net Worth Snapshot' });
+			new RowLabel({ appendTo: nwHeader, textContent: 'Net Worth Snapshot' });
 
 			const nw = inventoryValue + appraisedAssets + equipmentAppraisedValue - outstandingLoans;
 			const nwColor = nw >= 0 ? colors.light(colors.success) : colors.light(colors.danger);
@@ -386,15 +388,16 @@ export default class Financials extends AsyncView {
 
 			// Per-loan equity breakdown
 			if (loanEquity.length) {
-				new SectionLabel({
+				const equity = new Component({
 					appendTo: nwCard,
-					style: { margin: `${space.sm} 0 ${space.xs}`, paddingTop: space.sm, borderTop: `1px solid ${colors.border}` },
-					textContent: 'Equity by Asset',
+					style: { marginTop: space.sm, paddingTop: space.sm, borderTop: `1px solid ${colors.border}` },
 				});
+
+				new SectionLabel({ appendTo: equity, textContent: 'Equity by Asset' });
 
 				for (const l of loanEquity) {
 					const eqColor = l.equity >= 0 ? colors.light(colors.success) : colors.light(colors.danger);
-					const row = new AmountRow({ appendTo: nwCard });
+					const row = new AmountRow({ appendTo: equity });
 
 					new Elem({ tag: 'span', appendTo: row, textContent: `${l.name} (${l.ltv}% LTV)` });
 					new Elem({ tag: 'span', appendTo: row, style: { color: eqColor, fontWeight: '600' } }).elem.textContent =
@@ -419,9 +422,8 @@ export default class Financials extends AsyncView {
 			style: { display: 'flex', justifyContent: 'space-between', marginBottom: space.sm },
 		});
 
-		new CardLabel({
+		new RowLabel({
 			appendTo: monthHeader,
-			style: { margin: '0' },
 			textContent: `Monthly — ${yr}${isThisYear ? ` (through ${MONTHS[lastMonth]})` : ''}`,
 		});
 
@@ -868,7 +870,7 @@ export default class Financials extends AsyncView {
 		]) {
 			if (!items.length) continue;
 
-			new SectionLabel({ appendTo: budgetCard, style: { margin: `${space.sm} 0 ${space.xs}` }, textContent: label });
+			new SectionLabel({ appendTo: budgetCard, textContent: label });
 
 			for (const b of items.sort((a, z) => annualAmount(z) - annualAmount(a))) {
 				const freq = FREQUENCIES.find(f => f.value === b.frequency);

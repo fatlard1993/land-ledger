@@ -148,7 +148,6 @@ export default class Supplies extends AsyncView {
 
 			new SectionLabel({
 				appendTo: this.content,
-				style: { margin: `${space.sm} 0 0` },
 				textContent: `${catEmoji} ${cat}`,
 			});
 

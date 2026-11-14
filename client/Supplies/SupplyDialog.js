@@ -234,7 +234,7 @@ export default class SupplyDialog extends FormDialog {
 			style: { marginTop: space.md, borderTop: `1px solid ${colors.border}`, paddingTop: space.md },
 		});
 
-		new SectionLabel({ appendTo: pricingDiv, textContent: 'Sale Price', style: { margin: `0 0 ${space.sm}` } });
+		new SectionLabel({ appendTo: pricingDiv, textContent: 'Sale Price' });
 
 		// Mode toggle
 		const modeRow = new Elem({

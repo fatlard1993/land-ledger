@@ -329,7 +329,7 @@ export default class AccountsDialog extends Dialog {
 	_renderNassSection() {
 		const sec = new AdminSection({ appendTo: this.body });
 
-		new SectionLabel({ appendTo: sec, textContent: 'USDA NASS API Key', style: { margin: `0 0 ${space.xs}` } });
+		new SectionLabel({ appendTo: sec, textContent: 'USDA NASS API Key' });
 
 		const sub = new Hint({ appendTo: sec, style: { marginBottom: '0' } });
 
