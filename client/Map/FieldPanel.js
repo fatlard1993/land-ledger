@@ -1567,8 +1567,8 @@ export default class FieldPanel extends Component {
 
 				select.setStyle(FIELD_STYLE);
 				select.options.options = options;
-				select.elem.value = item[key] || '';
-				getters[key] = () => select.elem.value;
+				select.options.value = item[key] || '';
+				getters[key] = () => select.options.value;
 			} else {
 				const input = new Input({ appendTo: this._content });
 

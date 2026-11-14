@@ -246,13 +246,13 @@ export default class LeaseDialog extends FormDialog {
 
 					const select = new Select({ appendTo: entityPickerWrap });
 					select.options.options = items.map(i => ({ value: i.id, label: i.name || `Unnamed ${type}` }));
-					select.elem.value = lease.entityId || items[0]?.id || '';
-					this._entityId = select.elem.value;
+					select.options.value = lease.entityId || items[0]?.id || '';
+					this._entityId = select.options.value;
 					this._entityType = type;
-					this._entityName = items.find(i => i.id === select.elem.value)?.name || '';
+					this._entityName = items.find(i => i.id === select.options.value)?.name || '';
 					select.elem.addEventListener('change', () => {
-						this._entityId = select.elem.value;
-						this._entityName = items.find(i => i.id === select.elem.value)?.name || '';
+						this._entityId = select.options.value;
+						this._entityName = items.find(i => i.id === select.options.value)?.name || '';
 					});
 				};
 
@@ -269,13 +269,13 @@ export default class LeaseDialog extends FormDialog {
 				const fields = Object.values(fieldsData?.body || {});
 				const fieldSelect = new Select({ appendTo: container });
 				fieldSelect.options.options = fields.map(f => ({ value: f.id, label: f.name || 'Unnamed' }));
-				fieldSelect.elem.value = lease.entityId || fields[0]?.id || '';
-				this._entityId = fieldSelect.elem.value;
+				fieldSelect.options.value = lease.entityId || fields[0]?.id || '';
+				this._entityId = fieldSelect.options.value;
 				this._entityType = 'field';
-				this._entityName = fields.find(f => f.id === fieldSelect.elem.value)?.name || '';
+				this._entityName = fields.find(f => f.id === fieldSelect.options.value)?.name || '';
 				fieldSelect.elem.addEventListener('change', () => {
-					this._entityId = fieldSelect.elem.value;
-					this._entityName = fields.find(f => f.id === fieldSelect.elem.value)?.name || '';
+					this._entityId = fieldSelect.options.value;
+					this._entityName = fields.find(f => f.id === fieldSelect.options.value)?.name || '';
 				});
 			}
 		}

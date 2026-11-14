@@ -249,12 +249,12 @@ export default class EventDialog extends FormDialog {
 
 		fieldSelect.options.options = fieldOptions.map(({ value, label }) => ({ value, label }));
 
-		fieldSelect.elem.value = this._fieldId || fieldOptions[0]?.value || '';
+		fieldSelect.options.value = this._fieldId || fieldOptions[0]?.value || '';
 
-		this._getters.fieldId = () => fieldSelect.elem.value;
+		this._getters.fieldId = () => fieldSelect.options.value;
 
 		fieldSelect.elem.addEventListener('change', () => {
-			const opt = fieldOptions.find(f => f.value === fieldSelect.elem.value);
+			const opt = fieldOptions.find(f => f.value === fieldSelect.options.value);
 
 			this._acreage = opt?.acreage || 0;
 			this._refreshCalculations?.();
