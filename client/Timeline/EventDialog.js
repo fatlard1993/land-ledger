@@ -391,7 +391,7 @@ export default class EventDialog extends FormDialog {
 			new FormLabel({ appendTo: container, textContent: 'Crop' });
 			const speciesEl = makeCropCombobox(container.elem, prev.species || '', 'e.g. Corn, Winter Wheat, Grain Sorghum…');
 
-			speciesEl.addEventListener('input', () => this._refreshEmoji?.(speciesEl.value));
+			speciesEl.elem.addEventListener('input', () => this._refreshEmoji?.(speciesEl.options.value));
 
 			// Seed cost from inventory
 			new FormLabel({ appendTo: container, textContent: 'Seed from inventory (optional)' });
@@ -445,11 +445,11 @@ export default class EventDialog extends FormDialog {
 
 			g.name = () => {
 				const p = collectCropProps();
-				return `${speciesEl.value}${p.variety ? ` — ${p.variety}` : ''}`;
+				return `${speciesEl.options.value}${p.variety ? ` — ${p.variety}` : ''}`;
 			};
 			g.details = () => ({
 				...collectCropProps(),
-				species: speciesEl.value,
+				species: speciesEl.options.value,
 				seedCostPerAcre: toNum(seedCostEl.options.value),
 				seedSupplyId: seedSelect.options.value || null,
 			});
