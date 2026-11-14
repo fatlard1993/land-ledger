@@ -388,8 +388,11 @@ export default class EventDialog extends FormDialog {
 		const g = this._detailGetters;
 
 		if (category === 'crop') {
-			new FormLabel({ appendTo: container, textContent: 'Crop' });
-			const speciesEl = makeCropCombobox(container.elem, prev.species || '', 'e.g. Corn, Winter Wheat, Grain Sorghum…');
+			const speciesEl = makeCropCombobox(container, {
+				label: 'Crop',
+				value: prev.species || '',
+				placeholder: 'e.g. Corn, Winter Wheat, Grain Sorghum…',
+			});
 
 			speciesEl.elem.addEventListener('input', () => this._refreshEmoji?.(speciesEl.options.value));
 

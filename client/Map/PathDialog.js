@@ -81,13 +81,11 @@ export default class PathDialog extends FormDialog {
 		};
 
 		// Name
-		const lbl = s => new Caption({ appendTo: this.body, textContent: s });
-
-		lbl('Name');
+		new Caption({ appendTo: this.body, textContent: 'Name' });
 		this._nameEl = new Input({ appendTo: this.body, type: 'text', placeholder: 'e.g. North Lane, Driveway' });
 		this._nameEl.options.value = path.name || '';
 
-		lbl('Type');
+		new Caption({ appendTo: this.body, textContent: 'Type' });
 		this._typeEl = new Input({
 			appendTo: this.body,
 			type: 'text',
@@ -98,7 +96,7 @@ export default class PathDialog extends FormDialog {
 			if (!emojiInput.elem.dataset.manual) emojiInput.options.value = detectPathEmoji(this._typeEl.options.value);
 		});
 
-		lbl('Width (feet)');
+		new Caption({ appendTo: this.body, textContent: 'Width (feet)' });
 		this._widthEl = new Input({
 			appendTo: this.body,
 			type: 'number',
@@ -108,7 +106,7 @@ export default class PathDialog extends FormDialog {
 		this._widthEl.options.value = path.widthFt || '10';
 
 		// Color
-		lbl('Surface / color');
+		new Caption({ appendTo: this.body, textContent: 'Surface / color' });
 
 		const colorRow = new Elem({
 			tag: 'div',
@@ -136,7 +134,7 @@ export default class PathDialog extends FormDialog {
 		this._collectProps = collectProps;
 
 		// Status
-		lbl('Status');
+		new Caption({ appendTo: this.body, textContent: 'Status' });
 		this._statusSelect = new Select({
 			appendTo: this.body,
 			options: [
