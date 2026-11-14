@@ -338,10 +338,10 @@ export default class Timeline extends AsyncView {
 			filterSelect.elem.append(opt);
 		}
 
-		filterSelect.elem.value = this._fieldFilter || '';
+		filterSelect.options.value = this._fieldFilter || '';
 
 		filterSelect.elem.addEventListener('change', () => {
-			this._fieldFilter = filterSelect.elem.value || null;
+			this._fieldFilter = filterSelect.options.value || null;
 			const selectedField = this.fields?.body?.[this._fieldFilter];
 
 			this.toolbar.options.heading = selectedField ? selectedField.name : 'Timeline';

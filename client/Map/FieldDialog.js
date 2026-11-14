@@ -45,12 +45,12 @@ export default class FieldDialog extends FormDialog {
 			onSave: async d => {
 				const data = {
 					...d,
-					acreage: this._acreageInput?.elem.value || '',
-					acreageUnit: this._unitSelect?.elem.value || 'ac',
+					acreage: this._acreageInput?.options.value ?? '',
+					acreageUnit: this._unitSelect?.options.value || 'ac',
 					showLabel: this._showLabelEl?.elem.checked !== false,
-					status: this._statusSelect?.elem.value || '',
-					trialGroup: this._trialGroupEl?.elem.value.trim() || '',
-					trialRole: this._trialRoleSelect?.elem.value || '',
+					status: this._statusSelect?.options.value || '',
+					trialGroup: this._trialGroupEl?.options.value.trim() || '',
+					trialRole: this._trialRoleSelect?.options.value || '',
 					properties: this._collectProps?.() ?? {},
 				};
 
@@ -150,11 +150,11 @@ export default class FieldDialog extends FormDialog {
 				onPointerPress: () => {
 					if (!sqm) return;
 
-					const unit = this._unitSelect.elem.value;
+					const unit = this._unitSelect.options.value;
 					const val = convertArea(sqm, unit);
 					const meta = AREA_UNITS.find(u => u.value === unit);
 
-					this._acreageInput.elem.value = val.toFixed(meta?.decimals ?? 1);
+					this._acreageInput.options.value = val.toFixed(meta?.decimals ?? 1);
 				},
 			});
 		}

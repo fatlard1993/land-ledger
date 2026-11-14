@@ -45,7 +45,7 @@ export function openSellDialog(entityType, entity, onComplete, hide) {
 		inputs: [],
 		saveLabel: 'Record Sale & Remove',
 		onSave: async () => {
-			if (!priceEl.elem.value) {
+			if (priceEl.options.value === '') {
 				priceEl.elem.style.border = `1px solid ${colors.danger}`;
 
 				return 'Enter the sale price';
@@ -57,11 +57,11 @@ export function openSellDialog(entityType, entity, onComplete, hide) {
 						entityType,
 						entityId: entity.id,
 						entityName: entity.name || '',
-						date: dateEl.elem.value || toDateOnly(),
-						amount: Number(priceEl.elem.value),
+						date: dateEl.options.value || toDateOnly(),
+						amount: Number(priceEl.options.value),
 						type: 'sale',
 						description: `Sale of ${entityLabel}`,
-						notes: [buyerEl.elem.value ? `Buyer: ${buyerEl.elem.value}` : null, notesEl.elem.value || null]
+						notes: [buyerEl.options.value ? `Buyer: ${buyerEl.options.value}` : null, notesEl.options.value || null]
 							.filter(Boolean)
 							.join('\n'),
 					},
@@ -85,7 +85,7 @@ export function openSellDialog(entityType, entity, onComplete, hide) {
 
 	new FormLabel({ appendTo: dialog.body, textContent: 'Sale Date' });
 	const dateEl = new Input({ appendTo: dialog.body, type: 'date' });
-	dateEl.elem.value = toDateOnly();
+	dateEl.options.value = toDateOnly();
 
 	new FormLabel({ appendTo: dialog.body, textContent: 'Buyer (optional)' });
 	const buyerEl = new Input({ appendTo: dialog.body, placeholder: 'Buyer name or business' });
@@ -106,17 +106,17 @@ export function openRevenueDialog(entityType, entity, existingRecord, onSave, on
 		header: existingRecord ? 'Edit Income Record' : `Record Income — ${entity.name || ''}`,
 		inputs: [],
 		onSave: async () => {
-			if (!amountEl.elem.value) return 'Enter an amount';
+			if (amountEl.options.value === '') return 'Enter an amount';
 
 			const stay = stayOpenFor(
 				await onSave({
 					entityType,
 					entityId: entity.id,
 					entityName: entity.name || '',
-					date: dateEl.elem.value,
-					amount: Number(amountEl.elem.value),
-					type: typeEl.elem.value,
-					description: descEl.elem.value,
+					date: dateEl.options.value,
+					amount: Number(amountEl.options.value),
+					type: typeEl.options.value,
+					description: descEl.options.value,
 					properties: collectProps(),
 				}),
 			);
@@ -161,15 +161,15 @@ export function openRevenueDialog(entityType, entity, existingRecord, onSave, on
 
 	new FormLabel({ appendTo: row, textContent: 'Amount ($)' });
 	const amountEl = new Input({ appendTo: row, type: 'number', step: '0.01', placeholder: '0.00' });
-	amountEl.elem.value = rec.amount || '';
+	amountEl.options.value = rec.amount || '';
 
 	new FormLabel({ appendTo: row, textContent: 'Date' });
 	const dateEl = new Input({ appendTo: row, type: 'date' });
-	dateEl.elem.value = rec.date || toDateOnly();
+	dateEl.options.value = rec.date || toDateOnly();
 
 	new FormLabel({ appendTo: dialog.body, textContent: 'Description' });
 	const descEl = new Input({ appendTo: dialog.body, placeholder: 'What was the space used for?' });
-	descEl.elem.value = rec.description || '';
+	descEl.options.value = rec.description || '';
 
 	const { collect: collectProps } = makePropertiesEditor(dialog.body, rec.properties || {});
 
@@ -209,7 +209,7 @@ export function openRevenueDialog(entityType, entity, existingRecord, onSave, on
 
 			if (total > 0) {
 				totalPreview.elem.textContent = `= ${formatDollar(total, 2)} — auto-fills Amount`;
-				amountEl.elem.value = total.toFixed(2);
+				amountEl.options.value = total.toFixed(2);
 			} else {
 				totalPreview.elem.textContent = '';
 			}
@@ -288,24 +288,24 @@ export function openRevenueDialog(entityType, entity, existingRecord, onSave, on
 			});
 
 			select.elem.addEventListener('change', () => {
-				lineData.supplyId = select.elem.value;
+				lineData.supplyId = select.options.value;
 
-				const supply = allSupplies.find(s => s.id === select.elem.value);
+				const supply = allSupplies.find(s => s.id === select.options.value);
 				const salePrice = salePriceForSupply(supply);
 
-				if (salePrice != null) priceI.elem.value = salePrice.toFixed(2);
-				lineData.price = priceI.elem.value;
+				if (salePrice != null) priceI.options.value = salePrice.toFixed(2);
+				lineData.price = priceI.options.value;
 
-				if (!typeEl.elem.value || typeEl.elem.value === '') typeEl.elem.value = 'Inventory sale';
+				if (!typeEl.options.value || typeEl.options.value === '') typeEl.options.value = 'Inventory sale';
 				recalculateTotal();
 			});
 
 			qtyI.elem.addEventListener('input', () => {
-				lineData.qty = qtyI.elem.value;
+				lineData.qty = qtyI.options.value;
 				recalculateTotal();
 			});
 			priceI.elem.addEventListener('input', () => {
-				lineData.price = priceI.elem.value;
+				lineData.price = priceI.options.value;
 				recalculateTotal();
 			});
 		};

@@ -2,6 +2,7 @@ import { Button, Component, Input, Select, styled, theme } from '@vanilla-bean/c
 
 import { FormLabel } from '../Layout';
 import { makePropertiesEditor } from '../utils/PropertiesEditor';
+import { toNum } from '../utils/format.js';
 
 const { space } = theme;
 
@@ -146,7 +147,7 @@ export function buildCoverCropSection(container, prev, g) {
 		seedingMethodSelect.elem.append(o);
 	}
 
-	seedingMethodSelect.elem.value = prev.seedingMethod || 'drilled';
+	seedingMethodSelect.options.value = prev.seedingMethod || 'drilled';
 
 	new FormLabel({ appendTo: container, textContent: 'Termination Method' });
 	const terminationSelect = new Select({ appendTo: container });
@@ -158,7 +159,7 @@ export function buildCoverCropSection(container, prev, g) {
 		terminationSelect.elem.append(o);
 	}
 
-	terminationSelect.elem.value = prev.terminationMethod || 'roller_crimper';
+	terminationSelect.options.value = prev.terminationMethod || 'roller_crimper';
 
 	const costRow = new Component({
 		appendTo: container,
@@ -171,7 +172,7 @@ export function buildCoverCropSection(container, prev, g) {
 		attributes: { type: 'number', step: '0.01', placeholder: 'Optional' },
 	});
 
-	ccSeedCostEl.elem.value = prev.seedCostPerAcre || '';
+	ccSeedCostEl.options.value = prev.seedCostPerAcre || '';
 
 	new FormLabel({ appendTo: costRow, textContent: 'Application Cost/Acre ($)' });
 	const ccAppCostEl = new Input({
@@ -179,7 +180,7 @@ export function buildCoverCropSection(container, prev, g) {
 		attributes: { type: 'number', step: '0.01', placeholder: 'Optional' },
 	});
 
-	ccAppCostEl.elem.value = prev.applicationCostPerAcre || '';
+	ccAppCostEl.options.value = prev.applicationCostPerAcre || '';
 
 	const { collect: collectCCProps } = makePropertiesEditor(container, {
 		estimatedBiomass:
@@ -190,21 +191,21 @@ export function buildCoverCropSection(container, prev, g) {
 
 	g.name = () =>
 		speciesRows
-			.filter(r => r.nameEl.elem.value)
-			.map(r => r.nameEl.elem.value)
+			.filter(r => r.nameEl.options.value)
+			.map(r => r.nameEl.options.value)
 			.join(' + ') || 'Cover Crop';
 	g.details = () => ({
 		species: speciesRows
-			.filter(r => r.nameEl.elem.value)
+			.filter(r => r.nameEl.options.value)
 			.map(r => ({
-				name: r.nameEl.elem.value,
-				rate: r.rateEl.elem.value ? Number(r.rateEl.elem.value) : null,
-				unit: r.unitEl.elem.value,
+				name: r.nameEl.options.value,
+				rate: toNum(r.rateEl.options.value),
+				unit: r.unitEl.options.value,
 			})),
-		seedingMethod: seedingMethodSelect.elem.value,
-		terminationMethod: terminationSelect.elem.value,
-		seedCostPerAcre: ccSeedCostEl.elem.value ? Number(ccSeedCostEl.elem.value) : null,
-		applicationCostPerAcre: ccAppCostEl.elem.value ? Number(ccAppCostEl.elem.value) : null,
+		seedingMethod: seedingMethodSelect.options.value,
+		terminationMethod: terminationSelect.options.value,
+		seedCostPerAcre: toNum(ccSeedCostEl.options.value),
+		applicationCostPerAcre: toNum(ccAppCostEl.options.value),
 		...collectCCProps(),
 	});
 }

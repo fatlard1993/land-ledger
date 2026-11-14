@@ -85,7 +85,7 @@ function openTokenForm(container, { onRefresh }) {
 		textContent: 'Generate token',
 		appendTo: row,
 		onPointerPress: async () => {
-			const name = input.elem.value.trim();
+			const name = input.options.value.trim();
 			if (!name) {
 				input.elem.focus();
 				return;

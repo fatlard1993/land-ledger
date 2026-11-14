@@ -100,7 +100,7 @@ export default class SupplyDialog extends FormDialog {
 					placeholder: 'e.g. Seed, Herbicide, Lime',
 					suggestions: SUPPLY_CATEGORY_SUGGESTIONS,
 					onChange: ({ value }) => {
-						if (!emojiInput.elem.dataset.manual) emojiInput.elem.value = detectSupplyEmoji(value);
+						if (!emojiInput.elem.dataset.manual) emojiInput.options.value = detectSupplyEmoji(value);
 					},
 				},
 				{
@@ -161,7 +161,7 @@ export default class SupplyDialog extends FormDialog {
 			style: { fontSize: '22px', padding: space.xs, width: '52px', textAlign: 'center', flexShrink: '0' },
 		});
 
-		emojiInput.elem.value = supply.emoji || detectSupplyEmoji(supply.category || '');
+		emojiInput.options.value = supply.emoji || detectSupplyEmoji(supply.category || '');
 
 		const emojiHint = new Elem({
 			tag: 'span',
@@ -171,8 +171,8 @@ export default class SupplyDialog extends FormDialog {
 		});
 
 		emojiInput.elem.addEventListener('input', () => {
-			emojiInput.elem.dataset.manual = emojiInput.elem.value ? '1' : '';
-			emojiHint.elem.textContent = emojiInput.elem.value
+			emojiInput.elem.dataset.manual = emojiInput.options.value ? '1' : '';
+			emojiHint.elem.textContent = emojiInput.options.value
 				? 'Custom · clear to auto-detect'
 				: 'Auto-detected · tap to change';
 		});
@@ -203,14 +203,14 @@ export default class SupplyDialog extends FormDialog {
 						buildingSelect.elem.append(opt);
 					}
 
-					if (preBuildingId) buildingSelect.elem.value = preBuildingId;
+					if (preBuildingId) buildingSelect.options.value = preBuildingId;
 				})
 				.catch(() => {
 					/* building list unavailable */
 				});
 
 			buildingSelect.elem.addEventListener('change', () => {
-				this._buildingId = buildingSelect.elem.value;
+				this._buildingId = buildingSelect.options.value;
 			});
 		}
 
@@ -224,7 +224,7 @@ export default class SupplyDialog extends FormDialog {
 		this._getEmoji = () => {
 			const auto = detectSupplyEmoji(this.form.options.data.category || '');
 
-			return emojiInput.elem.value !== auto ? emojiInput.elem.value : '';
+			return emojiInput.options.value !== auto ? emojiInput.options.value : '';
 		};
 
 		// Pricing section — cost vs sale price
@@ -284,7 +284,8 @@ export default class SupplyDialog extends FormDialog {
 
 		const markupInput = new Input({ appendTo: markupWrap, attributes: { id: markupId } });
 
-		Object.assign(markupInput.elem, { type: 'number', step: '1', min: '0', value: this._markupPct, placeholder: '50' });
+		Object.assign(markupInput.elem, { type: 'number', step: '1', min: '0', placeholder: '50' });
+		markupInput.options.value = this._markupPct;
 
 		const calcDisplay = new Input({ appendTo: markupWrap, style: { opacity: '0.6' }, attributes: { id: calcId } });
 
@@ -301,13 +302,14 @@ export default class SupplyDialog extends FormDialog {
 
 		const fixedInput = new Input({ appendTo: fixedWrap });
 
-		Object.assign(fixedInput.elem, { type: 'number', step: '0.01', value: this._fixedPrice, placeholder: '0.00' });
+		Object.assign(fixedInput.elem, { type: 'number', step: '0.01', placeholder: '0.00' });
+		fixedInput.options.value = this._fixedPrice;
 
 		const updateCalc = () => {
 			const cost = Number(this.form.options.data.costPerUnit) || 0;
-			const pct = Number(markupInput.elem.value) || 0;
+			const pct = Number(markupInput.options.value) || 0;
 
-			calcDisplay.elem.value = cost > 0 ? `$${(cost * (1 + pct / 100)).toFixed(2)}` : '—';
+			calcDisplay.options.value = cost > 0 ? `$${(cost * (1 + pct / 100)).toFixed(2)}` : '—';
 		};
 
 		const applyMode = () => {
@@ -333,11 +335,11 @@ export default class SupplyDialog extends FormDialog {
 		});
 
 		markupInput.elem.addEventListener('input', () => {
-			this._markupPct = markupInput.elem.value;
+			this._markupPct = markupInput.options.value;
 			updateCalc();
 		});
 		fixedInput.elem.addEventListener('input', () => {
-			this._fixedPrice = fixedInput.elem.value;
+			this._fixedPrice = fixedInput.options.value;
 		});
 
 		// Sync when cost changes via the Form

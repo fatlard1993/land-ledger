@@ -5,6 +5,7 @@ import { FormLabel } from '../Layout';
 
 import { getFields, getBuildings, getEquipment } from '../api';
 import { toDateOnly } from '../utils/dates';
+import { toNum } from '../utils/format.js';
 import { entityIcon } from '../utils/icons';
 
 const { colors, space } = theme;
@@ -216,7 +217,7 @@ export default class LeaseDialog extends FormDialog {
 					o.textContent = l;
 					typeSelect.elem.append(o);
 				}
-				typeSelect.elem.value = entityType;
+				typeSelect.options.value = entityType;
 
 				const entityPickerWrap = new Component({ appendTo: container });
 
@@ -268,7 +269,7 @@ export default class LeaseDialog extends FormDialog {
 				await buildEntityPicker(entityType);
 
 				typeSelect.elem.addEventListener('change', async () => {
-					entityType = typeSelect.elem.value;
+					entityType = typeSelect.options.value;
 					await buildEntityPicker(entityType);
 				});
 			} else {
@@ -302,14 +303,14 @@ export default class LeaseDialog extends FormDialog {
 
 			new FormLabel({ appendTo: col, textContent: label });
 			const el = new Input({ appendTo: col, ...inputOpts });
-			if (inputOpts?.value !== undefined) el.elem.value = inputOpts.value;
+			if (inputOpts?.value !== undefined) el.options.value = inputOpts.value;
 
 			return el;
 		};
 
 		new FormLabel({ appendTo: container, textContent: isLessor ? 'Tenant Name' : 'Landlord Name' });
 		const nameEl = new Input({ appendTo: container, placeholder: 'Full name' });
-		nameEl.elem.value = lease[nameKey] || '';
+		nameEl.options.value = lease[nameKey] || '';
 
 		// Rate
 		const rateTypeRow = new Component({
@@ -329,23 +330,23 @@ export default class LeaseDialog extends FormDialog {
 			o.textContent = l;
 			typeSelect.elem.append(o);
 		}
-		typeSelect.elem.value = lease.type || (isLessor ? 'monthly' : 'cash_per_acre');
+		typeSelect.options.value = lease.type || (isLessor ? 'monthly' : 'cash_per_acre');
 
 		const rateAmtCol = new Component({ appendTo: rateTypeRow });
 
 		new FormLabel({ appendTo: rateAmtCol, textContent: 'Amount' });
 		const rateEl = new Input({ appendTo: rateAmtCol, type: 'number', step: '0.01', placeholder: '0.00' });
-		rateEl.elem.value = lease.rateAmount || '';
+		rateEl.options.value = lease.rateAmount || '';
 
 		// Crop share — shown only when type is crop_share
 		const shareWrap = new Component({ appendTo: container });
 
 		new FormLabel({ appendTo: shareWrap, textContent: 'Crop Share (%)' });
 		const shareEl = new Input({ appendTo: shareWrap, type: 'number', placeholder: 'e.g. 50' });
-		shareEl.elem.value = lease.cropSharePercent || '';
+		shareEl.options.value = lease.cropSharePercent || '';
 
 		const updateRateUI = () => {
-			const isCropShare = typeSelect.elem.value === 'crop_share';
+			const isCropShare = typeSelect.options.value === 'crop_share';
 
 			shareWrap.elem.style.display = isCropShare ? '' : 'none';
 			rateAmtCol.elem.style.display = isCropShare ? 'none' : '';
@@ -357,7 +358,7 @@ export default class LeaseDialog extends FormDialog {
 					hourly: '$/hour',
 					per_use: '$/use',
 					crop_share: '',
-				}[typeSelect.elem.value] || '0.00';
+				}[typeSelect.options.value] || '0.00';
 		};
 
 		typeSelect.elem.addEventListener('change', updateRateUI);
@@ -374,7 +375,7 @@ export default class LeaseDialog extends FormDialog {
 
 		new FormLabel({ appendTo: container, textContent: 'Payment Terms' });
 		const payEl = new Input({ appendTo: container, placeholder: 'e.g. March 1 & Sept 1, First of month' });
-		payEl.elem.value = lease.paymentTerms || lease.paymentDates || '';
+		payEl.options.value = lease.paymentTerms || lease.paymentDates || '';
 
 		const { collect: collectProps } = makePropertiesEditor(container, lease.properties || {});
 
@@ -383,14 +384,14 @@ export default class LeaseDialog extends FormDialog {
 			entityType: this._entityType,
 			entityId: this._entityId,
 			entityName: this._entityName,
-			[nameKey]: nameEl.elem.value,
-			type: typeSelect.elem.value,
-			rateAmount: rateEl.elem.value ? Number(rateEl.elem.value) : null,
-			cropSharePercent: shareEl.elem.value ? Number(shareEl.elem.value) : null,
-			startDate: startEl.elem.value,
-			endDate: endEl.elem.value,
-			renewalDate: renewEl.elem.value,
-			paymentTerms: payEl.elem.value,
+			[nameKey]: nameEl.options.value,
+			type: typeSelect.options.value,
+			rateAmount: toNum(rateEl.options.value),
+			cropSharePercent: toNum(shareEl.options.value),
+			startDate: startEl.options.value,
+			endDate: endEl.options.value,
+			renewalDate: renewEl.options.value,
+			paymentTerms: payEl.options.value,
 			properties: collectProps(),
 		});
 	}
@@ -413,7 +414,7 @@ export default class LeaseDialog extends FormDialog {
 
 			new FormLabel({ appendTo: col, textContent: label });
 			const el = new Input({ appendTo: col, ...inputOpts });
-			if (inputOpts?.value !== undefined) el.elem.value = inputOpts.value;
+			if (inputOpts?.value !== undefined) el.options.value = inputOpts.value;
 
 			return el;
 		};
@@ -478,16 +479,16 @@ export default class LeaseDialog extends FormDialog {
 		const calcHint = new Hint({ appendTo: container });
 
 		const recalculatePayment = () => {
-			const P = Number(principalEl.elem.value);
-			const r = Number(rateEl.elem.value);
-			const t = Number(termEl.elem.value);
+			const P = Number(principalEl.options.value);
+			const r = Number(rateEl.options.value);
+			const t = Number(termEl.options.value);
 
 			if (P && t) {
 				const mp = calcMonthlyPayment(P, r, t);
 
 				calcHint.elem.textContent = `Calculated payment: ${Number(mp).toLocaleString('en-US', { style: 'currency', currency: 'USD' })}/mo`;
 
-				if (!paymentEl.elem.value) paymentEl.elem.value = mp.toFixed(2);
+				if (paymentEl.options.value === '') paymentEl.options.value = mp.toFixed(2);
 			} else {
 				calcHint.elem.textContent = '';
 			}
@@ -528,11 +529,11 @@ export default class LeaseDialog extends FormDialog {
 
 		// Auto-fill maturity from start + term
 		const recalculateMaturity = () => {
-			if (startEl.elem.value && termEl.elem.value && !maturityEl.elem.value) {
-				const d = parseDate(startEl.elem.value);
+			if (startEl.options.value && termEl.options.value !== '' && !maturityEl.options.value) {
+				const d = parseDate(startEl.options.value);
 
-				d.setFullYear(d.getFullYear() + Number(termEl.elem.value));
-				maturityEl.elem.value = toDateOnly(d);
+				d.setFullYear(d.getFullYear() + Number(termEl.options.value));
+				maturityEl.options.value = toDateOnly(d);
 			}
 		};
 
@@ -547,14 +548,14 @@ export default class LeaseDialog extends FormDialog {
 			step: '1',
 			placeholder: 'Market / appraised value',
 		});
-		appraisalEl.elem.value = lease.assetAppraisalValue || '';
+		appraisalEl.options.value = lease.assetAppraisalValue || '';
 
 		// Live equity preview
 		const equityHint = new Hint({ appendTo: container });
 
 		const updateEquity = () => {
-			const av = Number(appraisalEl.elem.value);
-			const balance = Number(balanceEl.elem.value) || Number(principalEl.elem.value) || 0;
+			const av = Number(appraisalEl.options.value);
+			const balance = Number(balanceEl.options.value) || Number(principalEl.options.value) || 0;
 
 			if (av && balance) {
 				const equity = av - balance;
@@ -582,17 +583,17 @@ export default class LeaseDialog extends FormDialog {
 			entityType: preEntityType || this._entityType || '',
 			entityId: preEntity?.id || this._entityId || '',
 			entityName: preEntity?.name || this._entityName || '',
-			lender: lenderEl.elem.value,
-			loanNumber: loanNumEl.elem.value,
-			loanAmount: principalEl.elem.value ? Number(principalEl.elem.value) : null,
-			interestRate: rateEl.elem.value ? Number(rateEl.elem.value) : null,
-			termYears: termEl.elem.value ? Number(termEl.elem.value) : null,
-			monthlyPayment: paymentEl.elem.value ? Number(paymentEl.elem.value) : null,
-			currentBalance: balanceEl.elem.value ? Number(balanceEl.elem.value) : null,
+			lender: lenderEl.options.value,
+			loanNumber: loanNumEl.options.value,
+			loanAmount: toNum(principalEl.options.value),
+			interestRate: toNum(rateEl.options.value),
+			termYears: toNum(termEl.options.value),
+			monthlyPayment: toNum(paymentEl.options.value),
+			currentBalance: toNum(balanceEl.options.value),
 			escrow: escrowCb.elem.checked,
-			assetAppraisalValue: appraisalEl.elem.value ? Number(appraisalEl.elem.value) : null,
-			startDate: startEl.elem.value,
-			maturityDate: maturityEl.elem.value,
+			assetAppraisalValue: toNum(appraisalEl.options.value),
+			startDate: startEl.options.value,
+			maturityDate: maturityEl.options.value,
 			properties: collectProps(),
 		});
 	}

@@ -6,4 +6,5 @@ module.exports = [
 			'no-empty': ['error', { allowEmptyCatch: true }],
 		},
 	},
+	...require('@vanilla-bean/components/eslint.usage.config.cjs'),
 ];

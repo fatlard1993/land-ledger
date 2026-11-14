@@ -278,7 +278,7 @@ export default class TabularImportDialog extends Dialog {
 				textContent: 'Load',
 				style: { flexShrink: '0' },
 				onPointerPress: () => {
-					const tpl = templates.find(t => t.name === templateSelect.elem.value);
+					const tpl = templates.find(t => t.name === templateSelect.options.value);
 
 					if (!tpl) return;
 
@@ -295,9 +295,9 @@ export default class TabularImportDialog extends Dialog {
 				title: 'Delete selected template',
 				style: { flexShrink: '0', color: colors.light(colors.danger) },
 				onPointerPress: async () => {
-					if (!templateSelect.elem.value) return;
+					if (!templateSelect.options.value) return;
 
-					await deleteImportTemplate(templateSelect.elem.value).catch(() => {});
+					await deleteImportTemplate(templateSelect.options.value).catch(() => {});
 					this._renderMapper();
 				},
 			});
@@ -316,7 +316,7 @@ export default class TabularImportDialog extends Dialog {
 			collectionSelect.elem.append(opt);
 		}
 
-		collectionSelect.elem.value = this._collection;
+		collectionSelect.options.value = this._collection;
 
 		// Column mapper header
 		const mapHeader = new MapHeader({ appendTo: this.body });
@@ -336,7 +336,7 @@ export default class TabularImportDialog extends Dialog {
 
 		// Collection change rebuilds the dropdowns
 		collectionSelect.elem.addEventListener('change', () => {
-			this._collection = collectionSelect.elem.value;
+			this._collection = collectionSelect.options.value;
 			this._buildMapping();
 			mapList.empty();
 			this._renderMapRows(mapList);
@@ -397,9 +397,9 @@ export default class TabularImportDialog extends Dialog {
 
 			selectEl.elem.append(otherGroup);
 
-			selectEl.elem.value = this._mapping[col] ?? '_properties';
+			selectEl.options.value = this._mapping[col] ?? '_properties';
 			selectEl.elem.addEventListener('change', () => {
-				this._mapping[col] = selectEl.elem.value;
+				this._mapping[col] = selectEl.options.value;
 				this._updateImportBtn();
 			});
 
@@ -496,7 +496,7 @@ export default class TabularImportDialog extends Dialog {
 			textContent: 'Save Template',
 			style: { flex: '1' },
 			onPointerPress: async () => {
-				const name = nameInput.elem.value.trim();
+				const name = nameInput.options.value.trim();
 
 				if (!name) {
 					nameInput.elem.focus();

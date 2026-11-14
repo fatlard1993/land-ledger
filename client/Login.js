@@ -114,7 +114,7 @@ export function mountLoginScreen(onSuccess) {
 	const btn = new LoginButton({ appendTo: card, textContent: 'Continue' });
 
 	const attempt = async () => {
-		const passkey = input.elem.value;
+		const passkey = input.options.value;
 
 		if (!passkey) {
 			input.elem.focus();
@@ -131,7 +131,7 @@ export function mountLoginScreen(onSuccess) {
 				onSuccess();
 			} else {
 				errorElem.options.textContent = 'Invalid passkey';
-				input.elem.value = '';
+				input.options.value = '';
 				input.elem.focus();
 			}
 		} catch {

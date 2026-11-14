@@ -119,7 +119,7 @@ function openShareForm(container, { onRefresh }) {
 		textContent: 'Generate Link',
 		appendTo: buttons,
 		onPointerPress: async () => {
-			const name = nameInput.elem.value.trim();
+			const name = nameInput.options.value.trim();
 			if (!name) {
 				nameInput.elem.focus();
 				return;
@@ -130,10 +130,10 @@ function openShareForm(container, { onRefresh }) {
 				purpose: selectedPurpose,
 				collections: selectedCollections,
 				dateRange:
-					startInput.elem.value || endInput.elem.value
-						? { start: startInput.elem.value || null, end: endInput.elem.value || null }
+					startInput.options.value || endInput.options.value
+						? { start: startInput.options.value || null, end: endInput.options.value || null }
 						: null,
-				expiresAt: expInput.elem.value || null,
+				expiresAt: expInput.options.value || null,
 			};
 
 			const res = await fetch('/auth/shares', {

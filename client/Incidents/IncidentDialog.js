@@ -127,12 +127,12 @@ export default class IncidentDialog extends FormDialog {
 				livestockLosses: lossRows.length
 					? JSON.stringify(
 							lossRows
-								.filter(r => r.lostEl.elem.value || r.injuredEl.elem.value)
+								.filter(r => toNum(r.lostEl.options.value) != null || toNum(r.injuredEl.options.value) != null)
 								.map(r => ({
 									eventId: r.eventId,
 									species: r.species,
-									lost: r.lostEl.elem.value ? Number(r.lostEl.elem.value) : 0,
-									injured: r.injuredEl.elem.value ? Number(r.injuredEl.elem.value) : 0,
+									lost: toNum(r.lostEl.options.value) ?? 0,
+									injured: toNum(r.injuredEl.options.value) ?? 0,
 								})),
 						)
 					: null,
@@ -141,7 +141,7 @@ export default class IncidentDialog extends FormDialog {
 				// entity status changes — only for equipment/buildings
 				entityStatusUpdate: (() => {
 					if (button === 'Mark Resolved') return restoreEl?.elem.checked ? 'active' : null;
-					return statusImpactSelect?.elem.value || null;
+					return statusImpactSelect?.options.value || null;
 				})(),
 			};
 		};

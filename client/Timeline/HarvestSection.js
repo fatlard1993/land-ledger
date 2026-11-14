@@ -1,6 +1,7 @@
 import { Component, Input, theme } from '@vanilla-bean/components';
 
 import { FormLabel } from '../Layout';
+import { toNum } from '../utils/format.js';
 
 const { space } = theme;
 
@@ -39,8 +40,8 @@ export function buildHarvestSection(container, prev, g, { onEmojiRefresh } = {})
 		suggestions: OUTPUT_SUGGESTIONS,
 	});
 
-	outputEl.elem.value = prev.outputType || '';
-	outputEl.elem.addEventListener('input', () => onEmojiRefresh?.(outputEl.elem.value));
+	outputEl.options.value = prev.outputType || '';
+	outputEl.elem.addEventListener('input', () => onEmojiRefresh?.(outputEl.options.value));
 
 	// Yield / acre — the key field for county benchmark comparison
 	const yieldRow = new Component({
@@ -54,7 +55,7 @@ export function buildHarvestSection(container, prev, g, { onEmojiRefresh } = {})
 		attributes: { type: 'number', step: '0.01', placeholder: 'e.g. 85.5' },
 	});
 
-	yieldEl.elem.value = prev.yieldPerAcre != null ? String(prev.yieldPerAcre) : '';
+	yieldEl.options.value = prev.yieldPerAcre != null ? String(prev.yieldPerAcre) : '';
 
 	new FormLabel({ appendTo: yieldRow, textContent: 'Unit' });
 	const yieldUnitEl = new Input({
@@ -63,7 +64,7 @@ export function buildHarvestSection(container, prev, g, { onEmojiRefresh } = {})
 		suggestions: UNIT_SUGGESTIONS,
 	});
 
-	yieldUnitEl.elem.value = prev.yieldUnit || prev.unit || '';
+	yieldUnitEl.options.value = prev.yieldUnit || prev.unit || '';
 
 	const row1 = new Component({
 		appendTo: container,
@@ -76,7 +77,7 @@ export function buildHarvestSection(container, prev, g, { onEmojiRefresh } = {})
 		attributes: { type: 'number', step: '0.01', placeholder: 'Whole-field total' },
 	});
 
-	qtyEl.elem.value = prev.quantity || '';
+	qtyEl.options.value = prev.quantity || '';
 
 	new FormLabel({ appendTo: row1, textContent: 'Unit' });
 	const unitEl = new Input({
@@ -85,14 +86,14 @@ export function buildHarvestSection(container, prev, g, { onEmojiRefresh } = {})
 		suggestions: UNIT_SUGGESTIONS,
 	});
 
-	unitEl.elem.value = prev.unit || prev.yieldUnit || '';
+	unitEl.options.value = prev.unit || prev.yieldUnit || '';
 
 	// Keep yield unit and quantity unit in sync
 	yieldUnitEl.elem.addEventListener('input', () => {
-		if (!unitEl.elem.value) unitEl.elem.value = yieldUnitEl.elem.value;
+		if (!unitEl.options.value) unitEl.options.value = yieldUnitEl.options.value;
 	});
 	unitEl.elem.addEventListener('input', () => {
-		if (!yieldUnitEl.elem.value) yieldUnitEl.elem.value = unitEl.elem.value;
+		if (!yieldUnitEl.options.value) yieldUnitEl.options.value = unitEl.options.value;
 	});
 
 	const row2 = new Component({
@@ -106,7 +107,7 @@ export function buildHarvestSection(container, prev, g, { onEmojiRefresh } = {})
 		attributes: { type: 'number', step: '0.0001', placeholder: 'Optional' },
 	});
 
-	priceEl.elem.value = prev.pricePerUnit || '';
+	priceEl.options.value = prev.pricePerUnit || '';
 
 	new FormLabel({ appendTo: row2, textContent: 'Revenue ($)' });
 	const revenueEl = new Input({
@@ -114,30 +115,32 @@ export function buildHarvestSection(container, prev, g, { onEmojiRefresh } = {})
 		attributes: { type: 'number', step: '0.01', placeholder: 'Optional' },
 	});
 
-	revenueEl.elem.value = prev.revenue || '';
+	revenueEl.options.value = prev.revenue || '';
 
 	// Auto-calc revenue from quantity × price
 	const recalculate = () => {
-		if (qtyEl.elem.value && priceEl.elem.value && !revenueEl.elem.value) {
-			revenueEl.elem.placeholder = `$${(Number(qtyEl.elem.value) * Number(priceEl.elem.value)).toFixed(2)}`;
+		if (qtyEl.options.value !== '' && priceEl.options.value !== '' && revenueEl.options.value === '') {
+			revenueEl.elem.placeholder = `$${(Number(qtyEl.options.value) * Number(priceEl.options.value)).toFixed(2)}`;
 		}
 	};
 
 	qtyEl.elem.addEventListener('input', recalculate);
 	priceEl.elem.addEventListener('input', recalculate);
 
-	g.name = () => outputEl.elem.value || 'Harvest';
+	g.name = () => outputEl.options.value || 'Harvest';
 	g.details = () => ({
-		outputType: outputEl.elem.value,
-		yieldPerAcre: yieldEl.elem.value ? Number(yieldEl.elem.value) : null,
-		yieldUnit: yieldUnitEl.elem.value || unitEl.elem.value || null,
-		quantity: qtyEl.elem.value ? Number(qtyEl.elem.value) : null,
-		unit: unitEl.elem.value || yieldUnitEl.elem.value,
-		pricePerUnit: priceEl.elem.value ? Number(priceEl.elem.value) : null,
+		outputType: outputEl.options.value,
+		yieldPerAcre: toNum(yieldEl.options.value),
+		yieldUnit: yieldUnitEl.options.value || unitEl.options.value || null,
+		quantity: toNum(qtyEl.options.value),
+		unit: unitEl.options.value || yieldUnitEl.options.value,
+		pricePerUnit: toNum(priceEl.options.value),
 		revenue: (() => {
-			if (revenueEl.elem.value) return Number(revenueEl.elem.value);
+			if (revenueEl.options.value !== '') return Number(revenueEl.options.value);
 			const calculatedRevenue =
-				qtyEl.elem.value && priceEl.elem.value ? Number(qtyEl.elem.value) * Number(priceEl.elem.value) : null;
+				qtyEl.options.value !== '' && priceEl.options.value !== ''
+					? Number(qtyEl.options.value) * Number(priceEl.options.value)
+					: null;
 			return calculatedRevenue;
 		})(),
 	});

@@ -135,11 +135,11 @@ export default class PrecisionLayerImport extends Dialog {
 			o.textContent = l;
 			valueSelect.elem.append(o);
 		}
-		valueSelect.elem.value = preview.columns[0] || '';
+		valueSelect.options.value = preview.columns[0] || '';
 
 		// Auto-select the most likely value column
 		const valueGuess = preview.columns.find(c => /yield|rate|bu|ton|lb|seed|appli|actual|target/i.test(c));
-		if (valueGuess) valueSelect.elem.value = valueGuess;
+		if (valueGuess) valueSelect.options.value = valueGuess;
 
 		new FormLabel({ appendTo: body, textContent: 'Value unit (e.g. bu/ac, seeds/ac)' });
 		const unitInput = new Input({ appendTo: body });
@@ -185,12 +185,12 @@ export default class PrecisionLayerImport extends Dialog {
 			o.textContent = l;
 			typeSelect.elem.append(o);
 		}
-		typeSelect.elem.value = 'yield';
+		typeSelect.options.value = 'yield';
 
 		new FormLabel({ appendTo: c2, textContent: 'Season' });
 		const seasonInput = new Input({ appendTo: c2 });
 		seasonInput.elem.type = 'number';
-		seasonInput.elem.value = new Date().getFullYear();
+		seasonInput.options.value = new Date().getFullYear();
 
 		new FormLabel({ appendTo: body, textContent: 'Field (optional — link to a specific field)' });
 		const fieldSelect = new Select({ appendTo: body });
@@ -205,7 +205,7 @@ export default class PrecisionLayerImport extends Dialog {
 					.forEach(f => {
 						fieldSelect.elem.append(new Option(f.name || 'Unnamed', f.id));
 					});
-				if (this.options.presetFieldId) fieldSelect.elem.value = this.options.presetFieldId;
+				if (this.options.presetFieldId) fieldSelect.options.value = this.options.presetFieldId;
 			})
 			.catch(() => {});
 
@@ -220,7 +220,7 @@ export default class PrecisionLayerImport extends Dialog {
 			textContent: 'Import Layer',
 			style: { width: '100%', marginTop: space.lg },
 			onPointerPress: async () => {
-				const valueField = valueSelect.elem.value;
+				const valueField = valueSelect.options.value;
 				if (!valueField) {
 					new Notify({ intent: 'warning', textContent: 'Select a value column', timeout: 3000 });
 					return;
@@ -232,12 +232,12 @@ export default class PrecisionLayerImport extends Dialog {
 				try {
 					const result = await importPrecisionLayer({
 						file,
-						fieldId: fieldSelect.elem.value || null,
-						type: typeSelect.elem.value,
+						fieldId: fieldSelect.options.value || null,
+						type: typeSelect.options.value,
 						valueField,
-						valueUnit: unitInput.elem.value.trim(),
-						season: Number(seasonInput.elem.value),
-						crop: cropInput.elem.value.trim(),
+						valueUnit: unitInput.options.value.trim(),
+						season: Number(seasonInput.options.value),
+						crop: cropInput.options.value.trim(),
 					});
 
 					new Notify({

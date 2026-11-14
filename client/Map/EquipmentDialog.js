@@ -92,7 +92,7 @@ export default class EquipmentDialog extends FormDialog {
 					placeholder: 'e.g. Row crop tractor, Sprayer, Grain cart',
 					suggestions: COMMON_TYPES,
 					onChange: ({ value }) => {
-						if (!emojiInput.elem.dataset.manual) emojiInput.elem.value = equipmentEmoji(value);
+						if (!emojiInput.elem.dataset.manual) emojiInput.options.value = equipmentEmoji(value);
 					},
 				},
 				{
@@ -175,7 +175,7 @@ export default class EquipmentDialog extends FormDialog {
 		this._getEmoji = () => {
 			const auto = equipmentEmoji(this.form.options.data.type || '');
 
-			return emojiInput.elem.value !== auto ? emojiInput.elem.value : '';
+			return emojiInput.options.value !== auto ? emojiInput.options.value : '';
 		};
 
 		const { collect: collectProps } = makePropertiesEditor(this.body, item.properties || {});

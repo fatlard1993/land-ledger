@@ -177,15 +177,15 @@ export default class AccountsDialog extends Dialog {
 		};
 
 		turnOn.onPointerPress(async () => {
-			const passkey = passkeyEl.elem.value;
+			const passkey = passkeyEl.options.value;
 
 			if (!passkey) {
 				passkeyEl.elem.focus();
 				return;
 			}
-			if (passkey !== confirmEl.elem.value) {
+			if (passkey !== confirmEl.options.value) {
 				new Notify({ intent: 'danger', textContent: 'The passkeys differ', timeout: 3000 });
-				confirmEl.elem.value = '';
+				confirmEl.options.value = '';
 				confirmEl.elem.focus();
 				return;
 			}
@@ -354,7 +354,7 @@ export default class AccountsDialog extends Dialog {
 			style: { flexShrink: '0' },
 			appendTo: row,
 			onPointerPress: async () => {
-				const key = input.elem.value.trim();
+				const key = input.options.value.trim();
 				await updateAppSettings({ nassApiKey: key }).catch(() => {});
 				this._nassKeySet = !!key;
 				new Notify({
@@ -362,7 +362,7 @@ export default class AccountsDialog extends Dialog {
 					textContent: key ? 'NASS key saved — county benchmarks now available' : 'NASS key cleared',
 					timeout: 3000,
 				});
-				input.elem.value = '';
+				input.options.value = '';
 				input.elem.placeholder = key ? '(key is set — enter new key to replace)' : 'Paste your NASS API key';
 			},
 		});
@@ -507,8 +507,8 @@ export default class AccountsDialog extends Dialog {
 			appendTo: buttons,
 			textContent: isNew ? 'Create' : 'Save',
 			onPointerPress: async () => {
-				const name = nameEl.elem.value.trim();
-				const passkey = passkeyEl.elem.value;
+				const name = nameEl.options.value.trim();
+				const passkey = passkeyEl.options.value;
 				const roles = Object.fromEntries(ROLES.map(r => [r.key, callbacks[r.key].elem.checked]));
 
 				if (!name) {

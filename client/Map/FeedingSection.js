@@ -26,6 +26,7 @@ import { ActionHeader, FormLabel } from '../Layout';
 import { daysAgoLabel, toDateOnly } from '../utils/dates';
 import { stayOpenFor } from '../utils/stayOpenFor';
 import { feedIcon } from '../utils/icons';
+import { toNum } from '../utils/format.js';
 import { IconText } from '../statusIcons';
 import {
 	EmptyNote,
@@ -49,19 +50,19 @@ export function openTreatDialog(field, totalHead, refresh) {
 		inputs: [],
 		saveLabel: 'Log',
 		onSave: async () => {
-			if (!feedTypeEl.elem.value) return 'Fill in what they got';
+			if (!feedTypeEl.options.value) return 'Fill in what they got';
 
 			const stay = stayOpenFor(
 				await createFeedingLog({
 					body: {
 						fieldId: field.id,
-						feedType: feedTypeEl.elem.value,
-						amountPerHead: amountEl.elem.value ? Number(amountEl.elem.value) : null,
-						amountUnit: unitEl.elem.value || 'lbs/hd',
+						feedType: feedTypeEl.options.value,
+						amountPerHead: toNum(amountEl.options.value),
+						amountUnit: unitEl.options.value || 'lbs/hd',
 						headCount: totalHead || null,
 						type: 'treat',
-						date: dateEl.elem.value || toDateOnly(),
-						notes: notesEl.elem.value,
+						date: dateEl.options.value || toDateOnly(),
+						notes: notesEl.options.value,
 					},
 				}),
 			);
@@ -104,11 +105,11 @@ export function openTreatDialog(field, totalHead, refresh) {
 
 	new FormLabel({ appendTo: rowEl, textContent: 'Unit' });
 	const unitEl = new Input({ appendTo: rowEl, type: 'text', placeholder: 'lbs/hd, bales…' });
-	unitEl.elem.value = 'lbs/hd';
+	unitEl.options.value = 'lbs/hd';
 
 	new FormLabel({ appendTo: rowEl, textContent: 'Date' });
 	const dateEl = new Input({ appendTo: rowEl, type: 'date' });
-	dateEl.elem.value = toDateOnly();
+	dateEl.options.value = toDateOnly();
 
 	new FormLabel({ appendTo: dialog.body, textContent: 'Notes' });
 	const notesEl = new Input({ appendTo: dialog.body, type: 'text', placeholder: 'Optional — why, weather, etc.' });

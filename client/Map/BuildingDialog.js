@@ -90,7 +90,7 @@ export default class BuildingDialog extends FormDialog {
 					placeholder: 'e.g. Barn, Machine shed, Grain bin',
 					suggestions: COMMON_TYPES,
 					onChange: ({ value }) => {
-						if (!emojiInput.elem.dataset.manual) emojiInput.elem.value = buildingEmoji(value);
+						if (!emojiInput.elem.dataset.manual) emojiInput.options.value = buildingEmoji(value);
 					},
 				},
 				{
@@ -135,7 +135,7 @@ export default class BuildingDialog extends FormDialog {
 		this._getEmoji = () => {
 			const auto = buildingEmoji(this.form.options.data.type || '');
 
-			return emojiInput.elem.value !== auto ? emojiInput.elem.value : '';
+			return emojiInput.options.value !== auto ? emojiInput.options.value : '';
 		};
 
 		if (isEdit) {

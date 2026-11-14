@@ -172,7 +172,7 @@ export default class MaintenanceScheduleDialog extends FormDialog {
 		// Wire template picker to fill Form fields
 		if (!isEdit && tplSelect) {
 			tplSelect.elem.addEventListener('change', () => {
-				const tpl = COMMON_SCHEDULES.find(t => t.name === tplSelect.elem.value);
+				const tpl = COMMON_SCHEDULES.find(t => t.name === tplSelect.options.value);
 
 				if (!tpl) return;
 				['name', 'procedure'].forEach(k => {

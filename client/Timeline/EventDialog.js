@@ -7,6 +7,7 @@ import { makeCropCombobox } from '../Charts/cropCombobox';
 import { stayOpenFor } from '../utils/stayOpenFor';
 import { makePropertiesEditor } from '../utils/PropertiesEditor';
 import { toDateOnly } from '../utils/dates';
+import { toNum } from '../utils/format.js';
 import { buildHarvestSection } from './HarvestSection.js';
 import { buildCoverCropSection } from './CoverCropSection.js';
 
@@ -308,7 +309,7 @@ export default class EventDialog extends FormDialog {
 			title: 'Tap to change emoji — auto-detected from event name',
 		});
 
-		emojiPreview.elem.value = this._event.emoji || detectEmoji(_selectedCategory, '');
+		emojiPreview.options.value = this._event.emoji || detectEmoji(_selectedCategory, '');
 
 		const emojiHint = new Elem({
 			tag: 'span',
@@ -322,35 +323,35 @@ export default class EventDialog extends FormDialog {
 			if (!emojiPreview.elem.dataset.manual) {
 				const detected = detectEmoji(_selectedCategory, name);
 
-				emojiPreview.elem.value = detected;
+				emojiPreview.options.value = detected;
 				emojiHint.elem.textContent = 'Auto-detected · tap to change';
 			}
 		};
 
 		emojiPreview.elem.addEventListener('input', () => {
-			emojiPreview.elem.dataset.manual = emojiPreview.elem.value ? '1' : '';
-			emojiHint.elem.textContent = emojiPreview.elem.value
+			emojiPreview.elem.dataset.manual = emojiPreview.options.value ? '1' : '';
+			emojiHint.elem.textContent = emojiPreview.options.value
 				? 'Custom · clear to auto-detect'
 				: 'Auto-detected · tap to change';
 		});
 
 		// Hook into category change to refresh auto-detected emoji
 		this._onCategoryChange = () => {
-			if (!emojiPreview.elem.dataset.manual) emojiPreview.elem.value = detectEmoji(_selectedCategory, '');
+			if (!emojiPreview.elem.dataset.manual) emojiPreview.options.value = detectEmoji(_selectedCategory, '');
 		};
 
-		this._getters.emoji = () => emojiPreview.elem.value || null;
+		this._getters.emoji = () => emojiPreview.options.value || null;
 
 		const today = toDateOnly();
 
 		new FormLabel({ appendTo: form, textContent: 'Date' });
 		const dateIn = new Input({ appendTo: form, attributes: { type: 'date' } });
 
-		dateIn.elem.value = this._event.date || today;
+		dateIn.options.value = this._event.date || today;
 
-		this._getters.date = () => dateIn.elem.value;
+		this._getters.date = () => dateIn.options.value;
 		this._getters.season = () => {
-			const d = parseDate(dateIn.elem.value);
+			const d = parseDate(dateIn.options.value);
 
 			return d ? d.getFullYear() : new Date().getFullYear();
 		};
@@ -384,8 +385,8 @@ export default class EventDialog extends FormDialog {
 			attributes: { type: 'text', placeholder: 'Optional' },
 		});
 
-		notesEl.elem.value = this._event.notes || '';
-		this._getters.notes = () => notesEl.elem.value;
+		notesEl.options.value = this._event.notes || '';
+		this._getters.notes = () => notesEl.options.value;
 	}
 
 	_buildCategory(container, category, prev) {
@@ -415,7 +416,7 @@ export default class EventDialog extends FormDialog {
 				attributes: { type: 'number', step: '0.01', placeholder: 'Optional' },
 			});
 
-			seedCostEl.elem.value = prev.seedCostPerAcre || '';
+			seedCostEl.options.value = prev.seedCostPerAcre || '';
 
 			import('../api/supplies')
 				.then(({ getSupplies }) => getSupplies())
@@ -435,7 +436,8 @@ export default class EventDialog extends FormDialog {
 						seedSelect.elem.append(opt);
 					}
 
-					if (prev.seedSupplyId) seedSelect.elem.value = prev.seedSupplyId;
+					// A supply since used up or deleted isn't listed, and stays unpicked
+					if (seeds.some(seed => seed.id === prev.seedSupplyId)) seedSelect.options.value = prev.seedSupplyId;
 				})
 				.catch(() => {
 					/* supply list unavailable */
@@ -453,8 +455,8 @@ export default class EventDialog extends FormDialog {
 			g.details = () => ({
 				...collectCropProps(),
 				species: speciesEl.value,
-				seedCostPerAcre: seedCostEl.elem.value ? Number(seedCostEl.elem.value) : null,
-				seedSupplyId: seedSelect.elem.value || null,
+				seedCostPerAcre: toNum(seedCostEl.options.value),
+				seedSupplyId: seedSelect.options.value || null,
 			});
 		} else if (category === 'harvest') {
 			this._buildHarvestSection(container, prev, g);
@@ -473,22 +475,22 @@ export default class EventDialog extends FormDialog {
 				typeSelect.elem.append(o);
 			}
 
-			typeSelect.elem.value = prev.inputType || 'herbicide';
+			typeSelect.options.value = prev.inputType || 'herbicide';
 
 			new FormLabel({ appendTo: container, textContent: 'Product' });
 			const productEl = new Input({ appendTo: container, attributes: { placeholder: 'e.g. Roundup' } });
 
-			productEl.elem.value = prev.product || '';
+			productEl.options.value = prev.product || '';
 
 			new FormLabel({ appendTo: container, textContent: 'Rate' });
 			const rateEl = new Input({ appendTo: container, attributes: { placeholder: 'e.g. 22 oz/ac' } });
 
-			rateEl.elem.value = prev.rate || '';
+			rateEl.options.value = prev.rate || '';
 
 			new FormLabel({ appendTo: container, textContent: 'Cost/Acre ($)' });
 			const costEl = new Input({ appendTo: container, attributes: { type: 'number', step: '0.01' } });
 
-			costEl.elem.value = prev.costPerAcre || '';
+			costEl.options.value = prev.costPerAcre || '';
 
 			// Supply inventory link
 			new FormLabel({ appendTo: container, textContent: 'From inventory (optional)' });
@@ -521,7 +523,8 @@ export default class EventDialog extends FormDialog {
 						supplySelect.elem.append(opt);
 					}
 
-					if (prev.supplyId) supplySelect.elem.value = prev.supplyId;
+					// A supply since used up or deleted isn't listed, and stays unpicked
+					if (inputSupplies.some(supply => supply.id === prev.supplyId)) supplySelect.options.value = prev.supplyId;
 				})
 				.catch(() => {
 					/* supply list unavailable */
@@ -531,7 +534,7 @@ export default class EventDialog extends FormDialog {
 				const opt = supplySelect.elem.selectedOptions[0];
 
 				if (opt?.value && opt.dataset.name) {
-					productEl.elem.value = opt.dataset.name;
+					productEl.options.value = opt.dataset.name;
 					// Auto-fill rate placeholder with unit
 					if (opt.dataset.unit) rateEl.elem.placeholder = `amount per ac (${opt.dataset.unit}/ac)`;
 				}
@@ -543,25 +546,25 @@ export default class EventDialog extends FormDialog {
 
 				if (!opt?.value || !opt.dataset.costPerUnit) return;
 
-				const rateMatch = rateEl.elem.value.match(/[\d.]+/);
+				const rateMatch = String(rateEl.options.value).match(/[\d.]+/);
 
 				if (rateMatch) {
 					const rate = Number(rateMatch[0]);
 					const cost = rate * Number(opt.dataset.costPerUnit);
 
-					costEl.elem.value = cost.toFixed(2);
+					costEl.options.value = cost.toFixed(2);
 				}
 			};
 
 			rateEl.elem.addEventListener('input', recalculateCost);
 
-			g.name = () => productEl.elem.value || typeSelect.elem.value;
+			g.name = () => productEl.options.value || typeSelect.options.value;
 			g.details = () => ({
-				inputType: typeSelect.elem.value,
-				product: productEl.elem.value,
-				rate: rateEl.elem.value,
-				costPerAcre: costEl.elem.value ? Number(costEl.elem.value) : null,
-				supplyId: supplySelect.elem.value || null,
+				inputType: typeSelect.options.value,
+				product: productEl.options.value,
+				rate: rateEl.options.value,
+				costPerAcre: toNum(costEl.options.value),
+				supplyId: supplySelect.options.value || null,
 			});
 		} else if (category === 'tillage') {
 			new FormLabel({ appendTo: container, textContent: 'Type' });
@@ -574,7 +577,7 @@ export default class EventDialog extends FormDialog {
 				typeSelect.elem.append(o);
 			}
 
-			typeSelect.elem.value = prev.type || 'no_till';
+			typeSelect.options.value = prev.type || 'no_till';
 
 			new FormLabel({ appendTo: container, textContent: 'Cost/Acre ($)' });
 			const tillageCostEl = new Input({
@@ -582,18 +585,18 @@ export default class EventDialog extends FormDialog {
 				attributes: { type: 'number', step: '0.01', placeholder: 'Optional' },
 			});
 
-			tillageCostEl.elem.value = prev.costPerAcre || '';
+			tillageCostEl.options.value = prev.costPerAcre || '';
 
 			const { collect: collectTillageProps } = makePropertiesEditor(container, {
 				depth: prev.depth != null ? String(prev.depth) : '',
 				equipment: prev.equipment || '',
 			});
 
-			g.name = () => TILLAGE_TYPES.find(t => t.value === typeSelect.elem.value)?.label || typeSelect.elem.value;
+			g.name = () => TILLAGE_TYPES.find(t => t.value === typeSelect.options.value)?.label || typeSelect.options.value;
 			g.details = () => ({
 				...collectTillageProps(),
-				type: typeSelect.elem.value,
-				costPerAcre: tillageCostEl.elem.value ? Number(tillageCostEl.elem.value) : null,
+				type: typeSelect.options.value,
+				costPerAcre: toNum(tillageCostEl.options.value),
 			});
 		} else if (category === 'soil_test') {
 			const TIMING_OPTS = [
@@ -611,7 +614,7 @@ export default class EventDialog extends FormDialog {
 			new FormLabel({ appendTo: container, textContent: 'Lab' });
 			const labEl = new Input({ appendTo: container, attributes: { placeholder: 'e.g. Regen Ag, Ward Labs' } });
 
-			labEl.elem.value = prev.lab || '';
+			labEl.options.value = prev.lab || '';
 
 			new FormLabel({ appendTo: container, textContent: 'Timing' });
 			const timingEl = new Select({ appendTo: container });
@@ -623,7 +626,7 @@ export default class EventDialog extends FormDialog {
 				timingEl.elem.append(o);
 			}
 
-			timingEl.elem.value = prev.timing || 'pre-season';
+			timingEl.options.value = prev.timing || 'pre-season';
 
 			new FormLabel({ appendTo: container, textContent: 'Sample Depth' });
 			const depthEl = new Select({ appendTo: container });
@@ -635,7 +638,7 @@ export default class EventDialog extends FormDialog {
 				depthEl.elem.append(o);
 			}
 
-			depthEl.elem.value = prev.sampleDepth || '0-6 in';
+			depthEl.options.value = prev.sampleDepth || '0-6 in';
 
 			new FormLabel({ appendTo: container, textContent: 'Results' });
 
@@ -649,7 +652,7 @@ export default class EventDialog extends FormDialog {
 					attributes: { type: 'number', step: 'any', placeholder: '—' },
 				});
 
-				el.elem.value = prev[key] != null && prev[key] !== '' ? String(prev[key]) : '';
+				el.options.value = prev[key] != null && prev[key] !== '' ? String(prev[key]) : '';
 				return el;
 			};
 
@@ -667,7 +670,7 @@ export default class EventDialog extends FormDialog {
 				attributes: { type: 'number', step: '0.01', placeholder: 'Total cost for this test' },
 			});
 
-			labCostEl.elem.value = prev.labCost || '';
+			labCostEl.options.value = prev.labCost || '';
 
 			// Properties bag — any lab result or custom field not covered above
 			const KNOWN = new Set([
@@ -686,18 +689,18 @@ export default class EventDialog extends FormDialog {
 			const prevProps = Object.fromEntries(Object.entries(prev).filter(([k]) => !KNOWN.has(k)));
 			const { collect: collectSoilProps } = makePropertiesEditor(container, prevProps);
 
-			const numVal = el => (el.elem.value !== '' ? Number(el.elem.value) : null);
+			const numVal = el => (el.options.value !== '' ? Number(el.options.value) : null);
 
 			g.name = () => {
-				const t = TIMING_OPTS.find(o => o.value === timingEl.elem.value)?.label || timingEl.elem.value;
-				const lab = labEl.elem.value.trim();
+				const t = TIMING_OPTS.find(o => o.value === timingEl.options.value)?.label || timingEl.options.value;
+				const lab = labEl.options.value.trim();
 				return `Soil Test — ${t}${lab ? ` (${lab})` : ''}`;
 			};
 			g.details = () => ({
 				...collectSoilProps(),
-				lab: labEl.elem.value.trim() || null,
-				timing: timingEl.elem.value,
-				sampleDepth: depthEl.elem.value,
+				lab: labEl.options.value.trim() || null,
+				timing: timingEl.options.value,
+				sampleDepth: depthEl.options.value,
 				organicMatter: numVal(omEl),
 				soilRespiration: numVal(respEl),
 				pH: numVal(phEl),
@@ -718,7 +721,7 @@ export default class EventDialog extends FormDialog {
 				typeEl.elem.append(o);
 			}
 
-			typeEl.elem.value = prev.type || 'weed_pressure';
+			typeEl.options.value = prev.type || 'weed_pressure';
 
 			const { collect: collectObsProps } = makePropertiesEditor(container, {
 				description: prev.description || '',
@@ -727,9 +730,9 @@ export default class EventDialog extends FormDialog {
 
 			g.name = () => {
 				const p = collectObsProps();
-				return p.description || OBS_TYPES.find(t => t.value === typeEl.elem.value)?.label || 'Observation';
+				return p.description || OBS_TYPES.find(t => t.value === typeEl.options.value)?.label || 'Observation';
 			};
-			g.details = () => ({ type: typeEl.elem.value, ...collectObsProps() });
+			g.details = () => ({ type: typeEl.options.value, ...collectObsProps() });
 		}
 	}
 
@@ -750,7 +753,7 @@ export default class EventDialog extends FormDialog {
 			suggestions: this._knownSpecies,
 		});
 
-		speciesInput.elem.addEventListener('input', () => this._refreshEmoji?.(speciesInput.elem.value));
+		speciesInput.elem.addEventListener('input', () => this._refreshEmoji?.(speciesInput.options.value));
 
 		const row1 = new Component({
 			appendTo: container,
@@ -760,22 +763,22 @@ export default class EventDialog extends FormDialog {
 		new FormLabel({ appendTo: row1, textContent: 'Head Count' });
 		const headEl = new Input({ appendTo: row1, attributes: { type: 'number', min: '1' } });
 
-		headEl.elem.value = prev.headCount || '';
+		headEl.options.value = prev.headCount || '';
 
 		new FormLabel({ appendTo: row1, textContent: 'Entry Wt (lbs/head)' });
 		const entryWtEl = new Input({ appendTo: row1, attributes: { type: 'number' } });
 
-		entryWtEl.elem.value = prev.entryWeight || '';
+		entryWtEl.options.value = prev.entryWeight || '';
 
 		const { collect: collectStockProps } = makePropertiesEditor(container, {
 			stockingNotes: prev.stockingNotes || '',
 		});
 
-		g.name = () => `${speciesInput.elem.value}${headEl.elem.value ? ` (${headEl.elem.value})` : ''}`;
+		g.name = () => `${speciesInput.options.value}${headEl.options.value !== '' ? ` (${headEl.options.value})` : ''}`;
 		g.details = () => ({
-			species: speciesInput.elem.value,
-			headCount: headEl.elem.value ? Number(headEl.elem.value) : null,
-			entryWeight: entryWtEl.elem.value ? Number(entryWtEl.elem.value) : null,
+			species: speciesInput.options.value,
+			headCount: toNum(headEl.options.value),
+			entryWeight: toNum(entryWtEl.options.value),
 			...collectStockProps(),
 		});
 	}

@@ -37,9 +37,9 @@ export default class ParcelDialog extends FormDialog {
 			onSave: async d => {
 				const data = {
 					...d,
-					acreage: this._acreageInput?.elem.value || '',
-					acreageUnit: this._unitSelect?.elem.value || 'ac',
-					status: this._statusSelect?.elem.value || '',
+					acreage: this._acreageInput?.options.value ?? '',
+					acreageUnit: this._unitSelect?.options.value || 'ac',
+					status: this._statusSelect?.options.value || '',
 					showLabel: this._showLabelEl?.elem.checked !== false,
 					properties: this._collectProps?.() ?? {},
 				};
@@ -107,10 +107,10 @@ export default class ParcelDialog extends FormDialog {
 				title: 'Calculate from boundary',
 				attributes: { type: 'button' },
 				onPointerPress: () => {
-					const unit = this._unitSelect.elem.value;
+					const unit = this._unitSelect.options.value;
 					const meta = AREA_UNITS.find(u => u.value === unit);
 
-					this._acreageInput.elem.value = convertArea(sqm, unit).toFixed(meta?.decimals ?? 1);
+					this._acreageInput.options.value = convertArea(sqm, unit).toFixed(meta?.decimals ?? 1);
 				},
 			});
 		}

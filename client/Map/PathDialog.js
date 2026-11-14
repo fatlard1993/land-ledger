@@ -75,9 +75,9 @@ export default class PathDialog extends FormDialog {
 		const emojiInput = emojiField(this.body, path.emoji || detectPathEmoji(path.type || ''));
 
 		this._getEmoji = () => {
-			const auto = detectPathEmoji(this._typeEl?.elem.value || '');
+			const auto = detectPathEmoji(this._typeEl?.options.value || '');
 
-			return emojiInput.elem.value !== auto ? emojiInput.elem.value : '';
+			return emojiInput.options.value !== auto ? emojiInput.options.value : '';
 		};
 
 		// Name
@@ -85,7 +85,7 @@ export default class PathDialog extends FormDialog {
 
 		lbl('Name');
 		this._nameEl = new Input({ appendTo: this.body, type: 'text', placeholder: 'e.g. North Lane, Driveway' });
-		this._nameEl.elem.value = path.name || '';
+		this._nameEl.options.value = path.name || '';
 
 		lbl('Type');
 		this._typeEl = new Input({
@@ -93,9 +93,9 @@ export default class PathDialog extends FormDialog {
 			type: 'text',
 			placeholder: 'e.g. Driveway, Farm road, Trail, Creek road',
 		});
-		this._typeEl.elem.value = path.type || '';
+		this._typeEl.options.value = path.type || '';
 		this._typeEl.elem.addEventListener('input', () => {
-			if (!emojiInput.elem.dataset.manual) emojiInput.elem.value = detectPathEmoji(this._typeEl.elem.value);
+			if (!emojiInput.elem.dataset.manual) emojiInput.options.value = detectPathEmoji(this._typeEl.options.value);
 		});
 
 		lbl('Width (feet)');
@@ -105,7 +105,7 @@ export default class PathDialog extends FormDialog {
 			placeholder: '10',
 			attributes: { step: '1', min: '1' },
 		});
-		this._widthEl.elem.value = path.widthFt || '10';
+		this._widthEl.options.value = path.widthFt || '10';
 
 		// Color
 		lbl('Surface / color');
@@ -155,12 +155,12 @@ export default class PathDialog extends FormDialog {
 
 		this._collect = () => {
 			const data = {
-				name: this._nameEl.elem.value,
-				type: this._typeEl.elem.value,
-				widthFt: this._widthEl.elem.value || '10',
+				name: this._nameEl.options.value,
+				type: this._typeEl.options.value,
+				widthFt: this._widthEl.options.value || '10',
 				color: this._selectedColor,
 				emoji: this._getEmoji?.() || '',
-				status: this._statusSelect?.elem.value || '',
+				status: this._statusSelect?.options.value || '',
 				showLabel: this._showLabelEl.elem.checked,
 				properties: this._collectProps?.() ?? {},
 			};

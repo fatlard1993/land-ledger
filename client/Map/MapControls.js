@@ -209,7 +209,7 @@ export function createMapControls(
 				size: 'large',
 				inputs: [],
 				onSave: async () => {
-					const url = input.elem.value.trim();
+					const url = input.options.value.trim();
 
 					if (!(await updateAppSettings({ parcelServiceUrl: url }))) return 'Could not save the parcel service';
 
@@ -239,7 +239,7 @@ export function createMapControls(
 				style: { marginBottom: space.sm },
 			});
 
-			input.elem.value = current.parcelServiceUrl || '';
+			input.options.value = current.parcelServiceUrl || '';
 
 			new Elem({
 				tag: 'p',

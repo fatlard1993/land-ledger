@@ -118,7 +118,7 @@ export const areaField = (appendTo, { estimate, unit }) => {
 		},
 	});
 
-	input.elem.value = estimate || '';
+	input.options.value = estimate || '';
 
 	const unitSelect = new Select({ appendTo: row, attributes: { 'aria-label': 'Area unit' } });
 
@@ -130,7 +130,7 @@ export const areaField = (appendTo, { estimate, unit }) => {
 		unitSelect.elem.append(opt);
 	}
 
-	unitSelect.elem.value = unit;
+	unitSelect.options.value = unit;
 
 	return { row, input, unitSelect };
 };
@@ -181,8 +181,8 @@ export const emojiField = (appendTo, value) => {
 	const hint = new Hint({ appendTo: row, textContent: 'Auto-detected · tap to change' });
 
 	input.elem.addEventListener('input', () => {
-		input.elem.dataset.manual = input.elem.value ? '1' : '';
-		hint.elem.textContent = input.elem.value ? 'Custom · clear to auto-detect' : 'Auto-detected · tap to change';
+		input.elem.dataset.manual = input.options.value ? '1' : '';
+		hint.elem.textContent = input.options.value ? 'Custom · clear to auto-detect' : 'Auto-detected · tap to change';
 	});
 
 	return input;

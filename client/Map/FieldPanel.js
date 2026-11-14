@@ -808,7 +808,8 @@ export default class FieldPanel extends Component {
 		const emojiRow = new EmojiRow({ appendTo: this._content });
 		const emojiInput = new Input({ appendTo: emojiRow });
 
-		Object.assign(emojiInput.elem, { type: 'text', maxLength: 4, value: p.emoji || detectPathEmoji(p.type || '') });
+		Object.assign(emojiInput.elem, { type: 'text', maxLength: 4 });
+		emojiInput.options.value = p.emoji || detectPathEmoji(p.type || '');
 		emojiInput.elem.title = 'Tap to change emoji';
 
 		const emojiHint = new Elem({ tag: 'span', appendTo: emojiRow });
@@ -816,7 +817,7 @@ export default class FieldPanel extends Component {
 		emojiHint.elem.textContent = 'Auto-detected · tap to change';
 
 		emojiInput.elem.addEventListener('input', () => {
-			emojiHint.elem.textContent = emojiInput.elem.value
+			emojiHint.elem.textContent = emojiInput.options.value
 				? 'Custom · clear to auto-detect'
 				: 'Auto-detected · tap to change';
 		});
@@ -830,13 +831,14 @@ export default class FieldPanel extends Component {
 		]) {
 			new FormLabel({ appendTo: this._content, textContent: label });
 			const input = new Input({ appendTo: this._content });
-			Object.assign(input.elem, { type: type || 'text', placeholder: placeholder || '', value: p[key] || '' });
+			Object.assign(input.elem, { type: type || 'text', placeholder: placeholder || '' });
+			input.options.value = p[key] || '';
 			input.setStyle(FIELD_STYLE);
-			getters[key] = () => input.elem.value;
+			getters[key] = () => input.options.value;
 			// Auto-update emoji when type changes
 			if (key === 'type')
 				input.elem.addEventListener('input', () => {
-					if (!emojiInput.elem.dataset.manual) emojiInput.elem.value = detectPathEmoji(input.elem.value);
+					if (!emojiInput.elem.dataset.manual) emojiInput.options.value = detectPathEmoji(input.options.value);
 				});
 		}
 
@@ -897,7 +899,7 @@ export default class FieldPanel extends Component {
 			o.textContent = label;
 			pathStatusSelect.elem.append(o);
 		});
-		pathStatusSelect.elem.value = p.status || '';
+		pathStatusSelect.options.value = p.status || '';
 
 		const pathLabelCb = this._mkLabelToggle(p.showLabel === true);
 
@@ -912,9 +914,9 @@ export default class FieldPanel extends Component {
 				const data = Object.fromEntries(Object.entries(getters).map(([k, g]) => [k, g()]));
 				const autoEmoji = detectPathEmoji(data.type || '');
 
-				data.emoji = emojiInput.elem.value !== autoEmoji ? emojiInput.elem.value : '';
+				data.emoji = emojiInput.options.value !== autoEmoji ? emojiInput.options.value : '';
 				data.color = selectedColor;
-				data.status = pathStatusSelect.elem.value;
+				data.status = pathStatusSelect.options.value;
 				data.showLabel = pathLabelCb.checked;
 				data.properties = collectPathProps();
 				data.geometry = p.geometry;
@@ -1045,14 +1047,15 @@ export default class FieldPanel extends Component {
 					o.textContent = optionLabel;
 					select.elem.append(o);
 				});
-				select.elem.value = p[key] || '';
-				getters[key] = () => select.elem.value;
+				select.options.value = p[key] || '';
+				getters[key] = () => select.options.value;
 			} else {
 				const input = new Input({ appendTo: this._content });
 
-				Object.assign(input.elem, { type: 'text', placeholder: placeholder || '', value: p[key] || '' });
+				Object.assign(input.elem, { type: 'text', placeholder: placeholder || '' });
+				input.options.value = p[key] || '';
 				input.setStyle(FIELD_STYLE);
-				getters[key] = () => input.elem.value;
+				getters[key] = () => input.options.value;
 			}
 		}
 
@@ -1068,13 +1071,8 @@ export default class FieldPanel extends Component {
 
 		const areaInput = new Input({ appendTo: areaRow, attributes: { 'aria-label': 'Area' } });
 
-		Object.assign(areaInput.elem, {
-			type: 'number',
-			step: '0.01',
-			min: '0',
-			placeholder: 'Size',
-			value: defaultArea ? Number(defaultArea).toFixed(unitMeta.decimals) : '',
-		});
+		Object.assign(areaInput.elem, { type: 'number', step: '0.01', min: '0', placeholder: 'Size' });
+		areaInput.options.value = defaultArea ? Number(defaultArea).toFixed(unitMeta.decimals) : '';
 		areaInput.setStyle(FIELD_STYLE);
 
 		const unitSelect = new Select({ appendTo: areaRow, attributes: { 'aria-label': 'Area unit' } });
@@ -1086,11 +1084,11 @@ export default class FieldPanel extends Component {
 			unitSelect.elem.append(opt);
 		}
 
-		unitSelect.elem.value = currentUnit;
+		unitSelect.options.value = currentUnit;
 		unitSelect.elem.addEventListener('change', () => {
 			if (!sqm) return;
-			const meta = AREA_UNITS.find(u => u.value === unitSelect.elem.value) || AREA_UNITS[1];
-			areaInput.elem.value = convertArea(sqm, unitSelect.elem.value).toFixed(meta.decimals);
+			const meta = AREA_UNITS.find(u => u.value === unitSelect.options.value) || AREA_UNITS[1];
+			areaInput.options.value = convertArea(sqm, unitSelect.options.value).toFixed(meta.decimals);
 		});
 
 		if (sqm) {
@@ -1100,14 +1098,14 @@ export default class FieldPanel extends Component {
 				icon: 'arrows-rotate',
 				title: 'Calculate from boundary',
 				onPointerPress: () => {
-					const meta = AREA_UNITS.find(u => u.value === unitSelect.elem.value) || AREA_UNITS[1];
-					areaInput.elem.value = convertArea(sqm, unitSelect.elem.value).toFixed(meta.decimals);
+					const meta = AREA_UNITS.find(u => u.value === unitSelect.options.value) || AREA_UNITS[1];
+					areaInput.options.value = convertArea(sqm, unitSelect.options.value).toFixed(meta.decimals);
 				},
 			});
 		}
 
-		getters.acreage = () => areaInput.elem.value;
-		getters.acreageUnit = () => unitSelect.elem.value;
+		getters.acreage = () => areaInput.options.value;
+		getters.acreageUnit = () => unitSelect.options.value;
 
 		const parcelLabelCb = this._mkLabelToggle(p.showLabel !== false);
 
@@ -1328,7 +1326,8 @@ export default class FieldPanel extends Component {
 		const bldgEmojiRow = new EmojiRow({ appendTo: this._content });
 		const bldgEmojiInput = new Input({ appendTo: bldgEmojiRow });
 
-		Object.assign(bldgEmojiInput.elem, { type: 'text', maxLength: 4, value: b.emoji || buildingEmoji(b.type || '') });
+		Object.assign(bldgEmojiInput.elem, { type: 'text', maxLength: 4 });
+		bldgEmojiInput.options.value = b.emoji || buildingEmoji(b.type || '');
 		bldgEmojiInput.elem.title = 'Tap to change emoji';
 
 		const bldgEmojiHint = new Elem({ tag: 'span', appendTo: bldgEmojiRow });
@@ -1336,8 +1335,8 @@ export default class FieldPanel extends Component {
 		bldgEmojiHint.elem.textContent = b.emoji ? 'Custom · clear to auto-detect' : 'Auto-detected · tap to change';
 
 		bldgEmojiInput.elem.addEventListener('input', () => {
-			bldgEmojiInput.elem.dataset.manual = bldgEmojiInput.elem.value ? '1' : '';
-			bldgEmojiHint.elem.textContent = bldgEmojiInput.elem.value
+			bldgEmojiInput.elem.dataset.manual = bldgEmojiInput.options.value ? '1' : '';
+			bldgEmojiHint.elem.textContent = bldgEmojiInput.options.value
 				? 'Custom · clear to auto-detect'
 				: 'Auto-detected · tap to change';
 		});
@@ -1371,18 +1370,19 @@ export default class FieldPanel extends Component {
 					o.textContent = optionLabel;
 					select.elem.append(o);
 				});
-				select.elem.value = b[key] || '';
-				getters[key] = () => select.elem.value;
+				select.options.value = b[key] || '';
+				getters[key] = () => select.options.value;
 			} else {
 				const input = new Input({ appendTo: this._content });
 
-				Object.assign(input.elem, { type: 'text', placeholder: placeholder || '', value: b[key] || '' });
+				Object.assign(input.elem, { type: 'text', placeholder: placeholder || '' });
+				input.options.value = b[key] || '';
 				input.setStyle(FIELD_STYLE);
-				getters[key] = () => input.elem.value;
+				getters[key] = () => input.options.value;
 				// Auto-update emoji when type changes
 				if (key === 'type')
 					input.elem.addEventListener('input', () => {
-						if (!bldgEmojiInput.elem.dataset.manual) bldgEmojiInput.elem.value = buildingEmoji(input.elem.value);
+						if (!bldgEmojiInput.elem.dataset.manual) bldgEmojiInput.options.value = buildingEmoji(input.options.value);
 					});
 			}
 		}
@@ -1391,7 +1391,7 @@ export default class FieldPanel extends Component {
 
 		getters['emoji'] = () => {
 			const auto = buildingEmoji(getters.type());
-			return bldgEmojiInput.elem.value !== auto ? bldgEmojiInput.elem.value : '';
+			return bldgEmojiInput.options.value !== auto ? bldgEmojiInput.options.value : '';
 		};
 
 		getters['showLabel'] = () => bldgLabelCb.checked;
@@ -1564,11 +1564,8 @@ export default class FieldPanel extends Component {
 		const eqEmojiRow = new EmojiRow({ appendTo: this._content });
 		const eqEmojiInput = new Input({ appendTo: eqEmojiRow });
 
-		Object.assign(eqEmojiInput.elem, {
-			type: 'text',
-			maxLength: 4,
-			value: item.emoji || equipmentEmoji(item.type || ''),
-		});
+		Object.assign(eqEmojiInput.elem, { type: 'text', maxLength: 4 });
+		eqEmojiInput.options.value = item.emoji || equipmentEmoji(item.type || '');
 		eqEmojiInput.elem.title = 'Tap to change emoji';
 
 		const eqEmojiHint = new Elem({ tag: 'span', appendTo: eqEmojiRow });
@@ -1576,8 +1573,8 @@ export default class FieldPanel extends Component {
 		eqEmojiHint.elem.textContent = item.emoji ? 'Custom · clear to auto-detect' : 'Auto-detected · tap to change';
 
 		eqEmojiInput.elem.addEventListener('input', () => {
-			eqEmojiInput.elem.dataset.manual = eqEmojiInput.elem.value ? '1' : '';
-			eqEmojiHint.elem.textContent = eqEmojiInput.elem.value
+			eqEmojiInput.elem.dataset.manual = eqEmojiInput.options.value ? '1' : '';
+			eqEmojiHint.elem.textContent = eqEmojiInput.options.value
 				? 'Custom · clear to auto-detect'
 				: 'Auto-detected · tap to change';
 		});
@@ -1601,9 +1598,10 @@ export default class FieldPanel extends Component {
 			} else {
 				const input = new Input({ appendTo: this._content });
 
-				Object.assign(input.elem, { type, placeholder, value: item[key] || '' });
+				Object.assign(input.elem, { type, placeholder });
+				input.options.value = item[key] || '';
 				input.setStyle(FIELD_STYLE);
-				getters[key] = () => input.elem.value;
+				getters[key] = () => input.options.value;
 			}
 		};
 
@@ -1613,12 +1611,13 @@ export default class FieldPanel extends Component {
 		new FormLabel({ appendTo: this._content, textContent: 'Type' });
 		const typeInput = new Input({ appendTo: this._content });
 
-		Object.assign(typeInput.elem, { type: 'text', placeholder: 'e.g. Row crop tractor', value: item.type || '' });
+		Object.assign(typeInput.elem, { type: 'text', placeholder: 'e.g. Row crop tractor' });
+		typeInput.options.value = item.type || '';
 		typeInput.setStyle(FIELD_STYLE);
 		typeInput.elem.addEventListener('input', () => {
-			if (!eqEmojiInput.elem.dataset.manual) eqEmojiInput.elem.value = equipmentEmoji(typeInput.elem.value);
+			if (!eqEmojiInput.elem.dataset.manual) eqEmojiInput.options.value = equipmentEmoji(typeInput.options.value);
 		});
-		getters['type'] = () => typeInput.elem.value;
+		getters['type'] = () => typeInput.options.value;
 		addField('tenure', 'Ownership', {
 			options: [
 				{ value: 'own', label: 'Owned' },
@@ -1632,15 +1631,17 @@ export default class FieldPanel extends Component {
 			style: { ...FIELD_STYLE, flex: '1', minWidth: '0' },
 			attributes: { 'aria-label': 'Usage' },
 		});
-		Object.assign(usageInput.elem, { type: 'number', step: '0.1', placeholder: 'Amount', value: item.usage || '' });
+		Object.assign(usageInput.elem, { type: 'number', step: '0.1', placeholder: 'Amount' });
+		usageInput.options.value = item.usage || '';
 		const unitInput = new Input({
 			appendTo: usageRow,
 			style: { ...FIELD_STYLE, width: '72px', flexShrink: '0' },
 			attributes: { 'aria-label': 'Usage unit' },
 		});
-		Object.assign(unitInput.elem, { type: 'text', placeholder: 'hrs', value: item.usageUnit || '' });
-		getters['usage'] = () => usageInput.elem.value;
-		getters['usageUnit'] = () => unitInput.elem.value;
+		Object.assign(unitInput.elem, { type: 'text', placeholder: 'hrs' });
+		unitInput.options.value = item.usageUnit || '';
+		getters['usage'] = () => usageInput.options.value;
+		getters['usageUnit'] = () => unitInput.options.value;
 		addField('size', 'Size', {
 			options: [
 				{ value: 'sm', label: 'Small' },
@@ -1681,7 +1682,8 @@ export default class FieldPanel extends Component {
 				// Use picker value; fall back to auto-detect if cleared
 				const autoEmoji = equipmentEmoji(data.type);
 
-				data.emoji = eqEmojiInput.elem.value && eqEmojiInput.elem.value !== autoEmoji ? eqEmojiInput.elem.value : '';
+				data.emoji =
+					eqEmojiInput.options.value && eqEmojiInput.options.value !== autoEmoji ? eqEmojiInput.options.value : '';
 				const updated = await callbacks.onSave?.(data);
 
 				if (failedSave(updated, buttons)) return;
@@ -1770,8 +1772,8 @@ export default class FieldPanel extends Component {
 					select.elem.append(opt);
 				}
 
-				select.elem.value = field[key] || options[0].value;
-				inputGetters[key] = () => select.elem.value;
+				select.options.value = field[key] || options[0].value;
+				inputGetters[key] = () => select.options.value;
 			} else if (key === 'acreage') {
 				const wrap = new AreaField({ appendTo: this._content });
 
@@ -1782,13 +1784,8 @@ export default class FieldPanel extends Component {
 
 				const input = new Input({ appendTo: wrap, attributes: { 'aria-label': 'Area' } });
 
-				Object.assign(input.elem, {
-					type: 'number',
-					step: '0.01',
-					min: '0',
-					placeholder: 'Size',
-					value: defaultAcreage ? Number(defaultAcreage).toFixed(unitMeta.decimals) : '',
-				});
+				Object.assign(input.elem, { type: 'number', step: '0.01', min: '0', placeholder: 'Size' });
+				input.options.value = defaultAcreage ? Number(defaultAcreage).toFixed(unitMeta.decimals) : '';
 				input.setStyle(FIELD_STYLE);
 
 				// Unit selector
@@ -1802,19 +1799,19 @@ export default class FieldPanel extends Component {
 					unitSelect.elem.append(opt);
 				}
 
-				unitSelect.elem.value = currentUnit;
+				unitSelect.options.value = currentUnit;
 
 				// Recalculate when unit changes
 				unitSelect.elem.addEventListener('change', () => {
 					if (!sqm) return;
 
-					const newMeta = AREA_UNITS.find(u => u.value === unitSelect.elem.value) || AREA_UNITS[1];
+					const newMeta = AREA_UNITS.find(u => u.value === unitSelect.options.value) || AREA_UNITS[1];
 
-					input.elem.value = convertArea(sqm, unitSelect.elem.value).toFixed(newMeta.decimals);
+					input.options.value = convertArea(sqm, unitSelect.options.value).toFixed(newMeta.decimals);
 				});
 
-				inputGetters[key] = () => input.elem.value;
-				inputGetters['acreageUnit'] = () => unitSelect.elem.value;
+				inputGetters[key] = () => input.options.value;
+				inputGetters['acreageUnit'] = () => unitSelect.options.value;
 
 				if (sqm) {
 					new Button({
@@ -1823,22 +1820,19 @@ export default class FieldPanel extends Component {
 						icon: 'arrows-rotate',
 						title: 'Calculate from boundary',
 						onPointerPress: () => {
-							const meta = AREA_UNITS.find(u => u.value === unitSelect.elem.value) || AREA_UNITS[1];
+							const meta = AREA_UNITS.find(u => u.value === unitSelect.options.value) || AREA_UNITS[1];
 
-							input.elem.value = convertArea(sqm, unitSelect.elem.value).toFixed(meta.decimals);
+							input.options.value = convertArea(sqm, unitSelect.options.value).toFixed(meta.decimals);
 						},
 					});
 				}
 			} else {
 				const input = new Input({ appendTo: this._content });
 
-				Object.assign(input.elem, {
-					type: type || 'text',
-					placeholder: placeholder || '',
-					value: field[key] || '',
-				});
+				Object.assign(input.elem, { type: type || 'text', placeholder: placeholder || '' });
+				input.options.value = field[key] || '';
 				input.setStyle(FIELD_STYLE);
-				inputGetters[key] = () => input.elem.value;
+				inputGetters[key] = () => input.options.value;
 			}
 		}
 

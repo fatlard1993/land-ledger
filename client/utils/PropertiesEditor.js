@@ -31,8 +31,8 @@ export const makePropertiesEditor = (container, initialProperties = {}) => {
 			attributes: { 'aria-label': 'Property value' },
 		});
 
-		keyInput.elem.value = key;
-		valueInput.elem.value = value;
+		keyInput.options.value = key;
+		valueInput.options.value = value;
 
 		new Button({
 			appendTo: row,
@@ -68,8 +68,8 @@ export const makePropertiesEditor = (container, initialProperties = {}) => {
 	const collect = () => {
 		const result = {};
 		for (const { keyInput, valueInput } of rows) {
-			const k = keyInput.elem.value.trim();
-			const v = valueInput.elem.value.trim();
+			const k = keyInput.options.value.trim();
+			const v = valueInput.options.value.trim();
 			if (k) result[k] = v;
 		}
 		return result;

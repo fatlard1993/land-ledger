@@ -36,8 +36,14 @@ const turnOn = async (passkey, again = passkey) => {
 
 	const [first, second] = dialog.body.elem.querySelectorAll('input[type=password]');
 
-	first.value = passkey;
-	second.value = again;
+	// Typed, as a person would: the field's value is what its input events left in options.value
+	for (const [field, value] of [
+		[first, passkey],
+		[second, again],
+	]) {
+		field.value = value;
+		field.dispatchEvent(new Event('input'));
+	}
 	[...dialog.body.elem.querySelectorAll('button')].find(b => b.textContent.includes('Turn on sign-in')).click();
 	await settle();
 

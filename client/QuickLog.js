@@ -17,6 +17,7 @@ import { CATEGORIES as APP_CATEGORIES } from './ApplicationLog/ApplicationLogDia
 import { FormLabel } from './Layout';
 import { toDateOnly } from './utils/dates';
 import { EVENT_CATEGORIES } from './eventCategories';
+import { toNum } from './utils/format.js';
 
 // ── Constants ──────────────────────────────────────────────────────────────────
 
@@ -257,7 +258,7 @@ export function openQuickLog() {
 			const field = detectField(allFields, lat, longitude);
 
 			setLocation(field, building);
-			if (locationSelect && !locationUserPicked) locationSelect.elem.value = building?.id || field?.id || '';
+			if (locationSelect && !locationUserPicked) locationSelect.options.value = building?.id || field?.id || '';
 		} else {
 			locationText.elem.textContent = 'Location unavailable — select location';
 		}
@@ -338,7 +339,7 @@ export function openQuickLog() {
 				locationSelect.elem.append(group);
 			}
 
-			locationSelect.elem.value = currentBuilding?.id || currentField?.id || '';
+			locationSelect.options.value = currentBuilding?.id || currentField?.id || '';
 		};
 
 		if (Object.keys(allFields).length || Object.keys(allBuildings).length) {
@@ -364,11 +365,11 @@ export function openQuickLog() {
 			});
 
 			getPayload = () => ({
-				fieldId: locationSelect.elem.value || null,
+				fieldId: locationSelect.options.value || null,
 				date: toDateOnly(),
 				category: 'observation',
 				name: 'Observation',
-				notes: noteText.elem.value.trim(),
+				notes: noteText.options.value.trim(),
 			});
 		} else if (logType === 'event') {
 			new FormLabel({ appendTo: formArea, textContent: 'Type' });
@@ -401,12 +402,12 @@ export function openQuickLog() {
 			const noteInput = new Input({ appendTo: formArea, placeholder: 'Anything else worth capturing' });
 
 			getPayload = () => ({
-				fieldId: locationSelect.elem.value || null,
+				fieldId: locationSelect.options.value || null,
 				date: toDateOnly(),
 				season: new Date().getFullYear(),
 				category: selectedCat,
-				name: nameInput.elem.value.trim(),
-				notes: noteInput.elem.value.trim(),
+				name: nameInput.options.value.trim(),
+				notes: noteInput.options.value.trim(),
 			});
 		} else if (logType === 'application') {
 			new FormLabel({ appendTo: formArea, textContent: 'Category' });
@@ -448,23 +449,23 @@ export function openQuickLog() {
 			const rateInput = new Input({ appendTo: rateCol1, type: 'number', step: '0.1', placeholder: '22' });
 
 			new FormLabel({ appendTo: rateCol2, textContent: 'Unit' });
-			const unitSelect = new Select({ appendTo: rateCol2 });
-			['oz/ac', 'fl oz/ac', 'lbs/ac', 'gal/ac', 'pts/ac'].forEach(u => {
-				const o = new Option(u, u);
-				unitSelect.elem.append(o);
+			const unitSelect = new Select({
+				appendTo: rateCol2,
+				options: ['oz/ac', 'fl oz/ac', 'lbs/ac', 'gal/ac', 'pts/ac'],
+				value: 'oz/ac',
 			});
 
 			new FormLabel({ appendTo: formArea, textContent: 'EPA Reg. # (optional)' });
 			const epaInput = new Input({ appendTo: formArea, placeholder: '12345-67890' });
 
 			getPayload = () => ({
-				fieldId: locationSelect.elem.value || null,
+				fieldId: locationSelect.options.value || null,
 				date: toDateOnly(),
 				category: selectedCat,
-				product: productInput.elem.value.trim(),
-				rate: rateInput.elem.value ? Number(rateInput.elem.value) : null,
-				rateUnit: unitSelect.elem.value,
-				epaRegNumber: epaInput.elem.value.trim() || null,
+				product: productInput.options.value.trim(),
+				rate: toNum(rateInput.options.value),
+				rateUnit: unitSelect.options.value,
+				epaRegNumber: epaInput.options.value.trim() || null,
 				acresTreated: currentField?.acreage ? Number(currentField.acreage) : null,
 			});
 		}

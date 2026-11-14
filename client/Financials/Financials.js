@@ -211,7 +211,7 @@ export default class Financials extends AsyncView {
 		this.content = new PageView({ appendTo: this });
 		this._year = YEAR;
 		yearSelect.elem.addEventListener('change', () => {
-			this._year = Number(yearSelect.elem.value);
+			this._year = Number(yearSelect.options.value);
 			this._render();
 		});
 	}

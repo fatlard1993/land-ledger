@@ -50,7 +50,10 @@ describe('the quick log sheet', () => {
 		await waitFor(() => expect(sheetInPage()?.open).toBe(true));
 
 		buttonNamed('Quick note').click();
-		sheetInPage().querySelector('textarea').value = 'Fence down on the north line';
+		const note = sheetInPage().querySelector('textarea');
+
+		note.value = 'Fence down on the north line';
+		note.dispatchEvent(new Event('input'));
 		buttonNamed('Log It').click();
 
 		await waitFor(() => expect(buttonNamed('Logged')).toBeTruthy());
