@@ -97,7 +97,6 @@ export default class Nav extends BottomNav {
 		// Admin controls — accounts, and turning sign-in on or off
 		if (isAdmin) {
 			const adminItem = new NavItem({
-				tag: 'button',
 				appendTo: this,
 				title: 'Manage accounts & auth',
 				onPointerPress: async () => {
@@ -114,7 +113,6 @@ export default class Nav extends BottomNav {
 		// Logout — visible whenever auth is enabled and user is logged in
 		if (user) {
 			const logoutItem = new NavItem({
-				tag: 'button',
 				appendTo: this,
 				title: `Signed in as ${user.name} — tap to sign out`,
 				onPointerPress: async () => {

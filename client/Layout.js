@@ -1,4 +1,4 @@
-import { Card, Component, Content, Link, SectionLabel, styled } from '@vanilla-bean/components';
+import { Button, Card, Component, Content, Link, SectionLabel, styled } from '@vanilla-bean/components';
 
 // Clear of the home indicator below, and of a landscape notch beside the rail
 export const BottomNav = styled(
@@ -74,7 +74,7 @@ const navItem = ({ colors, media, space }) => `
 	}
 `;
 
-export const NavItem = styled(Component, navItem);
+export const NavItem = styled(Button, navItem);
 
 // A route in the nav: a link, without the tooltip a Link carries elsewhere
 export const NavLink = styled(Link, navItem);
