@@ -100,7 +100,7 @@ const AreaFrame = styled(
  * @param {object} options - Area options
  * @param {number|string} [options.estimate] - The size shown and hinted before the user types one
  * @param {string} options.unit - The unit selected
- * @returns {{ row: Component, input: Elem, unitSelect: Elem }} The frame (for a recalculate button), the size input and the unit select
+ * @returns {{ row: Component, input: Input, unitSelect: Select }} The frame (for a recalculate button), the size input and the unit select
  */
 export const areaField = (appendTo, { estimate, unit }) => {
 	new Caption({ appendTo, textContent: 'Area' });
@@ -136,7 +136,7 @@ export const areaField = (appendTo, { estimate, unit }) => {
  * @param {string} options.label - The caption
  * @param {boolean} options.checked - Whether it starts checked
  * @param {object} [options.style] - Extra inline style for the row
- * @returns {Elem} The checkbox
+ * @returns {Input} The checkbox
  */
 export const checkboxRow = (appendTo, { label, checked, style }) => {
 	const id = `lbl-${Math.random().toString(36).slice(2)}`;
