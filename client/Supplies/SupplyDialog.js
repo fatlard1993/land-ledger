@@ -185,23 +185,17 @@ export default class SupplyDialog extends FormDialog {
 
 			new FormLabel({ appendTo: bldgRow, textContent: 'Stored in building (optional)', style: { marginTop: '0' } });
 
-			const buildingSelect = new Select({ appendTo: bldgRow });
-
-			const noOpt = document.createElement('option');
-
-			noOpt.value = '';
-			noOpt.textContent = '— not assigned to a building —';
-			buildingSelect.elem.append(noOpt);
+			const notAssigned = { value: '', label: '— not assigned to a building —' };
+			const buildingSelect = new Select({ appendTo: bldgRow, options: [notAssigned] });
 
 			getBuildings()
 				.then(data => {
-					for (const b of Object.values(data?.body || {}).sort((a, z) => (a.name || '').localeCompare(z.name || ''))) {
-						const opt = document.createElement('option');
-
-						opt.value = b.id;
-						opt.textContent = b.name || 'Unnamed building';
-						buildingSelect.elem.append(opt);
-					}
+					buildingSelect.options.options = [
+						notAssigned,
+						...Object.values(data?.body || {})
+							.sort((a, z) => (a.name || '').localeCompare(z.name || ''))
+							.map(b => ({ value: b.id, label: b.name || 'Unnamed building' })),
+					];
 
 					if (preBuildingId) buildingSelect.options.value = preBuildingId;
 				})

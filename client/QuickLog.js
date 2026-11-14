@@ -313,31 +313,24 @@ export function openQuickLog() {
 		});
 
 		const populateLocationSelect = (fields, buildings) => {
-			locationSelect.elem.innerHTML = '';
-			locationSelect.elem.append(new Option('— select —', ''));
+			const byName = (a, b) => (a.name || '').localeCompare(b.name || '');
+			const buildingList = Object.values(buildings).sort(byName);
+			const fieldList = Object.values(fields).sort(byName);
 
-			const buildingList = Object.values(buildings).sort((a, b) => (a.name || '').localeCompare(b.name || ''));
-			const fieldList = Object.values(fields).sort((a, b) => (a.name || '').localeCompare(b.name || ''));
-
-			if (buildingList.length) {
-				const group = document.createElement('optgroup');
-				group.label = 'Buildings';
-				buildingList.forEach(b => {
-					const o = new Option(b.name || 'Unnamed building', b.id);
-					group.append(o);
-				});
-				locationSelect.elem.append(group);
-			}
-
-			if (fieldList.length) {
-				const group = document.createElement('optgroup');
-				group.label = 'Fields';
-				fieldList.forEach(f => {
-					const o = new Option(f.name || 'Unnamed field', f.id);
-					group.append(o);
-				});
-				locationSelect.elem.append(group);
-			}
+			locationSelect.options.options = [
+				{ value: '', label: '— select —' },
+				...(buildingList.length
+					? [
+							{
+								label: 'Buildings',
+								options: buildingList.map(b => ({ value: b.id, label: b.name || 'Unnamed building' })),
+							},
+						]
+					: []),
+				...(fieldList.length
+					? [{ label: 'Fields', options: fieldList.map(f => ({ value: f.id, label: f.name || 'Unnamed field' })) }]
+					: []),
+			];
 
 			locationSelect.options.value = currentBuilding?.id || currentField?.id || '';
 		};

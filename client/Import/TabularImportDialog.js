@@ -257,21 +257,11 @@ export default class TabularImportDialog extends Dialog {
 				style: { display: 'flex', gap: space.sm, marginBottom: space.md },
 			});
 
-			const templateSelect = new Select({ appendTo: tplRow, style: { flex: '1' } });
-
-			const blankOpt = document.createElement('option');
-
-			blankOpt.value = '';
-			blankOpt.textContent = '— select template —';
-			templateSelect.elem.append(blankOpt);
-
-			for (const t of templates) {
-				const opt = document.createElement('option');
-
-				opt.value = t.name;
-				opt.textContent = t.name;
-				templateSelect.elem.append(opt);
-			}
+			const templateSelect = new Select({
+				appendTo: tplRow,
+				style: { flex: '1' },
+				options: [{ value: '', label: '— select template —' }, ...templates.map(t => t.name)],
+			});
 
 			new Button({
 				appendTo: tplRow,
@@ -359,39 +349,20 @@ export default class TabularImportDialog extends Dialog {
 			new Elem({ tag: 'div', appendTo: row, addClass: 'col-source', textContent: col, title: col });
 			new Elem({ tag: 'div', appendTo: row, addClass: 'col-arrow', textContent: '→' });
 
-			const selectEl = new Select({ appendTo: row, attributes: { 'aria-label': `Import ${col} as` } });
-
-			// Known fields for this collection
-			const knownGroup = document.createElement('optgroup');
-
-			knownGroup.label = 'Known fields';
-
-			for (const f of fields) {
-				const opt = document.createElement('option');
-
-				opt.value = f.value;
-				opt.textContent = f.label;
-				knownGroup.append(opt);
-			}
-
-			selectEl.elem.append(knownGroup);
-
-			// Properties / skip options
-			const otherGroup = document.createElement('optgroup');
-
-			otherGroup.label = 'Other';
-			[
-				{ value: '_properties', label: 'Properties (free-form)' },
-				{ value: '_skip', label: 'Skip' },
-			].forEach(({ value, label }) => {
-				const opt = document.createElement('option');
-
-				opt.value = value;
-				opt.textContent = label;
-				otherGroup.append(opt);
+			const selectEl = new Select({
+				appendTo: row,
+				attributes: { 'aria-label': `Import ${col} as` },
+				options: [
+					{ label: 'Known fields', options: fields.map(({ value, label }) => ({ value, label })) },
+					{
+						label: 'Other',
+						options: [
+							{ value: '_properties', label: 'Properties (free-form)' },
+							{ value: '_skip', label: 'Skip' },
+						],
+					},
+				],
 			});
-
-			selectEl.elem.append(otherGroup);
 
 			selectEl.options.value = this._mapping[col] ?? '_properties';
 			selectEl.elem.addEventListener('change', () => {

@@ -183,18 +183,16 @@ export default class PrecisionLayerImport extends Dialog {
 		seasonInput.options.value = new Date().getFullYear();
 
 		new FormLabel({ appendTo: body, textContent: 'Field (optional — link to a specific field)' });
-		const fieldSelect = new Select({ appendTo: body });
-		const notLinkedOpt = document.createElement('option');
-		notLinkedOpt.value = '';
-		notLinkedOpt.textContent = '— not linked —';
-		fieldSelect.elem.append(notLinkedOpt);
+		const notLinked = { value: '', label: '— not linked —' };
+		const fieldSelect = new Select({ appendTo: body, options: [notLinked] });
 		getFields()
 			.then(d => {
-				Object.values(d?.body || {})
-					.sort((a, b) => (a.name || '').localeCompare(b.name || ''))
-					.forEach(f => {
-						fieldSelect.elem.append(new Option(f.name || 'Unnamed', f.id));
-					});
+				fieldSelect.options.options = [
+					notLinked,
+					...Object.values(d?.body || {})
+						.sort((a, b) => (a.name || '').localeCompare(b.name || ''))
+						.map(f => ({ value: f.id, label: f.name || 'Unnamed' })),
+				];
 				if (this.options.presetFieldId) fieldSelect.options.value = this.options.presetFieldId;
 			})
 			.catch(() => {});

@@ -225,24 +225,11 @@ export function openRevenueDialog(entityType, entity, existingRecord, onSave, on
 			})
 			.catch(() => {});
 
-		const buildSupplyOptions = (select, currentVal) => {
-			select.innerHTML = '';
-			const none = document.createElement('option');
-
-			none.value = '';
-			none.textContent = '— select item —';
-			select.append(none);
-			for (const s of allSupplies) {
-				const o = document.createElement('option');
-
-				o.value = s.id;
-				o.textContent = `${s.name} (${s.currentStock} ${s.unit || 'units'})`;
-				o.dataset.costPerUnit = s.costPerUnit || '';
-				o.dataset.stock = s.currentStock || '0';
-				if (s.id === currentVal) o.selected = true;
-				select.append(o);
-			}
-		};
+		const supplyOptions = () => [
+			{ value: '', label: '— select item —' },
+			...allSupplies.map(s => ({ value: s.id, label: `${s.name} (${s.currentStock} ${s.unit || 'units'})` })),
+		];
+		const lineSelects = new Set();
 
 		const addLine = () => {
 			const lineData = { supplyId: '', qty: '', price: '' };
@@ -260,9 +247,13 @@ export function openRevenueDialog(entityType, entity, existingRecord, onSave, on
 				},
 			});
 
-			const select = new LineSelect({ appendTo: lineRow, attributes: { 'aria-label': 'Inventory item' } });
+			const select = new LineSelect({
+				appendTo: lineRow,
+				attributes: { 'aria-label': 'Inventory item' },
+				options: supplyOptions(),
+			});
 
-			buildSupplyOptions(select.elem, '');
+			lineSelects.add(select);
 
 			const qtyI = new LineInput({ appendTo: lineRow, attributes: { 'aria-label': 'Quantity' } });
 
@@ -282,6 +273,7 @@ export function openRevenueDialog(entityType, entity, existingRecord, onSave, on
 					const idx = lineItems.indexOf(lineData);
 
 					if (idx !== -1) lineItems.splice(idx, 1);
+					lineSelects.delete(select);
 					lineRow.elem.remove();
 					recalculateTotal();
 				},
@@ -318,7 +310,7 @@ export function openRevenueDialog(entityType, entity, existingRecord, onSave, on
 			style: { flexShrink: '0' },
 			onPointerPress: () => {
 				// Rebuild options in case supplies loaded after initial click
-				linesContainer.elem.querySelectorAll('select').forEach(s => buildSupplyOptions(s, s.value));
+				for (const select of lineSelects) select.options.options = supplyOptions();
 				addLine();
 			},
 		});

@@ -11,6 +11,12 @@ import { toNum } from '../utils/format.js';
 import { buildHarvestSection } from './HarvestSection.js';
 import { buildCoverCropSection } from './CoverCropSection.js';
 
+// A supply as a Select option: its name, with its cost per unit
+const supplyOption = s => ({
+	value: s.id,
+	label: `${s.name} ($${Number(s.costPerUnit || 0).toFixed(2)}/${s.unit || 'unit'})`,
+});
+
 const { space } = theme;
 
 const CategoryGrid = styled(
@@ -398,15 +404,10 @@ export default class EventDialog extends FormDialog {
 
 			// Seed cost from inventory
 			new FormLabel({ appendTo: container, textContent: 'Seed from inventory (optional)' });
-			const seedSelect = new Select({ appendTo: container });
+			const manualSeed = { value: '', label: '— enter cost manually —' };
+			const seedSelect = new Select({ appendTo: container, options: [manualSeed] });
 
 			seedSelect.elem.style.width = '100%';
-
-			const seedNoneOpt = document.createElement('option');
-
-			seedNoneOpt.value = '';
-			seedNoneOpt.textContent = '— enter cost manually —';
-			seedSelect.elem.append(seedNoneOpt);
 
 			new FormLabel({ appendTo: container, textContent: 'Seed Cost/Acre ($)' });
 			const seedCostEl = new Input({
@@ -423,16 +424,7 @@ export default class EventDialog extends FormDialog {
 						.filter(s => s.category === 'seed')
 						.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
 
-					for (const s of seeds) {
-						const opt = document.createElement('option');
-
-						opt.value = s.id;
-						opt.textContent = `${s.name} ($${Number(s.costPerUnit || 0).toFixed(2)}/${s.unit || 'unit'})`;
-						opt.dataset.costPerUnit = s.costPerUnit || '';
-						opt.dataset.unit = s.unit || '';
-						opt.dataset.name = s.name;
-						seedSelect.elem.append(opt);
-					}
+					seedSelect.options.options = [manualSeed, ...seeds.map(supplyOption)];
 
 					// A supply since used up or deleted isn't listed, and stays unpicked
 					if (seeds.some(seed => seed.id === prev.seedSupplyId)) seedSelect.options.value = prev.seedSupplyId;
@@ -487,15 +479,12 @@ export default class EventDialog extends FormDialog {
 
 			// Supply inventory link
 			new FormLabel({ appendTo: container, textContent: 'From inventory (optional)' });
-			const supplySelect = new Select({ appendTo: container });
+			const manualSupply = { value: '', label: '— enter manually —' };
+			const supplySelect = new Select({ appendTo: container, options: [manualSupply] });
+			// The listed supplies by id, for the name, unit and cost of the one picked
+			const supplies = new Map();
 
 			supplySelect.elem.style.width = '100%';
-
-			const noneOpt = document.createElement('option');
-
-			noneOpt.value = '';
-			noneOpt.textContent = '— enter manually —';
-			supplySelect.elem.append(noneOpt);
 
 			// Load supply options asynchronously
 			import('../api/supplies')
@@ -505,16 +494,11 @@ export default class EventDialog extends FormDialog {
 						['herbicide', 'fertilizer', 'amendment', 'fungicide', 'insecticide', 'other'].includes(s.category),
 					);
 
-					for (const s of inputSupplies.sort((a, b) => (a.name || '').localeCompare(b.name || ''))) {
-						const opt = document.createElement('option');
+					inputSupplies.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
 
-						opt.value = s.id;
-						opt.textContent = `${s.name} ($${Number(s.costPerUnit || 0).toFixed(2)}/${s.unit || 'unit'})`;
-						opt.dataset.name = s.name;
-						opt.dataset.costPerUnit = s.costPerUnit || '';
-						opt.dataset.unit = s.unit || '';
-						supplySelect.elem.append(opt);
-					}
+					for (const s of inputSupplies) supplies.set(s.id, s);
+
+					supplySelect.options.options = [manualSupply, ...inputSupplies.map(supplyOption)];
 
 					// A supply since used up or deleted isn't listed, and stays unpicked
 					if (inputSupplies.some(supply => supply.id === prev.supplyId)) supplySelect.options.value = prev.supplyId;
@@ -524,26 +508,26 @@ export default class EventDialog extends FormDialog {
 				});
 
 			supplySelect.elem.addEventListener('change', () => {
-				const opt = supplySelect.elem.selectedOptions[0];
+				const supply = supplies.get(supplySelect.options.value);
 
-				if (opt?.value && opt.dataset.name) {
-					productEl.options.value = opt.dataset.name;
+				if (supply?.name) {
+					productEl.options.value = supply.name;
 					// Auto-fill rate placeholder with unit
-					if (opt.dataset.unit) rateEl.elem.placeholder = `amount per ac (${opt.dataset.unit}/ac)`;
+					if (supply.unit) rateEl.elem.placeholder = `amount per ac (${supply.unit}/ac)`;
 				}
 			});
 
 			// Auto-calculate cost when rate changes
 			const recalculateCost = () => {
-				const opt = supplySelect.elem.selectedOptions[0];
+				const supply = supplies.get(supplySelect.options.value);
 
-				if (!opt?.value || !opt.dataset.costPerUnit) return;
+				if (!supply?.costPerUnit) return;
 
 				const rateMatch = String(rateEl.options.value).match(/[\d.]+/);
 
 				if (rateMatch) {
 					const rate = Number(rateMatch[0]);
-					const cost = rate * Number(opt.dataset.costPerUnit);
+					const cost = rate * Number(supply.costPerUnit);
 
 					costEl.options.value = cost.toFixed(2);
 				}
