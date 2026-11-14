@@ -12,22 +12,35 @@ import Feeding from './Feeding';
 import ApplicationLogs from './ApplicationLog';
 import Animals from './Animals';
 import Todo from './Todo';
+import { ROUTES, movedRoute } from './routes';
+
+// A bookmark or link from before the paths were lowercase opens its view, not the map: on load, and ahead of the
+// router's own listeners (popstate comes before hashchange)
+const followMoved = () => {
+	const moved = movedRoute(window.location.hash);
+
+	if (moved) window.history.replaceState(null, '', moved);
+};
+
+followMoved();
+window.addEventListener('popstate', followMoved);
+window.addEventListener('hashchange', followMoved);
 
 const router = new Router({
 	defaultPath: '/',
 	views: {
-		'/': MapView,
-		'/Fields': Fields,
-		'/Leases': Leases,
-		'/Supplies': Supplies,
-		'/Timeline': Timeline,
-		'/Financials': Financials,
-		'/Todo': Todo,
-		'/Incidents': Incidents,
-		'/Maintenance': Maintenance,
-		'/Feeding': Feeding,
-		'/Applications': ApplicationLogs,
-		'/Animals': Animals,
+		[ROUTES.map]: MapView,
+		[ROUTES.fields]: Fields,
+		[ROUTES.leases]: Leases,
+		[ROUTES.supplies]: Supplies,
+		[ROUTES.timeline]: Timeline,
+		[ROUTES.financials]: Financials,
+		[ROUTES.todo]: Todo,
+		[ROUTES.incidents]: Incidents,
+		[ROUTES.maintenance]: Maintenance,
+		[ROUTES.feeding]: Feeding,
+		[ROUTES.applications]: ApplicationLogs,
+		[ROUTES.animals]: Animals,
 	},
 });
 

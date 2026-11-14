@@ -8,8 +8,8 @@ describe('Nav', () => {
 		const links = [...nav.elem.querySelectorAll('a')].map(a => a.getAttribute('href'));
 
 		expect(links).toContain('#/');
-		expect(links).toContain('#/Fields');
-		expect(links).toContain('#/Timeline');
+		expect(links).toContain('#/fields');
+		expect(links).toContain('#/timeline');
 
 		nav.destroy();
 	});

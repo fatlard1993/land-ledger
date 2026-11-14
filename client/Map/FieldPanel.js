@@ -27,6 +27,7 @@ import EventDialog from '../Timeline/EventDialog';
 import SeasonCharts from '../Charts/SeasonCharts';
 import { scheduleStatus } from '../utils/maintenanceUtils';
 import { IconText, STATUS_ICONS } from '../statusIcons';
+import { ROUTES } from '../routes';
 import { buildingEmoji } from './BuildingDialog';
 import { equipmentEmoji } from './EquipmentDialog';
 import { detectPathEmoji, PATH_COLORS } from './PathDialog';
@@ -1229,7 +1230,7 @@ export default class FieldPanel extends Component {
 				title: 'Open in Timeline',
 				onPointerPress: () => {
 					context.timelineFieldFilter = building.id;
-					window.location.hash = '/Timeline';
+					window.location.hash = ROUTES.timeline;
 					this.hide();
 				},
 			});
@@ -1904,7 +1905,7 @@ export default class FieldPanel extends Component {
 			title: 'Open in Timeline',
 			onPointerPress: () => {
 				context.timelineFieldFilter = field.id;
-				window.location.hash = '/Timeline';
+				window.location.hash = ROUTES.timeline;
 				this.hide();
 			},
 		});

@@ -3,22 +3,23 @@ import { Elem, Icon } from '@vanilla-bean/components';
 import { BottomNav, NavItem, NavLink } from './Layout';
 import context from './context';
 import { logout } from './api/auth';
+import { ROUTES } from './routes';
 
 const BASE_ITEMS = [
-	{ path: '/', icon: 'map-location-dot', label: 'Map' },
-	{ path: '/Fields', icon: 'wheat-awn', label: 'Fields' },
-	{ path: '/Todo', icon: 'list-check', label: 'To Do' },
-	{ path: '/Timeline', icon: 'calendar-days', label: 'Timeline' },
+	{ path: ROUTES.map, icon: 'map-location-dot', label: 'Map' },
+	{ path: ROUTES.fields, icon: 'wheat-awn', label: 'Fields' },
+	{ path: ROUTES.todo, icon: 'list-check', label: 'To Do' },
+	{ path: ROUTES.timeline, icon: 'calendar-days', label: 'Timeline' },
 ];
 
-const LEASES_ITEM = { path: '/Leases', icon: 'file-signature', label: 'Leases' };
-const SUPPLIES_ITEM = { path: '/Supplies', icon: 'boxes-stacked', label: 'Supplies' };
-const FINANCIALS_ITEM = { path: '/Financials', icon: 'sack-dollar', label: 'Financials' };
-const INCIDENTS_ITEM = { path: '/Incidents', icon: 'triangle-exclamation', label: 'Incidents' };
-const MAINTENANCE_ITEM = { path: '/Maintenance', icon: 'wrench', label: 'Maintenance' };
-const FEEDING_ITEM = { path: '/Feeding', icon: 'cow', label: 'Feeding' };
-const APPLICATIONS_ITEM = { path: '/Applications', icon: 'flask', label: 'Applications' };
-const ANIMALS_ITEM = { path: '/Animals', icon: 'paw', label: 'Animals' };
+const LEASES_ITEM = { path: ROUTES.leases, icon: 'file-signature', label: 'Leases' };
+const SUPPLIES_ITEM = { path: ROUTES.supplies, icon: 'boxes-stacked', label: 'Supplies' };
+const FINANCIALS_ITEM = { path: ROUTES.financials, icon: 'sack-dollar', label: 'Financials' };
+const INCIDENTS_ITEM = { path: ROUTES.incidents, icon: 'triangle-exclamation', label: 'Incidents' };
+const MAINTENANCE_ITEM = { path: ROUTES.maintenance, icon: 'wrench', label: 'Maintenance' };
+const FEEDING_ITEM = { path: ROUTES.feeding, icon: 'cow', label: 'Feeding' };
+const APPLICATIONS_ITEM = { path: ROUTES.applications, icon: 'flask', label: 'Applications' };
+const ANIMALS_ITEM = { path: ROUTES.animals, icon: 'paw', label: 'Animals' };
 
 export default class Nav extends BottomNav {
 	build() {

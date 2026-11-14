@@ -36,6 +36,7 @@ import { eventEmoji } from '../Timeline/EventDialog';
 import { categoryMeta } from '../eventCategories';
 import context from '../context';
 import { toDateOnly } from '../utils/dates';
+import { ROUTES } from '../routes';
 
 const { colors } = theme;
 
@@ -239,7 +240,7 @@ export default class Todo extends AsyncView {
 				entity: eq?.name || 'Equipment',
 				detail: status.label,
 				detail2: schedule.procedure || null,
-				navigate: '/Maintenance',
+				navigate: ROUTES.maintenance,
 			});
 		}
 
@@ -359,7 +360,7 @@ export default class Todo extends AsyncView {
 				entity: incident.entityName || '',
 				detail: [severity.label, incident.date ? formatDate(incident.date) : null].filter(Boolean).join(' · '),
 				detail2: incident.description || null,
-				navigate: '/Incidents',
+				navigate: ROUTES.incidents,
 			});
 		}
 
@@ -380,7 +381,7 @@ export default class Todo extends AsyncView {
 				title: 'Lease renewal',
 				entity: lease.entityName || lease.landlordName || lease.tenantName || '',
 				detail: dStr,
-				navigate: '/Leases',
+				navigate: ROUTES.leases,
 			});
 		}
 
@@ -401,7 +402,7 @@ export default class Todo extends AsyncView {
 				title: 'Loan maturity',
 				entity: loan.lender || loan.entityName || '',
 				detail: dStr,
-				navigate: '/Leases',
+				navigate: ROUTES.leases,
 			});
 		}
 
@@ -444,7 +445,7 @@ export default class Todo extends AsyncView {
 				detail: dateLabel,
 				onPress: () => {
 					context.timelineFieldFilter = event.fieldId || null;
-					window.location.hash = '/Timeline';
+					window.location.hash = ROUTES.timeline;
 				},
 			});
 		}
@@ -472,7 +473,7 @@ export default class Todo extends AsyncView {
 				entity: animal ? animal.name || `#${animal.tagId}` : 'Animal',
 				detail: `${r.drug} — clears ${r.withdrawalDate} (${daysLeft}d)`,
 				onPress: () => {
-					window.location.hash = '/Animals';
+					window.location.hash = ROUTES.animals;
 				},
 			});
 		}
@@ -510,7 +511,7 @@ export default class Todo extends AsyncView {
 				entity: dam ? dam.name || `#${dam.tagId}` : 'Animal',
 				detail: dateLabel,
 				onPress: () => {
-					window.location.hash = '/Animals';
+					window.location.hash = ROUTES.animals;
 				},
 			});
 		}
