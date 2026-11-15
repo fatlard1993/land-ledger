@@ -1,4 +1,4 @@
-import { Button, Component, styled, theme } from '@vanilla-bean/components';
+import { Button, Component, Elem, styled, theme } from '@vanilla-bean/components';
 
 const { colors } = theme;
 
@@ -23,6 +23,14 @@ const IndicatorBar = styled(
 	&.visible {
 		display: block;
 	}
+
+	/* The synced notice holds a Refresh button beside its words */
+	&.visible.synced {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		gap: ${space.sm};
+	}
 `,
 );
 
@@ -34,6 +42,7 @@ export function mountOfflineIndicator() {
 
 	const show = (text, bg) => {
 		clearTimeout(hideTimer);
+		bar.removeClass('synced');
 		bar.options.textContent = text;
 		bar.options.style = { background: bg };
 		bar.addClass('visible');
@@ -71,16 +80,16 @@ export function mountOfflineIndicator() {
 	// Show a "Refresh" prompt after a successful queue flush instead of auto-reloading,
 	// so unsaved form state is never silently destroyed.
 	window.addEventListener('land-ledger:queue-flushed', ({ detail: { synced } }) => {
-		bar.elem.innerHTML = '';
-		bar.elem.style.background = `${colors.dark(colors.green)}`;
-		bar.elem.style.display = 'flex';
-		bar.elem.style.alignItems = 'center';
-		bar.elem.style.justifyContent = 'center';
-		bar.elem.style.gap = '10px';
+		clearTimeout(hideTimer);
+		bar.empty();
+		bar.options.style = { background: colors.dark(colors.green) };
+		bar.addClass('synced');
 
-		const msg = document.createElement('span');
-		msg.textContent = `Synced ${synced} change${synced !== 1 ? 's' : ''} — refresh to see updates`;
-		bar.elem.appendChild(msg);
+		new Elem({
+			tag: 'span',
+			appendTo: bar,
+			textContent: `Synced ${synced} change${synced !== 1 ? 's' : ''} — refresh to see updates`,
+		});
 
 		new Button({
 			appendTo: bar,

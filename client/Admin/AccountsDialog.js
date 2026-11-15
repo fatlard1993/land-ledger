@@ -338,9 +338,11 @@ export default class AccountsDialog extends Dialog {
 
 		new SectionLabel({ appendTo: sec, textContent: 'USDA NASS API Key' });
 
-		const sub = new Hint({ appendTo: sec, style: { marginBottom: '0' } });
-
-		sub.elem.innerHTML = `Enables county yield benchmarks in Timeline Insights. Free registration at <b>quickstats.nass.usda.gov/api</b>`;
+		new Hint(
+			{ appendTo: sec, style: { marginBottom: '0' } },
+			'Enables county yield benchmarks in Timeline Insights. Free registration at ',
+			new Elem({ tag: 'b', textContent: 'quickstats.nass.usda.gov/api' }),
+		);
 
 		const row = new Elem({
 			tag: 'div',

@@ -412,7 +412,24 @@ const EDIT_FIELDS = [
 	},
 ];
 
-export default class FieldPanel extends Component {
+// On desktop the panel slides open beside the map
+const FieldPanelOuter = styled(
+	Component,
+	({ media }) => `
+		@media ${media.wide} {
+			flex-shrink: 0;
+			width: 0;
+			overflow: hidden;
+			transition: width 0.3s ease;
+
+			&.open {
+				width: 340px;
+			}
+		}
+	`,
+);
+
+export default class FieldPanel extends FieldPanelOuter {
 	constructor(options = {}) {
 		super({ autoRender: false, ...options });
 	}
@@ -513,19 +530,6 @@ export default class FieldPanel extends Component {
 		this.addCleanup('esc', () => document.removeEventListener('keydown', this._escHandler));
 
 		this.addClass('field-panel-outer');
-
-		if (!document.getElementById('field-panel-outer-style')) {
-			const s = document.createElement('style');
-
-			s.id = 'field-panel-outer-style';
-			s.textContent = `
-				@media ${theme.media.wide} {
-					.field-panel-outer { flex-shrink: 0; width: 0; overflow: hidden; transition: width 0.3s ease; }
-					.field-panel-outer.open { width: 340px; }
-				}
-			`;
-			document.head.append(s);
-		}
 
 		this.panel = new StyledPanel({ appendTo: this });
 

@@ -1,6 +1,6 @@
 import L from 'leaflet';
 import '@geoman-io/leaflet-geoman-free';
-import { Notify, failureReason, parseDate, theme } from '@vanilla-bean/components';
+import { Notify, failureReason, parseDate, styled, theme } from '@vanilla-bean/components';
 
 import AsyncView from '../AsyncView';
 
@@ -65,47 +65,46 @@ const refusedDelete = (result, what) => {
 	return true;
 };
 
-const { colors, media } = theme;
+const { colors } = theme;
 
-export default class MapView extends AsyncView {
+// On desktop the map and the panel sit side by side; on a phone, Leaflet's controls are made big enough to tap
+const MapViewRoot = styled(
+	AsyncView,
+	({ media }) => `
+		@media ${media.wide} {
+			flex-direction: row !important;
+		}
+
+		@media ${media.phone} {
+			& .leaflet-control-zoom a {
+				width: 44px !important;
+				height: 44px !important;
+				line-height: 44px !important;
+				font-size: 20px !important;
+			}
+
+			& .leaflet-control-zoom {
+				border-radius: 8px !important;
+			}
+
+			/* Draw mode and map control buttons */
+			& .leaflet-control a,
+			& .leaflet-bar a {
+				width: 44px !important;
+				height: 44px !important;
+				line-height: 44px !important;
+			}
+		}
+	`,
+);
+
+export default class MapView extends MapViewRoot {
 	_loadOnConnect = true;
 	_referenceVisible = false;
 	_referenceLoading = false;
 	_drawMode = 'field'; // 'field' | 'building' | 'equipment' | 'parcel' | 'path'
 
 	_buildView() {
-		// On desktop, MapView needs to be flex-row so map and panel sit side by side
-		this.addClass('map-view-root');
-
-		if (!document.getElementById('map-view-root-style')) {
-			const s = document.createElement('style');
-
-			s.id = 'map-view-root-style';
-			s.textContent = `
-				@media ${media.wide}{.map-view-root{flex-direction:row!important}}
-
-				/* Mobile: bigger Leaflet zoom buttons */
-				@media ${media.phone}{
-					.leaflet-control-zoom a {
-						width: 44px !important;
-						height: 44px !important;
-						line-height: 44px !important;
-						font-size: 20px !important;
-					}
-					.leaflet-control-zoom {
-						border-radius: 8px !important;
-					}
-					/* Draw mode and map control buttons */
-					.leaflet-control a, .leaflet-bar a {
-						width: 44px !important;
-						height: 44px !important;
-						line-height: 44px !important;
-					}
-				}
-			`;
-			document.head.append(s);
-		}
-
 		this.mapWrap = new MapWrap({ appendTo: this });
 		this.panel = new FieldPanel({ appendTo: this });
 	}

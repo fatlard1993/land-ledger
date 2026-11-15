@@ -215,12 +215,22 @@ export default class Supplies extends AsyncView {
 					const stockVal = Number(supply.currentStock);
 					const costVal = stockVal * (Number(supply.costPerUnit) || 0);
 
-					new Elem({
+					const stock = new Elem({
 						tag: 'div',
 						appendTo: card,
 						style: { textAlign: 'right', flexShrink: '0' },
-					}).elem.innerHTML =
-						`<div class="supply-stock">${stockVal} ${supply.unit || ''}</div>${costVal > 0 ? `<div class="supply-cost">$${costVal.toFixed(0)}</div>` : ''}`;
+					});
+
+					new Elem({
+						tag: 'div',
+						appendTo: stock,
+						addClass: 'supply-stock',
+						textContent: `${stockVal} ${supply.unit || ''}`,
+					});
+
+					if (costVal > 0) {
+						new Elem({ tag: 'div', appendTo: stock, addClass: 'supply-cost', textContent: `$${costVal.toFixed(0)}` });
+					}
 				}
 			}
 		}
