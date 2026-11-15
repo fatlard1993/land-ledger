@@ -3,34 +3,32 @@ import {
 	Component,
 	Dialog,
 	Elem,
-	failureReason,
 	formatDate,
-	Input,
 	parseDate,
 	SectionLabel,
-	Select,
 	styled,
 	theme,
 } from '@vanilla-bean/components';
 
-import { geodesicAreaSqm, convertArea, formatArea, AREA_UNITS } from '../geo';
+import { formatArea } from '../geo';
 import parseDetails from '../utils/parseDetails';
-import { makePropertiesEditor } from '../utils/PropertiesEditor';
 import { formatDollar } from '../utils/format';
 
 import { getEvents, updateEvent, getMaintenance, getMaintenanceSchedules, updateEquipment } from '../api';
 import { eventEmoji } from '../Timeline/EventDialog';
 import { categoryMeta } from '../eventCategories';
-import { ActionHeader, FieldPanel as StyledPanel, DetailRow, FormLabel, TenureBadge } from '../Layout';
+import { ActionHeader, FieldPanel as StyledPanel, DetailRow, TenureBadge } from '../Layout';
 import context from '../context';
 import EventDialog from '../Timeline/EventDialog';
 import SeasonCharts from '../Charts/SeasonCharts';
 import { scheduleStatus } from '../utils/maintenanceUtils';
 import { IconText, STATUS_ICONS } from '../statusIcons';
 import { ROUTES } from '../routes';
-import { buildingEmoji } from './BuildingDialog';
-import { equipmentEmoji } from './EquipmentDialog';
-import { detectPathEmoji, PATH_COLORS } from './PathDialog';
+import BuildingDialog, { buildingEmoji } from './BuildingDialog';
+import EquipmentDialog, { equipmentEmoji } from './EquipmentDialog';
+import FieldDialog from './FieldDialog';
+import ParcelDialog from './ParcelDialog';
+import PathDialog, { detectPathEmoji } from './PathDialog';
 import { renderWeatherStrip } from './FieldWeather';
 import { renderPrecisionLayersSection } from './PrecisionLayerPanel';
 import { renderEconomics } from './FieldEconomics';
@@ -42,9 +40,6 @@ import { renderBuildingInventory, renderEntityRevenue, renderBudgetItems } from 
 import { openSellDialog } from './EntityRevenue';
 
 const { colors, space } = theme;
-
-// At 16px a phone's browser doesn't zoom the page in when the field takes focus
-const FIELD_STYLE = { fontSize: '16px' };
 
 const PanelHeader = styled(
 	Component,
@@ -259,125 +254,6 @@ const HistoryRow = styled(
 	`,
 );
 
-const EmojiRow = styled(
-	Component,
-	({ colors, space }) => `
-		display: flex;
-		align-items: center;
-		gap: ${space.sm};
-		margin: ${space.xs} 0 ${space.sm};
-
-		& > input {
-			flex-shrink: 0;
-			width: 52px;
-			padding: ${space.xs};
-			font-size: 22px;
-			text-align: center;
-		}
-
-		& > span {
-			font-size: 11px;
-			color: ${colors.gray};
-		}
-	`,
-);
-
-// A number with its unit beside it, drawn as one field
-const AreaField = styled(
-	Component,
-	({ colors, focusRing, radius, space }) => `
-		display: flex;
-		align-items: center;
-		overflow: hidden;
-		border: 1px solid ${colors.border};
-		border-radius: ${radius.sm};
-		background: ${colors.alpha(colors.white, 0.06)};
-
-		/* The one focus ring, round the whole field */
-		&:has(:focus-visible) {
-			${focusRing()}
-		}
-
-		& > input,
-		& > input:focus {
-			flex: 1;
-			min-width: 0;
-			border: none;
-			background: transparent;
-			box-shadow: none;
-		}
-
-		& > select,
-		& > select:focus {
-			flex-shrink: 0;
-			width: 54px;
-			padding: ${space.sm} ${space.xs};
-			border: none;
-			border-left: 1px solid ${colors.border};
-			border-radius: 0;
-			background: transparent;
-			box-shadow: none;
-			font-size: 13px;
-			cursor: pointer;
-		}
-
-		& > button {
-			flex-shrink: 0;
-			border-left: 1px solid ${colors.border};
-			border-radius: 0;
-		}
-	`,
-);
-
-const LabelToggle = styled(
-	Component,
-	({ colors, space }) => `
-		display: flex;
-		align-items: center;
-		gap: ${space.sm};
-		margin-top: ${space.md};
-
-		& label {
-			font-size: 13px;
-			color: ${colors.muted};
-			cursor: pointer;
-			user-select: none;
-		}
-	`,
-);
-
-const FormButtons = styled(
-	Component,
-	({ space }) => `
-		display: flex;
-		gap: ${space.sm};
-		margin-top: ${space.lg};
-
-		& > button {
-			flex: 1;
-		}
-	`,
-);
-
-const SaveFailure = styled(
-	Elem,
-	({ colors, space }) => `
-		margin-top: ${space.md};
-		color: ${colors.light(colors.danger)};
-	`,
-);
-
-// The panel's edit forms save outside a FormDialog, so one shows a failed save's reason above its buttons as a FormDialog would
-const failedSave = (result, buttons) => {
-	if (result?.status !== 'error') return false;
-
-	buttons.failure ??= new SaveFailure({ attributes: { role: 'alert' } });
-	buttons.elem.before(buttons.failure.elem);
-	buttons.failure.elem.textContent = failureReason(result);
-
-	return true;
-};
-
 const FIELD_STATUSES = [
 	{ value: '', label: 'Active' },
 	{ value: 'needs_maintenance', label: 'Needs maintenance' },
@@ -386,30 +262,6 @@ const FIELD_STATUSES = [
 	{ value: 'fallow', label: 'Fallow' },
 	{ value: 'abandoned', label: 'Abandoned' },
 	{ value: 'destroyed', label: 'Destroyed' },
-];
-
-const EDIT_FIELDS = [
-	{ key: 'name', label: 'Field Name', placeholder: 'e.g. Home Farm North' },
-	{
-		key: 'tenure',
-		label: 'Tenure',
-		options: [
-			{ value: 'own', label: 'Owned' },
-			{ value: 'rent', label: 'Rented' },
-		],
-	},
-	{ key: 'status', label: 'Status', options: FIELD_STATUSES },
-	{ key: 'acreage', label: 'Acreage', placeholder: 'e.g. 143.5', type: 'number' },
-	{ key: 'trialGroup', label: 'Trial Group', placeholder: 'e.g. FLOURISH 2024' },
-	{
-		key: 'trialRole',
-		label: 'Trial Role',
-		options: [
-			{ value: '', label: 'None' },
-			{ value: 'treatment', label: 'Treatment' },
-			{ value: 'control', label: 'Control' },
-		],
-	},
 ];
 
 // On desktop the panel slides open beside the map
@@ -504,21 +356,6 @@ export default class FieldPanel extends FieldPanelOuter {
 			},
 			{ passive: true },
 		);
-	}
-
-	_mkLabelToggle(defaultOn = true) {
-		const uniqueId = `lbl-toggle-${Math.random().toString(36).slice(2)}`;
-		const row = new LabelToggle({ appendTo: this._content });
-		const cb = new Input({ appendTo: row, attributes: { id: uniqueId } });
-
-		cb.elem.type = 'checkbox';
-		cb.elem.checked = defaultOn;
-
-		const label = new Elem({ tag: 'label', appendTo: row, textContent: 'Show name label on map' });
-
-		label.elem.htmlFor = uniqueId;
-
-		return cb.elem;
 	}
 
 	build() {
@@ -738,7 +575,12 @@ export default class FieldPanel extends FieldPanelOuter {
 		this._editBoundaryBtn.elem.title = 'Edit path line';
 		this._configureButtons({ edit: true, editBoundary: !!p.geometry, del: true });
 
-		this._editBtn.options.onPointerPress = () => this._renderPathEdit();
+		this._editBtn.options.onPointerPress = () =>
+			new PathDialog({
+				path: p,
+				onSave: data => this._saveEntity(data, () => this._renderPathView()),
+				onDelete: callbacks.onDelete,
+			});
 		this._editBoundaryBtn.options.onPointerPress = callbacks.onEditPath;
 
 		this._deleteBtn.options.onPointerPress = async () => {
@@ -801,139 +643,13 @@ export default class FieldPanel extends FieldPanelOuter {
 		this._renderProperties(p.properties, this._content);
 	}
 
-	_renderPathEdit() {
-		const { data: p, callbacks } = this._entity;
+	// Saves an edit made in the record's dialog and shows the saved record; a failed save goes back to the dialog
+	async _saveEntity(data, render) {
+		const updated = await this._entity.callbacks.onSave?.(data);
 
-		this._titleElem.elem.textContent = 'Edit Path';
-		this._configureButtons();
-		this._metaElem.empty();
-		this._content.empty();
-
-		// Emoji row
-		const emojiRow = new EmojiRow({ appendTo: this._content });
-		const emojiInput = new Input({ appendTo: emojiRow });
-
-		Object.assign(emojiInput.elem, { type: 'text', maxLength: 4 });
-		emojiInput.options.value = p.emoji || detectPathEmoji(p.type || '');
-		emojiInput.elem.title = 'Tap to change emoji';
-
-		const emojiHint = new Elem({ tag: 'span', appendTo: emojiRow });
-
-		emojiHint.elem.textContent = 'Auto-detected · tap to change';
-
-		emojiInput.elem.addEventListener('input', () => {
-			emojiHint.elem.textContent = emojiInput.options.value
-				? 'Custom · clear to auto-detect'
-				: 'Auto-detected · tap to change';
-		});
-
-		const getters = {};
-
-		for (const { key, label, placeholder, type } of [
-			{ key: 'name', label: 'Name', placeholder: 'e.g. North Lane' },
-			{ key: 'type', label: 'Type', placeholder: 'e.g. Driveway, Farm road, Trail' },
-			{ key: 'widthFt', label: 'Width (feet)', placeholder: '10', type: 'number' },
-		]) {
-			new FormLabel({ appendTo: this._content, textContent: label });
-			const input = new Input({ appendTo: this._content });
-			Object.assign(input.elem, { type: type || 'text', placeholder: placeholder || '' });
-			input.options.value = p[key] || '';
-			input.setStyle(FIELD_STYLE);
-			getters[key] = () => input.options.value;
-			// Auto-update emoji when type changes
-			if (key === 'type')
-				input.elem.addEventListener('input', () => {
-					if (!emojiInput.elem.dataset.manual) emojiInput.options.value = detectPathEmoji(input.options.value);
-				});
-		}
-
-		// Color picker
-		new FormLabel({ appendTo: this._content, textContent: 'Surface / Color' });
-
-		let selectedColor = p.color || PATH_COLORS[0].value;
-		const colorGrid = new Component({
-			appendTo: this._content,
-			style: {
-				display: 'grid',
-				gridTemplateColumns: 'repeat(4, 1fr)',
-				gap: space.xs,
-				marginTop: space.xs,
-				marginBottom: space.sm,
-			},
-		});
-
-		// The swatches are the path's own stored hex colors; the selected one is tinted with an alpha suffix
-		const tint = value => `${value}44`;
-
-		for (const { value, label } of PATH_COLORS) {
-			const btn = new Button({
-				appendTo: colorGrid,
-				textContent: label,
-				style: {
-					background: value === selectedColor ? tint(value) : 'transparent',
-					border: `2px solid ${value}`,
-					color: colors.white,
-					fontSize: '11px',
-					padding: `${space.sm} ${space.xs}`,
-				},
-				onPointerPress: () => {
-					selectedColor = value;
-					Array.from(colorGrid.elem.children).forEach(b => {
-						b.style.background = 'transparent';
-					});
-					btn.elem.style.background = tint(value);
-				},
-			});
-			btn.elem.type = 'button';
-		}
-
-		new FormLabel({ appendTo: this._content, textContent: 'Status' });
-		const pathStatusSelect = new Select({ appendTo: this._content });
-
-		pathStatusSelect.setStyle(FIELD_STYLE);
-		pathStatusSelect.options.options = [
-			{ value: '', label: 'Active' },
-			{ value: 'needs_maintenance', label: 'Needs maintenance' },
-			{ value: 'needs_service', label: 'Needs service' },
-			{ value: 'out_of_service', label: 'Out of service' },
-			{ value: 'closed', label: 'Closed' },
-			{ value: 'destroyed', label: 'Destroyed' },
-		];
-		pathStatusSelect.options.value = p.status || '';
-
-		const pathLabelCb = this._mkLabelToggle(p.showLabel === true);
-
-		const { collect: collectPathProps } = makePropertiesEditor(this._content, p.properties || {});
-
-		const buttons = new FormButtons({ appendTo: this._content });
-
-		new Button({
-			appendTo: buttons,
-			textContent: 'Cancel',
-			variant: 'flat',
-			onPointerPress: () => this._renderPathView(),
-		});
-		new Button({
-			appendTo: buttons,
-			textContent: 'Save',
-			onPointerPress: async () => {
-				const data = Object.fromEntries(Object.entries(getters).map(([k, g]) => [k, g()]));
-				const autoEmoji = detectPathEmoji(data.type || '');
-
-				data.emoji = emojiInput.options.value !== autoEmoji ? emojiInput.options.value : '';
-				data.color = selectedColor;
-				data.status = pathStatusSelect.options.value;
-				data.showLabel = pathLabelCb.checked;
-				data.properties = collectPathProps();
-				data.geometry = p.geometry;
-
-				const updated = await callbacks.onSave?.(data);
-
-				if (failedSave(updated, buttons)) return;
-				if (updated) this._entity.data = updated;
-				this._renderPathView();
-			},
-		});
+		if (updated?.status === 'error' || updated?.conflict) return updated;
+		if (updated) this._entity.data = updated;
+		render();
 	}
 
 	async showParcel(parcel, callbacks = {}) {
@@ -955,7 +671,12 @@ export default class FieldPanel extends FieldPanelOuter {
 		this._editBoundaryBtn.elem.title = 'Edit boundary';
 		this._configureButtons({ edit: true, editBoundary: !!p.geometry, sell: true, del: true });
 
-		this._editBtn.options.onPointerPress = () => this._renderParcelEdit();
+		this._editBtn.options.onPointerPress = () =>
+			new ParcelDialog({
+				parcel: p,
+				onSave: data => this._saveEntity(data, () => this._renderParcelView()),
+				onDelete: callbacks.onDelete,
+			});
 		this._editBoundaryBtn.options.onPointerPress = callbacks.onEditBoundary;
 
 		this._sellBtn.options.onPointerPress = () =>
@@ -1010,123 +731,6 @@ export default class FieldPanel extends FieldPanelOuter {
 		await renderIncidents('parcel', p, () => this._renderParcelView(), this._content);
 	}
 
-	async _renderParcelEdit() {
-		const { data: p, callbacks } = this._entity;
-
-		this._titleElem.elem.textContent = 'Edit Property Line';
-		this._configureButtons();
-		this._metaElem.empty();
-		this._content.empty();
-
-		const getters = {};
-
-		for (const { key, label, placeholder, options } of [
-			{ key: 'name', label: 'Description', placeholder: 'e.g. North Parcel' },
-			{
-				key: 'status',
-				label: 'Status',
-				options: [
-					{ value: '', label: 'Active' },
-					{ value: 'needs_maintenance', label: 'Needs maintenance' },
-					{ value: 'out_of_service', label: 'Out of service' },
-					{ value: 'disputed', label: 'Disputed' },
-					{ value: 'encumbered', label: 'Encumbered' },
-					{ value: 'destroyed', label: 'Destroyed' },
-				],
-			},
-		]) {
-			new FormLabel({ appendTo: this._content, textContent: label });
-
-			if (options) {
-				const select = new Select({ appendTo: this._content });
-
-				select.setStyle(FIELD_STYLE);
-				select.options.options = options;
-				select.options.value = p[key] || '';
-				getters[key] = () => select.options.value;
-			} else {
-				const input = new Input({ appendTo: this._content });
-
-				Object.assign(input.elem, { type: 'text', placeholder: placeholder || '' });
-				input.options.value = p[key] || '';
-				input.setStyle(FIELD_STYLE);
-				getters[key] = () => input.options.value;
-			}
-		}
-
-		// Area row — same pattern as field inline edit
-		new FormLabel({ appendTo: this._content, textContent: 'Area' });
-
-		const areaRow = new AreaField({ appendTo: this._content });
-
-		const currentUnit = p.acreageUnit || 'ac';
-		const sqm = p.geometry ? geodesicAreaSqm(p.geometry) : null;
-		const defaultArea = p.acreage || (sqm ? convertArea(sqm, currentUnit) : '') || '';
-		const unitMeta = AREA_UNITS.find(u => u.value === currentUnit) || AREA_UNITS[1];
-
-		const areaInput = new Input({ appendTo: areaRow, attributes: { 'aria-label': 'Area' } });
-
-		Object.assign(areaInput.elem, { type: 'number', step: '0.01', min: '0', placeholder: 'Size' });
-		areaInput.options.value = defaultArea ? Number(defaultArea).toFixed(unitMeta.decimals) : '';
-		areaInput.setStyle(FIELD_STYLE);
-
-		const unitSelect = new Select({ appendTo: areaRow, attributes: { 'aria-label': 'Area unit' } });
-
-		unitSelect.options.options = AREA_UNITS;
-
-		unitSelect.options.value = currentUnit;
-		unitSelect.elem.addEventListener('change', () => {
-			if (!sqm) return;
-			const meta = AREA_UNITS.find(u => u.value === unitSelect.options.value) || AREA_UNITS[1];
-			areaInput.options.value = convertArea(sqm, unitSelect.options.value).toFixed(meta.decimals);
-		});
-
-		if (sqm) {
-			new Button({
-				appendTo: areaRow,
-				variant: 'flat',
-				icon: 'arrows-rotate',
-				title: 'Calculate from boundary',
-				onPointerPress: () => {
-					const meta = AREA_UNITS.find(u => u.value === unitSelect.options.value) || AREA_UNITS[1];
-					areaInput.options.value = convertArea(sqm, unitSelect.options.value).toFixed(meta.decimals);
-				},
-			});
-		}
-
-		getters.acreage = () => areaInput.options.value;
-		getters.acreageUnit = () => unitSelect.options.value;
-
-		const parcelLabelCb = this._mkLabelToggle(p.showLabel !== false);
-
-		getters['showLabel'] = () => parcelLabelCb.checked;
-
-		const { collect: collectParcelProps } = makePropertiesEditor(this._content, p.properties || {});
-
-		getters['properties'] = collectParcelProps;
-
-		const buttons = new FormButtons({ appendTo: this._content });
-
-		new Button({
-			appendTo: buttons,
-			textContent: 'Cancel',
-			variant: 'flat',
-			onPointerPress: () => this._renderParcelView(),
-		});
-		new Button({
-			appendTo: buttons,
-			textContent: 'Save',
-			onPointerPress: async () => {
-				const data = Object.fromEntries(Object.entries(getters).map(([k, g]) => [k, g()]));
-				const updated = await callbacks.onSave?.(data);
-
-				if (failedSave(updated, buttons)) return;
-				if (updated) this._entity.data = updated;
-				this._renderParcelView();
-			},
-		});
-	}
-
 	async showBuilding(building, callbacks = {}) {
 		if (!this.rendered) this.render();
 		this._dismissCurrent();
@@ -1156,7 +760,12 @@ export default class FieldPanel extends FieldPanelOuter {
 		this._editBoundaryBtn.elem.title = 'Edit boundary';
 		this._configureButtons({ edit: true, editBoundary: !!b.geometry, del: true });
 
-		this._editBtn.options.onPointerPress = () => this._renderBuildingEdit();
+		this._editBtn.options.onPointerPress = () =>
+			new BuildingDialog({
+				building: b,
+				onSave: data => this._saveEntity(data, () => this._renderBuildingView()),
+				onDelete: callbacks.onDelete,
+			});
 		this._editBoundaryBtn.options.onPointerPress = callbacks.onEditBoundary;
 
 		this._deleteBtn.options.onPointerPress = async () => {
@@ -1305,111 +914,6 @@ export default class FieldPanel extends FieldPanelOuter {
 		}
 	}
 
-	async _renderBuildingEdit() {
-		const { data: b, callbacks } = this._entity;
-
-		this._titleElem.elem.textContent = 'Edit Building';
-		this._configureButtons();
-		this._metaElem.empty();
-		this._content.empty();
-
-		// Emoji row
-		const bldgEmojiRow = new EmojiRow({ appendTo: this._content });
-		const bldgEmojiInput = new Input({ appendTo: bldgEmojiRow });
-
-		Object.assign(bldgEmojiInput.elem, { type: 'text', maxLength: 4 });
-		bldgEmojiInput.options.value = b.emoji || buildingEmoji(b.type || '');
-		bldgEmojiInput.elem.title = 'Tap to change emoji';
-
-		const bldgEmojiHint = new Elem({ tag: 'span', appendTo: bldgEmojiRow });
-
-		bldgEmojiHint.elem.textContent = b.emoji ? 'Custom · clear to auto-detect' : 'Auto-detected · tap to change';
-
-		bldgEmojiInput.elem.addEventListener('input', () => {
-			bldgEmojiInput.elem.dataset.manual = bldgEmojiInput.options.value ? '1' : '';
-			bldgEmojiHint.elem.textContent = bldgEmojiInput.options.value
-				? 'Custom · clear to auto-detect'
-				: 'Auto-detected · tap to change';
-		});
-
-		const getters = {};
-
-		for (const { key, label, placeholder, options } of [
-			{ key: 'name', label: 'Name', placeholder: 'Building name' },
-			{ key: 'type', label: 'Type', placeholder: 'e.g. Barn, Machine shed, Grain bin' },
-			{
-				key: 'status',
-				label: 'Status',
-				options: [
-					{ value: '', label: 'Active' },
-					{ value: 'needs_maintenance', label: 'Needs maintenance' },
-					{ value: 'needs_service', label: 'Needs service' },
-					{ value: 'out_of_service', label: 'Out of service' },
-					{ value: 'destroyed', label: 'Destroyed' },
-				],
-			},
-		]) {
-			new FormLabel({ appendTo: this._content, textContent: label });
-
-			if (options) {
-				const select = new Select({ appendTo: this._content });
-
-				select.setStyle(FIELD_STYLE);
-				select.options.options = options;
-				select.options.value = b[key] || '';
-				getters[key] = () => select.options.value;
-			} else {
-				const input = new Input({ appendTo: this._content });
-
-				Object.assign(input.elem, { type: 'text', placeholder: placeholder || '' });
-				input.options.value = b[key] || '';
-				input.setStyle(FIELD_STYLE);
-				getters[key] = () => input.options.value;
-				// Auto-update emoji when type changes
-				if (key === 'type')
-					input.elem.addEventListener('input', () => {
-						if (!bldgEmojiInput.elem.dataset.manual) bldgEmojiInput.options.value = buildingEmoji(input.options.value);
-					});
-			}
-		}
-
-		const bldgLabelCb = this._mkLabelToggle(b.showLabel !== false);
-
-		getters['emoji'] = () => {
-			const auto = buildingEmoji(getters.type());
-			return bldgEmojiInput.options.value !== auto ? bldgEmojiInput.options.value : '';
-		};
-
-		getters['showLabel'] = () => bldgLabelCb.checked;
-
-		const { collect: collectBldgProps } = makePropertiesEditor(this._content, b.properties || {});
-
-		getters['properties'] = collectBldgProps;
-
-		const buttons = new FormButtons({ appendTo: this._content });
-
-		new Button({
-			appendTo: buttons,
-			textContent: 'Cancel',
-			variant: 'flat',
-			onPointerPress: () => this._renderBuildingView(),
-		});
-		new Button({
-			appendTo: buttons,
-			textContent: 'Save',
-			onPointerPress: async () => {
-				const data = Object.fromEntries(Object.entries(getters).map(([k, g]) => [k, g()]));
-				const updated = await callbacks.onSave?.(data);
-
-				if (failedSave(updated, buttons)) return;
-				if (updated) {
-					this._entity.data = updated;
-				}
-				this._renderBuildingView();
-			},
-		});
-	}
-
 	async _renderEquipmentView() {
 		const { data: item, callbacks } = this._entity;
 		const emoji = equipmentEmoji(item.type, item.emoji);
@@ -1417,7 +921,12 @@ export default class FieldPanel extends FieldPanelOuter {
 		this._titleElem.elem.textContent = `${emoji} ${item.name || 'Equipment'}`;
 		this._configureButtons({ edit: true, move: true, sell: true, del: true });
 
-		this._editBtn.options.onPointerPress = () => this._renderEquipmentEdit();
+		this._editBtn.options.onPointerPress = () =>
+			new EquipmentDialog({
+				item,
+				onSave: data => this._saveEntity(data, () => this._renderEquipmentView()),
+				onDelete: callbacks.onDelete,
+			});
 		this._moveBtn.options.onPointerPress = () => {
 			callbacks.onMovePin?.();
 			this.hide();
@@ -1536,151 +1045,6 @@ export default class FieldPanel extends FieldPanelOuter {
 		await renderIncidents('equipment', item, () => this._renderEquipmentView(), this._content);
 	}
 
-	async _renderEquipmentEdit() {
-		const { data: item, callbacks } = this._entity;
-
-		this._titleElem.elem.textContent = 'Edit Equipment';
-		this._configureButtons();
-		this._metaElem.empty();
-		this._content.empty();
-
-		const getters = {};
-
-		// Emoji picker — same pattern as building and path edit
-		const eqEmojiRow = new EmojiRow({ appendTo: this._content });
-		const eqEmojiInput = new Input({ appendTo: eqEmojiRow });
-
-		Object.assign(eqEmojiInput.elem, { type: 'text', maxLength: 4 });
-		eqEmojiInput.options.value = item.emoji || equipmentEmoji(item.type || '');
-		eqEmojiInput.elem.title = 'Tap to change emoji';
-
-		const eqEmojiHint = new Elem({ tag: 'span', appendTo: eqEmojiRow });
-
-		eqEmojiHint.elem.textContent = item.emoji ? 'Custom · clear to auto-detect' : 'Auto-detected · tap to change';
-
-		eqEmojiInput.elem.addEventListener('input', () => {
-			eqEmojiInput.elem.dataset.manual = eqEmojiInput.options.value ? '1' : '';
-			eqEmojiHint.elem.textContent = eqEmojiInput.options.value
-				? 'Custom · clear to auto-detect'
-				: 'Auto-detected · tap to change';
-		});
-
-		const addField = (key, label, { placeholder = '', type = 'text', options = null } = {}) => {
-			new FormLabel({ appendTo: this._content, textContent: label });
-
-			if (options) {
-				const select = new Select({ appendTo: this._content });
-
-				select.setStyle(FIELD_STYLE);
-				select.options.options = options;
-				select.options.value = item[key] || '';
-				getters[key] = () => select.options.value;
-			} else {
-				const input = new Input({ appendTo: this._content });
-
-				Object.assign(input.elem, { type, placeholder });
-				input.options.value = item[key] || '';
-				input.setStyle(FIELD_STYLE);
-				getters[key] = () => input.options.value;
-			}
-		};
-
-		addField('name', 'Name / ID', { placeholder: 'e.g. JD 8R 340' });
-
-		// Type field — auto-updates emoji if not manually overridden
-		new FormLabel({ appendTo: this._content, textContent: 'Type' });
-		const typeInput = new Input({ appendTo: this._content });
-
-		Object.assign(typeInput.elem, { type: 'text', placeholder: 'e.g. Row crop tractor' });
-		typeInput.options.value = item.type || '';
-		typeInput.setStyle(FIELD_STYLE);
-		typeInput.elem.addEventListener('input', () => {
-			if (!eqEmojiInput.elem.dataset.manual) eqEmojiInput.options.value = equipmentEmoji(typeInput.options.value);
-		});
-		getters['type'] = () => typeInput.options.value;
-		addField('tenure', 'Ownership', {
-			options: [
-				{ value: 'own', label: 'Owned' },
-				{ value: 'lease', label: 'Leased' },
-			],
-		});
-		new FormLabel({ appendTo: this._content, textContent: 'Usage' });
-		const usageRow = new Component({ appendTo: this._content, style: { display: 'flex', gap: space.sm } });
-		const usageInput = new Input({
-			appendTo: usageRow,
-			style: { ...FIELD_STYLE, flex: '1', minWidth: '0' },
-			attributes: { 'aria-label': 'Usage' },
-		});
-		Object.assign(usageInput.elem, { type: 'number', step: '0.1', placeholder: 'Amount' });
-		usageInput.options.value = item.usage || '';
-		const unitInput = new Input({
-			appendTo: usageRow,
-			style: { ...FIELD_STYLE, width: '72px', flexShrink: '0' },
-			attributes: { 'aria-label': 'Usage unit' },
-		});
-		Object.assign(unitInput.elem, { type: 'text', placeholder: 'hrs' });
-		unitInput.options.value = item.usageUnit || '';
-		getters['usage'] = () => usageInput.options.value;
-		getters['usageUnit'] = () => unitInput.options.value;
-		addField('size', 'Size', {
-			options: [
-				{ value: 'sm', label: 'Small' },
-				{ value: 'med', label: 'Medium' },
-				{ value: 'lrg', label: 'Large' },
-				{ value: 'xlrg', label: 'X-Large' },
-			],
-		});
-		addField('status', 'Status', {
-			options: [
-				{ value: '', label: 'Active' },
-				{ value: 'needs_maintenance', label: 'Needs maintenance' },
-				{ value: 'needs_service', label: 'Needs service' },
-				{ value: 'out_of_service', label: 'Out of service' },
-				{ value: 'destroyed', label: 'Destroyed' },
-			],
-		});
-		addField('appraisalValue', 'Appraised Value ($)', {
-			type: 'number',
-			placeholder: 'Market value — used in net worth',
-		});
-
-		const eqLabelCb = this._mkLabelToggle(item.showLabel !== false);
-
-		getters['showLabel'] = () => eqLabelCb.checked;
-
-		const { collect: collectEqProps } = makePropertiesEditor(this._content, item.properties || {});
-
-		getters['properties'] = collectEqProps;
-
-		const buttons = new FormButtons({ appendTo: this._content });
-
-		new Button({
-			appendTo: buttons,
-			textContent: 'Cancel',
-			variant: 'flat',
-			onPointerPress: () => this._renderEquipmentView(),
-		});
-		new Button({
-			appendTo: buttons,
-			textContent: 'Save',
-			onPointerPress: async () => {
-				const data = Object.fromEntries(Object.entries(getters).map(([k, g]) => [k, g()]));
-				// Use picker value; fall back to auto-detect if cleared
-				const autoEmoji = equipmentEmoji(data.type);
-
-				data.emoji =
-					eqEmojiInput.options.value && eqEmojiInput.options.value !== autoEmoji ? eqEmojiInput.options.value : '';
-				const updated = await callbacks.onSave?.(data);
-
-				if (failedSave(updated, buttons)) return;
-				if (updated) {
-					this._entity.data = updated;
-				}
-				this._renderEquipmentView();
-			},
-		});
-	}
-
 	async _renderViewMode() {
 		const field = this._field;
 		const callbacks = this._callbacks;
@@ -1689,7 +1053,18 @@ export default class FieldPanel extends FieldPanelOuter {
 
 		this._configureButtons({ edit: true, editBoundary: !!field.geometry, del: true });
 
-		this._editBtn.options.onPointerPress = () => this._renderEditMode();
+		this._editBtn.options.onPointerPress = () =>
+			new FieldDialog({
+				field,
+				onSave: async data => {
+					const updated = await callbacks.onSave?.(data);
+
+					if (updated?.status === 'error' || updated?.conflict) return updated;
+					if (updated) this._field = updated;
+					await this._renderViewMode();
+				},
+				onDelete: callbacks.onDelete,
+			});
 
 		this._editBoundaryBtn.options.onPointerPress = callbacks.onEditBoundary;
 
@@ -1723,116 +1098,6 @@ export default class FieldPanel extends FieldPanelOuter {
 
 		this._content.empty();
 		await this._renderDetails(field);
-	}
-
-	async _renderEditMode() {
-		const field = this._field;
-
-		this._titleElem.elem.textContent = 'Edit Field';
-		this._configureButtons();
-
-		this._metaElem.empty();
-		this._content.empty();
-
-		const inputGetters = {};
-
-		for (const { key, label, placeholder, options, type } of EDIT_FIELDS) {
-			new FormLabel({ appendTo: this._content, textContent: label });
-
-			if (options) {
-				const select = new Select({ appendTo: this._content });
-
-				select.setStyle(FIELD_STYLE);
-
-				select.options.options = options;
-
-				select.options.value = field[key] || options[0].value;
-				inputGetters[key] = () => select.options.value;
-			} else if (key === 'acreage') {
-				const wrap = new AreaField({ appendTo: this._content });
-
-				const currentUnit = field.acreageUnit || 'ac';
-				const sqm = field.geometry ? geodesicAreaSqm(field.geometry) : null;
-				const defaultAcreage = field[key] || (sqm ? convertArea(sqm, currentUnit) : '') || '';
-				const unitMeta = AREA_UNITS.find(u => u.value === currentUnit) || AREA_UNITS[1];
-
-				const input = new Input({ appendTo: wrap, attributes: { 'aria-label': 'Area' } });
-
-				Object.assign(input.elem, { type: 'number', step: '0.01', min: '0', placeholder: 'Size' });
-				input.options.value = defaultAcreage ? Number(defaultAcreage).toFixed(unitMeta.decimals) : '';
-				input.setStyle(FIELD_STYLE);
-
-				// Unit selector
-				const unitSelect = new Select({ appendTo: wrap, attributes: { 'aria-label': 'Area unit' } });
-
-				unitSelect.options.options = AREA_UNITS;
-
-				unitSelect.options.value = currentUnit;
-
-				// Recalculate when unit changes
-				unitSelect.elem.addEventListener('change', () => {
-					if (!sqm) return;
-
-					const newMeta = AREA_UNITS.find(u => u.value === unitSelect.options.value) || AREA_UNITS[1];
-
-					input.options.value = convertArea(sqm, unitSelect.options.value).toFixed(newMeta.decimals);
-				});
-
-				inputGetters[key] = () => input.options.value;
-				inputGetters['acreageUnit'] = () => unitSelect.options.value;
-
-				if (sqm) {
-					new Button({
-						appendTo: wrap,
-						variant: 'flat',
-						icon: 'arrows-rotate',
-						title: 'Calculate from boundary',
-						onPointerPress: () => {
-							const meta = AREA_UNITS.find(u => u.value === unitSelect.options.value) || AREA_UNITS[1];
-
-							input.options.value = convertArea(sqm, unitSelect.options.value).toFixed(meta.decimals);
-						},
-					});
-				}
-			} else {
-				const input = new Input({ appendTo: this._content });
-
-				Object.assign(input.elem, { type: type || 'text', placeholder: placeholder || '' });
-				input.options.value = field[key] || '';
-				input.setStyle(FIELD_STYLE);
-				inputGetters[key] = () => input.options.value;
-			}
-		}
-
-		const labelCb = this._mkLabelToggle(field.showLabel !== false);
-
-		inputGetters['showLabel'] = () => labelCb.checked;
-
-		const { collect: collectProps } = makePropertiesEditor(this._content, field.properties || {});
-
-		inputGetters['properties'] = collectProps;
-
-		const buttons = new FormButtons({ appendTo: this._content });
-
-		new Button({
-			appendTo: buttons,
-			textContent: 'Cancel',
-			variant: 'flat',
-			onPointerPress: () => this._renderViewMode(),
-		});
-
-		new Button({
-			appendTo: buttons,
-			textContent: 'Save',
-			onPointerPress: async () => {
-				const data = Object.fromEntries(Object.entries(inputGetters).map(([k, get]) => [k, get()]));
-				const updated = await this._callbacks.onSave?.(data);
-
-				if (failedSave(updated, buttons)) return;
-				if (updated) this._field = updated;
-				await this._renderViewMode();
-			},
-		});
 	}
 
 	_renderProperties(properties, container) {
