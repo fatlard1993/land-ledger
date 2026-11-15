@@ -121,17 +121,6 @@ const UseSummary = styled(
 		padding: ${space.sm} ${space.md};
 		font-size: 12px;
 
-		& .use-title, & .use-group {
-			font-size: 10px;
-			text-transform: uppercase;
-			letter-spacing: 0.07em;
-			color: ${colors.gray};
-		}
-
-		& .use-title {
-			margin-bottom: ${space.sm};
-		}
-
 		& .use-row {
 			display: flex;
 			align-items: baseline;
@@ -596,7 +585,7 @@ export default class Fields extends AsyncView {
 		if (useMap.size) {
 			const useBar = new UseSummary({ appendTo: this.content });
 
-			new Elem({ tag: 'div', appendTo: useBar, addClass: 'use-title', textContent: `${CURRENT_YEAR} — current use` });
+			new SectionLabel({ appendTo: useBar, textContent: `${CURRENT_YEAR} — current use` });
 
 			const groups = [
 				{ cat: 'crop', label: 'Crops' },
@@ -613,7 +602,7 @@ export default class Fields extends AsyncView {
 
 				const row = new Component({ appendTo: useBar, addClass: 'use-row' });
 
-				new Elem({ tag: 'span', appendTo: row, addClass: 'use-group', textContent: groupLabel });
+				new SectionLabel({ appendTo: row, addClass: 'use-group', inRow: true, level: 4, textContent: groupLabel });
 
 				const itemsRow = new Component({ appendTo: row, addClass: 'use-items' });
 

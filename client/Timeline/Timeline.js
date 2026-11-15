@@ -5,6 +5,7 @@ import {
 	EmptyState,
 	formatDate,
 	parseDate,
+	SectionLabel,
 	Select,
 	styled,
 	Tabs,
@@ -95,12 +96,6 @@ const SeasonHeader = styled(
 		gap: ${space.xs} ${space.md};
 		padding: ${space.md} 0 ${space.xs};
 		color: ${colors.gray};
-
-		& > .season {
-			font-size: 12px;
-			letter-spacing: 0.08em;
-			text-transform: uppercase;
-		}
 
 		& > .note {
 			font-size: 11px;
@@ -403,7 +398,7 @@ export default class Timeline extends AsyncView {
 			if (season !== lastSeason) {
 				const seasonHeader = new SeasonHeader({ appendTo: this.content });
 
-				new Elem({ tag: 'span', appendTo: seasonHeader, addClass: 'season', textContent: String(season) });
+				new SectionLabel({ appendTo: seasonHeader, inRow: true, textContent: String(season) });
 
 				// Weather + county benchmark — only when filtering by a specific field
 				if (field?.geometry && season <= CURRENT_YEAR) {
