@@ -475,7 +475,7 @@ export default class TabularImportDialog extends Dialog {
 
 		new Button({
 			appendTo: buttons,
-			textContent: 'Save Template',
+			textContent: 'Save template',
 			style: { flex: '1' },
 			onPointerPress: async () => {
 				const name = nameInput.options.value.trim();

@@ -127,7 +127,7 @@ function openShareForm(container, { onRefresh }) {
 	});
 
 	new Button({
-		textContent: 'Generate Link',
+		textContent: 'Generate link',
 		appendTo: buttons,
 		onPointerPress: async () => {
 			const name = nameInput.options.value.trim();
@@ -212,7 +212,7 @@ export async function renderShareLinksSection(container, { onRefresh }) {
 	new SectionLabel({ appendTo: header, textContent: 'Shared Access Links' });
 
 	new Button({
-		textContent: 'New Link',
+		textContent: 'Create link',
 		icon: 'plus',
 		variant: 'flat',
 		appendTo: header,

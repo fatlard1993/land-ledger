@@ -52,7 +52,7 @@ export async function renderMaintenanceSection(equipment, maintenance, schedules
 	new HeaderButton({
 		appendTo: maintenanceButtons,
 		icon: 'plus',
-		textContent: 'Log Work',
+		textContent: 'Log work',
 		onPointerPress: () =>
 			new MaintenanceDialog({
 				equipment: item,

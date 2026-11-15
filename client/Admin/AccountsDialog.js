@@ -297,7 +297,7 @@ export default class AccountsDialog extends Dialog {
 		if (this._editingId !== 'new') {
 			new Button({
 				appendTo: header,
-				textContent: 'Add Account',
+				textContent: 'Add account',
 				icon: 'plus',
 				variant: 'flat',
 				onPointerPress: () => {

@@ -468,7 +468,7 @@ export function openQuickLog() {
 		// ── Submit button ──────────────────────────────────────────────────────
 		const submitBtn = new SubmitButton({
 			appendTo: formArea,
-			textContent: 'Log It',
+			textContent: 'Log it',
 			onPointerPress: async () => {
 				if (!getPayload) return;
 
@@ -485,7 +485,7 @@ export function openQuickLog() {
 				// A refused save resolves rather than throws: either way the sheet stays open and says why
 				const notLogged = reason => {
 					submitBtn.options.disabled = false;
-					submitBtn.elem.textContent = 'Log It';
+					submitBtn.elem.textContent = 'Log it';
 					new Notify({ intent: 'danger', content: `Couldn't log it: ${reason}` });
 				};
 

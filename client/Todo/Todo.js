@@ -292,7 +292,7 @@ export default class Todo extends AsyncView {
 				entity: field?.name || 'Field',
 				detail: status.label,
 				quickAction: {
-					label: 'Fed',
+					label: 'Mark fed',
 					icon: 'check',
 					fn: async () => {
 						const result = await createFeedingLog({

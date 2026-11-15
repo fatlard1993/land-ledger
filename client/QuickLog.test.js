@@ -54,7 +54,7 @@ describe('the quick log sheet', () => {
 
 		note.value = 'Fence down on the north line';
 		note.dispatchEvent(new Event('input'));
-		buttonNamed('Log It').click();
+		buttonNamed('Log it').click();
 
 		await waitFor(() => expect(buttonNamed('Logged')).toBeTruthy());
 		expect(sheetInPage().open).toBe(true);

@@ -205,7 +205,7 @@ export default class PrecisionLayerImport extends Dialog {
 		// Import button
 		const importBtn = new Button({
 			appendTo: body,
-			textContent: 'Import Layer',
+			textContent: 'Import layer',
 			style: { width: '100%', marginTop: space.lg },
 			onPointerPress: async () => {
 				const valueField = valueSelect.options.value;
@@ -239,7 +239,7 @@ export default class PrecisionLayerImport extends Dialog {
 				} catch (err) {
 					new Notify({ intent: 'danger', textContent: err.message || 'Import failed' });
 					importBtn.options.disabled = false;
-					importBtn.elem.textContent = 'Import Layer';
+					importBtn.elem.textContent = 'Import layer';
 				}
 			},
 		});

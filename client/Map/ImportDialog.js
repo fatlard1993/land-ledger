@@ -92,7 +92,7 @@ export default class ImportDialog extends Dialog {
 
 		new Button({
 			appendTo: this._previewSection,
-			textContent: `Import All ${features.length} Fields`,
+			textContent: `Import all ${features.length} fields`,
 			style: { marginTop: space.xs, width: '100%' },
 			onPointerPress: () => {
 				this.options.onImport?.(this._pendingFeatures);

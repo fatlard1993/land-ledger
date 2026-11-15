@@ -61,7 +61,7 @@ export function openSellDialog(entityType, entity, onComplete, hide) {
 	const dialog = new FormDialog({
 		header: `Sell ${entityLabel}`,
 		inputs: [],
-		saveLabel: 'Record Sale & Remove',
+		saveLabel: 'Record sale & remove',
 		onSave: async () => {
 			if (priceEl.options.value === '') {
 				priceEl.elem.style.border = `1px solid ${colors.danger}`;

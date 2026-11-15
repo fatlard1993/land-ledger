@@ -123,7 +123,7 @@ export default class ParcelImportDialog extends Dialog {
 
 		new Button({
 			appendTo: this._preview,
-			textContent: `Import All ${features.length} Property Lines`,
+			textContent: `Import all ${features.length} property lines`,
 			style: { width: '100%' },
 			onPointerPress: () => {
 				this.options.onImport?.(this._pendingFeatures);

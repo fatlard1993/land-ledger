@@ -60,7 +60,7 @@ export const makePropertiesEditor = (container, initialProperties = {}) => {
 		appendTo: root,
 		variant: 'flat',
 		icon: 'plus',
-		textContent: 'Add Property',
+		textContent: 'Add property',
 		style: { marginTop: space.xs },
 		onPointerPress: () => addRow(),
 	});
