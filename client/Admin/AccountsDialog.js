@@ -355,7 +355,13 @@ export default class AccountsDialog extends Dialog {
 			appendTo: row,
 			onPointerPress: async () => {
 				const key = input.options.value.trim();
-				await updateAppSettings({ nassApiKey: key }).catch(() => {});
+				const saved = await updateAppSettings({ nassApiKey: key }).catch(() => false);
+
+				if (!saved) {
+					new Notify({ intent: 'danger', textContent: `Couldn't ${key ? 'save' : 'clear'} the NASS key` });
+					return;
+				}
+
 				this._nassKeySet = !!key;
 				new Notify({
 					intent: 'success',

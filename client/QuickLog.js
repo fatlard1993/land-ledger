@@ -3,9 +3,11 @@ import {
 	Button,
 	Component,
 	Elem,
+	failureReason,
 	formatDate,
 	Icon,
 	Input,
+	Notify,
 	Select,
 	styled,
 	theme,
@@ -480,22 +482,27 @@ export function openQuickLog() {
 				submitBtn.options.disabled = true;
 				submitBtn.elem.textContent = 'Saving…';
 
+				// A refused save resolves rather than throws: either way the sheet stays open and says why
+				const notLogged = reason => {
+					submitBtn.options.disabled = false;
+					submitBtn.elem.textContent = 'Log It';
+					new Notify({ intent: 'danger', content: `Couldn't log it: ${reason}` });
+				};
+
 				try {
-					if (logType === 'application') {
-						await createApplicationLog({ body: payload });
-					} else {
-						await createEvent({ body: payload });
-					}
+					const result =
+						logType === 'application'
+							? await createApplicationLog({ body: payload })
+							: await createEvent({ body: payload });
+
+					if (result?.status === 'error') return notLogged(failureReason(result));
 
 					submitBtn.options.icon = 'check';
 					submitBtn.elem.textContent = 'Logged';
 					submitBtn.setStyle({ backgroundColor: colors.success });
 					setTimeout(() => sheet.close(), 800);
-				} catch {
-					submitBtn.options.disabled = false;
-					submitBtn.elem.textContent = 'Log It';
-					submitBtn.setStyle({ backgroundColor: colors.dark(colors.danger) });
-					setTimeout(() => submitBtn.setStyle({ backgroundColor: '' }), 2000);
+				} catch (error) {
+					notLogged(error.message);
 				}
 			},
 		});

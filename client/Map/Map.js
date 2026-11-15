@@ -1,6 +1,6 @@
 import L from 'leaflet';
 import '@geoman-io/leaflet-geoman-free';
-import { Notify, parseDate, theme } from '@vanilla-bean/components';
+import { Notify, failureReason, parseDate, theme } from '@vanilla-bean/components';
 
 import AsyncView from '../AsyncView';
 
@@ -55,6 +55,15 @@ import { editPathGeometry } from './PathEditing.js';
 import { createParcelDetection } from './ParcelDetection.js';
 import { loadReferenceFields, adoptReferenceField } from './ReferenceFields.js';
 import { createDrawModeToggle, createMapControls } from './MapControls.js';
+
+// A delete the server refused: said, with its reason, and the record left where it is
+const refusedDelete = (result, what) => {
+	if (result?.status !== 'error') return false;
+
+	new Notify({ intent: 'danger', content: `Couldn't delete ${what}: ${failureReason(result)}` });
+
+	return true;
+};
 
 const { colors, media } = theme;
 
@@ -582,7 +591,7 @@ export default class MapView extends AsyncView {
 				this._editFieldBoundary(field);
 			},
 			onDelete: async () => {
-				await deleteField(field.id);
+				if (refusedDelete(await deleteField(field.id), `"${field.name || 'this field'}"`)) return;
 				if (this.fields?.body) delete this.fields.body[field.id];
 				this._renderFieldLayers();
 				this.panel.hide();
@@ -694,7 +703,7 @@ export default class MapView extends AsyncView {
 				this._editBuildingBoundary(building);
 			},
 			onDelete: async () => {
-				await deleteBuilding(building.id);
+				if (refusedDelete(await deleteBuilding(building.id), `"${building.name || 'this building'}"`)) return;
 				if (this.buildings?.body) delete this.buildings.body[building.id];
 				this._renderBuildingLayers();
 				this.panel.hide();
@@ -825,7 +834,7 @@ export default class MapView extends AsyncView {
 
 				if (c && pointInPolygon(c.lat, c.lon, geo)) {
 					try {
-						await deleteField(field.id);
+						if ((await deleteField(field.id))?.status === 'error') throw new Error('refused');
 						if (this.fields?.body) delete this.fields.body[field.id];
 					} catch {
 						failures.push(`field ${field.id}`);
@@ -839,7 +848,7 @@ export default class MapView extends AsyncView {
 
 				if (c && pointInPolygon(c.lat, c.lon, geo)) {
 					try {
-						await deleteBuilding(building.id);
+						if ((await deleteBuilding(building.id))?.status === 'error') throw new Error('refused');
 						if (this.buildings?.body) delete this.buildings.body[building.id];
 					} catch {
 						failures.push(`building ${building.id}`);
@@ -857,7 +866,7 @@ export default class MapView extends AsyncView {
 
 					if (pointInPolygon(lat, lon, geo)) {
 						try {
-							await deletePath(path.id);
+							if ((await deletePath(path.id))?.status === 'error') throw new Error('refused');
 							if (this.paths?.body) delete this.paths.body[path.id];
 						} catch {
 							failures.push(`path ${path.id}`);
@@ -870,7 +879,7 @@ export default class MapView extends AsyncView {
 			for (const item of Object.values(this.equipment?.body || {})) {
 				if (item.lat != null && item.lng != null && pointInPolygon(Number(item.lat), Number(item.lng), geo)) {
 					try {
-						await deleteEquipment(item.id);
+						if ((await deleteEquipment(item.id))?.status === 'error') throw new Error('refused');
 						if (this.equipment?.body) delete this.equipment.body[item.id];
 					} catch {
 						failures.push(`equipment ${item.id}`);
@@ -883,12 +892,11 @@ export default class MapView extends AsyncView {
 			new Notify({
 				intent: 'danger',
 				textContent: `Some items could not be deleted: ${failures.join(', ')}. Reload to see current state.`,
-				timeout: 8000,
 			});
 			return;
 		}
 
-		await deleteParcel(parcel.id);
+		if (refusedDelete(await deleteParcel(parcel.id), 'the property line')) return;
 		if (this.parcels?.body) delete this.parcels.body[parcel.id];
 
 		this._renderFieldLayers();
@@ -1025,7 +1033,7 @@ export default class MapView extends AsyncView {
 					this._editPathGeometry(path);
 				},
 				onDelete: async () => {
-					await deletePath(path.id);
+					if (refusedDelete(await deletePath(path.id), `"${path.name || 'this path'}"`)) return;
 					if (this.paths?.body) delete this.paths.body[path.id];
 					this._renderPathLayers();
 					this._updateLabels();
@@ -1093,7 +1101,7 @@ export default class MapView extends AsyncView {
 			},
 			onMovePin: () => this._moveEquipment(item),
 			onDelete: async () => {
-				await deleteEquipment(item.id);
+				if (refusedDelete(await deleteEquipment(item.id), `"${item.name || 'this equipment'}"`)) return;
 				if (this.equipment?.body) delete this.equipment.body[item.id];
 				this._renderEquipmentMarkers();
 				this.panel.hide();
@@ -1232,7 +1240,7 @@ export default class MapView extends AsyncView {
 							});
 						},
 						onDelete: async () => {
-							await deleteParcel(parcel.id);
+							if (refusedDelete(await deleteParcel(parcel.id), 'the parcel')) return;
 							if (this.parcels?.body) delete this.parcels.body[parcel.id];
 							this._renderParcelLayers();
 							this._updateLabels();
@@ -1283,7 +1291,7 @@ export default class MapView extends AsyncView {
 							this._editPathGeometry(path);
 						},
 						onDelete: async () => {
-							await deletePath(path.id);
+							if (refusedDelete(await deletePath(path.id), `"${path.name || 'this path'}"`)) return;
 							if (this.paths?.body) delete this.paths.body[path.id];
 							this._renderPathLayers();
 							this._updateLabels();
