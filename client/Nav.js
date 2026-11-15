@@ -131,7 +131,12 @@ export default class Nav extends BottomNav {
 		const currentPath = window.location.hash.replace(/^#\/?/, '/').replace(/\?.*$/, '') || '/';
 
 		for (const [path, item] of this._itemMap) {
-			item.toggleClass('active', currentPath === path || (path !== '/' && currentPath.startsWith(path)));
+			const current = currentPath === path || (path !== '/' && currentPath.startsWith(path));
+
+			item.toggleClass('active', current);
+			// The class only looks current; aria-current says so
+			if (current) item.elem.setAttribute('aria-current', 'page');
+			else item.elem.removeAttribute('aria-current');
 		}
 	}
 }

@@ -22,4 +22,16 @@ describe('Nav', () => {
 
 		nav.destroy();
 	});
+
+	test('the view on screen is marked current', () => {
+		window.location.hash = '#/fields';
+
+		const nav = new Nav({ appendTo: document.body });
+		const current = [...nav.elem.querySelectorAll('a[aria-current="page"]')].map(a => a.getAttribute('href'));
+
+		expect(current).toEqual(['#/fields']);
+
+		nav.destroy();
+		window.location.hash = '';
+	});
 });
