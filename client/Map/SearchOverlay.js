@@ -70,7 +70,8 @@ export function buildSearchOverlay(container, map) {
 
 	Object.assign(clearBtn.style, { display: 'none', flexShrink: '0', color: `${colors.gray}` });
 
-	const locateBtn = new Button({ variant: 'flat', icon: 'location-crosshairs', title: 'Go to my location' }).elem;
+	const locate = new Button({ variant: 'flat', icon: 'location-crosshairs', title: 'Go to my location' });
+	const locateBtn = locate.elem;
 
 	Object.assign(locateBtn.style, {
 		flexShrink: '0',
@@ -79,7 +80,7 @@ export function buildSearchOverlay(container, map) {
 		borderLeft: `1px solid ${colors.border}`,
 	});
 
-	locateBtn.addEventListener('click', () => locateMe(map));
+	locateBtn.addEventListener('click', () => locateMe(map, locate));
 
 	inputWrap.append(icon, input, clearBtn, locateBtn);
 
@@ -236,19 +237,26 @@ export function buildSearchOverlay(container, map) {
 	L.DomEvent.disableScrollPropagation(wrap);
 }
 
-function locateMe(map) {
+function locateMe(map, button) {
 	if (!navigator.geolocation) {
 		new Notify({ intent: 'danger', textContent: 'Geolocation is not available in this browser' });
 		return;
 	}
 
-	new Notify({ intent: 'success', textContent: 'Finding your location…', timeout: 3000 });
+	if (button.options.disabled) return;
+
+	const done = () =>
+		Object.assign(button.options, { disabled: false, icon: 'location-crosshairs', iconAnimation: undefined });
+
+	Object.assign(button.options, { disabled: true, icon: 'spinner', iconAnimation: 'spin-pulse' });
 
 	navigator.geolocation.getCurrentPosition(
 		({ coords }) => {
+			done();
 			map.setView([coords.latitude, coords.longitude], 14);
 		},
 		() => {
+			done();
 			new Notify({
 				intent: 'danger',
 				textContent: 'Could not get your location — check browser permissions',
