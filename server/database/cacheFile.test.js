@@ -24,6 +24,20 @@ describe('cache files', () => {
 		expect(weatherDb.getDay('42,-93', '2026-05-03')).toBeNull();
 	});
 
+	test('opened again while writes are queued, waits for them rather than racing them for the temporary file', async () => {
+		const path = join(dir, 'weather-busy.json');
+
+		await weatherDb.init({ path });
+		const unawaited = Array.from({ length: 20 }, (_, i) =>
+			weatherDb.setDays('1,1', { [`2026-06-${10 + i}`]: { tempMax: i } }),
+		);
+
+		await weatherDb.init({ path });
+		await Promise.all(unawaited);
+
+		expect(weatherDb.getDay('1,1', '2026-06-29')).toEqual({ tempMax: 19 });
+	});
+
 	test('a benchmark keeps its value and when it was fetched', async () => {
 		const path = join(dir, 'benchmarks.json');
 

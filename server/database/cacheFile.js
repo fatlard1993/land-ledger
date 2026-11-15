@@ -11,6 +11,9 @@ export const cacheFile = ({ key, label }) => {
 			return cache.db?.data?.[key];
 		},
 		async init({ path }) {
+			// A write still queued finishes first: two instances writing one file race on its temporary file
+			await cache._writeQueue;
+
 			cache.db = new Low(jsonFile(path), { [key]: {} });
 
 			await cache.db.read();

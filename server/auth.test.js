@@ -43,6 +43,18 @@ describe('api tokens', () => {
 	});
 });
 
+describe('the settings file', () => {
+	test('opened again while a write is in flight, waits for it rather than racing it for the temporary file', async () => {
+		// As a bearer request's last-used stamp does: a write nobody awaits
+		const unawaited = Array.from({ length: 20 }, (_, i) => settingsDb.set('nassApiKey', `key-${i}`));
+
+		await restart();
+		await Promise.all(unawaited);
+
+		expect(JSON.parse(readFileSync(file, 'utf8')).nassApiKey).toBe('key-19');
+	});
+});
+
 describe('sessions', () => {
 	test('survive a restart, kept by digest; signing out ends them', async () => {
 		const token = await createSession({ id: 'admin', name: 'Admin', roles: { admin: true } });
