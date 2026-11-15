@@ -172,7 +172,7 @@ export default class AccountsDialog extends Dialog {
 		const turnOn = new Button({ appendTo: buttons, icon: 'lock', textContent: 'Turn on sign-in' });
 
 		const fail = textContent => {
-			new Notify({ intent: 'danger', textContent, timeout: 5000 });
+			new Notify({ intent: 'danger', textContent });
 			Object.assign(turnOn.options, { disabled: false, icon: 'lock', iconAnimation: undefined });
 		};
 
@@ -184,7 +184,7 @@ export default class AccountsDialog extends Dialog {
 				return;
 			}
 			if (passkey !== confirmEl.options.value) {
-				new Notify({ intent: 'danger', textContent: 'The passkeys differ', timeout: 3000 });
+				new Notify({ intent: 'danger', textContent: 'The passkeys differ' });
 				confirmEl.options.value = '';
 				confirmEl.elem.focus();
 				return;
@@ -258,7 +258,7 @@ export default class AccountsDialog extends Dialog {
 
 			if (!ok) {
 				toggle.elem.checked = !toggle.elem.checked;
-				new Notify({ intent: 'danger', textContent: 'Could not update auth setting', timeout: 3000 });
+				new Notify({ intent: 'danger', textContent: 'Could not update auth setting' });
 			} else {
 				this._authEnabled = toggle.elem.checked;
 				setQueueOwner(await getMe());
@@ -432,7 +432,7 @@ export default class AccountsDialog extends Dialog {
 						new Notify({ intent: 'success', textContent: `Deleted "${account.name}"`, timeout: 3000 });
 						this._draw();
 					} catch (err) {
-						new Notify({ intent: 'danger', textContent: err.message || 'Delete failed', timeout: 4000 });
+						new Notify({ intent: 'danger', textContent: err.message || 'Delete failed' });
 					}
 				},
 			});
@@ -548,7 +548,7 @@ export default class AccountsDialog extends Dialog {
 					this._editingId = null;
 					this._draw();
 				} catch (err) {
-					new Notify({ intent: 'danger', textContent: err.message || 'Save failed', timeout: 4000 });
+					new Notify({ intent: 'danger', textContent: err.message || 'Save failed' });
 					Object.assign(saveBtn.options, { disabled: false, icon: undefined, iconAnimation: undefined });
 				}
 			},

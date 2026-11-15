@@ -238,7 +238,7 @@ export function buildSearchOverlay(container, map) {
 
 function locateMe(map) {
 	if (!navigator.geolocation) {
-		new Notify({ intent: 'danger', textContent: 'Geolocation is not available in this browser', timeout: 4000 });
+		new Notify({ intent: 'danger', textContent: 'Geolocation is not available in this browser' });
 		return;
 	}
 
@@ -252,7 +252,6 @@ function locateMe(map) {
 			new Notify({
 				intent: 'danger',
 				textContent: 'Could not get your location — check browser permissions',
-				timeout: 4000,
 			});
 		},
 		{ enableHighAccuracy: true, timeout: 12_000, maximumAge: 30_000 },

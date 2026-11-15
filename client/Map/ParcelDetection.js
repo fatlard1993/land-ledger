@@ -75,7 +75,6 @@ export function createParcelDetection({
 				new Notify({
 					intent: 'danger',
 					textContent: 'Could not load parcel boundaries — check your network or county service URL',
-					timeout: 4000,
 				});
 
 				return;

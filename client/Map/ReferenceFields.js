@@ -100,7 +100,6 @@ export async function loadReferenceFields({ map, referenceLayer, fields, refBtn,
 		new Notify({
 			intent: 'danger',
 			textContent: 'Could not reach field outline service — try again in a moment',
-			timeout: 4000,
 		});
 	} finally {
 		setLoading(false);

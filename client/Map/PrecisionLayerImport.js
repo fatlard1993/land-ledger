@@ -107,7 +107,7 @@ export default class PrecisionLayerImport extends Dialog {
 		try {
 			preview = await previewPrecisionFile(file);
 		} catch (err) {
-			new Notify({ intent: 'danger', textContent: err.message || 'Could not parse file', timeout: 5000 });
+			new Notify({ intent: 'danger', textContent: err.message || 'Could not parse file' });
 			this._renderUpload();
 			return;
 		}
@@ -210,7 +210,7 @@ export default class PrecisionLayerImport extends Dialog {
 			onPointerPress: async () => {
 				const valueField = valueSelect.options.value;
 				if (!valueField) {
-					new Notify({ intent: 'warning', textContent: 'Select a value column', timeout: 3000 });
+					new Notify({ intent: 'warning', textContent: 'Select a value column' });
 					return;
 				}
 
@@ -237,7 +237,7 @@ export default class PrecisionLayerImport extends Dialog {
 					this.options.onImport?.(result);
 					this.close();
 				} catch (err) {
-					new Notify({ intent: 'danger', textContent: err.message || 'Import failed', timeout: 5000 });
+					new Notify({ intent: 'danger', textContent: err.message || 'Import failed' });
 					importBtn.options.disabled = false;
 					importBtn.elem.textContent = 'Import Layer';
 				}

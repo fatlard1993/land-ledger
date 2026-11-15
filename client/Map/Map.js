@@ -615,7 +615,7 @@ export default class MapView extends AsyncView {
 		const layer = this._fieldRenderer.getLayer(field.id);
 
 		if (!layer) {
-			new Notify({ intent: 'danger', textContent: 'Field layer not found — try reloading', timeout: 4000 });
+			new Notify({ intent: 'danger', textContent: 'Field layer not found — try reloading' });
 
 			return;
 		}
@@ -951,7 +951,7 @@ export default class MapView extends AsyncView {
 		const layer = this._buildingRenderer.getLayer(building.id);
 
 		if (!layer) {
-			new Notify({ intent: 'danger', textContent: 'Building layer not found — try reloading', timeout: 4000 });
+			new Notify({ intent: 'danger', textContent: 'Building layer not found — try reloading' });
 			return;
 		}
 
