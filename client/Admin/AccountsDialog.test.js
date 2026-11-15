@@ -281,3 +281,31 @@ describe('a new token', () => {
 		expect(code.querySelector('button')).not.toBeNull();
 	});
 });
+
+describe('the Require login checkbox', () => {
+	let fetch;
+
+	afterEach(() => {
+		fetch.mockRestore();
+		document.body.innerHTML = '';
+	});
+
+	test('comes first, named by the label after it', async () => {
+		fetch = spyOn(globalThis, 'fetch').mockImplementation(async url => {
+			if (url === '/auth/settings') return Response.json({ authEnabled: true, adminPasskeyIsDefault: false });
+			if (url === '/auth/accounts' || url === '/auth/tokens' || url === '/auth/shares') return Response.json([]);
+
+			return Response.json({});
+		});
+
+		const dialog = new AccountsDialog({ appendTo: document.body });
+
+		await settle();
+
+		const checkbox = dialog.body.elem.querySelector('input[type=checkbox]');
+		const label = dialog.body.elem.querySelector(`label[for="${checkbox.id}"]`);
+
+		expect(label.textContent).toBe('Require login');
+		expect(checkbox.compareDocumentPosition(label) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+	});
+});

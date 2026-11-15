@@ -302,20 +302,25 @@ export default class EventDialog extends FormDialog {
 		// Emoji row: auto-detected with override
 		const emojiRow = new EmojiRow({ appendTo: form });
 
+		const emojiId = `emoji-${Math.random().toString(36).slice(2)}`;
+
 		const emojiPreview = new Input({
 			appendTo: emojiRow,
 			type: 'text',
 			maxLength: 4,
 			title: 'Tap to change emoji — auto-detected from event name',
+			attributes: { id: emojiId },
 		});
 
 		emojiPreview.options.value = this._event.emoji || detectEmoji(_selectedCategory, '');
 
+		// The hint is the field's label, so it names the field as well as saying where the emoji came from
 		const emojiHint = new Elem({
-			tag: 'span',
+			tag: 'label',
 			appendTo: emojiRow,
 			addClass: 'hint',
-			textContent: 'Auto-detected · tap to change',
+			attributes: { for: emojiId },
+			textContent: 'Emoji: auto-detected · tap to change',
 		});
 
 		// Update emoji when name is entered (after detail section builds)
@@ -324,15 +329,15 @@ export default class EventDialog extends FormDialog {
 				const detected = detectEmoji(_selectedCategory, name);
 
 				emojiPreview.options.value = detected;
-				emojiHint.elem.textContent = 'Auto-detected · tap to change';
+				emojiHint.elem.textContent = 'Emoji: auto-detected · tap to change';
 			}
 		};
 
 		emojiPreview.elem.addEventListener('input', () => {
 			emojiPreview.elem.dataset.manual = emojiPreview.options.value ? '1' : '';
 			emojiHint.elem.textContent = emojiPreview.options.value
-				? 'Custom · clear to auto-detect'
-				: 'Auto-detected · tap to change';
+				? 'Emoji: custom · clear to auto-detect'
+				: 'Emoji: auto-detected · tap to change';
 		});
 
 		// Hook into category change to refresh auto-detected emoji

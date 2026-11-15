@@ -163,20 +163,29 @@ export const checkboxRow = (appendTo, { label, checked, style }) => {
  */
 export const emojiField = (appendTo, value) => {
 	const row = new Row({ appendTo, style: { margin: `${space.sm} 0` } });
+	const id = `emoji-${Math.random().toString(36).slice(2)}`;
 
 	const input = new Input({
 		appendTo: row,
 		type: 'text',
 		value,
-		attributes: { maxlength: '4', title: 'Tap to change emoji — auto-detected from type' },
+		attributes: { id, maxlength: '4', title: 'Tap to change emoji — auto-detected from type' },
 		style: { width: '52px', padding: space.xs, flexShrink: '0', fontSize: '22px', textAlign: 'center' },
 	});
 
-	const hint = new Hint({ appendTo: row, textContent: 'Auto-detected · tap to change' });
+	// The hint is the field's label, so it names the field as well as saying where the emoji came from
+	const hint = new Hint({
+		appendTo: row,
+		tag: 'label',
+		attributes: { for: id },
+		textContent: 'Emoji: auto-detected · tap to change',
+	});
 
 	input.elem.addEventListener('input', () => {
 		input.elem.dataset.manual = input.options.value ? '1' : '';
-		hint.elem.textContent = input.options.value ? 'Custom · clear to auto-detect' : 'Auto-detected · tap to change';
+		hint.elem.textContent = input.options.value
+			? 'Emoji: custom · clear to auto-detect'
+			: 'Emoji: auto-detected · tap to change';
 	});
 
 	return input;

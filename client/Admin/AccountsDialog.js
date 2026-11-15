@@ -43,13 +43,13 @@ const AuthToggleRow = styled(
 	({ colors, space }) => `
 		display: flex;
 		align-items: center;
-		justify-content: space-between;
 		gap: ${space.md};
 		padding-bottom: ${space.md};
 		margin-bottom: ${space.md};
 		border-bottom: 1px solid ${colors.border};
 
 		& .title {
+			display: block;
 			font-size: 13px;
 			font-weight: 600;
 			color: ${colors.white};
@@ -237,19 +237,26 @@ export default class AccountsDialog extends Dialog {
 
 		const toggleRow = new AuthToggleRow({ appendTo: this.body });
 
+		// The checkbox first, its label after it
+		const toggle = new Input({
+			attributes: { type: 'checkbox', id: 'require-login' },
+			style: { flexShrink: '0' },
+			appendTo: toggleRow,
+		});
+
 		const info = new Component({ appendTo: toggleRow });
 
-		new Component({ appendTo: info, addClass: 'title', textContent: 'Require login' });
+		new Component({
+			appendTo: info,
+			tag: 'label',
+			addClass: 'title',
+			attributes: { for: 'require-login' },
+			textContent: 'Require login',
+		});
 		new Component({
 			appendTo: info,
 			addClass: 'sub',
 			textContent: 'When enabled, a passkey is required to open the app',
-		});
-
-		const toggle = new Input({
-			attributes: { type: 'checkbox' },
-			style: { flexShrink: '0' },
-			appendTo: toggleRow,
 		});
 
 		toggle.elem.checked = this._authEnabled;
