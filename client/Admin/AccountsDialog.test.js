@@ -93,7 +93,9 @@ describe('turning sign-in on from the Admin panel', () => {
 		);
 
 		const dialog = await turnOn('north-forty');
-		const button = [...dialog.body.elem.querySelectorAll('button')].find(b => b.textContent.includes('Turn on sign-in'));
+		const button = [...dialog.body.elem.querySelectorAll('button')].find(b =>
+			b.textContent.includes('Turn on sign-in'),
+		);
 
 		const waiting = { disabled: button.disabled, spinning: button.classList.contains('icon-animation-spin-pulse') };
 
@@ -149,7 +151,8 @@ describe('deleting an account', () => {
 		return dialog;
 	};
 
-	const confirmDialog = () => [...document.querySelectorAll('dialog[open]')].find(d => d.textContent.includes('Delete "'));
+	const confirmDialog = () =>
+		[...document.querySelectorAll('dialog[open]')].find(d => d.textContent.includes('Delete "'));
 	const buttonIn = (dialog, text) => [...dialog.querySelectorAll('button')].find(b => b.textContent === text);
 	const deletes = () => calls.filter(call => call.startsWith('DELETE'));
 
@@ -177,4 +180,66 @@ describe('deleting an account', () => {
 		expect(deletes()).toEqual(['DELETE /auth/accounts/hand']);
 		expect(dialog.body.elem.textContent).not.toContain('Hired Hand');
 	});
+});
+
+describe('revoking a token or a share link', () => {
+	let calls;
+	let fetch;
+
+	afterEach(() => {
+		fetch.mockRestore();
+		document.body.innerHTML = '';
+	});
+
+	// A revoked token or link can't be brought back, so the revoke asks first
+	const pressRevoke = async render => {
+		calls = [];
+		fetch = spyOn(globalThis, 'fetch').mockImplementation(async (url, { method = 'GET' } = {}) => {
+			calls.push(`${method} ${url}`);
+
+			if (url === '/auth/tokens') return Response.json([{ id: 't1', name: 'Home Automation', tokenPrefix: 'abc' }]);
+			if (url === '/auth/shares') return Response.json([{ id: 's1', purpose: 'certification' }]);
+
+			return new Response(null, { status: 204 });
+		});
+
+		const container = document.createElement('div');
+
+		document.body.append(container);
+		await render(container, { onRefresh: () => {} });
+		[...container.querySelectorAll('button')].find(b => b.textContent === 'Revoke').click();
+		await settle();
+	};
+
+	const confirmDialog = () =>
+		[...document.querySelectorAll('dialog[open]')].find(d => d.textContent.includes('Revoke'));
+	const deletes = () => calls.filter(call => call.startsWith('DELETE'));
+
+	for (const [what, load, url] of [
+		['a token', () => import('./ApiTokensSection.js').then(m => m.renderApiTokensSection), '/auth/tokens/t1'],
+		['a share link', () => import('./ShareLinksSection.js').then(m => m.renderShareLinksSection), '/auth/shares/s1'],
+	]) {
+		test(`${what} asks first, as a danger, and a cancel keeps it`, async () => {
+			await pressRevoke(await load());
+
+			const confirm = confirmDialog();
+
+			expect(confirm.classList.contains('intent-danger')).toBe(true);
+			expect(deletes()).toEqual([]);
+
+			[...confirm.querySelectorAll('button')].find(b => b.textContent === 'Cancel').click();
+			await settle();
+
+			expect(deletes()).toEqual([]);
+		});
+
+		test(`${what} is revoked once confirmed`, async () => {
+			await pressRevoke(await load());
+
+			[...confirmDialog().querySelectorAll('button')].find(b => b.textContent === 'Revoke').click();
+			await settle();
+
+			expect(deletes()).toEqual([`DELETE ${url}`]);
+		});
+	}
 });

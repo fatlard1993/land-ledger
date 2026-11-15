@@ -3,6 +3,7 @@ import {
 	Card,
 	Component,
 	copyToClipboard,
+	Dialog,
 	Elem,
 	Input,
 	Notify,
@@ -291,6 +292,16 @@ export async function renderShareLinksSection(container, { onRefresh }) {
 			intent: 'danger',
 			appendTo: row,
 			onPointerPress: async () => {
+				if (
+					!(await Dialog.confirm({
+						header: 'Revoke this share link?',
+						body: 'Anyone who has it can no longer open it.',
+						confirmLabel: 'Revoke',
+						intent: 'danger',
+					}))
+				)
+					return;
+
 				const res = await fetch(`/auth/shares/${s.id}`, { method: 'DELETE' });
 
 				if (!res.ok) {

@@ -3,6 +3,7 @@ import {
 	Card,
 	Component,
 	copyToClipboard,
+	Dialog,
 	Elem,
 	Input,
 	Notify,
@@ -169,6 +170,16 @@ export async function renderApiTokensSection(container, { onRefresh }) {
 			intent: 'danger',
 			appendTo: row,
 			onPointerPress: async () => {
+				if (
+					!(await Dialog.confirm({
+						header: `Revoke "${t.name}"?`,
+						body: 'Anything signing in with this token loses access.',
+						confirmLabel: 'Revoke',
+						intent: 'danger',
+					}))
+				)
+					return;
+
 				const res = await fetch(`/auth/tokens/${t.id}`, { method: 'DELETE' });
 
 				if (!res.ok) {
