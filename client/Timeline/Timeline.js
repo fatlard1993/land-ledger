@@ -370,6 +370,19 @@ export default class Timeline extends AsyncView {
 				return parseDate(b.date) - parseDate(a.date);
 			});
 
+		if (!allEvents.length && this._fieldFilter) {
+			const name = this.fields?.body?.[this._fieldFilter]?.name || 'this field';
+
+			new EmptyState({
+				appendTo: this.content,
+				icon: 'magnifying-glass',
+				title: `No events for ${name}`,
+				message: 'Pick another field, or clear the filter to see every field',
+			});
+
+			return;
+		}
+
 		if (!allEvents.length) {
 			new EmptyState({
 				appendTo: this.content,
