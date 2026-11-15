@@ -215,8 +215,10 @@ export async function renderFeedingSection(field, livestockEvents, refresh, cont
 			new Button({
 				appendTo: row,
 				icon: 'check',
+				variant: 'flat',
+				intent: 'success',
 				title: 'Mark as fed',
-				style: { flexShrink: '0', backgroundColor: colors.dark(colors.success) },
+				style: { flexShrink: '0' },
 				onPointerPress: async () => {
 					const result = await createFeedingLog({
 						body: {

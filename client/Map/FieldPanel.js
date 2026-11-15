@@ -560,7 +560,7 @@ export default class FieldPanel extends FieldPanelOuter {
 			variant: 'flat',
 			icon: 'tag',
 			title: 'Record sale of this asset',
-			style: { color: colors.light(colors.success) },
+			intent: 'success',
 		});
 		this._deleteBtn = new Button({
 			appendTo: this._actions,

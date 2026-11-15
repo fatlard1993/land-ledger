@@ -569,7 +569,7 @@ export default class Todo extends AsyncView {
 				appendTo: card,
 				icon: item.quickAction.icon,
 				textContent: item.quickAction.label,
-				style: { backgroundColor: colors.dark(colors.success) },
+				intent: 'success',
 				onPointerPress: async e => {
 					e.stopPropagation?.();
 					await item.quickAction.fn();

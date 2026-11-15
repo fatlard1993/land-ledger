@@ -31,6 +31,8 @@ const log = {
 	notes: 'Cold snap',
 };
 
+const schedule = { id: 's1', fieldId: 'f1', feedType: 'Hay', frequency: 'daily' };
+
 const buttonNamed = text => [...document.querySelectorAll('button')].find(button => button.textContent.includes(text));
 
 describe('deleting a feeding log entry', () => {
@@ -43,6 +45,7 @@ describe('deleting a feeding log entry', () => {
 			calls.push({ method, url: String(url), body: body && JSON.parse(body) });
 
 			if (method === 'GET' && String(url).startsWith('/feeding-logs')) return Response.json({ log1: log });
+			if (method === 'GET' && String(url).startsWith('/feeding-schedules')) return Response.json({ s1: schedule });
 			if (method === 'DELETE') return new Response(null, { status: 204 });
 
 			return Response.json({});
@@ -74,5 +77,35 @@ describe('deleting a feeding log entry', () => {
 		const { id, _v, ...fields } = log;
 
 		expect(body).toEqual(fields);
+	});
+});
+
+describe('a feeding schedule row', () => {
+	let fetch;
+
+	beforeEach(() => {
+		fetch = spyOn(globalThis, 'fetch').mockImplementation(async url => {
+			if (String(url).startsWith('/feeding-schedules')) {
+				return Response.json({ s1: schedule });
+			}
+
+			return Response.json({});
+		});
+	});
+	afterEach(() => {
+		fetch.mockRestore();
+		document.body.innerHTML = '';
+	});
+
+	test('marks it fed with a flat success button, beside the filled header actions', async () => {
+		const container = new Component({ appendTo: document.body });
+
+		await renderFeedingSection({ id: 'f1' }, [], () => {}, container);
+
+		const markFed = container.elem.querySelector('button[title="Mark as fed"]');
+
+		expect(markFed.classList.contains('intent-success')).toBe(true);
+		expect(markFed.classList.contains('variant-flat')).toBe(true);
+		expect(markFed.style.backgroundColor).toBe('');
 	});
 });
