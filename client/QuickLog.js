@@ -373,6 +373,15 @@ export function openQuickLog() {
 				options: APP_CATEGORIES.map(({ value, label }) => ({ value, label })),
 				value: 'herbicide',
 			});
+			// The chosen category's own color down the field's edge, as its chip once took it
+			const tintCategory = () => {
+				const color = APP_CATEGORIES.find(category => category.value === catSelect.options.value)?.color;
+
+				catSelect.elem.style.boxShadow = color ? `inset 4px 0 ${color}` : '';
+			};
+
+			catSelect.elem.addEventListener('change', tintCategory);
+			tintCategory();
 
 			new FormLabel({ appendTo: formArea, textContent: 'Product *' });
 			const productInput = new Input({ appendTo: formArea, placeholder: 'e.g. Roundup PowerMAX' });
