@@ -51,8 +51,6 @@ const signColor = n => {
 };
 
 const CardLabel = styled(SectionLabel, ({ space }) => `margin: 0 0 ${space.md};`);
-// Beside the row's figures or controls, which space it
-const RowLabel = styled(SectionLabel, () => 'margin: 0;');
 
 const BarRow = styled(
 	Component,
@@ -359,7 +357,7 @@ export default class Financials extends AsyncView {
 				style: { display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: space.sm },
 			});
 
-			new RowLabel({ appendTo: nwHeader, textContent: 'Net Worth Snapshot' });
+			new SectionLabel({ appendTo: nwHeader, inRow: true, textContent: 'Net Worth Snapshot' });
 
 			const nw = inventoryValue + appraisedAssets + equipmentAppraisedValue - outstandingLoans;
 			const nwColor = nw >= 0 ? colors.light(colors.success) : colors.light(colors.danger);
@@ -422,7 +420,8 @@ export default class Financials extends AsyncView {
 			style: { display: 'flex', justifyContent: 'space-between', marginBottom: space.sm },
 		});
 
-		new RowLabel({
+		new SectionLabel({
+			inRow: true,
 			appendTo: monthHeader,
 			textContent: `Monthly — ${yr}${isThisYear ? ` (through ${MONTHS[lastMonth]})` : ''}`,
 		});
