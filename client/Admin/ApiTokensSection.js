@@ -130,7 +130,7 @@ export async function renderApiTokensSection(container, { onRefresh }) {
 		new Component({
 			appendTo: rowInfo,
 			addClass: 'meta',
-			style: { fontFamily: 'monospace' },
+			style: { fontFamily: theme.fonts.family.code },
 			textContent: `${t.tokenPrefix}…  ·  ${lastUsed}`,
 		});
 

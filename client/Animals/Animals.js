@@ -14,7 +14,7 @@ const { colors, space } = theme;
 // One animal per row; a phone keeps the tag, name, species and status
 const AnimalRow = styled(
 	Component,
-	({ colors, media, space }) => `
+	({ colors, fonts, media, space }) => `
 		display: grid;
 		grid-template-columns: 80px 1fr 90px 100px 80px 70px;
 		gap: ${space.sm};
@@ -27,7 +27,7 @@ const AnimalRow = styled(
 
 		&:hover { background: ${colors.alpha(colors.white, 0.03)}; }
 
-		& .tag { font-family: monospace; }
+		& .tag { font-family: ${fonts.family.code}; }
 		& .name { min-width: 0; }
 		& .name-text {
 			overflow: hidden;
