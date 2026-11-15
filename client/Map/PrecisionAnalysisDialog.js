@@ -226,7 +226,8 @@ export default class PrecisionAnalysisDialog extends Dialog {
 					textContent: String(text),
 				});
 
-				if (best) new Icon({ tag: 'span', appendTo: td, icon: 'star', style: { marginLeft: space.xs } });
+				if (best)
+					new Icon({ tag: 'span', appendTo: td, icon: 'star', 'aria-label': 'Best', style: { marginLeft: space.xs } });
 			});
 		}
 

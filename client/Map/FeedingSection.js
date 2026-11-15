@@ -282,6 +282,7 @@ export async function renderFeedingSection(field, livestockEvents, refresh, cont
 			appendTo: row,
 			style: { flexShrink: '0' },
 			icon: log.type === 'treat' ? 'candy-cane' : 'check',
+			'aria-label': log.type === 'treat' ? 'Treat' : 'Scheduled',
 		});
 		new Component({
 			tag: 'span',
