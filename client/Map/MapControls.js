@@ -225,7 +225,7 @@ export function createMapControls(
 			new Elem({
 				tag: 'p',
 				appendTo: dialog.body,
-				style: { fontSize: '13px', color: colors.gray, margin: `0 0 ${space.sm}` },
+				style: { fontSize: '13px', color: colors.muted, margin: `0 0 ${space.sm}` },
 				textContent:
 					"Paste your county's ArcGIS FeatureServer layer URL. The property-line search button will query it for parcels in your map view.",
 			});
@@ -243,7 +243,7 @@ export function createMapControls(
 			new Elem({
 				tag: 'p',
 				appendTo: dialog.body,
-				style: { fontSize: '11px', color: colors.gray, margin: '0' },
+				style: { fontSize: '11px', color: colors.muted, margin: '0' },
 				textContent:
 					'Whitman County, WA: https://services3.arcgis.com/eoLFybJXLOtInQXJ/arcgis/rest/services/Parcel_Data___TaxSifter_Map_WFL1/FeatureServer/19',
 			});

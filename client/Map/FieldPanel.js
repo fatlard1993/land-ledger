@@ -120,7 +120,7 @@ const MetaFaint = styled(
 	Component,
 	({ colors }) => `
 		font-size: 12px;
-		color: ${colors.gray};
+		color: ${colors.muted};
 	`,
 	{ tag: 'span' },
 );
@@ -156,7 +156,7 @@ const EmptyNote = styled(
 	({ colors, space }) => `
 		padding: ${space.sm} 0 ${space.sm};
 		font-size: 12px;
-		color: ${colors.gray};
+		color: ${colors.muted};
 	`,
 );
 
@@ -187,7 +187,7 @@ const ActivityRow = styled(
 
 		& .meta {
 			font-size: 11px;
-			color: ${colors.gray};
+			color: ${colors.muted};
 		}
 	`,
 );
@@ -219,7 +219,7 @@ const EventBlock = styled(
 
 		& .date {
 			font-size: 11px;
-			color: ${colors.gray};
+			color: ${colors.muted};
 		}
 
 		& .details {
@@ -244,7 +244,7 @@ const HistoryRow = styled(
 		& .year {
 			flex-shrink: 0;
 			width: 34px;
-			color: ${colors.gray};
+			color: ${colors.muted};
 		}
 
 		& .tokens {

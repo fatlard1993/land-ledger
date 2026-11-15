@@ -58,7 +58,7 @@ const AuthToggleRow = styled(
 		& .sub {
 			margin-top: ${space.xs};
 			font-size: 11px;
-			color: ${colors.gray};
+			color: ${colors.muted};
 		}
 	`,
 );

@@ -48,7 +48,7 @@ const Parts = styled(
 		margin-top: ${space.xs};
 		overflow: hidden;
 		font-size: 12px;
-		color: ${colors.gray};
+		color: ${colors.muted};
 		text-overflow: ellipsis;
 		white-space: nowrap;
 	`,
@@ -158,7 +158,7 @@ export default class Maintenance extends AsyncView {
 		new Elem({
 			tag: 'span',
 			appendTo: meta,
-			style: equipment ? {} : { color: colors.gray, fontStyle: 'italic' },
+			style: equipment ? {} : { color: colors.muted, fontStyle: 'italic' },
 			textContent: `🚜 ${equipmentName}`,
 		});
 

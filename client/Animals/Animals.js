@@ -37,8 +37,8 @@ const AnimalRow = styled(
 			text-overflow: ellipsis;
 			white-space: nowrap;
 		}
-		& .breed { font-size: 11px; color: ${colors.gray}; }
-		& .field { overflow: hidden; color: ${colors.gray}; text-overflow: ellipsis; white-space: nowrap; }
+		& .breed { font-size: 11px; color: ${colors.muted}; }
+		& .field { overflow: hidden; color: ${colors.muted}; text-overflow: ellipsis; white-space: nowrap; }
 		& .status { font-size: 11px; font-weight: 600; }
 
 		&.header {
@@ -46,7 +46,7 @@ const AnimalRow = styled(
 			font-size: 10px;
 			letter-spacing: 0.06em;
 			text-transform: uppercase;
-			color: ${colors.gray};
+			color: ${colors.muted};
 			cursor: default;
 
 			&:hover { background: none; }
@@ -151,7 +151,7 @@ export default class Animals extends AsyncView {
 			new Elem({
 				tag: 'span',
 				appendTo: summaryRow,
-				style: { fontSize: '12px', color: colors.gray },
+				style: { fontSize: '12px', color: colors.muted },
 				textContent: `${meta.icon} ${count} ${meta.label}`,
 			});
 		}

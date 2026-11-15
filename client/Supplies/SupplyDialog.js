@@ -165,7 +165,7 @@ export default class SupplyDialog extends FormDialog {
 		const emojiHint = new Elem({
 			tag: 'span',
 			appendTo: emojiRow,
-			style: { fontSize: '11px', color: colors.gray },
+			style: { fontSize: '11px', color: colors.muted },
 			textContent: supply.emoji ? 'Custom · clear to auto-detect' : 'Auto-detected · tap to change',
 		});
 

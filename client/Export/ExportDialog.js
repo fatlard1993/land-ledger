@@ -26,7 +26,7 @@ const ExportRow = styled(
 		& .export-sub {
 			margin-top: 1px;
 			font-size: 11px;
-			color: ${colors.gray};
+			color: ${colors.muted};
 		}
 
 		& .export-ext {

@@ -151,7 +151,7 @@ export default class MaintenanceScheduleDialog extends FormDialog {
 		new Elem({
 			tag: 'div',
 			appendTo: this.intro,
-			style: { fontSize: '11px', color: colors.gray, marginTop: space.md, marginBottom: space.xs },
+			style: { fontSize: '11px', color: colors.muted, marginTop: space.md, marginBottom: space.xs },
 			textContent: 'Set one or both interval types — whichever comes first triggers the reminder',
 		});
 

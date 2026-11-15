@@ -47,7 +47,7 @@ const signColor = n => {
 	if (n > 0) return colors.light(colors.success);
 	if (n < 0) return colors.light(colors.danger);
 
-	return colors.gray;
+	return colors.muted;
 };
 
 const CardLabel = styled(SectionLabel, ({ space }) => `margin: 0 0 ${space.md};`);
@@ -121,7 +121,7 @@ const AmountRow = styled(
 		font-size: 12px;
 
 		& > :first-child {
-			color: ${colors.gray};
+			color: ${colors.muted};
 		}
 	`,
 );
@@ -131,7 +131,7 @@ const Note = styled(
 	({ colors, space }) => `
 		margin-top: ${space.sm};
 		font-size: 10px;
-		color: ${colors.gray};
+		color: ${colors.muted};
 	`,
 );
 
@@ -161,7 +161,7 @@ const GridRow = styled(
 			font-size: 10px;
 			letter-spacing: 0.06em;
 			text-transform: uppercase;
-			color: ${colors.gray};
+			color: ${colors.muted};
 		}
 	`,
 );
@@ -434,7 +434,7 @@ export default class Financials extends AsyncView {
 			new Elem({
 				tag: 'div',
 				appendTo: monthCard,
-				style: { fontSize: '12px', color: colors.gray },
+				style: { fontSize: '12px', color: colors.muted },
 				textContent: 'No recorded transactions yet',
 			});
 		} else {
@@ -449,7 +449,7 @@ export default class Financials extends AsyncView {
 				new Elem({
 					tag: 'span',
 					appendTo: mRow,
-					style: { fontSize: '11px', color: colors.gray, width: '26px', flexShrink: '0' },
+					style: { fontSize: '11px', color: colors.muted, width: '26px', flexShrink: '0' },
 					textContent: m.name,
 				});
 
@@ -510,7 +510,7 @@ export default class Financials extends AsyncView {
 				new Elem({
 					tag: 'span',
 					appendTo: item,
-					style: { fontSize: '10px', color: colors.gray },
+					style: { fontSize: '10px', color: colors.muted },
 					textContent: label,
 				});
 			});
@@ -689,7 +689,7 @@ export default class Financials extends AsyncView {
 					let c;
 					if (v > 0) c = colors.muted;
 					else if (v < 0) c = colors.light(colors.warning);
-					else c = colors.gray;
+					else c = colors.muted;
 					return { textContent: s, style: { fontSize: '12px', color: c, textAlign: 'right' } };
 				};
 

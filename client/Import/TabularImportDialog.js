@@ -31,7 +31,7 @@ const DropZone = styled(
 		padding: 28px 16px;
 		text-align: center;
 		cursor: pointer;
-		color: ${colors.gray};
+		color: ${colors.muted};
 		transition: border-color 0.15s, color 0.15s;
 
 		&.drag-over {
@@ -62,7 +62,7 @@ const MapRow = styled(
 
 		& .col-arrow {
 			text-align: center;
-			color: ${colors.gray};
+			color: ${colors.muted};
 			font-size: 11px;
 		}
 
@@ -84,7 +84,7 @@ const MapHeader = styled(
 		font-size: 10px;
 		letter-spacing: 0.06em;
 		text-transform: uppercase;
-		color: ${colors.gray};
+		color: ${colors.muted};
 	`,
 );
 

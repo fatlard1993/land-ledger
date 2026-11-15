@@ -92,7 +92,7 @@ export async function renderIncidents(entityType, entity, refresh, appendTo, { l
 			tag: 'span',
 			appendTo: titleRow,
 			style: {
-				color: open ? colors.white : colors.gray,
+				color: open ? colors.white : colors.muted,
 				fontWeight: '500',
 				textDecoration: rec.resolved ? 'line-through' : 'none',
 			},

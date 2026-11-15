@@ -43,7 +43,7 @@ export const ageLabel = birthDate => {
 // Text colors for an animal's status on the dark ground
 export const STATUS_COLORS = {
 	active: colors.light(colors.success),
-	deceased: colors.gray,
+	deceased: colors.muted,
 	sold: colors.light(colors.info),
 	transferred: colors.light(colors.warning),
 };

@@ -26,7 +26,7 @@ const DropZone = styled(
 		padding: 28px 16px;
 		text-align: center;
 		cursor: pointer;
-		color: ${colors.gray};
+		color: ${colors.muted};
 		transition: border-color 0.15s;
 
 		& .drop-icon {
@@ -53,7 +53,7 @@ const Note = styled(
 	Component,
 	({ colors }) => `
 		font-size: 13px;
-		color: ${colors.gray};
+		color: ${colors.muted};
 	`,
 );
 

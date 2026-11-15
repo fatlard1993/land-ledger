@@ -44,13 +44,13 @@ const SummaryBar = styled(
 			font-size: 11px;
 			text-transform: uppercase;
 			letter-spacing: 0.07em;
-			color: ${colors.gray};
+			color: ${colors.muted};
 			margin-top: ${space.xs};
 		}
 
 		& .stat-sub {
 			font-size: 11px;
-			color: ${colors.gray};
+			color: ${colors.muted};
 			margin-top: ${space.sm};
 		}
 	`,
@@ -77,7 +77,7 @@ const Stats = styled(
 			font-size: 10px;
 			text-transform: uppercase;
 			letter-spacing: 0.06em;
-			color: ${colors.gray};
+			color: ${colors.muted};
 		}
 	`,
 );
@@ -105,7 +105,7 @@ const HistoryRow = styled(
 
 		& > .meta, & > .date {
 			font-size: 11px;
-			color: ${colors.gray};
+			color: ${colors.muted};
 		}
 
 		& > .date {
@@ -226,14 +226,14 @@ const UseBlock = styled(
 			font-size: 9px;
 			text-transform: uppercase;
 			letter-spacing: 0.06em;
-			color: ${colors.gray};
+			color: ${colors.muted};
 		}
 
 		& > .empty {
 			padding: 1px 0;
 			font-size: 12px;
 			font-style: italic;
-			color: ${colors.gray};
+			color: ${colors.muted};
 		}
 
 		& > .use {

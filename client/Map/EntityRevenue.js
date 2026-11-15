@@ -35,7 +35,7 @@ const DialogNote = styled(
 	({ colors, space }) => `
 		margin: 0 0 ${space.xs};
 		font-size: 13px;
-		color: ${colors.gray};
+		color: ${colors.muted};
 	`,
 	{ tag: 'p' },
 );
@@ -288,7 +288,7 @@ export function openRevenueDialog(entityType, entity, existingRecord, onSave, on
 				variant: 'flat',
 				icon: 'xmark',
 				title: 'Remove item',
-				style: { width: '28px', color: colors.gray },
+				style: { width: '28px', color: colors.muted },
 				onPointerPress: () => {
 					const idx = lineItems.indexOf(lineData);
 

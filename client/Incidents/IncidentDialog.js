@@ -78,7 +78,7 @@ const LossGrid = styled(
 			font-size: 10px;
 			letter-spacing: 0.04em;
 			text-transform: uppercase;
-			color: ${colors.gray};
+			color: ${colors.muted};
 		}
 	`,
 );

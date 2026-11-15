@@ -49,7 +49,7 @@ const Masthead = styled(
 		& .hint {
 			margin-top: ${space.xs};
 			font-size: 12px;
-			color: ${colors.gray};
+			color: ${colors.muted};
 		}
 	`,
 );

@@ -196,7 +196,7 @@ export default class MaintenanceDialog extends FormDialog {
 				tag: 'label',
 				appendTo: checkRow,
 				textContent: 'Update equipment hours from this record',
-				style: { fontSize: '12px', color: colors.gray, cursor: 'pointer' },
+				style: { fontSize: '12px', color: colors.muted, cursor: 'pointer' },
 			});
 
 			lbl.elem.htmlFor = cbId;

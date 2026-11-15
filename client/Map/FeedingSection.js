@@ -295,7 +295,7 @@ export async function renderFeedingSection(field, livestockEvents, refresh, cont
 		new Component({
 			tag: 'span',
 			appendTo: row,
-			style: { flexShrink: '0', color: colors.gray },
+			style: { flexShrink: '0', color: colors.muted },
 			textContent: formatDate(log.date) || '—',
 		});
 
@@ -304,7 +304,7 @@ export async function renderFeedingSection(field, livestockEvents, refresh, cont
 			icon: 'xmark',
 			title: 'Delete this log entry',
 			appendTo: row,
-			style: { flexShrink: '0', width: '22px', height: '22px', color: colors.gray },
+			style: { flexShrink: '0', width: '22px', height: '22px', color: colors.muted },
 			onPointerPress: async () => {
 				const result = await deleteFeedingLog(log.id);
 

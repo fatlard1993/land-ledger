@@ -41,7 +41,7 @@ const Intro = styled(
 	({ colors, space }) => `
 		margin: 0 0 ${space.md};
 		font-size: 13px;
-		color: ${colors.gray};
+		color: ${colors.muted};
 	`,
 	{ tag: 'p' },
 );
@@ -75,16 +75,16 @@ const Row = styled(
 			font-size: 10px;
 			letter-spacing: 0.06em;
 			text-transform: uppercase;
-			color: ${colors.gray};
+			color: ${colors.muted};
 		}
 
 		& .key {
 			font-weight: 500;
-			color: ${colors.gray};
+			color: ${colors.muted};
 		}
 
 		& .value {
-			color: ${colors.gray};
+			color: ${colors.muted};
 		}
 
 		& .value.kept {

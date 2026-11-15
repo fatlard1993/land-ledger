@@ -279,19 +279,20 @@ export default class Leases extends AsyncView {
 				new Elem({
 					tag: 'span',
 					appendTo: meta,
-					style: { color: colors.gray },
+					style: { color: colors.muted },
 					textContent: `#${lease.loanNumber}`,
 				});
 			if (lease.maturityDate)
 				new Elem({ tag: 'span', appendTo: meta, textContent: `Matures ${formatDate(lease.maturityDate)}` });
-			if (lease.escrow) new Elem({ tag: 'span', appendTo: meta, style: { color: colors.gray }, textContent: 'Escrow' });
+			if (lease.escrow)
+				new Elem({ tag: 'span', appendTo: meta, style: { color: colors.muted }, textContent: 'Escrow' });
 		} else {
 			if (lease.endDate) new Elem({ tag: 'span', appendTo: meta, textContent: `Ends ${formatDate(lease.endDate)}` });
 			if (lease.paymentTerms || lease.paymentDates)
 				new Elem({
 					tag: 'span',
 					appendTo: meta,
-					style: { color: colors.gray },
+					style: { color: colors.muted },
 					textContent: lease.paymentTerms || lease.paymentDates,
 				});
 

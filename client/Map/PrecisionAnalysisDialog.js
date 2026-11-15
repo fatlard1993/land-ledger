@@ -14,7 +14,7 @@ const Footnote = styled(
 		margin-top: ${space.sm};
 		font-size: 10px;
 		line-height: 1.5;
-		color: ${colors.gray};
+		color: ${colors.muted};
 	`,
 );
 
@@ -164,21 +164,21 @@ export default class PrecisionAnalysisDialog extends Dialog {
 						title: {
 							display: true,
 							text: `Applied rate (${appliedLayer.valueUnit ?? ''})`,
-							color: css(colors.gray),
+							color: css(colors.muted),
 							font: { size: 11 },
 						},
 						grid: { color: css(colors.border) },
-						ticks: { color: css(colors.gray), font: { size: 10 } },
+						ticks: { color: css(colors.muted), font: { size: 10 } },
 					},
 					y: {
 						title: {
 							display: true,
 							text: `Yield (${yieldLayer.valueUnit ?? ''})`,
-							color: css(colors.gray),
+							color: css(colors.muted),
 							font: { size: 11 },
 						},
 						grid: { color: css(colors.border) },
-						ticks: { color: css(colors.gray), font: { size: 10 } },
+						ticks: { color: css(colors.muted), font: { size: 10 } },
 					},
 				},
 			},

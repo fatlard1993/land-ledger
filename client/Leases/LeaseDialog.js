@@ -15,7 +15,7 @@ const Hint = styled(
 	({ colors, space }) => `
 		padding: ${space.xs} 0 ${space.xs};
 		font-size: 11px;
-		color: ${colors.gray};
+		color: ${colors.muted};
 	`,
 );
 

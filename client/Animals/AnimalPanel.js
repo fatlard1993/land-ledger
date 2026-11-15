@@ -18,7 +18,7 @@ const BREEDING_STATUS_COLORS = {
 	pending: colors.light(colors.warning),
 	confirmed: colors.light(colors.success),
 	delivered: colors.light(colors.info),
-	failed: colors.gray,
+	failed: colors.muted,
 };
 
 const PresenceChip = styled(
@@ -45,7 +45,7 @@ const SummaryCell = styled(
 			font-size: 10px;
 			letter-spacing: 0.06em;
 			text-transform: uppercase;
-			color: ${colors.gray};
+			color: ${colors.muted};
 		}
 
 		& .value {
@@ -88,7 +88,7 @@ const RecordRow = styled(
 		& .meta {
 			margin-top: 1px;
 			font-size: 11px;
-			color: ${colors.gray};
+			color: ${colors.muted};
 		}
 
 		& .flag {
@@ -104,7 +104,7 @@ const Empty = styled(
 	({ colors, space }) => `
 		padding: ${space.sm} 0 ${space.md};
 		font-size: 12px;
-		color: ${colors.gray};
+		color: ${colors.muted};
 	`,
 );
 
@@ -324,7 +324,7 @@ export default class AnimalPanel extends Dialog {
 					new Elem({ tag: 'span', appendTo: row, addClass: 'marker', textContent: '🐣' });
 
 					const info = new Component({ appendTo: row, addClass: 'info' });
-					const statusColor = BREEDING_STATUS_COLORS[r.status] || colors.gray;
+					const statusColor = BREEDING_STATUS_COLORS[r.status] || colors.muted;
 					const statusLabel =
 						{ pending: 'Pending', confirmed: 'Confirmed', delivered: 'Delivered', failed: 'Failed' }[r.status] ||
 						r.status;

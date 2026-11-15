@@ -78,7 +78,7 @@ const TodoCard = styled(
 		& .entity {
 			flex-shrink: 0;
 			font-size: 11px;
-			color: ${colors.gray};
+			color: ${colors.muted};
 		}
 
 		& .detail {
@@ -90,7 +90,7 @@ const TodoCard = styled(
 			margin-top: ${space.xs};
 			overflow: hidden;
 			font-size: 11px;
-			color: ${colors.gray};
+			color: ${colors.muted};
 			text-overflow: ellipsis;
 			white-space: nowrap;
 		}
@@ -206,7 +206,7 @@ export default class Todo extends AsyncView {
 		const tiers = [
 			{ key: NOW, label: 'Needs Attention', color: colors.danger, text: colors.light(colors.danger) },
 			{ key: SOON, label: 'Coming Up', color: colors.warning, text: colors.light(colors.warning) },
-			{ key: LATER, label: 'Back Burner', color: colors.gray, text: colors.gray },
+			{ key: LATER, label: 'Back Burner', color: colors.gray, text: colors.muted },
 		];
 
 		for (const { key, label, ...tier } of tiers) {

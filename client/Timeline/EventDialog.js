@@ -55,7 +55,7 @@ const EmojiRow = styled(
 
 		& > .hint {
 			font-size: 11px;
-			color: ${colors.gray};
+			color: ${colors.muted};
 		}
 	`,
 );

@@ -172,7 +172,7 @@ export default class BudgetItemDialog extends FormDialog {
 
 		const preview = new Elem({
 			tag: 'div',
-			style: { fontSize: '11px', color: colors.gray, marginTop: space.sm },
+			style: { fontSize: '11px', color: colors.muted, marginTop: space.sm },
 		});
 
 		const updatePreview = () => {
@@ -195,7 +195,7 @@ export default class BudgetItemDialog extends FormDialog {
 		if (options.entity) {
 			new Elem({
 				tag: 'div',
-				style: { fontSize: '11px', color: colors.gray, marginTop: space.md },
+				style: { fontSize: '11px', color: colors.muted, marginTop: space.md },
 				textContent: `Linked to: ${options.entity.name || options.entityType}`,
 				appendTo: this.body,
 			});

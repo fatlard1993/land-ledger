@@ -33,7 +33,7 @@ export const Hint = styled(
 		margin-bottom: ${space.sm};
 		font-size: 11px;
 		line-height: 1.5;
-		color: ${colors.gray};
+		color: ${colors.muted};
 	`,
 );
 
@@ -42,7 +42,7 @@ export const EmptyLine = styled(
 	({ colors, space }) => `
 		padding: ${space.sm} 0;
 		font-size: 12px;
-		color: ${colors.gray};
+		color: ${colors.muted};
 	`,
 );
 
@@ -70,7 +70,7 @@ export const ItemRow = styled(
 		& .meta {
 			margin-top: 1px;
 			font-size: 11px;
-			color: ${colors.gray};
+			color: ${colors.muted};
 			overflow-wrap: anywhere;
 		}
 

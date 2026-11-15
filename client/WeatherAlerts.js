@@ -1,4 +1,15 @@
-import { Button, Card, Component, Elem, formatDate, Icon, readStorage, styled, theme, writeStorage } from '@vanilla-bean/components';
+import {
+	Button,
+	Card,
+	Component,
+	Elem,
+	formatDate,
+	Icon,
+	readStorage,
+	styled,
+	theme,
+	writeStorage,
+} from '@vanilla-bean/components';
 import { centroidFromGeometry } from './geo';
 import { toDateOnly } from './utils/dates';
 
@@ -158,7 +169,7 @@ const AlertCard = styled(
 		& .when {
 			margin-top: 1px;
 			font-size: 11px;
-			color: ${colors.gray};
+			color: ${colors.muted};
 		}
 	`,
 );

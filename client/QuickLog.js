@@ -62,7 +62,7 @@ const SheetHeader = styled(
 		& .date {
 			margin-top: ${space.xs};
 			font-size: 12px;
-			color: ${colors.gray};
+			color: ${colors.muted};
 		}
 	`,
 );
@@ -99,7 +99,7 @@ const TypeGrid = styled(
 
 		& .type-sub {
 			font-size: 10px;
-			color: ${colors.gray};
+			color: ${colors.muted};
 			text-align: center;
 		}
 	`,

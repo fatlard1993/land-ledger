@@ -78,7 +78,7 @@ const EventRow = styled(
 
 		& .event-meta {
 			font-size: 12px;
-			color: ${colors.gray};
+			color: ${colors.muted};
 			margin-top: 1px;
 			display: flex;
 			gap: ${space.sm};
@@ -95,7 +95,7 @@ const SeasonHeader = styled(
 		align-items: baseline;
 		gap: ${space.xs} ${space.md};
 		padding: ${space.md} 0 ${space.xs};
-		color: ${colors.gray};
+		color: ${colors.muted};
 
 		& > .note {
 			font-size: 11px;
@@ -130,7 +130,7 @@ const YieldTable = styled(
 
 		& th {
 			padding: ${space.sm} ${space.sm};
-			color: ${colors.gray};
+			color: ${colors.muted};
 			font-weight: 600;
 			border-bottom: 2px solid ${colors.border};
 			text-align: center;
@@ -157,7 +157,7 @@ const YieldTable = styled(
 		& .acres, & .crop {
 			font-size: 10px;
 			font-weight: 400;
-			color: ${colors.gray};
+			color: ${colors.muted};
 		}
 
 		& .yield {
@@ -195,7 +195,7 @@ const Footnote = styled(
 		margin-top: ${space.md};
 		font-size: 11px;
 		line-height: 1.6;
-		color: ${colors.gray};
+		color: ${colors.muted};
 	`,
 	{ tag: 'p' },
 );
@@ -534,7 +534,7 @@ export default class Timeline extends AsyncView {
 		} else {
 			// No farm yield recorded — show county average as reference only
 			slot.elem.textContent = `County avg: ${countyAvg.toFixed(1)} ${unit}`;
-			slot.elem.style.color = `${colors.gray}`;
+			slot.elem.style.color = `${colors.muted}`;
 		}
 	}
 

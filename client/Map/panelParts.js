@@ -38,7 +38,7 @@ export const RowMeta = styled(
 	Component,
 	({ colors }) => `
 		font-size: 11px;
-		color: ${colors.gray};
+		color: ${colors.muted};
 	`,
 );
 
@@ -50,7 +50,7 @@ export const RowAside = styled(
 		padding-left: ${space.sm};
 		margin-top: ${space.xs};
 		font-size: 11px;
-		color: ${colors.gray};
+		color: ${colors.muted};
 		text-align: right;
 		white-space: nowrap;
 	`,
@@ -72,7 +72,7 @@ export const EmptyNote = styled(
 	({ colors, space }) => `
 		padding: ${space.xs} 0 ${space.sm};
 		font-size: 12px;
-		color: ${colors.gray};
+		color: ${colors.muted};
 	`,
 );
 
@@ -114,7 +114,7 @@ export const FigureTable = styled(
 			letter-spacing: 0.05em;
 			text-align: left;
 			text-transform: uppercase;
-			color: ${colors.gray};
+			color: ${colors.muted};
 		}
 
 		& td {

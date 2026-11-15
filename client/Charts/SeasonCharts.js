@@ -24,12 +24,12 @@ const CHART_OPTS = {
 	color: css(colors.muted),
 	scales: {
 		x: {
-			ticks: { color: css(colors.gray), font: { size: 11 } },
+			ticks: { color: css(colors.muted), font: { size: 11 } },
 			grid: { color: css(colors.alpha(colors.white, 0.06)) },
 			border: { color: css(colors.border) },
 		},
 		y: {
-			ticks: { color: css(colors.gray), font: { size: 11 } },
+			ticks: { color: css(colors.muted), font: { size: 11 } },
 			grid: { color: css(colors.alpha(colors.white, 0.06)) },
 			border: { color: css(colors.border) },
 		},
@@ -48,7 +48,7 @@ const CHART_OPTS = {
 	animation: { duration: 300 },
 };
 
-const AXIS_TITLE = { color: css(colors.gray), font: { size: 10 } };
+const AXIS_TITLE = { color: css(colors.muted), font: { size: 10 } };
 
 const ChartWrap = styled(Card, () => 'margin-bottom: 12px;');
 
@@ -90,7 +90,7 @@ export default class SeasonCharts extends Component {
 			new Elem({
 				tag: 'p',
 				appendTo: this,
-				style: { fontSize: '12px', color: colors.gray, textAlign: 'center', padding: `${space.md} 0` },
+				style: { fontSize: '12px', color: colors.muted, textAlign: 'center', padding: `${space.md} 0` },
 				textContent: 'Need data from at least 2 seasons to show trends',
 			});
 
@@ -216,7 +216,12 @@ export default class SeasonCharts extends Component {
 		const xLabels = fieldFilter
 			? years.map(y => {
 					const p = practices[fieldFilter]?.[y] || {};
-					const icons = [p.livestock && categoryMeta('livestock').emoji, p.coverCrop && categoryMeta('cover_crop').emoji].filter(Boolean).join('');
+					const icons = [
+						p.livestock && categoryMeta('livestock').emoji,
+						p.coverCrop && categoryMeta('cover_crop').emoji,
+					]
+						.filter(Boolean)
+						.join('');
 
 					return icons ? `${y}\n${icons}` : String(y);
 				})
@@ -278,7 +283,7 @@ export default class SeasonCharts extends Component {
 			new Elem({
 				tag: 'div',
 				appendTo: wrap,
-				style: { fontSize: '11px', color: colors.gray, marginBottom: space.xs, marginTop: space.sm },
+				style: { fontSize: '11px', color: colors.muted, marginBottom: space.xs, marginTop: space.sm },
 				textContent: title,
 			});
 
@@ -375,7 +380,12 @@ export default class SeasonCharts extends Component {
 		const practiceLabelsX = fieldFilter
 			? years.map(y => {
 					const p = practices[fieldFilter]?.[y] || {};
-					const icons = [p.livestock && categoryMeta('livestock').emoji, p.coverCrop && categoryMeta('cover_crop').emoji].filter(Boolean).join('');
+					const icons = [
+						p.livestock && categoryMeta('livestock').emoji,
+						p.coverCrop && categoryMeta('cover_crop').emoji,
+					]
+						.filter(Boolean)
+						.join('');
 
 					return icons ? `${y}\n${icons}` : String(y);
 				})

@@ -50,7 +50,7 @@ const DayLabel = styled(
 		font-size: 9px;
 		letter-spacing: 0.04em;
 		text-transform: uppercase;
-		color: ${colors.gray};
+		color: ${colors.muted};
 	`,
 );
 
@@ -67,7 +67,7 @@ const Low = styled(
 	Component,
 	({ colors }) => `
 		font-size: 11px;
-		color: ${colors.gray};
+		color: ${colors.muted};
 
 		.freeze > & {
 			font-weight: 600;

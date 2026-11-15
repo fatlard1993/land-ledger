@@ -29,7 +29,7 @@ const Hint = styled(
 	Component,
 	({ colors }) => `
 		font-size: 11px;
-		color: ${colors.gray};
+		color: ${colors.muted};
 	`,
 	{ tag: 'span' },
 );
@@ -200,7 +200,7 @@ export const DropZone = styled(
 		border: 2px dashed ${colors.gray};
 		border-radius: ${radius.lg};
 		text-align: center;
-		color: ${colors.gray};
+		color: ${colors.muted};
 		cursor: pointer;
 		transition: border-color 0.15s, color 0.15s;
 
@@ -240,7 +240,7 @@ export const PreviewList = styled(
 		& > .more {
 			border-bottom: none;
 			font-size: 11px;
-			color: ${colors.gray};
+			color: ${colors.muted};
 		}
 	`,
 );
@@ -250,7 +250,7 @@ export const Lead = styled(
 	({ colors, space }) => `
 		margin: 0 0 ${space.sm};
 		font-size: 13px;
-		color: ${colors.gray};
+		color: ${colors.muted};
 	`,
 	{ tag: 'p' },
 );

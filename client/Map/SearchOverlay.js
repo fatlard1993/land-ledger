@@ -47,7 +47,7 @@ export function buildSearchOverlay(container, map) {
 
 	const icon = new Icon({
 		icon: 'magnifying-glass',
-		style: { padding: `0 ${space.xs} 0 ${space.md}`, color: colors.gray, flexShrink: '0' },
+		style: { padding: `0 ${space.xs} 0 ${space.md}`, color: colors.muted, flexShrink: '0' },
 	}).elem;
 
 	const input = new Input({
@@ -68,7 +68,7 @@ export function buildSearchOverlay(container, map) {
 
 	const clearBtn = new Button({ variant: 'flat', icon: 'xmark', title: 'Clear search' }).elem;
 
-	Object.assign(clearBtn.style, { display: 'none', flexShrink: '0', color: `${colors.gray}` });
+	Object.assign(clearBtn.style, { display: 'none', flexShrink: '0', color: `${colors.muted}` });
 
 	const locate = new Button({ variant: 'flat', icon: 'location-crosshairs', title: 'Go to my location' });
 	const locateBtn = locate.elem;
@@ -141,7 +141,7 @@ export function buildSearchOverlay(container, map) {
 				const empty = document.createElement('div');
 
 				empty.textContent = 'No results';
-				Object.assign(empty.style, { padding: space.md, color: `${colors.gray}`, fontSize: '13px' });
+				Object.assign(empty.style, { padding: space.md, color: `${colors.muted}`, fontSize: '13px' });
 				dropdown.append(empty);
 			} else {
 				results.forEach((r, i) => {
@@ -161,7 +161,7 @@ export function buildSearchOverlay(container, map) {
 
 					if (secondary) {
 						const secondaryDiv = document.createElement('div');
-						secondaryDiv.style.cssText = `font-size:11px;color:${colors.gray};margin-top:1px`;
+						secondaryDiv.style.cssText = `font-size:11px;color:${colors.muted};margin-top:1px`;
 						secondaryDiv.textContent = secondary;
 						item.append(secondaryDiv);
 					}

@@ -134,7 +134,7 @@ export default class ApplicationLogs extends AsyncView {
 					font-size: 10px;
 					text-transform: uppercase;
 					letter-spacing: .06em;
-					color: ${colors.gray};
+					color: ${colors.muted};
 					padding: ${space.xs} 0 ${space.sm};
 					border-bottom: 1px solid ${colors.border};
 					text-align: left;

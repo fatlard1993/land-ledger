@@ -49,7 +49,7 @@ const Frequency = styled(
 	({ colors }) => `
 		flex-shrink: 0;
 		font-size: 11px;
-		color: ${colors.gray};
+		color: ${colors.muted};
 	`,
 	{ tag: 'span' },
 );
@@ -77,7 +77,7 @@ const LogRow = styled(
 
 		& .where {
 			font-size: 11px;
-			color: ${colors.gray};
+			color: ${colors.muted};
 		}
 	`,
 );
@@ -86,7 +86,7 @@ const DeleteButton = styled(
 	Button,
 	({ colors }) => `
 		flex-shrink: 0;
-		color: ${colors.gray};
+		color: ${colors.muted};
 
 		&:hover {
 			color: ${colors.light(colors.danger)};
@@ -94,7 +94,7 @@ const DeleteButton = styled(
 	`,
 );
 
-const missing = { color: colors.gray, fontStyle: 'italic' };
+const missing = { color: colors.muted, fontStyle: 'italic' };
 
 export default class Feeding extends AsyncView {
 	_buildView() {

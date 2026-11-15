@@ -35,7 +35,7 @@ const Description = styled(
 		margin-top: ${space.xs};
 		overflow: hidden;
 		font-size: 12px;
-		color: ${colors.gray};
+		color: ${colors.muted};
 		text-overflow: ellipsis;
 		white-space: nowrap;
 	`,
