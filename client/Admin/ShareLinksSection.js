@@ -1,4 +1,14 @@
-import { Button, Card, Component, copyToClipboard, Elem, Input, SectionLabel, theme } from '@vanilla-bean/components';
+import {
+	Button,
+	Card,
+	Component,
+	copyToClipboard,
+	Elem,
+	Input,
+	Notify,
+	SectionLabel,
+	theme,
+} from '@vanilla-bean/components';
 
 import { FormLabel } from '../Layout';
 import { IconText } from '../statusIcons';
@@ -142,7 +152,13 @@ function openShareForm(container, { onRefresh }) {
 				body: JSON.stringify(body),
 			});
 
-			if (!res.ok) return;
+			if (!res.ok) {
+				new Notify({
+					intent: 'danger',
+					content: `Couldn't create the share link: ${res.statusText || `status ${res.status}`}`,
+				});
+				return;
+			}
 
 			const data = await res.json();
 			form.elem.remove();
@@ -275,7 +291,16 @@ export async function renderShareLinksSection(container, { onRefresh }) {
 			addClass: 'danger',
 			appendTo: row,
 			onPointerPress: async () => {
-				await fetch(`/auth/shares/${s.id}`, { method: 'DELETE' });
+				const res = await fetch(`/auth/shares/${s.id}`, { method: 'DELETE' });
+
+				if (!res.ok) {
+					new Notify({
+						intent: 'danger',
+						content: `Couldn't revoke the share link: ${res.statusText || `status ${res.status}`}`,
+					});
+					return;
+				}
+
 				onRefresh();
 			},
 		});

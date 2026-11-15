@@ -4,7 +4,9 @@ import {
 	Component,
 	Elem,
 	EmptyState,
+	failureReason,
 	formatDate,
+	Notify,
 	parseDate,
 	SectionLabel,
 	styled,
@@ -293,7 +295,7 @@ export default class Todo extends AsyncView {
 					label: 'Fed',
 					icon: 'check',
 					fn: async () => {
-						await createFeedingLog({
+						const result = await createFeedingLog({
 							body: {
 								scheduleId: schedule.id,
 								fieldId: schedule.fieldId,
@@ -304,6 +306,12 @@ export default class Todo extends AsyncView {
 								date: toDateOnly(),
 							},
 						});
+
+						if (result?.status === 'error') {
+							new Notify({ intent: 'danger', content: `Couldn't log the feeding: ${failureReason(result)}` });
+							return;
+						}
+
 						this._build();
 					},
 				},

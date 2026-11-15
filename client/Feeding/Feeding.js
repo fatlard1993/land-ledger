@@ -3,7 +3,9 @@ import {
 	Component,
 	Elem,
 	EmptyState,
+	failureReason,
 	formatDate,
+	Notify,
 	parseDate,
 	SectionLabel,
 	styled,
@@ -255,7 +257,13 @@ export default class Feeding extends AsyncView {
 						attributes: { title: 'Delete this log entry' },
 						onPointerPress: async e => {
 							e.stopPropagation();
-							await deleteFeedingLog(log.id);
+							const result = await deleteFeedingLog(log.id);
+
+							if (result?.status === 'error') {
+								new Notify({ intent: 'danger', content: `Couldn't delete the log entry: ${failureReason(result)}` });
+								return;
+							}
+
 							if (this._logs?.body) delete this._logs.body[log.id];
 							context.hasFeedingHistory =
 								Object.keys(this._logs?.body || {}).length > 0 || Object.keys(this._schedules?.body || {}).length > 0;

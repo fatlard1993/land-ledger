@@ -1,4 +1,14 @@
-import { Button, Card, Component, copyToClipboard, Elem, Input, SectionLabel, theme } from '@vanilla-bean/components';
+import {
+	Button,
+	Card,
+	Component,
+	copyToClipboard,
+	Elem,
+	Input,
+	Notify,
+	SectionLabel,
+	theme,
+} from '@vanilla-bean/components';
 
 import { AdminSection, EmptyLine, ItemRow, Reveal, SecretField, SectionHead } from './parts';
 
@@ -96,7 +106,14 @@ function openTokenForm(container, { onRefresh }) {
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({ name }),
 			});
-			if (!res.ok) return;
+
+			if (!res.ok) {
+				new Notify({
+					intent: 'danger',
+					content: `Couldn't create the token: ${res.statusText || `status ${res.status}`}`,
+				});
+				return;
+			}
 
 			const data = await res.json();
 			form.elem.remove();
@@ -152,7 +169,16 @@ export async function renderApiTokensSection(container, { onRefresh }) {
 			addClass: 'danger',
 			appendTo: row,
 			onPointerPress: async () => {
-				await fetch(`/auth/tokens/${t.id}`, { method: 'DELETE' });
+				const res = await fetch(`/auth/tokens/${t.id}`, { method: 'DELETE' });
+
+				if (!res.ok) {
+					new Notify({
+						intent: 'danger',
+						content: `Couldn't revoke the token: ${res.statusText || `status ${res.status}`}`,
+					});
+					return;
+				}
+
 				onRefresh();
 			},
 		});

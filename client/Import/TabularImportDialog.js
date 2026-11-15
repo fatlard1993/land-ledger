@@ -287,7 +287,13 @@ export default class TabularImportDialog extends Dialog {
 				onPointerPress: async () => {
 					if (!templateSelect.options.value) return;
 
-					await deleteImportTemplate(templateSelect.options.value).catch(() => {});
+					try {
+						await deleteImportTemplate(templateSelect.options.value);
+					} catch (error) {
+						new Notify({ intent: 'danger', content: `Couldn't delete the template: ${error.message}` });
+						return;
+					}
+
 					this._renderMapper();
 				},
 			});

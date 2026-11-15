@@ -35,7 +35,9 @@ export const saveImportTemplate = async ({ name, collection, mapping }) => {
 };
 
 export const deleteImportTemplate = async name => {
-	await fetch(`/import/tabular/templates/${encodeURIComponent(name)}`, { method: 'DELETE' });
+	const res = await fetch(`/import/tabular/templates/${encodeURIComponent(name)}`, { method: 'DELETE' });
+
+	if (!res.ok) throw new Error(res.statusText || `status ${res.status}`);
 };
 
 export const applyTabularImport = async ({ collection, rows, mapping, defaults }) => {

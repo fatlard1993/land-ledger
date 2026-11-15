@@ -219,7 +219,7 @@ export async function renderFeedingSection(field, livestockEvents, refresh, cont
 				title: 'Mark as fed',
 				style: { flexShrink: '0', backgroundColor: colors.dark(colors.success) },
 				onPointerPress: async () => {
-					await createFeedingLog({
+					const result = await createFeedingLog({
 						body: {
 							scheduleId: schedule.id,
 							fieldId: field.id,
@@ -231,6 +231,12 @@ export async function renderFeedingSection(field, livestockEvents, refresh, cont
 							date: toDateOnly(),
 						},
 					});
+
+					if (result?.status === 'error') {
+						new Notify({ intent: 'danger', content: `Couldn't log the feeding: ${failureReason(result)}` });
+						return;
+					}
+
 					refresh();
 				},
 			});

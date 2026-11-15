@@ -1,4 +1,4 @@
-import { Button, Component, Dialog, theme } from '@vanilla-bean/components';
+import { Button, Component, Dialog, failureReason, Notify, theme } from '@vanilla-bean/components';
 import { ActionHeader } from '../Layout';
 import { getPrecisionLayers, getPrecisionLayerPoints, deletePrecisionLayer } from '../api/precisionLayers';
 import PrecisionLayerImport from './PrecisionLayerImport';
@@ -157,7 +157,13 @@ export async function renderPrecisionLayersSection(field, container, callbacks =
 				)
 					return;
 
-				await deletePrecisionLayer(layer.id);
+				const result = await deletePrecisionLayer(layer.id);
+
+				if (result?.status === 'error') {
+					new Notify({ intent: 'danger', content: `Couldn't delete the layer: ${failureReason(result)}` });
+					return;
+				}
+
 				callbacks.onRefresh?.();
 			},
 		});
