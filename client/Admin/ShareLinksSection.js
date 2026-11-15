@@ -13,7 +13,7 @@ import {
 
 import { FormLabel } from '../Layout';
 import { IconText } from '../statusIcons';
-import { AdminSection, EmptyLine, Hint, ItemRow, Reveal, SecretField, SectionHead } from './parts';
+import { AdminSection, EmptyLine, Hint, ItemRow, Reveal, SecretCode, SectionHead } from './parts';
 
 const { space } = theme;
 
@@ -185,28 +185,9 @@ function showShareLink(container, data, { onRefresh }) {
 			'Anyone with this link can view the scoped records — no login required. Revoke it when access is no longer needed.',
 	});
 
-	const urlEl = new SecretField({ appendTo: reveal, attributes: { type: 'text', readonly: true } });
-
-	urlEl.elem.value = url;
-	urlEl.elem.addEventListener('click', () => urlEl.elem.select());
+	new SecretCode({ appendTo: reveal, code: url });
 
 	const actions = new Component({ appendTo: reveal, addClass: 'actions' });
-
-	const copyBtn = new Button({
-		textContent: 'Copy Link',
-		appendTo: actions,
-		onPointerPress: async () => {
-			// Where the copy is refused, the link is selected for copying by hand
-			if (!(await copyToClipboard(url))) return urlEl.elem.select();
-
-			copyBtn.options.icon = 'check';
-			copyBtn.elem.textContent = 'Copied';
-			setTimeout(() => {
-				copyBtn.options.icon = undefined;
-				copyBtn.elem.textContent = 'Copy Link';
-			}, 2000);
-		},
-	});
 
 	new Button({
 		textContent: 'Done',

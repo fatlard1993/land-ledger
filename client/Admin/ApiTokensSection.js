@@ -1,17 +1,6 @@
-import {
-	Button,
-	Card,
-	Component,
-	copyToClipboard,
-	Dialog,
-	Elem,
-	Input,
-	Notify,
-	SectionLabel,
-	theme,
-} from '@vanilla-bean/components';
+import { Button, Card, Component, Dialog, Elem, Input, Notify, SectionLabel, theme } from '@vanilla-bean/components';
 
-import { AdminSection, EmptyLine, ItemRow, Reveal, SecretField, SectionHead } from './parts';
+import { AdminSection, EmptyLine, ItemRow, Reveal, SecretCode, SectionHead } from './parts';
 
 const { space } = theme;
 
@@ -27,28 +16,9 @@ function showNewToken(container, data, { onRefresh }) {
 		textContent: 'Copy this token now. It will not be shown again.',
 	});
 
-	const tokenVal = new SecretField({ appendTo: reveal, attributes: { type: 'text', readonly: true } });
-
-	tokenVal.elem.value = data.token;
-	tokenVal.elem.addEventListener('click', () => tokenVal.elem.select());
+	new SecretCode({ appendTo: reveal, code: data.token });
 
 	const actions = new Component({ appendTo: reveal, addClass: 'actions' });
-
-	const copyBtn = new Button({
-		textContent: 'Copy',
-		appendTo: actions,
-		onPointerPress: async () => {
-			// Where the copy is refused, the token is selected for copying by hand
-			if (!(await copyToClipboard(data.token))) return tokenVal.elem.select();
-
-			copyBtn.options.icon = 'check';
-			copyBtn.elem.textContent = 'Copied';
-			setTimeout(() => {
-				copyBtn.options.icon = undefined;
-				copyBtn.elem.textContent = 'Copy';
-			}, 2000);
-		},
-	});
 
 	new Button({
 		textContent: 'Done',

@@ -243,3 +243,41 @@ describe('revoking a token or a share link', () => {
 		});
 	}
 });
+
+describe('a new token', () => {
+	let fetch;
+
+	afterEach(() => {
+		fetch.mockRestore();
+		document.body.innerHTML = '';
+	});
+
+	test('is shown as code, with its own copy button', async () => {
+		fetch = spyOn(globalThis, 'fetch').mockImplementation(async (url, { method = 'GET' } = {}) => {
+			if (url === '/auth/tokens' && method === 'POST') return Response.json({ name: 'Home', token: 'tok_secret' });
+			if (url === '/auth/tokens') return Response.json([]);
+
+			return Response.json({});
+		});
+
+		const { renderApiTokensSection } = await import('./ApiTokensSection.js');
+		const container = document.createElement('div');
+
+		document.body.append(container);
+		await renderApiTokensSection(container, { onRefresh: () => {} });
+
+		[...container.querySelectorAll('button')].find(b => b.textContent === 'Generate').click();
+
+		const name = container.querySelector('input[aria-label="Token name"]');
+
+		name.value = 'Home';
+		name.dispatchEvent(new Event('input'));
+		[...container.querySelectorAll('button')].find(b => b.textContent === 'Generate token').click();
+		await settle();
+
+		const code = container.querySelector('pre');
+
+		expect(code.querySelector('code').textContent).toBe('tok_secret');
+		expect(code.querySelector('button')).not.toBeNull();
+	});
+});

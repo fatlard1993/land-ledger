@@ -1,4 +1,4 @@
-import { Component, Input, styled } from '@vanilla-bean/components';
+import { Code, Component, styled } from '@vanilla-bean/components';
 import { IconText } from '../statusIcons';
 
 // One settings group in the accounts dialog, ruled off from the one above
@@ -113,16 +113,14 @@ export const Reveal = styled(
 	`,
 );
 
-// The secret itself, for selecting and copying rather than editing
-export const SecretField = styled(
-	Input,
-	({ colors }) => `
-		background-color: ${colors.alpha(colors.vantablack, 0.35)};
-		color: ${colors.light(colors.success)};
-		font-family: monospace;
-		font-size: 12px;
-		cursor: text;
+// The secret itself, to copy; a long token wraps instead of running off the dialog
+export const SecretCode = styled(
+	Code,
+	() => `
+		white-space: pre-wrap;
+		overflow-wrap: anywhere;
 	`,
+	{ multiline: true, copyButton: true, language: 'text' },
 );
 
 export const Notice = styled(
