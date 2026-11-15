@@ -1,6 +1,7 @@
 import {
 	Button,
 	Component,
+	ContextMenu,
 	Elem,
 	EmptyState,
 	formatDate,
@@ -65,60 +66,22 @@ export default class Leases extends AsyncView {
 	_buildView() {
 		this.toolbar = new Toolbar({ appendTo: this, variant: 'bar', heading: 'Leases', gap: 8 });
 
-		const addButtons = new Component({ appendTo: this.toolbar, style: { display: 'flex', gap: space.sm } });
+		const add = role => new LeaseDialog({ role, onSave: data => this._save(data) });
 
-		new Button({
-			appendTo: addButtons,
-			icon: 'arrow-trend-down',
-			textContent: 'I pay',
-			title: 'Add lease I pay',
-			onPointerPress: () =>
-				new LeaseDialog({
-					role: 'tenant',
-					onSave: async data => {
-						return this._save(data);
-					},
-				}),
+		this.addMenu = new ContextMenu({
+			appendTo: this,
+			items: [
+				{ textContent: 'Add a lease I pay', onPointerPress: () => add('tenant') },
+				{ textContent: 'Add a lease I receive', onPointerPress: () => add('lessor') },
+				{ textContent: 'Add a loan or mortgage', onPointerPress: () => add('loan') },
+			],
 		});
 
-		new Button({
-			appendTo: addButtons,
+		const addButton = new Button({
+			appendTo: this.toolbar,
 			icon: 'plus',
-			title: 'Add lease (default)',
-			onPointerPress: () =>
-				new LeaseDialog({
-					onSave: async data => {
-						return this._save(data);
-					},
-				}),
-		});
-
-		new Button({
-			appendTo: addButtons,
-			icon: 'arrow-trend-up',
-			textContent: 'I receive',
-			title: 'Add income lease',
-			onPointerPress: () =>
-				new LeaseDialog({
-					role: 'lessor',
-					onSave: async data => {
-						return this._save(data);
-					},
-				}),
-		});
-
-		new Button({
-			appendTo: addButtons,
-			icon: 'building-columns',
-			textContent: 'Loan',
-			title: 'Add loan / mortgage',
-			onPointerPress: () =>
-				new LeaseDialog({
-					role: 'loan',
-					onSave: async data => {
-						return this._save(data);
-					},
-				}),
+			textContent: 'Add',
+			onPointerPress: () => this.addMenu.open({ anchor: addButton }),
 		});
 
 		this.content = new PageView({ appendTo: this });
