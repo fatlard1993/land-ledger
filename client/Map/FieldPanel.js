@@ -905,6 +905,12 @@ export default class FieldPanel extends Component {
 
 		new Button({
 			appendTo: buttons,
+			textContent: 'Cancel',
+			variant: 'flat',
+			onPointerPress: () => this._renderPathView(),
+		});
+		new Button({
+			appendTo: buttons,
 			textContent: 'Save',
 			onPointerPress: async () => {
 				const data = Object.fromEntries(Object.entries(getters).map(([k, g]) => [k, g()]));
@@ -923,12 +929,6 @@ export default class FieldPanel extends Component {
 				if (updated) this._entity.data = updated;
 				this._renderPathView();
 			},
-		});
-		new Button({
-			appendTo: buttons,
-			textContent: 'Cancel',
-			variant: 'flat',
-			onPointerPress: () => this._renderPathView(),
 		});
 	}
 
@@ -1105,6 +1105,12 @@ export default class FieldPanel extends Component {
 
 		new Button({
 			appendTo: buttons,
+			textContent: 'Cancel',
+			variant: 'flat',
+			onPointerPress: () => this._renderParcelView(),
+		});
+		new Button({
+			appendTo: buttons,
 			textContent: 'Save',
 			onPointerPress: async () => {
 				const data = Object.fromEntries(Object.entries(getters).map(([k, g]) => [k, g()]));
@@ -1114,12 +1120,6 @@ export default class FieldPanel extends Component {
 				if (updated) this._entity.data = updated;
 				this._renderParcelView();
 			},
-		});
-		new Button({
-			appendTo: buttons,
-			textContent: 'Cancel',
-			variant: 'flat',
-			onPointerPress: () => this._renderParcelView(),
 		});
 	}
 
@@ -1385,6 +1385,12 @@ export default class FieldPanel extends Component {
 
 		new Button({
 			appendTo: buttons,
+			textContent: 'Cancel',
+			variant: 'flat',
+			onPointerPress: () => this._renderBuildingView(),
+		});
+		new Button({
+			appendTo: buttons,
 			textContent: 'Save',
 			onPointerPress: async () => {
 				const data = Object.fromEntries(Object.entries(getters).map(([k, g]) => [k, g()]));
@@ -1396,12 +1402,6 @@ export default class FieldPanel extends Component {
 				}
 				this._renderBuildingView();
 			},
-		});
-		new Button({
-			appendTo: buttons,
-			textContent: 'Cancel',
-			variant: 'flat',
-			onPointerPress: () => this._renderBuildingView(),
 		});
 	}
 
@@ -1651,6 +1651,12 @@ export default class FieldPanel extends Component {
 
 		new Button({
 			appendTo: buttons,
+			textContent: 'Cancel',
+			variant: 'flat',
+			onPointerPress: () => this._renderEquipmentView(),
+		});
+		new Button({
+			appendTo: buttons,
 			textContent: 'Save',
 			onPointerPress: async () => {
 				const data = Object.fromEntries(Object.entries(getters).map(([k, g]) => [k, g()]));
@@ -1667,12 +1673,6 @@ export default class FieldPanel extends Component {
 				}
 				this._renderEquipmentView();
 			},
-		});
-		new Button({
-			appendTo: buttons,
-			textContent: 'Cancel',
-			variant: 'flat',
-			onPointerPress: () => this._renderEquipmentView(),
 		});
 	}
 
@@ -1811,6 +1811,13 @@ export default class FieldPanel extends Component {
 
 		new Button({
 			appendTo: buttons,
+			textContent: 'Cancel',
+			variant: 'flat',
+			onPointerPress: () => this._renderViewMode(),
+		});
+
+		new Button({
+			appendTo: buttons,
 			textContent: 'Save',
 			onPointerPress: async () => {
 				const data = Object.fromEntries(Object.entries(inputGetters).map(([k, get]) => [k, get()]));
@@ -1820,13 +1827,6 @@ export default class FieldPanel extends Component {
 				if (updated) this._field = updated;
 				await this._renderViewMode();
 			},
-		});
-
-		new Button({
-			appendTo: buttons,
-			textContent: 'Cancel',
-			variant: 'flat',
-			onPointerPress: () => this._renderViewMode(),
 		});
 	}
 

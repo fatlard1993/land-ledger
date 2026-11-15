@@ -64,22 +64,22 @@ export function showEditBar(appendTo, { label, onSave, onCancel, extraButtons = 
 
 	new Button({
 		appendTo: bar,
-		icon: 'check',
-		textContent: 'Save',
-		onPointerPress: () => {
-			bottomCenter.destroy();
-			onSave();
-		},
-	});
-
-	new Button({
-		appendTo: bar,
 		variant: 'flat',
 		icon: 'xmark',
 		textContent: 'Cancel',
 		onPointerPress: () => {
 			bottomCenter.destroy();
 			onCancel();
+		},
+	});
+
+	new Button({
+		appendTo: bar,
+		icon: 'check',
+		textContent: 'Save',
+		onPointerPress: () => {
+			bottomCenter.destroy();
+			onSave();
 		},
 	});
 
