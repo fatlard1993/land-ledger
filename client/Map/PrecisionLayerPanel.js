@@ -144,7 +144,7 @@ export async function renderPrecisionLayersSection(field, container, callbacks =
 			variant: 'flat',
 			icon: 'xmark',
 			title: 'Delete layer',
-			style: { color: colors.light(colors.danger) },
+			intent: 'danger',
 			onPointerPress: async () => {
 				// The uploaded points go with it, and the client doesn't hold them to put back
 				if (

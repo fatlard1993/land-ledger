@@ -563,7 +563,7 @@ export default class FieldPanel extends Component {
 			variant: 'flat',
 			icon: 'trash',
 			title: 'Delete field',
-			style: { color: colors.light(colors.danger) },
+			intent: 'danger',
 		});
 		new Button({
 			appendTo: this._actions,

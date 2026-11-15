@@ -283,7 +283,8 @@ export default class TabularImportDialog extends Dialog {
 				variant: 'flat',
 				icon: 'xmark',
 				title: 'Delete selected template',
-				style: { flexShrink: '0', color: colors.light(colors.danger) },
+				intent: 'danger',
+				style: { flexShrink: '0' },
 				onPointerPress: async () => {
 					if (!templateSelect.options.value) return;
 

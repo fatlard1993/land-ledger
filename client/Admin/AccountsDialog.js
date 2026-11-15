@@ -413,7 +413,7 @@ export default class AccountsDialog extends Dialog {
 				icon: 'xmark',
 				title: 'Delete account',
 				variant: 'flat',
-				addClass: 'danger',
+				intent: 'danger',
 				onPointerPress: async () => {
 					// Its sessions and passkey hash go with it; nothing on the client can put them back
 					if (

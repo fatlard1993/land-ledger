@@ -77,10 +77,6 @@ export const ItemRow = styled(
 		& > button {
 			flex-shrink: 0;
 		}
-
-		& > .danger {
-			color: ${colors.light(colors.danger)};
-		}
 	`,
 );
 

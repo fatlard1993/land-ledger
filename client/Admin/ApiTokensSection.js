@@ -166,7 +166,7 @@ export async function renderApiTokensSection(container, { onRefresh }) {
 		new Button({
 			textContent: 'Revoke',
 			variant: 'flat',
-			addClass: 'danger',
+			intent: 'danger',
 			appendTo: row,
 			onPointerPress: async () => {
 				const res = await fetch(`/auth/tokens/${t.id}`, { method: 'DELETE' });

@@ -288,7 +288,7 @@ export async function renderShareLinksSection(container, { onRefresh }) {
 		new Button({
 			textContent: 'Revoke',
 			variant: 'flat',
-			addClass: 'danger',
+			intent: 'danger',
 			appendTo: row,
 			onPointerPress: async () => {
 				const res = await fetch(`/auth/shares/${s.id}`, { method: 'DELETE' });
