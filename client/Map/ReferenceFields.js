@@ -31,7 +31,7 @@ export async function loadReferenceFields({ map, referenceLayer, fields, refBtn,
 
 	if (zoom < 12) {
 		referenceLayer.clearLayers();
-		new Notify({ intent: 'warning', textContent: 'Zoom in to county level to load field outlines' });
+		new Notify({ intent: 'info', textContent: 'Zoom in to county level to load field outlines' });
 
 		return;
 	}
@@ -53,7 +53,7 @@ export async function loadReferenceFields({ map, referenceLayer, fields, refBtn,
 		referenceLayer.clearLayers();
 
 		if (tooZoomed) {
-			new Notify({ intent: 'warning', textContent: 'Zoom in further to load field outlines' });
+			new Notify({ intent: 'info', textContent: 'Zoom in further to load field outlines' });
 
 			return;
 		}
