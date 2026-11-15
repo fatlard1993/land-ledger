@@ -1228,8 +1228,7 @@ export default class FieldPanel extends Component {
 				variant: 'flat',
 				size: 'small',
 				icon: 'calendar-days',
-				textContent: 'All',
-				title: 'Open in Timeline',
+				textContent: 'Open in Timeline',
 				onPointerPress: () => {
 					context.timelineFieldFilter = building.id;
 					window.location.hash = ROUTES.timeline;
@@ -1905,8 +1904,7 @@ export default class FieldPanel extends Component {
 			variant: 'flat',
 			size: 'small',
 			icon: 'calendar-days',
-			textContent: 'All',
-			title: 'Open in Timeline',
+			textContent: 'Open in Timeline',
 			onPointerPress: () => {
 				context.timelineFieldFilter = field.id;
 				window.location.hash = ROUTES.timeline;
