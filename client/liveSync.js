@@ -15,6 +15,7 @@ function showToast() {
 	_toast = new Notify({
 		intent: 'info',
 		timeout: 8_000,
+		anchor: false,
 		content: 'Updated on another device',
 		actions: [{ textContent: 'Refresh', onPointerPress: () => location.reload() }],
 	});
