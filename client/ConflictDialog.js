@@ -203,10 +203,13 @@ export function showConflictDialog(conflicts, { header = OFFLINE.header, intro =
 			onPointerPress: () => applyAll('theirs'),
 		});
 
-		const cardsWrap = new Component({ appendTo: dialog.body, style: { maxHeight: '420px', overflowY: 'auto' } });
+		const cardsWrap = new Component({
+			appendTo: dialog.body,
+			style: { display: 'flex', flexDirection: 'column', gap: space.sm, maxHeight: '420px', overflowY: 'auto' },
+		});
 
 		for (const { entry, current, conflictingFields } of conflicts) {
-			const card = new Card({ appendTo: cardsWrap, style: { marginBottom: space.sm } });
+			const card = new Card({ appendTo: cardsWrap });
 
 			const snapshot = entry.snapshot;
 			const label = entityLabel(snapshot || current);
