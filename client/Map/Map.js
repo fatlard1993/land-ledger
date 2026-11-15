@@ -99,6 +99,11 @@ const MapViewRoot = styled(
 );
 
 export default class MapView extends MapViewRoot {
+	// A record as the map last saved it: a panel or editor's closure holds the copy it opened with, which the first save
+	// replaces in the collection, so a second save sending that copy's version would be taken for someone else's change
+	_latest(collection, record) {
+		return this[collection]?.body?.[record.id] ?? record;
+	}
 	_loadOnConnect = true;
 	_referenceVisible = false;
 	_referenceLoading = false;
@@ -574,7 +579,7 @@ export default class MapView extends MapViewRoot {
 			allEvents: Object.values(this.events?.body || {}),
 			allFields: this.fields?.body || {},
 			onSave: async data => {
-				const result = await updateField(field.id, { body: { _v: field._v, ...data } });
+				const result = await updateField(field.id, { body: { _v: this._latest('fields', field)._v, ...data } });
 
 				if (result?.status === 'error') return result;
 
@@ -636,9 +641,17 @@ export default class MapView extends MapViewRoot {
 				this._fieldRenderer.clearEditing();
 
 				const acreage = geodesicAcreage(updatedGeometry);
-				const result = await updateField(field.id, { body: { geometry: updatedGeometry, acreage, _v: field._v } });
+				const result = await updateField(field.id, {
+					body: { geometry: updatedGeometry, acreage, _v: this._latest('fields', field)._v },
+				});
 
-				if (result?.status === 'success' && result.body && this.fields?.body) {
+				if (result?.status === 'error') {
+					new Notify({ intent: 'danger', textContent: `Couldn't save the boundary: ${failureReason(result)}` });
+					this._renderFieldLayers();
+					return;
+				}
+
+				if (result?.body && this.fields?.body) {
 					this.fields.body[field.id] = result.body;
 					this._renderFieldLayers();
 				}
@@ -690,7 +703,7 @@ export default class MapView extends MapViewRoot {
 				this._updateLabels();
 			},
 			onSave: async data => {
-				const r = await updateBuilding(building.id, { body: { _v: building._v, ...data } });
+				const r = await updateBuilding(building.id, { body: { _v: this._latest('buildings', building)._v, ...data } });
 
 				if (r?.status === 'error') return r;
 				if (r?.body && this.buildings?.body) this.buildings.body[building.id] = r.body;
@@ -778,7 +791,7 @@ export default class MapView extends MapViewRoot {
 					this._updateLabels();
 				},
 				onSave: async data => {
-					const result = await updateParcel(parcel.id, { body: { _v: parcel._v, ...data } });
+					const result = await updateParcel(parcel.id, { body: { _v: this._latest('parcels', parcel)._v, ...data } });
 
 					if (result?.status === 'error') return result;
 
@@ -928,9 +941,17 @@ export default class MapView extends MapViewRoot {
 					l.pm.disable();
 				});
 
-				const result = await updateParcel(parcel.id, { body: { geometry: updatedGeometry, _v: parcel._v } });
+				const result = await updateParcel(parcel.id, {
+					body: { geometry: updatedGeometry, _v: this._latest('parcels', parcel)._v },
+				});
 
-				if (result?.status === 'success' && result.body && this.parcels?.body) {
+				if (result?.status === 'error') {
+					new Notify({ intent: 'danger', textContent: `Couldn't save the property line: ${failureReason(result)}` });
+					this._renderParcelLayers();
+					return;
+				}
+
+				if (result?.body && this.parcels?.body) {
 					this.parcels.body[parcel.id] = result.body;
 					this._renderParcelLayers();
 					this._updateLabels();
@@ -967,9 +988,20 @@ export default class MapView extends MapViewRoot {
 					l.pm.disable();
 				});
 
-				const result = await updateBuilding(building.id, { body: { geometry: updatedGeometry, _v: building._v } });
+				const result = await updateBuilding(building.id, {
+					body: { geometry: updatedGeometry, _v: this._latest('buildings', building)._v },
+				});
 
-				if (result?.status === 'success' && result.body && this.buildings?.body) {
+				if (result?.status === 'error') {
+					new Notify({
+						intent: 'danger',
+						textContent: `Couldn't save the building's outline: ${failureReason(result)}`,
+					});
+					this._renderBuildingLayers();
+					return;
+				}
+
+				if (result?.body && this.buildings?.body) {
 					this.buildings.body[building.id] = result.body;
 					this._renderBuildingLayers();
 				}
@@ -990,14 +1022,28 @@ export default class MapView extends MapViewRoot {
 
 			const { lat, lng } = e.latlng;
 
-			updateEquipment(item.id, { body: { lat, lng, _v: item._v } })
+			updateEquipment(item.id, { body: { lat, lng, _v: this._latest('equipment', item)._v } })
 				.then(result => {
-					if (result?.status === 'success' && result.body && this.equipment?.body) {
+					if (result?.status === 'error') {
+						new Notify({
+							intent: 'danger',
+							textContent: `Couldn't move ${item.name || 'the equipment'}: ${failureReason(result)}`,
+						});
+						return;
+					}
+
+					if (result?.body && this.equipment?.body) {
 						this.equipment.body[item.id] = result.body;
 						this._renderEquipmentMarkers();
 					}
 				})
-				.catch(e => console.warn('Equipment move save failed:', e)); // eslint-disable-line no-console
+				.catch(
+					error =>
+						new Notify({
+							intent: 'danger',
+							textContent: `Couldn't move ${item.name || 'the equipment'}: ${error.message}`,
+						}),
+				);
 		};
 
 		this.map.on('click', moveHandler);
@@ -1016,7 +1062,7 @@ export default class MapView extends MapViewRoot {
 					this._updateLabels();
 				},
 				onSave: async data => {
-					const result = await updatePath(path.id, { body: { _v: path._v, ...data } });
+					const result = await updatePath(path.id, { body: { _v: this._latest('paths', path)._v, ...data } });
 
 					if (result?.status === 'error') return result;
 
@@ -1044,7 +1090,7 @@ export default class MapView extends MapViewRoot {
 
 	_editPathGeometry(path) {
 		this._selectionLayer.clearLayers();
-		editPathGeometry(path, {
+		editPathGeometry(this._latest('paths', path), {
 			map: this.map,
 			pathLayer: this._pathLayer,
 			mapEl: this._mapEl,
@@ -1087,7 +1133,7 @@ export default class MapView extends MapViewRoot {
 				this._updateLabels();
 			},
 			onSave: async data => {
-				const result = await updateEquipment(item.id, { body: { _v: item._v, ...data } });
+				const result = await updateEquipment(item.id, { body: { _v: this._latest('equipment', item)._v, ...data } });
 
 				if (result?.status === 'error') return result;
 
@@ -1206,7 +1252,7 @@ export default class MapView extends MapViewRoot {
 							this._updateLabels();
 						},
 						onSave: async data => {
-							const r = await updateParcel(parcel.id, { body: { _v: parcel._v, ...data } });
+							const r = await updateParcel(parcel.id, { body: { _v: this._latest('parcels', parcel)._v, ...data } });
 							if (r?.status === 'error') return r;
 							if (r?.body && this.parcels?.body) {
 								this.parcels.body[parcel.id] = r.body;
@@ -1279,7 +1325,7 @@ export default class MapView extends MapViewRoot {
 							this._updateLabels();
 						},
 						onSave: async data => {
-							const r = await updatePath(path.id, { body: { _v: path._v, ...data } });
+							const r = await updatePath(path.id, { body: { _v: this._latest('paths', path)._v, ...data } });
 							if (r?.status === 'error') return r;
 							if (r?.body && this.paths?.body) {
 								this.paths.body[path.id] = r.body;
