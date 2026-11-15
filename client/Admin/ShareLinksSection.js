@@ -265,7 +265,7 @@ export async function renderShareLinksSection(container, { onRefresh }) {
 
 		const copyBtn = new Button({
 			textContent: 'Copy link',
-			variant: 'chip',
+			size: 'small',
 			appendTo: row,
 			onPointerPress: async () => {
 				// /auth/shares returns safe records without full token — re-fetch to get it

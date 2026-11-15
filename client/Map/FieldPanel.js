@@ -662,7 +662,7 @@ export default class FieldPanel extends Component {
 
 			new Button({
 				appendTo: this._staleBanner,
-				variant: 'chip',
+				size: 'small',
 				textContent: 'Refresh',
 				onPointerPress: () => location.reload(),
 			});
@@ -1205,7 +1205,8 @@ export default class FieldPanel extends Component {
 
 		new Button({
 			appendTo: actButtons,
-			variant: 'chip',
+			variant: 'flat',
+			size: 'small',
 			icon: 'plus',
 			textContent: 'Event',
 			onPointerPress: () =>
@@ -1224,7 +1225,8 @@ export default class FieldPanel extends Component {
 		if (events.length) {
 			new Button({
 				appendTo: actButtons,
-				variant: 'chip',
+				variant: 'flat',
+				size: 'small',
 				icon: 'calendar-days',
 				textContent: 'All',
 				title: 'Open in Timeline',
@@ -1881,7 +1883,8 @@ export default class FieldPanel extends Component {
 
 		new Button({
 			appendTo: useActions,
-			variant: 'chip',
+			variant: 'flat',
+			size: 'small',
 			icon: 'plus',
 			textContent: 'Event',
 			onPointerPress: () =>
@@ -1899,7 +1902,8 @@ export default class FieldPanel extends Component {
 
 		new Button({
 			appendTo: useActions,
-			variant: 'chip',
+			variant: 'flat',
+			size: 'small',
 			icon: 'calendar-days',
 			textContent: 'All',
 			title: 'Open in Timeline',

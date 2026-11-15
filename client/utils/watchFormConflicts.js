@@ -119,8 +119,8 @@ export function watchFormConflicts(form, collection, id) {
 
 		const buttons = new Component({ appendTo: banner, style: { display: 'flex', gap: space.sm, flexShrink: '0' } });
 
-		new Button({ appendTo: buttons, variant: 'chip', textContent: 'Accept all', onPointerPress: acceptAll });
-		new Button({ appendTo: buttons, variant: 'flat', textContent: 'Dismiss', onPointerPress: clearAll });
+		new Button({ appendTo: buttons, size: 'small', textContent: 'Accept all', onPointerPress: acceptAll });
+		new Button({ appendTo: buttons, variant: 'flat', size: 'small', textContent: 'Dismiss', onPointerPress: clearAll });
 
 		_banner = banner.elem;
 

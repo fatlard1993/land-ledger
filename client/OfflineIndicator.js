@@ -84,7 +84,7 @@ export function mountOfflineIndicator() {
 
 		new Button({
 			appendTo: bar,
-			variant: 'chip',
+			size: 'small',
 			textContent: 'Refresh',
 			onPointerPress: () => window.location.reload(),
 		});

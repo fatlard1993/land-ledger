@@ -324,7 +324,8 @@ export function openRevenueDialog(entityType, entity, existingRecord, onSave, on
 
 		new Button({
 			appendTo: inventoryHeaderRow,
-			variant: 'chip',
+			variant: 'flat',
+			size: 'small',
 			icon: 'plus',
 			textContent: 'Add item',
 			style: { flexShrink: '0' },
