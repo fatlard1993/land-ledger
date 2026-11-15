@@ -16,6 +16,7 @@ import {
 import AsyncView from '../AsyncView';
 
 import {
+	createFeedingLog,
 	getFeedingLogs,
 	getFeedingSchedules,
 	getFields,
@@ -268,6 +269,28 @@ export default class Feeding extends AsyncView {
 							context.hasFeedingHistory =
 								Object.keys(this._logs?.body || {}).length > 0 || Object.keys(this._schedules?.body || {}).length > 0;
 							this._renderList();
+
+							// Nothing points at a log, so putting its fields back under a new id restores it as it was
+							const { id, _v, ...body } = log;
+
+							new Notify({
+								intent: 'success',
+								timeout: 10000,
+								textContent: 'Deleted the log entry',
+								actions: [
+									{
+										textContent: 'Undo',
+										onPointerPress: async () => {
+											const restored = await createFeedingLog({ body });
+
+											// A throw keeps the toast and its Undo, and says why
+											if (restored?.status === 'error') throw new Error(failureReason(restored));
+
+											this._loadData();
+										},
+									},
+								],
+							});
 						},
 					});
 				}
