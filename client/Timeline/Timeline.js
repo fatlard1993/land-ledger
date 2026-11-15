@@ -249,6 +249,7 @@ export default class Timeline extends AsyncView {
 			appendTo: this.toolbar,
 			icon: 'file-import',
 			title: 'Import CSV / JSON',
+			variant: 'flat',
 			onPointerPress: () => new TabularImportDialog({ initialCollection: 'events' }),
 		});
 
@@ -256,6 +257,7 @@ export default class Timeline extends AsyncView {
 			appendTo: this.toolbar,
 			icon: 'file-export',
 			title: 'Export data',
+			variant: 'flat',
 			onPointerPress: () => new ExportDialog(),
 		});
 

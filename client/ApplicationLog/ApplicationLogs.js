@@ -21,6 +21,7 @@ export default class ApplicationLogs extends AsyncView {
 			appendTo: this.toolbar,
 			icon: 'file-export',
 			title: 'Export application records',
+			variant: 'flat',
 			onPointerPress: () => new ExportDialog(),
 		});
 

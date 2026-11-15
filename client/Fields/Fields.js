@@ -296,6 +296,7 @@ export default class Fields extends AsyncView {
 			appendTo: this.toolbar,
 			icon: 'file-export',
 			title: 'Export data',
+			variant: 'flat',
 			onPointerPress: () => new ExportDialog(),
 		});
 		new Button({
@@ -384,6 +385,7 @@ export default class Fields extends AsyncView {
 			appendTo: this.toolbar,
 			icon: 'pencil',
 			title: 'Edit field',
+			variant: 'flat',
 			onPointerPress: () =>
 				new FieldDialog({
 					field,

@@ -174,6 +174,7 @@ function renderExportRow(container, { label, sub, url, ext, accent = false }) {
 		appendTo: row,
 		icon: 'download',
 		title: `Download ${label}`,
+		variant: 'flat',
 		style: { flexShrink: '0' },
 		onPointerPress: () => triggerDownload(url),
 	});

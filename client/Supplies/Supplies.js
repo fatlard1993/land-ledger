@@ -46,6 +46,7 @@ export default class Supplies extends AsyncView {
 			appendTo: this.toolbar,
 			icon: 'file-import',
 			title: 'Import CSV / JSON',
+			variant: 'flat',
 			onPointerPress: () => new TabularImportDialog({ initialCollection: 'supplies' }),
 		});
 
@@ -53,6 +54,7 @@ export default class Supplies extends AsyncView {
 			appendTo: this.toolbar,
 			icon: 'file-export',
 			title: 'Export data',
+			variant: 'flat',
 			onPointerPress: () => new ExportDialog(),
 		});
 
