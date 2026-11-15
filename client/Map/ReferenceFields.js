@@ -31,7 +31,7 @@ export async function loadReferenceFields({ map, referenceLayer, fields, refBtn,
 
 	if (zoom < 12) {
 		referenceLayer.clearLayers();
-		new Notify({ intent: 'success', textContent: 'Zoom in to county level to load field outlines', timeout: 3000 });
+		new Notify({ intent: 'warning', textContent: 'Zoom in to county level to load field outlines' });
 
 		return;
 	}
@@ -53,7 +53,7 @@ export async function loadReferenceFields({ map, referenceLayer, fields, refBtn,
 		referenceLayer.clearLayers();
 
 		if (tooZoomed) {
-			new Notify({ intent: 'success', textContent: 'Zoom in further to load field outlines', timeout: 3000 });
+			new Notify({ intent: 'warning', textContent: 'Zoom in further to load field outlines' });
 
 			return;
 		}
@@ -84,7 +84,7 @@ export async function loadReferenceFields({ map, referenceLayer, fields, refBtn,
 
 		if (count === 0) {
 			new Notify({
-				intent: 'success',
+				intent: 'info',
 				textContent: `No field outlines found here via ${source === 'clu' ? 'CLU' : 'OpenStreetMap'} — try zooming into a more detailed area`,
 				timeout: 3000,
 			});

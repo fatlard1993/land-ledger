@@ -52,7 +52,7 @@ export function createParcelDetection({
 		const zoom = map.getZoom();
 
 		if (zoom < 13) {
-			new Notify({ intent: 'success', textContent: 'Zoom in to county level to detect property lines', timeout: 3000 });
+			new Notify({ intent: 'warning', textContent: 'Zoom in to county level to detect property lines' });
 
 			return;
 		}
@@ -83,7 +83,7 @@ export function createParcelDetection({
 			const { features, tooZoomed, source } = result;
 
 			if (tooZoomed) {
-				new Notify({ intent: 'success', textContent: 'Zoom in further to detect property lines', timeout: 3000 });
+				new Notify({ intent: 'warning', textContent: 'Zoom in further to detect property lines' });
 
 				return;
 			}
