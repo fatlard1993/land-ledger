@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test';
 
-import { setQueueOwner } from './offlineQueue';
+import { initOfflineQueue, setQueueOwner } from './offlineQueue';
 
 const KEY = 'land-ledger-offline-queue';
 const stored = key => JSON.parse(localStorage.getItem(key) || '[]');
@@ -61,5 +61,44 @@ describe('the offline queue follows whoever is signed in', () => {
 
 		expect(stored(`${KEY}-admin`)).toHaveLength(1);
 		expect(localStorage.getItem(`${KEY}-hand`)).toBeNull();
+	});
+});
+
+describe('replaying the queue', () => {
+	const realFetch = window.fetch;
+
+	afterEach(() => {
+		window.fetch = realFetch;
+		delete navigator.onLine;
+		localStorage.clear();
+		document.body.innerHTML = '';
+	});
+
+	test('a change the server refuses is said, with its reason, and not counted as synced', async () => {
+		setQueueOwner({ enabled: false });
+		localStorage.setItem(KEY, JSON.stringify([{ url: '/events', method: 'POST', body: '{}', timestamp: 1 }]));
+		Object.defineProperty(navigator, 'onLine', { configurable: true, get: () => true });
+		window.fetch = async () =>
+			new Response(JSON.stringify({ error: 'Field is required' }), {
+				status: 400,
+				headers: { 'content-type': 'application/json' },
+			});
+
+		const states = [];
+		const done = new Promise(resolve =>
+			initOfflineQueue(
+				state => {
+					states.push(state);
+					if (state.syncing === false && state.synced !== null) resolve();
+				},
+				{ enabled: false },
+			),
+		);
+
+		await done;
+
+		expect(states.at(-1)).toMatchObject({ pending: 0, synced: 0 });
+		expect(document.body.textContent).toContain('A change made offline was refused (a new event): Field is required');
+		expect(stored(KEY)).toEqual([]);
 	});
 });

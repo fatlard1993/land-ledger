@@ -1,5 +1,38 @@
 import { Notify } from '@vanilla-bean/components';
 
+// What a queued change was, in words: "a new event", "an edit to a field", "deleting a supply"
+const describeEntry = ({ method, url }) => {
+	const kind =
+		url
+			.replace(/^\w+:\/\/[^/]+/, '')
+			.split(/[/?#]/)
+			.filter(Boolean)[0]
+			?.replace(/s$/, '') ?? 'record';
+	const article = /^[aeiou]/.test(kind) ? 'an' : 'a';
+
+	if (method === 'POST') return `a new ${kind}`;
+	if (method === 'DELETE') return `deleting ${article} ${kind}`;
+
+	return `an edit to ${article} ${kind}`;
+};
+
+// The server's reason for refusing a replayed change: its { error } or { message }, its text, or the status
+const refusalReason = async res => {
+	const text = await res
+		.clone()
+		.text()
+		.catch(() => '');
+
+	try {
+		const json = JSON.parse(text);
+
+		if (typeof json?.error === 'string') return json.error;
+		if (typeof json?.message === 'string') return json.message;
+	} catch {}
+
+	return text.trim() && !text.trim().startsWith('<') ? text.trim() : `HTTP ${res.status}`;
+};
+
 const DEFAULT_QUEUE_KEY = 'land-ledger-offline-queue';
 
 let _onStateChange = null;
@@ -166,8 +199,16 @@ async function flushQueue() {
 					new Notify({
 						intent: 'warning',
 						textContent: 'A queued edit was discarded — the record was deleted while you were offline.',
-						timeout: 6000,
+						anchor: false,
 					});
+				} else if (res.status >= 400) {
+					// Refused: dropped from the queue, since retrying won't change the answer, but not counted as synced
+					new Notify({
+						intent: 'danger',
+						textContent: `A change made offline was refused (${describeEntry(entry)}): ${await refusalReason(res)}`,
+						anchor: false,
+					});
+					continue;
 				} else if (res.status === 200 && entry.method === 'PATCH') {
 					// Server-side optimistic lock conflict: returns 200 { _conflict: true } when
 					// another session updated the record between queue time and replay.
@@ -178,7 +219,7 @@ async function flushQueue() {
 								intent: 'warning',
 								textContent:
 									'A queued edit was discarded — the same record was changed on another device while you were offline.',
-								timeout: 6000,
+								anchor: false,
 							});
 						}
 					} catch {}
