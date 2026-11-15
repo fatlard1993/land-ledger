@@ -574,7 +574,7 @@ export default class MapView extends MapViewRoot {
 			allEvents: Object.values(this.events?.body || {}),
 			allFields: this.fields?.body || {},
 			onSave: async data => {
-				const result = await updateField(field.id, { body: { ...data, _v: field._v } });
+				const result = await updateField(field.id, { body: { _v: field._v, ...data } });
 
 				if (result?.status === 'error') return result;
 
@@ -690,7 +690,7 @@ export default class MapView extends MapViewRoot {
 				this._updateLabels();
 			},
 			onSave: async data => {
-				const r = await updateBuilding(building.id, { body: { ...data, _v: building._v } });
+				const r = await updateBuilding(building.id, { body: { _v: building._v, ...data } });
 
 				if (r?.status === 'error') return r;
 				if (r?.body && this.buildings?.body) this.buildings.body[building.id] = r.body;
@@ -778,7 +778,7 @@ export default class MapView extends MapViewRoot {
 					this._updateLabels();
 				},
 				onSave: async data => {
-					const result = await updateParcel(parcel.id, { body: { ...data, _v: parcel._v } });
+					const result = await updateParcel(parcel.id, { body: { _v: parcel._v, ...data } });
 
 					if (result?.status === 'error') return result;
 
@@ -1016,7 +1016,7 @@ export default class MapView extends MapViewRoot {
 					this._updateLabels();
 				},
 				onSave: async data => {
-					const result = await updatePath(path.id, { body: { ...data, _v: path._v } });
+					const result = await updatePath(path.id, { body: { _v: path._v, ...data } });
 
 					if (result?.status === 'error') return result;
 
@@ -1087,7 +1087,7 @@ export default class MapView extends MapViewRoot {
 				this._updateLabels();
 			},
 			onSave: async data => {
-				const result = await updateEquipment(item.id, { body: { ...data, _v: item._v } });
+				const result = await updateEquipment(item.id, { body: { _v: item._v, ...data } });
 
 				if (result?.status === 'error') return result;
 
@@ -1206,7 +1206,8 @@ export default class MapView extends MapViewRoot {
 							this._updateLabels();
 						},
 						onSave: async data => {
-							const r = await updateParcel(parcel.id, { body: { ...data, _v: parcel._v } });
+							const r = await updateParcel(parcel.id, { body: { _v: parcel._v, ...data } });
+							if (r?.status === 'error') return r;
 							if (r?.body && this.parcels?.body) {
 								this.parcels.body[parcel.id] = r.body;
 								this._renderParcelLayers();
@@ -1278,7 +1279,8 @@ export default class MapView extends MapViewRoot {
 							this._updateLabels();
 						},
 						onSave: async data => {
-							const r = await updatePath(path.id, { body: { ...data, _v: path._v } });
+							const r = await updatePath(path.id, { body: { _v: path._v, ...data } });
+							if (r?.status === 'error') return r;
 							if (r?.body && this.paths?.body) {
 								this.paths.body[path.id] = r.body;
 								this._renderPathLayers();

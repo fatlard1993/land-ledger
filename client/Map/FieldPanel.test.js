@@ -93,6 +93,35 @@ describe("the panel's Edit", () => {
 		panel.elem.remove();
 	});
 
+	test('a second edit is saved over the version the first one saved, not the one the panel opened with', async () => {
+		const panel = new FieldPanel({ appendTo: document.body });
+		const saved = [];
+		let version = building._v;
+
+		await panel.showBuilding(building, {
+			onSave: async data => (saved.push(data), { ...building, ...data, _v: ++version }),
+		});
+		await settle();
+
+		for (const [from, to] of [
+			['North Barn', 'South Barn'],
+			['South Barn', 'East Barn'],
+		]) {
+			panel._editBtn.elem.click();
+			await settle();
+			rename(openDialog(), from, to);
+			press(openDialog(), 'Save');
+			await settle();
+		}
+
+		expect(saved.map(({ name, _v }) => [name, _v])).toEqual([
+			['South Barn', 1],
+			['East Barn', 2],
+		]);
+
+		panel.elem.remove();
+	});
+
 	test('a failed save stays in the dialog with its reason, and the panel keeps the record it had', async () => {
 		const panel = new FieldPanel({ appendTo: document.body });
 

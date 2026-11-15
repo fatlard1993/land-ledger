@@ -643,9 +643,10 @@ export default class FieldPanel extends FieldPanelOuter {
 		this._renderProperties(p.properties, this._content);
 	}
 
-	// Saves an edit made in the record's dialog and shows the saved record; a failed save goes back to the dialog
+	// Saves an edit made in the record's dialog and shows the saved record; a failed save goes back to the dialog. The
+	// save carries the version shown, so a second edit isn't taken for someone else's change to the one first opened.
 	async _saveEntity(data, render) {
-		const updated = await this._entity.callbacks.onSave?.(data);
+		const updated = await this._entity.callbacks.onSave?.({ ...data, _v: this._entity.data._v });
 
 		if (updated?.status === 'error' || updated?.conflict) return updated;
 		if (updated) this._entity.data = updated;
@@ -1057,7 +1058,7 @@ export default class FieldPanel extends FieldPanelOuter {
 			new FieldDialog({
 				field,
 				onSave: async data => {
-					const updated = await callbacks.onSave?.(data);
+					const updated = await callbacks.onSave?.({ ...data, _v: this._field._v });
 
 					if (updated?.status === 'error' || updated?.conflict) return updated;
 					if (updated) this._field = updated;
