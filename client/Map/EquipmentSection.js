@@ -1,4 +1,4 @@
-import { Button, formatDate, Icon, theme } from '@vanilla-bean/components';
+import { Button, failureReason, formatDate, Icon, Notify, theme } from '@vanilla-bean/components';
 
 import { ActionHeader } from '../Layout';
 import { formatDollar } from '../utils/format';
@@ -28,6 +28,15 @@ import {
 	SubLabel,
 } from './panelParts';
 
+// A write that follows a save already made: if it's refused, the save stands and the person hears what didn't follow
+const followUp = async (request, what) => {
+	const result = await request.catch(error => ({ status: 'error', body: error }));
+
+	if (result?.status === 'error') new Notify({ intent: 'warning', content: `${what}: ${failureReason(result)}` });
+
+	return result;
+};
+
 const { colors, space } = theme;
 
 export async function renderMaintenanceSection(equipment, maintenance, schedules, { refresh, appendTo }) {
@@ -54,7 +63,10 @@ export async function renderMaintenanceSection(equipment, maintenance, schedules
 
 					if (result?.body) {
 						if (data.usageAtService) {
-							await updateEquipment(item.id, { body: { usage: data.usageAtService, _v: item._v } });
+							await followUp(
+								updateEquipment(item.id, { body: { usage: data.usageAtService, _v: item._v } }),
+								"Service logged, but the equipment's usage wasn't updated",
+							);
 						}
 
 						await autoRestoreStatus(item, data.workType);
@@ -160,16 +172,22 @@ export async function renderMaintenanceSection(equipment, maintenance, schedules
 
 				if (result?.status === 'error') return result;
 
-				await updateMaintenanceSchedule(schedule.id, {
-					body: {
-						lastDoneDate: data.date,
-						lastDoneUsage: data.usageAtService || currentUsage || null,
-						_v: schedule._v,
-					},
-				});
+				await followUp(
+					updateMaintenanceSchedule(schedule.id, {
+						body: {
+							lastDoneDate: data.date,
+							lastDoneUsage: data.usageAtService || currentUsage || null,
+							_v: schedule._v,
+						},
+					}),
+					"Service logged, but the schedule's last-done date wasn't updated",
+				);
 
 				if (data.usageAtService) {
-					await updateEquipment(item.id, { body: { usage: data.usageAtService, _v: item._v } });
+					await followUp(
+						updateEquipment(item.id, { body: { usage: data.usageAtService, _v: item._v } }),
+						"Service logged, but the equipment's usage wasn't updated",
+					);
 				}
 
 				await autoRestoreStatus(item, data.workType);
@@ -248,7 +266,10 @@ export async function autoRestoreStatus(item, workType) {
 	if (!restore) return;
 
 	// Only mutate local state after server confirms the update
-	const result = await updateEquipment(item.id, { body: { status: '', _v: item._v } }).catch(() => null);
+	const result = await followUp(
+		updateEquipment(item.id, { body: { status: '', _v: item._v } }),
+		"Service logged, but the equipment's status wasn't cleared",
+	);
 
 	if (result?.body) {
 		item.status = '';

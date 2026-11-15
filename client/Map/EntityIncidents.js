@@ -1,4 +1,4 @@
-import { formatDate, theme } from '@vanilla-bean/components';
+import { failureReason, formatDate, Notify, theme } from '@vanilla-bean/components';
 
 import { ActionHeader, SquareBadge } from '../Layout';
 import { formatDollar } from '../utils/format';
@@ -16,6 +16,15 @@ import {
 } from '../api';
 import { EmptyNote, HeaderButton, PanelRow, RowAside, RowGlyph, RowMain, RowMeta, RowTitle } from './panelParts';
 
+// A write that follows a save already made: if it's refused, the save stands and the person hears what didn't follow
+const followUp = async (request, what) => {
+	const result = await request.catch(error => ({ status: 'error', body: error }));
+
+	if (result?.status === 'error') new Notify({ intent: 'warning', content: `${what}: ${failureReason(result)}` });
+
+	return result;
+};
+
 const { colors, space } = theme;
 
 export async function renderIncidents(entityType, entity, refresh, appendTo, { livestockEvents = [] } = {}) {
@@ -29,8 +38,12 @@ export async function renderIncidents(entityType, entity, refresh, appendTo, { l
 	const applyEntityStatus = async status => {
 		if (!status || !entity?.id) return;
 
-		if (entityType === 'equipment') await updateEquipment(entity.id, { body: { status, _v: entity._v } });
-		else if (entityType === 'building') await updateBuilding(entity.id, { body: { status, _v: entity._v } });
+		const what = `Incident recorded, but the ${entityType}'s status wasn't updated`;
+
+		if (entityType === 'equipment')
+			await followUp(updateEquipment(entity.id, { body: { status, _v: entity._v } }), what);
+		else if (entityType === 'building')
+			await followUp(updateBuilding(entity.id, { body: { status, _v: entity._v } }), what);
 	};
 
 	new HeaderButton({

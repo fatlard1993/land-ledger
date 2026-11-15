@@ -1,4 +1,14 @@
-import { Button, Component, FormDialog, Input, Select, styled, theme } from '@vanilla-bean/components';
+import {
+	Button,
+	Component,
+	failureReason,
+	FormDialog,
+	Input,
+	Notify,
+	Select,
+	styled,
+	theme,
+} from '@vanilla-bean/components';
 
 import { formatDollar } from '../utils/format';
 import { makePropertiesEditor } from '../utils/PropertiesEditor';
@@ -8,6 +18,15 @@ import { FormLabel } from '../Layout';
 import { toDateOnly } from '../utils/dates';
 import { stayOpenFor } from '../utils/stayOpenFor';
 import { SubLabel } from './panelParts';
+
+// A write that follows a save already made: if it's refused, the save stands and the person hears what didn't follow
+const followUp = async (request, what) => {
+	const result = await request.catch(error => ({ status: 'error', body: error }));
+
+	if (result?.status === 'error') new Notify({ intent: 'warning', content: `${what}: ${failureReason(result)}` });
+
+	return result;
+};
 
 const { colors, space } = theme;
 
@@ -133,7 +152,10 @@ export function openRevenueDialog(entityType, entity, existingRecord, onSave, on
 				if (supply) {
 					const newStock = Math.max(0, (Number(supply.currentStock) || 0) - Number(line.qty));
 
-					await updateSupply(supply.id, { body: { currentStock: newStock, _v: supply._v } }).catch(() => {});
+					await followUp(
+						updateSupply(supply.id, { body: { currentStock: newStock, _v: supply._v } }),
+						`Sale recorded, but ${supply.name}'s stock wasn't updated`,
+					);
 				}
 			}
 		},
