@@ -1,4 +1,4 @@
-import { Button, Component, Elem, FormDialog, Input, parseDate, Select, styled, theme } from '@vanilla-bean/components';
+import { Component, Elem, FormDialog, Input, parseDate, Select, styled, theme } from '@vanilla-bean/components';
 
 import { EVENT_CATEGORIES, categoryMeta } from '../eventCategories';
 import { FormLabel } from '../Layout';
@@ -18,23 +18,6 @@ const supplyOption = s => ({
 });
 
 const { space } = theme;
-
-const CategoryGrid = styled(
-	Component,
-	({ space }) => `
-		display: grid;
-		grid-template-columns: repeat(4, 1fr);
-		gap: ${space.sm};
-		margin-bottom: ${space.sm};
-
-		/* A long label ends in an ellipsis */
-		& > .vbc-button {
-			min-width: 0;
-			padding: ${space.sm} ${space.xs};
-			overflow: hidden;
-		}
-	`,
-);
 
 const EmojiRow = styled(
 	Component,
@@ -265,37 +248,21 @@ export default class EventDialog extends FormDialog {
 			this._refreshCalculations?.();
 		});
 
-		// Tiered category selection — Crop and Stock first
+		// Picking a category rebuilds the details below for that category
 		new FormLabel({ appendTo: form, textContent: 'Category' });
 
 		let _selectedCategory = this._event.category || 'crop';
 
-		const catRow = new CategoryGrid({ appendTo: form });
-
-		const categoryButtons = new Map();
-
-		const updateCategoryButtons = () => {
-			for (const [value, btn] of categoryButtons) btn.toggleClass('active', value === _selectedCategory);
-		};
-
-		for (const { value, label } of EVENT_CATEGORIES) {
-			const btn = new Button({
-				textContent: label,
-				appendTo: catRow,
-				variant: 'chip',
-				onPointerPress: () => {
-					_selectedCategory = value;
-					updateCategoryButtons();
-					buildDetails();
-					this._onCategoryChange?.();
-				},
-			});
-
-			btn.elem.type = 'button';
-			categoryButtons.set(value, btn);
-		}
-
-		updateCategoryButtons();
+		new Select({
+			appendTo: form,
+			options: EVENT_CATEGORIES.map(({ value, label }) => ({ value, label })),
+			value: _selectedCategory,
+			onChange: ({ value }) => {
+				_selectedCategory = value;
+				buildDetails();
+				this._onCategoryChange?.();
+			},
+		});
 
 		this._getters.category = () => _selectedCategory;
 

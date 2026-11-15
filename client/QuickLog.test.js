@@ -73,3 +73,68 @@ describe('the quick log sheet', () => {
 		expect(sheetInPage().open).toBe(true);
 	});
 });
+
+describe("the quick log's categories", () => {
+	let posts;
+	let fetch;
+
+	beforeEach(() => {
+		posts = [];
+		fetch = spyOn(globalThis, 'fetch').mockImplementation(async (url, { method = 'GET', body } = {}) => {
+			if (method === 'POST') posts.push({ url: String(url), body: JSON.parse(body) });
+
+			return new Response('{}');
+		});
+	});
+	afterEach(() => {
+		fetch.mockRestore();
+		document.querySelectorAll('dialog.quick-log').forEach(dialog => dialog.remove());
+	});
+
+	// The location comes first, then the category
+	const categorySelect = () => sheetInPage().querySelectorAll('select')[1];
+	const pick = (select, value) => {
+		select.value = value;
+		select.dispatchEvent(new Event('change', { bubbles: true }));
+	};
+
+	test("a field event's type is picked from a Select of the event categories", async () => {
+		openQuickLog();
+		await waitFor(() => expect(sheetInPage()?.open).toBe(true));
+
+		buttonNamed('Field event').click();
+
+		const select = categorySelect();
+
+		expect([...select.options].map(option => option.value)).toContain('soil_test');
+		expect(select.value).toBe('crop');
+
+		pick(select, 'soil_test');
+		buttonNamed('Log it').click();
+
+		await waitFor(() => expect(posts).toHaveLength(1));
+		expect(posts[0].body.category).toBe('soil_test');
+	});
+
+	test("an application's category is picked from a Select", async () => {
+		openQuickLog();
+		await waitFor(() => expect(sheetInPage()?.open).toBe(true));
+
+		buttonNamed('Application').click();
+
+		const select = categorySelect();
+
+		expect(select.value).toBe('herbicide');
+
+		pick(select, 'fungicide');
+
+		const product = sheetInPage().querySelector('input[placeholder="e.g. Roundup PowerMAX"]');
+
+		product.value = 'Headline';
+		product.dispatchEvent(new Event('input'));
+		buttonNamed('Log it').click();
+
+		await waitFor(() => expect(posts).toHaveLength(1));
+		expect(posts[0].body).toMatchObject({ category: 'fungicide', product: 'Headline' });
+	});
+});

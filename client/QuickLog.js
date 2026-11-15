@@ -105,28 +105,6 @@ const TypeGrid = styled(
 	`,
 );
 
-// Big enough to hit outdoors; a tinted chip takes its category's own color when chosen
-const ChipRow = styled(
-	Component,
-	({ space }) => `
-		display: flex;
-		flex-wrap: wrap;
-		gap: ${space.sm};
-		margin-bottom: ${space.xs};
-
-		& > .vbc-button {
-			padding: ${space.sm} ${space.md};
-			font-size: 13px;
-		}
-
-		& > .vbc-button.tinted.active {
-			color: var(--tint);
-			border-color: color-mix(in hsl, var(--tint) 40%, transparent);
-			background-color: color-mix(in hsl, var(--tint) 13%, transparent);
-		}
-	`,
-);
-
 const SubmitButton = styled(
 	Button,
 	({ colors, radius, space }) => `
@@ -368,26 +346,10 @@ export function openQuickLog() {
 			});
 		} else if (logType === 'event') {
 			new FormLabel({ appendTo: formArea, textContent: 'Type' });
-			const catGrid = new ChipRow({ appendTo: formArea, attributes: { role: 'group', 'aria-label': 'Type' } });
-			let selectedCat = 'crop';
-			const catChips = [];
-
-			EVENT_CATEGORIES.forEach(t => {
-				const chip = new Button({
-					appendTo: catGrid,
-					variant: 'chip',
-					addClass: t.value === selectedCat ? 'active' : [],
-					attributes: { 'aria-pressed': String(t.value === selectedCat) },
-					textContent: t.label,
-					onPointerPress: () => {
-						selectedCat = t.value;
-						catChips.forEach(c => {
-							c.toggleClass('active', c === chip);
-							c.elem.setAttribute('aria-pressed', String(c === chip));
-						});
-					},
-				});
-				catChips.push(chip);
+			const catSelect = new Select({
+				appendTo: formArea,
+				options: EVENT_CATEGORIES.map(({ value, label }) => ({ value, label })),
+				value: 'crop',
 			});
 
 			new FormLabel({ appendTo: formArea, textContent: 'Name (optional)' });
@@ -400,33 +362,16 @@ export function openQuickLog() {
 				fieldId: locationSelect.options.value || null,
 				date: toDateOnly(),
 				season: new Date().getFullYear(),
-				category: selectedCat,
+				category: catSelect.options.value,
 				name: nameInput.options.value.trim(),
 				notes: noteInput.options.value.trim(),
 			});
 		} else if (logType === 'application') {
 			new FormLabel({ appendTo: formArea, textContent: 'Category' });
-			const catGrid = new ChipRow({ appendTo: formArea, attributes: { role: 'group', 'aria-label': 'Category' } });
-			let selectedCat = 'herbicide';
-			const catChips = [];
-
-			APP_CATEGORIES.forEach(c => {
-				const chip = new Button({
-					appendTo: catGrid,
-					variant: 'chip',
-					addClass: ['tinted', ...(c.value === selectedCat ? ['active'] : [])],
-					attributes: { 'aria-pressed': String(c.value === selectedCat) },
-					textContent: c.label,
-					onPointerPress: () => {
-						selectedCat = c.value;
-						catChips.forEach(ch => {
-							ch.toggleClass('active', ch === chip);
-							ch.elem.setAttribute('aria-pressed', String(ch === chip));
-						});
-					},
-				});
-				chip.elem.style.setProperty('--tint', String(c.color));
-				catChips.push(chip);
+			const catSelect = new Select({
+				appendTo: formArea,
+				options: APP_CATEGORIES.map(({ value, label }) => ({ value, label })),
+				value: 'herbicide',
 			});
 
 			new FormLabel({ appendTo: formArea, textContent: 'Product *' });
@@ -456,7 +401,7 @@ export function openQuickLog() {
 			getPayload = () => ({
 				fieldId: locationSelect.options.value || null,
 				date: toDateOnly(),
-				category: selectedCat,
+				category: catSelect.options.value,
 				product: productInput.options.value.trim(),
 				rate: toNum(rateInput.options.value),
 				rateUnit: unitSelect.options.value,

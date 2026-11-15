@@ -1,9 +1,7 @@
-import { Button, Elem, FormDialog, Input, Select, theme } from '@vanilla-bean/components';
+import { FormDialog, Input, Select } from '@vanilla-bean/components';
 import { stayOpenFor } from '../utils/stayOpenFor';
 import { makePropertiesEditor } from '../utils/PropertiesEditor';
 import { Caption, checkboxRow, emojiField } from './dialogParts';
-
-const { space } = theme;
 
 // Stored on each path as its color, so these stay the literal values saved records hold
 export const PATH_COLORS = [
@@ -104,30 +102,16 @@ export default class PathDialog extends FormDialog {
 		});
 		this._widthEl.options.value = path.widthFt || '10';
 
-		// Color
+		// Color: the surface is stored as its color, which draws the path on the map
 		new Caption({ appendTo: this.body, textContent: 'Surface / color' });
-
-		const colorRow = new Elem({
-			tag: 'div',
+		new Select({
 			appendTo: this.body,
-			style: { display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: space.xs, marginBottom: space.sm },
+			options: PATH_COLORS,
+			value: this._selectedColor,
+			onChange: ({ value }) => {
+				this._selectedColor = value;
+			},
 		});
-
-		for (const { value, label } of PATH_COLORS) {
-			new Button({
-				textContent: label,
-				appendTo: colorRow,
-				variant: 'chip',
-				...(value === this._selectedColor && { addClass: 'active' }),
-				attributes: { type: 'button' },
-				style: { borderColor: value, fontSize: '11px' },
-				onPointerPress: ({ elem }) => {
-					this._selectedColor = value;
-					Array.from(colorRow.elem.children).forEach(b => b.classList.remove('active'));
-					elem.classList.add('active');
-				},
-			});
-		}
 
 		const { collect: collectProps } = makePropertiesEditor(this.body, path.properties || {});
 		this._collectProps = collectProps;
