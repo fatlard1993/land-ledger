@@ -183,7 +183,6 @@ export default class EventDialog extends FormDialog {
 		// The body is built by hand below, so the form holds no inputs and saving collects from the body; a body missing
 		// its field or date answers with what's missing, which keeps the dialog open and shows on its failure line
 		super({
-			size: 'large',
 			header: isEdit ? 'Edit Event' : 'Log Event',
 			inputs: [],
 			onSave: async () => {

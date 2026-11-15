@@ -45,7 +45,6 @@ const { colors, space } = theme;
 export function openTreatDialog(field, totalHead, refresh) {
 	// The body is built by hand below, so the form holds no inputs and saving collects from the body
 	const dialog = new FormDialog({
-		size: 'large',
 		header: 'Log Treat / Extra Feeding',
 		inputs: [],
 		saveLabel: 'Log',

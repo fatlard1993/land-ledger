@@ -68,7 +68,6 @@ export default class FeedingScheduleDialog extends FormDialog {
 		const schedule = options.schedule || {};
 
 		super({
-			size: 'large',
 			header: isEdit ? `Edit Feeding — ${schedule.feedType || 'Feed'}` : 'Add Feeding Schedule',
 			data: {
 				feedType: schedule.feedType || '',

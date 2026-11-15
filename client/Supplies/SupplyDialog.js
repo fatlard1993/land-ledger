@@ -77,7 +77,6 @@ export default class SupplyDialog extends FormDialog {
 		const preBuildingId = options.buildingId || supply.buildingId || '';
 
 		super({
-			size: 'large',
 			header: isEdit ? `Edit Supply — ${supply.name}` : 'Add Supply Item',
 			data: {
 				name: supply.name || '',

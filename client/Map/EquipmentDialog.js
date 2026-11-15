@@ -66,7 +66,6 @@ export default class EquipmentDialog extends FormDialog {
 		const item = options.item || {};
 
 		super({
-			size: 'large',
 			header: isEdit ? `Edit — ${options.item.name || 'Equipment'}` : 'Place Equipment',
 			data: {
 				name: item.name || '',

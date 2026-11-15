@@ -55,7 +55,6 @@ export default class MaintenanceScheduleDialog extends FormDialog {
 		const unit = equipment.usageUnit || '';
 
 		super({
-			size: 'large',
 			header: isEdit ? `Edit Schedule — ${schedule.name}` : `Add Schedule — ${equipment.name || 'Equipment'}`,
 			data: {
 				name: schedule.name || '',

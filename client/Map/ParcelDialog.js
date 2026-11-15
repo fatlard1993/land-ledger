@@ -22,7 +22,6 @@ export default class ParcelDialog extends FormDialog {
 		const parcel = options.parcel || {};
 
 		super({
-			size: 'large',
 			header: isEdit ? `Edit Property Line — ${options.parcel.name || ''}` : 'Mark Property Line',
 			data: {
 				name: parcel.name || '',

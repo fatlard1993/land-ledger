@@ -109,7 +109,6 @@ export default class LeaseDialog extends FormDialog {
 
 		// The body is built by hand below, so the form holds no inputs and saving collects from the body
 		super({
-			size: 'large',
 			header: isEdit ? 'Edit' : headerLabels[preRole] || 'Add Lease',
 			inputs: [],
 			onSave: async () => stayOpenFor(await options.onSave?.(this._collect())),

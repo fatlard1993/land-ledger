@@ -55,7 +55,6 @@ export default class PathDialog extends FormDialog {
 
 		// The body is built by hand below, so the form holds no inputs and saving collects from the body
 		super({
-			size: 'large',
 			header: isEdit ? `Edit Path — ${options.path.name || ''}` : 'Mark Path / Road',
 			inputs: [],
 			onSave: async () => stayOpenFor(await options.onSave?.(this._collect())),

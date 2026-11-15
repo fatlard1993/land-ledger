@@ -206,7 +206,6 @@ export function createMapControls(
 			// The body is built by hand below, so the form holds no inputs and saving reads the URL field
 			const dialog = new FormDialog({
 				header: 'Parcel Data Source',
-				size: 'large',
 				inputs: [],
 				onSave: async () => {
 					const url = input.options.value.trim();

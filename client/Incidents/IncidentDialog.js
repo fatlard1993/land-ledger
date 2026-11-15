@@ -147,7 +147,6 @@ export default class IncidentDialog extends FormDialog {
 		};
 
 		super({
-			size: 'large',
 			header: isEdit ? `Edit Incident Report` : `Report Incident${entityLabel ? ` — ${entityLabel}` : ''}`,
 			// FormDialog acts on the buttons marked with its data-action; Mark Resolved is this dialog's own. The way out
 			// comes before the actions and Save is last, as in every dialog

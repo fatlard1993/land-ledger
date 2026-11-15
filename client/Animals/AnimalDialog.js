@@ -16,7 +16,6 @@ export default class AnimalDialog extends FormDialog {
 		const rec = options.animal || {};
 
 		super({
-			size: 'large',
 			header: isNew ? 'Add Animal' : `Edit — ${rec.name || rec.tagId || 'Animal'}`,
 			data: {
 				tagId: rec.tagId || '',

@@ -17,7 +17,6 @@ export default class HealthRecordDialog extends FormDialog {
 		const animal = options.animal;
 
 		super({
-			size: 'large',
 			header: isNew ? `Add Health Record — ${animalLabel(animal)}` : 'Edit Health Record',
 			data: {
 				date: rec.date || toDateOnly(),
@@ -107,7 +106,12 @@ export default class HealthRecordDialog extends FormDialog {
 		const withdrawalDisplay = new Elem({
 			tag: 'div',
 			appendTo: this.body,
-			style: { fontSize: '13px', color: colors.light(colors.warning), fontWeight: '600', padding: `${space.xs} 0 ${space.sm}` },
+			style: {
+				fontSize: '13px',
+				color: colors.light(colors.warning),
+				fontWeight: '600',
+				padding: `${space.xs} 0 ${space.sm}`,
+			},
 		});
 
 		const updateWithdrawal = () => {

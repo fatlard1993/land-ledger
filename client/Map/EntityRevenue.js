@@ -59,7 +59,6 @@ export function openSellDialog(entityType, entity, onComplete, hide) {
 
 	// The body is built by hand below, so the form holds no inputs and saving collects from the body
 	const dialog = new FormDialog({
-		size: 'large',
 		header: `Sell ${entityLabel}`,
 		inputs: [],
 		saveLabel: 'Record Sale & Remove',
@@ -121,7 +120,6 @@ export function openRevenueDialog(entityType, entity, existingRecord, onSave, on
 
 	// The body is built by hand below, so the form holds no inputs and saving collects from the body
 	const dialog = new FormDialog({
-		size: 'large',
 		header: existingRecord ? 'Edit Income Record' : `Record Income — ${entity.name || ''}`,
 		inputs: [],
 		onSave: async () => {

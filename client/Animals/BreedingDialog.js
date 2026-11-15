@@ -18,7 +18,6 @@ export default class BreedingDialog extends FormDialog {
 		const gestation = speciesMeta(dam?.species)?.gestation;
 
 		super({
-			size: 'large',
 			header: isNew ? `Add Breeding Record — ${animalLabel(dam)}` : 'Edit Breeding Record',
 			data: {
 				breedingDate: rec.breedingDate || toDateOnly(),

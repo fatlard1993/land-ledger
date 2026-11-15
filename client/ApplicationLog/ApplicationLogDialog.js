@@ -49,7 +49,6 @@ export default class ApplicationLogDialog extends FormDialog {
 		const self = {};
 
 		super({
-			size: 'large',
 			header: isNew ? 'Log Application' : 'Edit Application Record',
 			data: {
 				date: rec.date || toDateOnly(),

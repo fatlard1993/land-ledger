@@ -61,7 +61,6 @@ export default class BudgetItemDialog extends FormDialog {
 		const item = options.item || {};
 
 		super({
-			size: 'large',
 			header: isEdit ? 'Edit Budget Item' : 'Add Budget Item',
 			data: {
 				name: item.name || '',

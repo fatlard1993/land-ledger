@@ -18,7 +18,6 @@ export default class FieldDialog extends FormDialog {
 		const field = options.field || {};
 
 		super({
-			size: 'large',
 			header: isEdit ? `Edit Field — ${options.field.name}` : 'New Field',
 			data: {
 				name: field.name || options.prefillName || '',

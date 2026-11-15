@@ -69,7 +69,6 @@ export default class BuildingDialog extends FormDialog {
 		const building = options.building || {};
 
 		super({
-			size: 'large',
 			header: isEdit ? `Edit — ${options.building.name || 'Building'}` : 'Mark Building',
 			data: {
 				name: building.name || '',

@@ -71,7 +71,6 @@ export default class MaintenanceDialog extends FormDialog {
 		const usageAtServiceLabel = `Usage at Service${equipment.usage ? ` (current: ${equipment.usage}${unit ? ' ' + unit : ''})` : ''}`;
 
 		super({
-			size: 'large',
 			header: isEdit ? 'Edit Service Record' : `Log Work — ${equipment.name || 'Equipment'}`,
 			data: {
 				type: record.type || '',
