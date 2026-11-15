@@ -47,7 +47,7 @@ export function buildSearchOverlay(container, map) {
 
 	const icon = new Icon({
 		icon: 'magnifying-glass',
-		style: { padding: `0 ${space.xs} 0 ${space.md}`, color: colors.muted, flexShrink: '0' },
+		style: { padding: `0 ${space.xs} 0 ${space.md}`, color: colors.gray, flexShrink: '0' },
 	}).elem;
 
 	const input = new Input({
@@ -68,7 +68,7 @@ export function buildSearchOverlay(container, map) {
 
 	const clearBtn = new Button({ variant: 'flat', icon: 'xmark', title: 'Clear search' }).elem;
 
-	Object.assign(clearBtn.style, { display: 'none', flexShrink: '0', color: `${colors.muted}` });
+	Object.assign(clearBtn.style, { display: 'none', flexShrink: '0', color: `${colors.gray}` });
 
 	const locate = new Button({ variant: 'flat', icon: 'location-crosshairs', title: 'Go to my location' });
 	const locateBtn = locate.elem;

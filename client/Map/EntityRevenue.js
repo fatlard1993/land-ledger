@@ -288,7 +288,7 @@ export function openRevenueDialog(entityType, entity, existingRecord, onSave, on
 				variant: 'flat',
 				icon: 'xmark',
 				title: 'Remove item',
-				style: { width: '28px', color: colors.muted },
+				style: { width: '28px', color: colors.gray },
 				onPointerPress: () => {
 					const idx = lineItems.indexOf(lineData);
 
