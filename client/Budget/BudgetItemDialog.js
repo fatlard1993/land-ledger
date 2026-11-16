@@ -1,5 +1,5 @@
 import { FormDialog, Component, Elem, Select, Button, theme } from '@vanilla-bean/components';
-import { makePropertiesEditor } from '../utils/PropertiesEditor';
+import { PropertiesField } from '../utils/formFields';
 import { toNum } from '../utils/format.js';
 import { watchFormConflicts } from '../utils/watchFormConflicts.js';
 import { stayOpenFor } from '../utils/stayOpenFor';
@@ -69,6 +69,7 @@ export default class BudgetItemDialog extends FormDialog {
 				frequency: item.frequency || 'monthly',
 				startDate: item.startDate || '',
 				endDate: item.endDate || '',
+				props: item.properties || {},
 			},
 			inputs: [
 				{ key: 'name', label: 'Name', placeholder: 'e.g. Barn electricity, Monthly rental income' },
@@ -107,6 +108,7 @@ export default class BudgetItemDialog extends FormDialog {
 						{ key: 'endDate', label: 'End Date (optional)', type: 'date' },
 					],
 				},
+				{ key: 'props', label: 'Properties', InputComponent: PropertiesField },
 			],
 			onSave: async d => {
 				return stayOpenFor(
@@ -121,7 +123,7 @@ export default class BudgetItemDialog extends FormDialog {
 						entityName: options.entity?.name || item.entityName || '',
 						startDate: d.startDate || null,
 						endDate: d.endDate || null,
-						properties: collectProps(),
+						properties: d.props,
 					}),
 				);
 			},
@@ -189,8 +191,6 @@ export default class BudgetItemDialog extends FormDialog {
 		// Initialize suggestions and preview
 		updateTypeStyle();
 		updatePreview();
-
-		const { collect: collectProps } = makePropertiesEditor(this.body, item.properties || {});
 
 		if (options.entity) {
 			new Elem({

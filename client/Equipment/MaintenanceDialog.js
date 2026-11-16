@@ -1,6 +1,6 @@
 import { Button, Component, Elem, FormDialog, Input, theme } from '@vanilla-bean/components';
 
-import { makePropertiesEditor } from '../utils/PropertiesEditor';
+import { PropertiesField } from '../utils/formFields';
 import { toNum } from '../utils/format.js';
 import { watchFormConflicts } from '../utils/watchFormConflicts.js';
 import { stayOpenFor } from '../utils/stayOpenFor';
@@ -79,6 +79,7 @@ export default class MaintenanceDialog extends FormDialog {
 				cost: record.cost != null ? record.cost : '',
 				parts: record.parts || '',
 				procedure: record.procedure || '',
+				props: record.properties || {},
 			},
 			inputs: [
 				{ key: 'type', label: 'Description', placeholder: 'What was done / what needs doing' },
@@ -111,6 +112,7 @@ export default class MaintenanceDialog extends FormDialog {
 					rows: 3,
 					placeholder: 'Description, findings, any follow-up needed…',
 				},
+				{ key: 'props', label: 'Properties', InputComponent: PropertiesField },
 			],
 			onSave: async d => {
 				return stayOpenFor(
@@ -123,7 +125,7 @@ export default class MaintenanceDialog extends FormDialog {
 						cost: toNum(d.cost),
 						parts: d.parts,
 						procedure: d.procedure,
-						properties: collectProps(),
+						properties: d.props,
 					}),
 				);
 			},
@@ -177,8 +179,6 @@ export default class MaintenanceDialog extends FormDialog {
 		if (isEdit) this.form.addCleanup('conflictWatch', watchFormConflicts(this.form, 'maintenance', record.id));
 
 		refreshSuggestions();
-
-		const { collect: collectProps } = makePropertiesEditor(this.body, record.properties || {});
 
 		// Update hours checkbox
 		if (!isEdit && equipment.id) {

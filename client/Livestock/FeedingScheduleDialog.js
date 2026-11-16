@@ -1,5 +1,5 @@
 import { FormDialog, Select, theme } from '@vanilla-bean/components';
-import { makePropertiesEditor } from '../utils/PropertiesEditor';
+import { PropertiesField } from '../utils/formFields';
 import { toNum } from '../utils/format.js';
 import { watchFormConflicts } from '../utils/watchFormConflicts.js';
 
@@ -75,6 +75,7 @@ export default class FeedingScheduleDialog extends FormDialog {
 				amountUnit: schedule.amountUnit || 'lbs/hd',
 				frequency: schedule.frequency || 'once_daily',
 				supplyId: schedule.supplyId || '',
+				props: schedule.properties || {},
 			},
 			inputs: [
 				{
@@ -116,6 +117,7 @@ export default class FeedingScheduleDialog extends FormDialog {
 					InputComponent: Select,
 					options: [{ label: '— not tracked in inventory —', value: '' }],
 				},
+				{ key: 'props', label: 'Properties', InputComponent: PropertiesField },
 			],
 			onSave: async d => {
 				return stayOpenFor(
@@ -127,7 +129,7 @@ export default class FeedingScheduleDialog extends FormDialog {
 						amountUnit: d.amountUnit,
 						frequency: d.frequency,
 						supplyId: d.supplyId || null,
-						properties: collectProps(),
+						properties: d.props,
 					}),
 				);
 			},
@@ -160,7 +162,5 @@ export default class FeedingScheduleDialog extends FormDialog {
 				if (schedule.supplyId) this.form.inputElements.supplyId.options.value = schedule.supplyId;
 			})
 			.catch(() => {});
-
-		const { collect: collectProps } = makePropertiesEditor(this.body, schedule.properties || {});
 	}
 }
