@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, spyOn, test } from 'bun:test';
 
 import { Component } from '@vanilla-bean/components';
 
-import { renderFeedingSection } from './FeedingSection.js';
+import { openTreatDialog, renderFeedingSection } from './FeedingSection.js';
 
 // Retries an assertion until it holds, or fails with its last error once the time is up
 const waitFor = async (assertion, { timeout = 1000 } = {}) => {
@@ -107,5 +107,55 @@ describe('a feeding schedule row', () => {
 		expect(markFed.classList.contains('intent-success')).toBe(true);
 		expect(markFed.classList.contains('variant-flat')).toBe(true);
 		expect(markFed.style.backgroundColor).toBe('');
+	});
+});
+
+describe('logging a treat', () => {
+	afterEach(() => {
+		document.body.innerHTML = '';
+	});
+
+	const fieldNamed = (dialog, text) =>
+		document.getElementById(
+			[...dialog.elem.querySelectorAll('label')].find(label => label.textContent === text).htmlFor,
+		);
+
+	const type = (input, value) => {
+		input.value = value;
+		input.dispatchEvent(new Event('input', { bubbles: true }));
+		input.dispatchEvent(new Event('change', { bubbles: true }));
+	};
+
+	test('says under the field what it needs, then logs it', async () => {
+		const fetch = spyOn(globalThis, 'fetch').mockImplementation(async () => Response.json({ id: 'log9' }));
+		const refreshed = [];
+		const dialog = openTreatDialog({ id: 'f1' }, 12, () => refreshed.push(true));
+
+		dialog.form.options.data.date = '2026-11-03';
+		buttonNamed('Log').click();
+		await waitFor(() =>
+			expect(fieldNamed(dialog, 'What they got').parentElement.querySelector('.vbc-field-error').textContent).toBe(
+				'Fill in what they got',
+			),
+		);
+		expect(fetch).not.toHaveBeenCalled();
+
+		type(fieldNamed(dialog, 'What they got'), 'Range Cake');
+		type(fieldNamed(dialog, 'Amount'), '2');
+		buttonNamed('Log').click();
+		await waitFor(() => expect(refreshed).toHaveLength(1));
+
+		expect(JSON.parse(fetch.mock.calls[0][1].body)).toEqual({
+			fieldId: 'f1',
+			feedType: 'Range Cake',
+			amountPerHead: 2,
+			amountUnit: 'lbs/hd',
+			headCount: 12,
+			type: 'treat',
+			date: '2026-11-03',
+			notes: '',
+		});
+
+		fetch.mockRestore();
 	});
 });

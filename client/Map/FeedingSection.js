@@ -5,7 +5,6 @@ import {
 	formatDate,
 	FormDialog,
 	Icon,
-	Input,
 	Notify,
 	parseDate,
 	theme,
@@ -22,11 +21,12 @@ import {
 } from '../api';
 import { frequencyLabel, frequencyInterval } from '../Livestock/FeedingScheduleDialog';
 import FeedingScheduleDialog from '../Livestock/FeedingScheduleDialog';
-import { ActionHeader, FormLabel } from '../Layout';
+import { ActionHeader } from '../Layout';
 import { daysAgoLabel, toDateOnly } from '../utils/dates';
 import { stayOpenFor } from '../utils/stayOpenFor';
 import { feedIcon } from '../utils/icons';
 import { toNum } from '../utils/format.js';
+import { numberField } from '../utils/formFields';
 import { IconText } from '../statusIcons';
 import {
 	EmptyNote,
@@ -42,26 +42,56 @@ import {
 
 const { colors, space } = theme;
 
-export function openTreatDialog(field, totalHead, refresh) {
-	// The body is built by hand below, so the form holds no inputs and saving collects from the body
-	const dialog = new FormDialog({
-		header: 'Log Treat / Extra Feeding',
-		inputs: [],
-		saveLabel: 'Log',
-		onSave: async () => {
-			if (!feedTypeEl.options.value) return 'Fill in what they got';
+const TREAT_SUGGESTIONS = [
+	'Hay — Grass',
+	'Hay — Alfalfa',
+	'Grain — Corn',
+	'Range Cake',
+	'Mineral Block',
+	'Salt',
+	'Protein Supplement',
+	'Silage',
+	'Pellets',
+	'Apple / Carrot',
+	'Other treat',
+];
 
+export function openTreatDialog(field, totalHead, refresh) {
+	return new FormDialog({
+		header: 'Log Treat / Extra Feeding',
+		saveLabel: 'Log',
+		data: { feedType: '', amountPerHead: '', amountUnit: 'lbs/hd', date: toDateOnly(), notes: '' },
+		inputs: [
+			{
+				key: 'feedType',
+				label: 'What they got',
+				placeholder: 'e.g. Hay, Range cake, Apple slices',
+				suggestions: TREAT_SUGGESTIONS,
+				validate: value => (value ? null : 'Fill in what they got'),
+			},
+			{
+				type: 'group',
+				style: { display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: space.sm },
+				inputs: [
+					{ key: 'amountPerHead', label: 'Amount', placeholder: 'e.g. 2', ...numberField({ step: '0.1' }) },
+					{ key: 'amountUnit', label: 'Unit', placeholder: 'lbs/hd, bales…' },
+					{ key: 'date', label: 'Date', type: 'date' },
+				],
+			},
+			{ key: 'notes', label: 'Notes', placeholder: 'Optional — why, weather, etc.' },
+		],
+		onSave: async ({ feedType, amountPerHead, amountUnit, date, notes }) => {
 			const stay = stayOpenFor(
 				await createFeedingLog({
 					body: {
 						fieldId: field.id,
-						feedType: feedTypeEl.options.value,
-						amountPerHead: toNum(amountEl.options.value),
-						amountUnit: unitEl.options.value || 'lbs/hd',
+						feedType,
+						amountPerHead: toNum(amountPerHead),
+						amountUnit: amountUnit || 'lbs/hd',
 						headCount: totalHead || null,
 						type: 'treat',
-						date: dateEl.options.value || toDateOnly(),
-						notes: notesEl.options.value,
+						date: date || toDateOnly(),
+						notes,
 					},
 				}),
 			);
@@ -71,47 +101,6 @@ export function openTreatDialog(field, totalHead, refresh) {
 			refresh();
 		},
 	});
-
-	const feedSuggestions = [
-		'Hay — Grass',
-		'Hay — Alfalfa',
-		'Grain — Corn',
-		'Range Cake',
-		'Mineral Block',
-		'Salt',
-		'Protein Supplement',
-		'Silage',
-		'Pellets',
-		'Apple / Carrot',
-		'Other treat',
-	];
-
-	new FormLabel({ appendTo: dialog.body, textContent: 'What they got' });
-	const feedTypeEl = new Input({
-		appendTo: dialog.body,
-		type: 'text',
-		placeholder: 'e.g. Hay, Range cake, Apple slices',
-		suggestions: feedSuggestions,
-	});
-
-	const rowEl = new Component({
-		style: { display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: space.sm },
-		appendTo: dialog.body,
-	});
-
-	new FormLabel({ appendTo: rowEl, textContent: 'Amount' });
-	const amountEl = new Input({ appendTo: rowEl, type: 'number', step: '0.1', placeholder: 'e.g. 2' });
-
-	new FormLabel({ appendTo: rowEl, textContent: 'Unit' });
-	const unitEl = new Input({ appendTo: rowEl, type: 'text', placeholder: 'lbs/hd, bales…' });
-	unitEl.options.value = 'lbs/hd';
-
-	new FormLabel({ appendTo: rowEl, textContent: 'Date' });
-	const dateEl = new Input({ appendTo: rowEl, type: 'date' });
-	dateEl.options.value = toDateOnly();
-
-	new FormLabel({ appendTo: dialog.body, textContent: 'Notes' });
-	const notesEl = new Input({ appendTo: dialog.body, type: 'text', placeholder: 'Optional — why, weather, etc.' });
 }
 
 export async function renderFeedingSection(field, livestockEvents, refresh, container) {
