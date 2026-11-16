@@ -8,6 +8,7 @@ import {
 	SectionLabel,
 	Select,
 	styled,
+	Table,
 	Tabs,
 	theme,
 	Toolbar,
@@ -122,7 +123,7 @@ const FilterBar = styled(
 
 // A field-by-season grid that scrolls sideways inside itself on a narrow screen
 const YieldTable = styled(
-	Component,
+	Table,
 	({ colors, space }) => `
 		width: 100%;
 		border-collapse: collapse;
@@ -186,7 +187,6 @@ const YieldTable = styled(
 			font-size: 10px;
 		}
 	`,
-	{ tag: 'table' },
 );
 
 const Footnote = styled(
@@ -674,116 +674,112 @@ export default class Timeline extends AsyncView {
 			style: { overflowX: 'auto', marginTop: space.sm },
 		});
 
-		const table = new YieldTable({ appendTo: tableWrap });
-
-		// Header row
-		const thead = new Elem({ tag: 'thead', appendTo: table });
-		const headerRow = new Elem({ tag: 'tr', appendTo: thead });
-
-		new Elem({ tag: 'th', appendTo: headerRow, textContent: 'Field' });
-
-		for (const season of seasons) new Elem({ tag: 'th', appendTo: headerRow, textContent: String(season) });
-
-		const tbody = new Elem({ tag: 'tbody', appendTo: table });
-
-		for (const field of fieldList) {
-			const row = new Elem({ tag: 'tr', appendTo: tbody });
-
-			const nameCell = new Elem({ tag: 'td', appendTo: row, addClass: 'field', textContent: field.name || 'Unnamed' });
-
-			if (field.acreage) {
-				new Elem({
-					tag: 'div',
-					appendTo: nameCell,
-					addClass: 'acres',
-					textContent: `${Number(field.acreage).toFixed(0)} ac`,
-				});
-			}
-
-			for (const season of seasons) {
-				const cell = new Elem({ tag: 'td', appendTo: row });
-
-				const seasonEvents = allEvents.filter(e => e.fieldId === field.id && e.season === season);
-
-				const cropEvent = seasonEvents.find(e => e.category === 'crop');
-				const hasLivestock = seasonEvents.some(e => e.category === 'livestock');
-				const hasCoverCrop = seasonEvents.some(e => e.category === 'cover_crop');
-				const soilTest = seasonEvents.find(e => e.category === 'soil_test');
-
-				if (cropEvent) {
-					const details = this._parseDetails(cropEvent.details);
-
-					if (details.yieldPerAcre) {
-						new Elem({
-							tag: 'div',
-							appendTo: cell,
-							addClass: 'yield',
-							textContent: `${details.yieldPerAcre} ${details.yieldUnit || 'bu'}`,
-						});
-
-						new Elem({
-							tag: 'div',
-							appendTo: cell,
-							addClass: 'crop',
-							textContent: details.species || cropEvent.name,
-						});
-					} else {
-						new Elem({
-							tag: 'div',
-							appendTo: cell,
-							addClass: 'crop-only',
-							textContent: this._parseDetails(cropEvent.details).species || cropEvent.name,
-						});
-					}
-				}
-
-				if (hasLivestock || hasCoverCrop || soilTest) {
-					const badges = new Elem({ tag: 'div', appendTo: cell, addClass: 'badges' });
-
-					if (hasLivestock) {
-						new Elem({
-							tag: 'span',
-							appendTo: badges,
-							attributes: { title: 'Livestock' },
-							textContent: categoryMeta('livestock').emoji,
-						});
-					}
-
-					if (hasCoverCrop) {
-						new Elem({
-							tag: 'span',
-							appendTo: badges,
-							attributes: { title: 'Cover crop' },
-							textContent: categoryMeta('cover_crop').emoji,
-						});
-					}
-
-					if (soilTest) {
-						const d = this._parseDetails(soilTest.details);
-
-						new Elem({
-							tag: 'span',
-							appendTo: badges,
-							attributes: { title: `Soil test${d.organicMatter ? ` — OM ${d.organicMatter}%` : ''}` },
-							textContent: '🔬',
-						});
-					}
-				}
-
-				if (!seasonEvents.length) {
-					cell.addClass('empty');
-					cell.elem.title = `Log event for ${field.name} — ${season}`;
-					cell.elem.textContent = '+ add';
-					cell.onPointerPress(() => this._openEventDialog(null, field.id));
-				}
-			}
-		}
+		// Each field's row, and in each season's column what it grew, yielded and carried, or a way to log it
+		new YieldTable({
+			appendTo: tableWrap,
+			columns: [
+				{
+					key: 'name',
+					content: 'Field',
+					dataColumn: ({ rowData: { field } }) => ({
+						addClass: 'field',
+						append: [
+							field.name || 'Unnamed',
+							field.acreage &&
+								new Elem({ tag: 'div', addClass: 'acres', textContent: `${Number(field.acreage).toFixed(0)} ac` }),
+						].filter(Boolean),
+					}),
+				},
+				...seasons.map(season => ({
+					key: `season${season}`,
+					content: String(season),
+					dataColumn: ({ rowData: { field } }) => this._seasonCell(field, season, allEvents),
+				})),
+			],
+			data: fieldList.map(field => ({ field, name: field.name || 'Unnamed' })),
+		});
 
 		new Footnote({
 			appendTo: this.content,
 			textContent:
 				'Fields with 🐄 and 🌱 alongside yield data show whether regenerative practices correlate with yield changes over time.',
 		});
+	}
+
+	// A field's season in the matrix: the crop and its yield, the badges for stock, cover and a soil test, or a way to log
+	// the first event
+	_seasonCell(field, season, allEvents) {
+		const seasonEvents = allEvents.filter(e => e.fieldId === field.id && e.season === season);
+
+		if (!seasonEvents.length) {
+			return {
+				addClass: 'empty',
+				title: `Log event for ${field.name} — ${season}`,
+				textContent: '+ add',
+				onPointerPress: () => this._openEventDialog(null, field.id),
+			};
+		}
+
+		const cropEvent = seasonEvents.find(e => e.category === 'crop');
+		const hasLivestock = seasonEvents.some(e => e.category === 'livestock');
+		const hasCoverCrop = seasonEvents.some(e => e.category === 'cover_crop');
+		const soilTest = seasonEvents.find(e => e.category === 'soil_test');
+		const append = [];
+
+		if (cropEvent) {
+			const details = this._parseDetails(cropEvent.details);
+
+			if (details.yieldPerAcre) {
+				append.push(
+					new Elem({
+						tag: 'div',
+						addClass: 'yield',
+						textContent: `${details.yieldPerAcre} ${details.yieldUnit || 'bu'}`,
+					}),
+					new Elem({ tag: 'div', addClass: 'crop', textContent: details.species || cropEvent.name }),
+				);
+			} else {
+				append.push(new Elem({ tag: 'div', addClass: 'crop-only', textContent: details.species || cropEvent.name }));
+			}
+		}
+
+		if (hasLivestock || hasCoverCrop || soilTest) {
+			const badges = new Elem({ tag: 'div', addClass: 'badges' });
+
+			if (hasLivestock) {
+				new Elem({
+					tag: 'span',
+					appendTo: badges,
+					attributes: { title: 'Livestock' },
+					textContent: categoryMeta('livestock').emoji,
+				});
+			}
+
+			if (hasCoverCrop) {
+				new Elem({
+					tag: 'span',
+					appendTo: badges,
+					attributes: { title: 'Cover crop' },
+					textContent: categoryMeta('cover_crop').emoji,
+				});
+			}
+
+			if (soilTest) {
+				const d = this._parseDetails(soilTest.details);
+
+				new Elem({
+					tag: 'span',
+					appendTo: badges,
+					attributes: { title: `Soil test${d.organicMatter ? ` — OM ${d.organicMatter}%` : ''}` },
+					textContent: '🔬',
+				});
+			}
+
+			append.push(badges);
+		}
+
+		// A season with events but none of these shows an empty cell, as it did
+		return { append };
 	}
 
 	_parseDetails(details) {
