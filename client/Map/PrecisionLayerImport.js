@@ -2,19 +2,19 @@ import {
 	Button,
 	Component,
 	Dialog,
-	Elem,
 	EmptyState,
+	Form,
 	Icon,
 	Input,
 	Notify,
+	SectionLabel,
 	Select,
 	styled,
+	Table,
 	theme,
 } from '@vanilla-bean/components';
 import { getFields } from '../api';
 import { previewPrecisionFile, importPrecisionLayer } from '../api/precisionLayers';
-import { FormLabel } from '../Layout';
-import { FigureTable } from './panelParts';
 
 const { space } = theme;
 
@@ -126,81 +126,88 @@ export default class PrecisionLayerImport extends Dialog {
 
 		const body = this.body;
 
-		// Value column
-		new FormLabel({ appendTo: body, textContent: 'Data value column *' });
-		const valueSelect = new Select({ appendTo: body });
-		valueSelect.options.options = preview.columns.map(c => ({ value: c, label: c }));
-		valueSelect.options.value = preview.columns[0] || '';
-
-		// Auto-select the most likely value column
-		const valueGuess = preview.columns.find(c => /yield|rate|bu|ton|lb|seed|appli|actual|target/i.test(c));
-		if (valueGuess) valueSelect.options.value = valueGuess;
-
-		new FormLabel({ appendTo: body, textContent: 'Value unit (e.g. bu/ac, seeds/ac)' });
-		const unitInput = new Input({ appendTo: body });
-		unitInput.elem.type = 'text';
-		unitInput.elem.placeholder = 'bu/ac';
-
-		// Sample preview table
+		// Sample preview: the first rows under the file's own columns
 		if (preview.sample?.length) {
-			new FormLabel({ appendTo: body, textContent: 'Preview (first 3 rows)' });
-			const table = new FigureTable({ appendTo: body, style: { marginTop: space.xs, fontSize: '11px' } });
-			const thead = new Elem({ tag: 'thead', appendTo: table });
-			const hRow = new Elem({ tag: 'tr', appendTo: thead });
-			for (const col of preview.columns.slice(0, 6)) {
-				new Elem({ tag: 'th', appendTo: hRow, textContent: col });
-			}
-			const tbody = new Elem({ tag: 'tbody', appendTo: table });
-			for (const row of preview.sample) {
-				const tr = new Elem({ tag: 'tr', appendTo: tbody });
-				for (const col of preview.columns.slice(0, 6)) {
-					new Elem({ tag: 'td', appendTo: tr, textContent: String(row[col] ?? '').slice(0, 20) });
-				}
-			}
+			const columns = preview.columns.slice(0, 6);
+
+			new SectionLabel({ appendTo: body, textContent: 'Preview (first 3 rows)' });
+			new Table({
+				appendTo: body,
+				style: { marginBottom: space.md, fontSize: '11px' },
+				columns: columns.map(col => ({ key: col, content: col })),
+				data: preview.sample.map(row =>
+					Object.fromEntries(columns.map(col => [col, String(row[col] ?? '').slice(0, 20)])),
+				),
+			});
 		}
 
-		// Type + field + season
-		const row1 = new Component({
-			appendTo: body,
-			style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: space.md },
-		});
-		const c1 = new Component({ appendTo: row1 });
-		const c2 = new Component({ appendTo: row1 });
-
-		new FormLabel({ appendTo: c1, textContent: 'Layer type' });
-		const typeSelect = new Select({ appendTo: c1 });
-		typeSelect.options.options = [
-			{ value: 'yield', label: 'Yield map' },
-			{ value: 'as-applied', label: 'As-applied map' },
-			{ value: 'soil-ec', label: 'Soil EC map' },
-			{ value: 'other', label: 'Other data layer' },
-		];
-		typeSelect.options.value = 'yield';
-
-		new FormLabel({ appendTo: c2, textContent: 'Season' });
-		const seasonInput = new Input({ appendTo: c2 });
-		seasonInput.elem.type = 'number';
-		seasonInput.options.value = new Date().getFullYear();
-
-		new FormLabel({ appendTo: body, textContent: 'Field (optional — link to a specific field)' });
+		// The most likely value column, picked to start with
+		const valueGuess = preview.columns.find(c => /yield|rate|bu|ton|lb|seed|appli|actual|target/i.test(c));
 		const notLinked = { value: '', label: '— not linked —' };
-		const fieldSelect = new Select({ appendTo: body, options: [notLinked] });
+
+		const form = new Form({
+			appendTo: body,
+			data: {
+				valueField: valueGuess || preview.columns[0] || '',
+				valueUnit: '',
+				layerType: 'yield',
+				season: new Date().getFullYear(),
+				fieldId: '',
+				crop: '',
+			},
+			inputs: [
+				{
+					key: 'valueField',
+					label: 'Data value column *',
+					InputComponent: Select,
+					options: preview.columns.map(c => ({ value: c, label: c })),
+					validate: value => (value ? null : 'Select a value column'),
+				},
+				{ key: 'valueUnit', label: 'Value unit (e.g. bu/ac, seeds/ac)', placeholder: 'bu/ac' },
+				// Type + season
+				{
+					type: 'group',
+					style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: space.md },
+					inputs: [
+						{
+							key: 'layerType',
+							label: 'Layer type',
+							InputComponent: Select,
+							options: [
+								{ value: 'yield', label: 'Yield map' },
+								{ value: 'as-applied', label: 'As-applied map' },
+								{ value: 'soil-ec', label: 'Soil EC map' },
+								{ value: 'other', label: 'Other data layer' },
+							],
+						},
+						{ key: 'season', label: 'Season', type: 'number' },
+					],
+				},
+				{
+					key: 'fieldId',
+					label: 'Field (optional — link to a specific field)',
+					InputComponent: Select,
+					options: [notLinked],
+				},
+				{ key: 'crop', label: 'Crop (optional)', placeholder: 'e.g. Corn, Winter Wheat' },
+			],
+		});
+		// What each field holds as it's typed, ahead of the change that leaving it makes
+		const value = key => form.inputElements[key].options.value;
+
 		getFields()
 			.then(d => {
-				fieldSelect.options.options = [
+				form.inputElements.fieldId.options.options = [
 					notLinked,
 					...Object.values(d?.body || {})
 						.sort((a, b) => (a.name || '').localeCompare(b.name || ''))
 						.map(f => ({ value: f.id, label: f.name || 'Unnamed' })),
 				];
-				if (this.options.presetFieldId) fieldSelect.options.value = this.options.presetFieldId;
+				if (this.options.presetFieldId) {
+					form.options.data.fieldId = form.inputElements.fieldId.options.value = this.options.presetFieldId;
+				}
 			})
 			.catch(() => {});
-
-		new FormLabel({ appendTo: body, textContent: 'Crop (optional)' });
-		const cropInput = new Input({ appendTo: body });
-		cropInput.elem.type = 'text';
-		cropInput.elem.placeholder = 'e.g. Corn, Winter Wheat';
 
 		// Import button
 		const importBtn = new Button({
@@ -208,11 +215,9 @@ export default class PrecisionLayerImport extends Dialog {
 			textContent: 'Import layer',
 			style: { width: '100%', marginTop: space.lg },
 			onPointerPress: async () => {
-				const valueField = valueSelect.options.value;
-				if (!valueField) {
-					new Notify({ intent: 'warning', textContent: 'Select a value column' });
-					return;
-				}
+				if (form.hasErrors()) return;
+
+				const valueField = value('valueField');
 
 				importBtn.options.disabled = true;
 				importBtn.elem.textContent = 'Importing…';
@@ -220,12 +225,12 @@ export default class PrecisionLayerImport extends Dialog {
 				try {
 					const result = await importPrecisionLayer({
 						file,
-						fieldId: fieldSelect.options.value || null,
-						type: typeSelect.options.value,
+						fieldId: value('fieldId') || null,
+						type: value('layerType'),
 						valueField,
-						valueUnit: unitInput.options.value.trim(),
-						season: Number(seasonInput.options.value),
-						crop: cropInput.options.value.trim(),
+						valueUnit: value('valueUnit').trim(),
+						season: Number(value('season')),
+						crop: value('crop').trim(),
 					});
 
 					new Notify({
