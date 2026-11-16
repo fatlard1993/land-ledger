@@ -1,7 +1,6 @@
-import { FormDialog, Input, Select } from '@vanilla-bean/components';
+import { FormDialog, Select } from '@vanilla-bean/components';
 import { stayOpenFor } from '../utils/stayOpenFor';
-import { makePropertiesEditor } from '../utils/PropertiesEditor';
-import { Caption, checkboxRow, emojiField } from './dialogParts';
+import { checkboxField, emojiInput, numberField, PropertiesField } from '../utils/formFields';
 
 // Stored on each path as its color, so these stay the literal values saved records hold
 export const PATH_COLORS = [
@@ -47,107 +46,72 @@ export const feetToWeight = (widthFt, zoom = 17) => {
 
 const withoutCallbacks = ({ onSave: _onSave, onDelete: _onDelete, ...options }) => options;
 
+const PATH_STATUSES = [
+	{ value: '', label: 'Active' },
+	{ value: 'needs_maintenance', label: 'Needs maintenance' },
+	{ value: 'needs_service', label: 'Needs service' },
+	{ value: 'out_of_service', label: 'Out of service' },
+	{ value: 'closed', label: 'Closed' },
+	{ value: 'destroyed', label: 'Destroyed' },
+];
+
 export default class PathDialog extends FormDialog {
 	constructor(options = {}) {
 		const isEdit = !!options.path?.id;
+		const path = options.path || {};
 
-		// The body is built by hand below, so the form holds no inputs and saving collects from the body
 		super({
-			header: isEdit ? `Edit Path — ${options.path.name || ''}` : 'Mark Path / Road',
-			inputs: [],
-			onSave: async () => stayOpenFor(await options.onSave?.(this._collect())),
+			header: isEdit ? `Edit Path — ${path.name || ''}` : 'Mark Path / Road',
+			data: {
+				emoji: path.emoji || detectPathEmoji(path.type || ''),
+				name: path.name || '',
+				type: path.type || '',
+				widthFt: path.widthFt || '10',
+				color: pathColor(path),
+				properties: path.properties || {},
+				status: path.status || '',
+				showLabel: path.showLabel === true,
+			},
+			inputs: [
+				emojiInput(),
+				{ key: 'name', label: 'Name', placeholder: 'e.g. North Lane, Driveway' },
+				{
+					key: 'type',
+					label: 'Type',
+					placeholder: 'e.g. Driveway, Farm road, Trail, Creek road',
+					onInput: ({ value }) => (this.form.inputElements.emoji.options.auto = detectPathEmoji(value)),
+				},
+				{ key: 'widthFt', label: 'Width (feet)', placeholder: '10', ...numberField({ step: '1', min: '1' }) },
+				// The surface is stored as its color, which draws the path on the map
+				{ key: 'color', label: 'Surface / color', InputComponent: Select, options: PATH_COLORS },
+				{ key: 'properties', InputComponent: PropertiesField },
+				{ key: 'status', label: 'Status', InputComponent: Select, options: PATH_STATUSES },
+				// Off by default for paths
+				checkboxField('showLabel', 'Show name label on map'),
+			],
+			onSave: async data => stayOpenFor(await options.onSave?.(this._collect(data))),
 			...(isEdit &&
 				options.onDelete && {
 					onDelete: async () => stayOpenFor(await options.onDelete()),
-					confirmDelete: { header: `Delete "${options.path.name || 'this path'}"?` },
+					confirmDelete: { header: `Delete "${path.name || 'this path'}"?` },
 				}),
 			...withoutCallbacks(options),
 		});
 
-		const path = options.path || {};
-
-		this._selectedColor = pathColor(path);
-
-		// Emoji row
-		const emojiInput = emojiField(this.body, path.emoji || detectPathEmoji(path.type || ''));
-
-		this._getEmoji = () => {
-			const auto = detectPathEmoji(this._typeEl?.options.value || '');
-
-			return emojiInput.options.value !== auto ? emojiInput.options.value : '';
-		};
-
-		// Name
-		new Caption({ appendTo: this.body, textContent: 'Name' });
-		this._nameEl = new Input({ appendTo: this.body, type: 'text', placeholder: 'e.g. North Lane, Driveway' });
-		this._nameEl.options.value = path.name || '';
-
-		new Caption({ appendTo: this.body, textContent: 'Type' });
-		this._typeEl = new Input({
-			appendTo: this.body,
-			type: 'text',
-			placeholder: 'e.g. Driveway, Farm road, Trail, Creek road',
-		});
-		this._typeEl.options.value = path.type || '';
-		this._typeEl.elem.addEventListener('input', () => {
-			if (!emojiInput.elem.dataset.manual) emojiInput.options.value = detectPathEmoji(this._typeEl.options.value);
-		});
-
-		new Caption({ appendTo: this.body, textContent: 'Width (feet)' });
-		this._widthEl = new Input({
-			appendTo: this.body,
-			type: 'number',
-			placeholder: '10',
-			attributes: { step: '1', min: '1' },
-		});
-		this._widthEl.options.value = path.widthFt || '10';
-
-		// Color: the surface is stored as its color, which draws the path on the map
-		new Caption({ appendTo: this.body, textContent: 'Surface / color' });
-		new Select({
-			appendTo: this.body,
-			options: PATH_COLORS,
-			value: this._selectedColor,
-			onChange: ({ value }) => {
-				this._selectedColor = value;
-			},
-		});
-
-		const { collect: collectProps } = makePropertiesEditor(this.body, path.properties || {});
-		this._collectProps = collectProps;
-
-		// Status
-		new Caption({ appendTo: this.body, textContent: 'Status' });
-		this._statusSelect = new Select({
-			appendTo: this.body,
-			options: [
-				{ value: '', label: 'Active' },
-				{ value: 'needs_maintenance', label: 'Needs maintenance' },
-				{ value: 'needs_service', label: 'Needs service' },
-				{ value: 'out_of_service', label: 'Out of service' },
-				{ value: 'closed', label: 'Closed' },
-				{ value: 'destroyed', label: 'Destroyed' },
-			],
-			value: path.status || '',
-		});
-
-		// Show label toggle — off by default for paths
-		this._showLabelEl = checkboxRow(this.body, { label: 'Show name label on map', checked: path.showLabel === true });
-
-		this._collect = () => {
+		this._collect = ({ emoji, name, type, widthFt, color, status, showLabel, properties }) => {
 			const data = {
-				name: this._nameEl.options.value,
-				type: this._typeEl.options.value,
-				widthFt: this._widthEl.options.value || '10',
-				color: this._selectedColor,
-				emoji: this._getEmoji?.() || '',
-				status: this._statusSelect?.options.value || '',
-				showLabel: this._showLabelEl.elem.checked,
-				properties: this._collectProps?.() ?? {},
+				name,
+				type,
+				widthFt: widthFt || '10',
+				color,
+				emoji: emoji !== detectPathEmoji(type || '') ? emoji : '',
+				status: status || '',
+				showLabel,
+				properties: properties ?? {},
 			};
 
 			if (options.geometry && !isEdit) data.geometry = options.geometry;
-			if (isEdit) data.geometry = options.path.geometry;
+			if (isEdit) data.geometry = path.geometry;
 
 			return data;
 		};

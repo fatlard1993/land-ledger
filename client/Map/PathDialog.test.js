@@ -34,3 +34,78 @@ describe("a path's surface", () => {
 		expect(onSave.mock.calls[0][0]).toMatchObject({ name: 'North Lane', color: '#9E9E9E' });
 	});
 });
+
+describe('the path dialog', () => {
+	afterEach(() => {
+		document.body.innerHTML = '';
+	});
+
+	const press = (dialog, label) =>
+		[...dialog.elem.querySelectorAll('button')].find(button => button.textContent.trim() === label).click();
+
+	const type = (input, value) => {
+		input.elem.value = value;
+		input.elem.dispatchEvent(new Event('input', { bubbles: true }));
+		input.elem.dispatchEvent(new Event('change', { bubbles: true }));
+	};
+
+	test('declares its fields, each with its label', async () => {
+		const dialog = new PathDialog({ appendTo: document.body, onSave: () => {} });
+
+		await settle();
+
+		const { inputElements } = dialog.form;
+
+		expect(Object.keys(inputElements)).toEqual([
+			'emoji',
+			'name',
+			'type',
+			'widthFt',
+			'color',
+			'properties',
+			'status',
+			'showLabel',
+		]);
+		expect(dialog.elem.querySelector(`label[for="${inputElements.name.elem.id}"]`).textContent).toBe('Name');
+	});
+
+	test("guesses the emoji from the type until one is typed, and saves only one that isn't the guess", async () => {
+		const onSave = mock(() => ({ status: 'success', body: {} }));
+		const geometry = { type: 'LineString', coordinates: [] };
+		const dialog = new PathDialog({ appendTo: document.body, geometry, onSave });
+
+		await settle();
+
+		const { inputElements } = dialog.form;
+
+		type(inputElements.name, 'Lower drive');
+		type(inputElements.type, 'Driveway');
+		expect(inputElements.emoji.elem.value).toBe('🚗');
+
+		press(dialog, 'Save');
+		await settle();
+
+		expect(onSave.mock.calls[0][0]).toEqual({
+			name: 'Lower drive',
+			type: 'Driveway',
+			widthFt: '10',
+			color: PATH_COLORS[0].value,
+			emoji: '',
+			status: '',
+			showLabel: false,
+			properties: {},
+			geometry,
+		});
+
+		const second = new PathDialog({ appendTo: document.body, geometry, onSave });
+
+		await settle();
+		type(second.form.inputElements.emoji, '🦆');
+		type(second.form.inputElements.type, 'Driveway');
+		expect(second.form.inputElements.emoji.elem.value).toBe('🦆');
+		press(second, 'Save');
+		await settle();
+
+		expect(onSave.mock.calls[1][0].emoji).toBe('🦆');
+	});
+});
