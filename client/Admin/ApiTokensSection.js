@@ -38,7 +38,7 @@ function openTokenForm(container, { onRefresh }) {
 		return;
 	}
 
-	const form = new Card({ style: { marginTop: space.sm } });
+	const form = new Card();
 
 	form.elem.dataset.tokenForm = '1';
 	container.append(form.elem);
@@ -109,6 +109,8 @@ export async function renderApiTokensSection(container, { onRefresh }) {
 	const sec = new AdminSection({ appendTo: container });
 
 	const header = new SectionHead({ appendTo: sec });
+	// Where a new one is made, under the button that opens it
+	const slot = new Component({ appendTo: sec });
 
 	new SectionLabel({ appendTo: header, textContent: 'API Tokens' });
 
@@ -117,7 +119,7 @@ export async function renderApiTokensSection(container, { onRefresh }) {
 		icon: 'plus',
 		variant: 'flat',
 		appendTo: header,
-		onPointerPress: () => openTokenForm(sec.elem, { onRefresh }),
+		onPointerPress: () => openTokenForm(slot.elem, { onRefresh }),
 	});
 
 	if (!existing.length) {

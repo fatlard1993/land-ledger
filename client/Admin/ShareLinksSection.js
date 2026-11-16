@@ -59,7 +59,7 @@ function openShareForm(container, { onRefresh }) {
 		},
 	};
 
-	const form = new Card({ style: { marginTop: space.md } });
+	const form = new Card();
 
 	form.elem.dataset.shareForm = '1';
 	container.append(form.elem);
@@ -198,7 +198,7 @@ export async function renderShareLinksSection(container, { onRefresh }) {
 		icon: 'plus',
 		variant: 'flat',
 		appendTo: header,
-		onPointerPress: () => openShareForm(sec.elem, { onRefresh }),
+		onPointerPress: () => openShareForm(slot.elem, { onRefresh }),
 	});
 
 	new Hint({
@@ -206,6 +206,9 @@ export async function renderShareLinksSection(container, { onRefresh }) {
 			'Generate read-only links scoped to specific records — for auditors, certifiers, lenders, or consultants. No login required.',
 		appendTo: sec,
 	});
+
+	// Where a new one is made, under what the links are for
+	const slot = new Component({ appendTo: sec });
 
 	if (!shares.length) new EmptyLine({ appendTo: sec, textContent: 'No active share links' });
 

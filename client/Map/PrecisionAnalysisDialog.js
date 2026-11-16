@@ -78,10 +78,14 @@ export default class PrecisionAnalysisDialog extends Dialog {
 	}
 
 	_render(r, appliedLayer, yieldLayer) {
-		const body = this.body;
+		// A column that spaces the summary card from what follows with its gap
+		const body = new Component({
+			appendTo: this.body,
+			style: { display: 'flex', flexDirection: 'column', gap: space.md },
+		});
 
 		// ── Summary header ───────────────────────────────────────────────────────
-		const summary = new Card({ appendTo: body, style: { marginBottom: space.md } });
+		const summary = new Card({ appendTo: body });
 
 		new Component({
 			appendTo: summary,
