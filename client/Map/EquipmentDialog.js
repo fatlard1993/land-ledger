@@ -1,7 +1,6 @@
 import { FormDialog, Select } from '@vanilla-bean/components';
-import { makePropertiesEditor } from '../utils/PropertiesEditor';
+import { checkboxField, emojiInput, PropertiesField } from '../utils/formFields';
 import { stayOpenFor } from '../utils/stayOpenFor';
-import { checkboxRow, emojiField } from './dialogParts';
 
 const COMMON_TYPES = [
 	'Tractor',
@@ -76,8 +75,12 @@ export default class EquipmentDialog extends FormDialog {
 				usage: item.usage || '',
 				usageUnit: item.usageUnit || '',
 				appraisalValue: item.appraisalValue || '',
+				emojiShown: item.emoji || equipmentEmoji(item.type || ''),
+				props: item.properties || {},
+				labelShown: item.showLabel !== false,
 			},
 			inputs: [
+				emojiInput('emojiShown'),
 				{
 					key: 'name',
 					label: 'Name / ID',
@@ -90,9 +93,7 @@ export default class EquipmentDialog extends FormDialog {
 					label: 'Type',
 					placeholder: 'e.g. Row crop tractor, Sprayer, Grain cart',
 					suggestions: COMMON_TYPES,
-					onChange: ({ value }) => {
-						if (!emojiInput.elem.dataset.manual) emojiInput.options.value = equipmentEmoji(value);
-					},
+					onChange: ({ value }) => (this.form.inputElements.emojiShown.options.auto = equipmentEmoji(value)),
 				},
 				{
 					key: 'tenure',
@@ -143,13 +144,16 @@ export default class EquipmentDialog extends FormDialog {
 					type: 'number',
 					placeholder: 'Market value — used in net worth',
 				},
+				{ key: 'props', label: 'Properties', InputComponent: PropertiesField },
+				checkboxField('labelShown', 'Show name label on map'),
 			],
 			onSave: async d => {
+				const { emojiShown, props, labelShown, ...fields } = d;
 				const data = {
-					...d,
-					emoji: this._getEmoji?.() || '',
-					showLabel: this._showLabelEl?.elem.checked !== false,
-					properties: this._collectProps?.() ?? {},
+					...fields,
+					emoji: emojiShown !== equipmentEmoji(fields.type || '') ? emojiShown : '',
+					showLabel: labelShown !== false,
+					properties: props ?? {},
 				};
 
 				if (options.lat != null) data.lat = options.lat;
@@ -167,21 +171,5 @@ export default class EquipmentDialog extends FormDialog {
 			}),
 			...withoutCallbacks(options),
 		});
-
-		// Emoji row
-		const emojiInput = emojiField(this.intro, item.emoji || equipmentEmoji(item.type || ''));
-
-		this._getEmoji = () => {
-			const auto = equipmentEmoji(this.form.options.data.type || '');
-
-			return emojiInput.options.value !== auto ? emojiInput.options.value : '';
-		};
-
-		const { collect: collectProps } = makePropertiesEditor(this.body, item.properties || {});
-
-		this._collectProps = collectProps;
-
-		// Show label toggle
-		this._showLabelEl = checkboxRow(this.body, { label: 'Show name label on map', checked: item.showLabel !== false });
 	}
 }

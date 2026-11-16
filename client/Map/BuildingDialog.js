@@ -1,8 +1,7 @@
 import { FormDialog, Select } from '@vanilla-bean/components';
-import { makePropertiesEditor } from '../utils/PropertiesEditor';
+import { checkboxField, emojiInput, PropertiesField } from '../utils/formFields';
 import { watchFormConflicts } from '../utils/watchFormConflicts.js';
 import { stayOpenFor } from '../utils/stayOpenFor';
-import { checkboxRow, emojiField } from './dialogParts';
 
 const COMMON_TYPES = [
 	'Barn',
@@ -74,8 +73,12 @@ export default class BuildingDialog extends FormDialog {
 				name: building.name || '',
 				type: building.type || '',
 				status: building.status || '',
+				emojiShown: building.emoji || buildingEmoji(building.type || ''),
+				props: building.properties || {},
+				labelShown: building.showLabel !== false,
 			},
 			inputs: [
+				emojiInput('emojiShown'),
 				{
 					key: 'name',
 					label: 'Name',
@@ -88,9 +91,7 @@ export default class BuildingDialog extends FormDialog {
 					label: 'Type',
 					placeholder: 'e.g. Barn, Machine shed, Grain bin',
 					suggestions: COMMON_TYPES,
-					onChange: ({ value }) => {
-						if (!emojiInput.elem.dataset.manual) emojiInput.options.value = buildingEmoji(value);
-					},
+					onChange: ({ value }) => (this.form.inputElements.emojiShown.options.auto = buildingEmoji(value)),
 				},
 				{
 					key: 'status',
@@ -104,13 +105,16 @@ export default class BuildingDialog extends FormDialog {
 						{ label: 'Destroyed', value: 'destroyed' },
 					],
 				},
+				{ key: 'props', label: 'Properties', InputComponent: PropertiesField },
+				checkboxField('labelShown', 'Show name label on map'),
 			],
 			onSave: async d => {
+				const { emojiShown, props, labelShown, ...fields } = d;
 				const data = {
-					...d,
-					emoji: this._getEmoji?.() || '',
-					showLabel: this._showLabelEl?.elem.checked !== false,
-					properties: this._collectProps?.() ?? {},
+					...fields,
+					emoji: emojiShown !== buildingEmoji(fields.type || '') ? emojiShown : '',
+					showLabel: labelShown !== false,
+					properties: props ?? {},
 				};
 
 				if (options.geometry && !isEdit) data.geometry = options.geometry;
@@ -125,26 +129,8 @@ export default class BuildingDialog extends FormDialog {
 			...withoutCallbacks(options),
 		});
 
-		// Emoji row
-		const emojiInput = emojiField(this.intro, building.emoji || buildingEmoji(building.type || ''));
-
-		const { collect: collectProps } = makePropertiesEditor(this.body, building.properties || {});
-		this._collectProps = collectProps;
-
-		this._getEmoji = () => {
-			const auto = buildingEmoji(this.form.options.data.type || '');
-
-			return emojiInput.options.value !== auto ? emojiInput.options.value : '';
-		};
-
 		if (isEdit) {
 			this.form.addCleanup('conflictWatch', watchFormConflicts(this.form, 'buildings', building.id));
 		}
-
-		// Show label toggle
-		this._showLabelEl = checkboxRow(this.body, {
-			label: 'Show name label on map',
-			checked: options.building?.showLabel !== false,
-		});
 	}
 }
