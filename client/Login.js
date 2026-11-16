@@ -1,6 +1,6 @@
 // Full-screen login overlay — shown when auth is enabled and the user has no session.
 // Single passkey field; no username. First matching account wins.
-import { Button, Card, Component, Icon, Input, Page, styled } from '@vanilla-bean/components';
+import { Button, Card, Component, Form, Icon, Input, Page, styled } from '@vanilla-bean/components';
 
 import { login } from './api/auth';
 
@@ -102,25 +102,33 @@ export function mountLoginScreen(onSuccess) {
 		],
 	});
 
-	const input = new PasskeyInput({
+	const form = new Form({
 		appendTo: card,
-		type: 'password',
-		placeholder: 'Passkey',
-		attributes: { 'aria-label': 'Passkey' },
-		autocomplete: 'current-password',
+		data: { passkey: '' },
+		inputs: [
+			{
+				key: 'passkey',
+				label: 'Passkey',
+				InputComponent: PasskeyInput,
+				type: 'password',
+				autocomplete: 'current-password',
+				validate: value => (value ? null : 'Enter your passkey'),
+			},
+		],
 	});
+	const input = form.inputElements.passkey;
 
 	const errorElem = new ErrorLine({ appendTo: card });
 
 	const btn = new LoginButton({ appendTo: card, textContent: 'Continue' });
 
 	const attempt = async () => {
-		const passkey = input.options.value;
-
-		if (!passkey) {
+		if (form.hasErrors()) {
 			input.elem.focus();
 			return;
 		}
+
+		const passkey = input.options.value;
 
 		// The passkey is checked against each account's hash, which takes seconds on a small server
 		Object.assign(btn.options, { disabled: true, icon: 'spinner', iconAnimation: 'spin-pulse' });
@@ -132,8 +140,9 @@ export function mountLoginScreen(onSuccess) {
 				onSuccess();
 			} else {
 				errorElem.options.textContent = 'Invalid passkey';
-				input.options.value = '';
+				// Selected rather than cleared, which the field would answer with its own "Enter your passkey"
 				input.elem.focus();
+				input.elem.select();
 			}
 		} catch {
 			errorElem.options.textContent = 'Could not reach server';
