@@ -106,12 +106,14 @@ describe('turning sign-in on from the Admin panel', () => {
 		expect(dialog.body.elem.textContent).toContain('Sign-in is on');
 	});
 
-	test('passkeys that differ change nothing', async () => {
+	test('passkeys that differ change nothing, and say so under the second', async () => {
 		server = serve();
 
-		await turnOn('north-forty', 'north-40');
+		const dialog = await turnOn('north-forty', 'north-40');
+		const again = [...dialog.body.elem.querySelectorAll('label')].find(label => label.textContent === 'Passkey again');
 
 		expect(server.calls.filter(call => !call.startsWith('GET'))).toEqual([]);
+		expect(again.parentElement.querySelector('.vbc-field-error')?.textContent).toBe('The passkeys differ');
 	});
 });
 
@@ -268,7 +270,8 @@ describe('a new token', () => {
 
 		[...container.querySelectorAll('button')].find(b => b.textContent === 'Generate').click();
 
-		const name = container.querySelector('input[aria-label="Token name"]');
+		const label = [...container.querySelectorAll('label')].find(each => each.textContent === 'Token name');
+		const name = document.getElementById(label.htmlFor);
 
 		name.value = 'Home';
 		name.dispatchEvent(new Event('input'));
@@ -279,6 +282,31 @@ describe('a new token', () => {
 
 		expect(code.querySelector('code').textContent).toBe('tok_secret');
 		expect(code.querySelector('button')).not.toBeNull();
+	});
+
+	test('without a name says so under it, and generates nothing', async () => {
+		const posts = [];
+
+		fetch = spyOn(globalThis, 'fetch').mockImplementation(async (url, { method = 'GET' } = {}) => {
+			if (method === 'POST') posts.push(url);
+
+			return Response.json([]);
+		});
+
+		const { renderApiTokensSection } = await import('./ApiTokensSection.js');
+		const container = document.createElement('div');
+
+		document.body.append(container);
+		await renderApiTokensSection(container, { onRefresh: () => {} });
+
+		[...container.querySelectorAll('button')].find(b => b.textContent === 'Generate').click();
+		[...container.querySelectorAll('button')].find(b => b.textContent === 'Generate token').click();
+		await settle();
+
+		const label = [...container.querySelectorAll('label')].find(each => each.textContent === 'Token name');
+
+		expect(label.parentElement.querySelector('.vbc-field-error')?.textContent).toBe('Name the token');
+		expect(posts).toEqual([]);
 	});
 });
 
@@ -307,5 +335,145 @@ describe('the Require login checkbox', () => {
 
 		expect(label.textContent).toBe('Require login');
 		expect(checkbox.compareDocumentPosition(label) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+	});
+});
+
+describe('adding an account', () => {
+	let server;
+
+	afterEach(() => {
+		server.fetch.mockRestore();
+		document.body.innerHTML = '';
+	});
+
+	const open = async () => {
+		const dialog = new AccountsDialog({ appendTo: document.body });
+
+		await settle();
+		[...dialog.body.elem.querySelectorAll('button')].find(b => b.textContent.includes('Add account')).click();
+		await settle();
+
+		return dialog;
+	};
+
+	const fieldNamed = (dialog, text) => {
+		const label = [...dialog.body.elem.querySelectorAll('label')].find(each => each.textContent === text);
+
+		return { label, input: document.getElementById(label.htmlFor) };
+	};
+
+	const typeIn = (input, value) => {
+		input.value = value;
+		input.dispatchEvent(new Event('input'));
+	};
+
+	const create = dialog =>
+		[...dialog.body.elem.querySelectorAll('button')].find(b => b.textContent === 'Create').click();
+
+	test('without a name or passkey says so under each, and creates nothing', async () => {
+		server = serve();
+
+		const dialog = await open();
+
+		create(dialog);
+		await settle();
+
+		for (const [text, message] of [
+			['Name', 'Name the account'],
+			['Passkey', 'Choose a passkey'],
+		]) {
+			expect(fieldNamed(dialog, text).label.parentElement.querySelector('.vbc-field-error')?.textContent).toBe(message);
+		}
+		expect(server.calls).not.toContain('POST /auth/accounts');
+	});
+
+	test('creates it with the roles ticked, and a refusal is said in the form', async () => {
+		server = serve();
+
+		const { fetch } = server;
+		const answer = fetch.getMockImplementation();
+		const posted = [];
+
+		fetch.mockImplementation((url, init) => {
+			if (url === '/auth/accounts' && init?.method === 'POST') {
+				posted.push(JSON.parse(init.body));
+
+				return new Response('That name is taken', { status: 409 });
+			}
+
+			return answer(url, init);
+		});
+
+		const dialog = await open();
+
+		typeIn(fieldNamed(dialog, 'Name').input, ' Field Team ');
+		typeIn(fieldNamed(dialog, 'Passkey').input, 'hay-bale');
+		fieldNamed(dialog, 'Financials').input.click();
+		create(dialog);
+		await settle();
+
+		expect(posted).toEqual([
+			{ name: 'Field Team', passkey: 'hay-bale', roles: { admin: false, financials: true, farmhand: true } },
+		]);
+		expect(dialog.body.elem.querySelector('[role=alert]').textContent).toBe('That name is taken');
+	});
+});
+
+describe('a new share link', () => {
+	let fetch;
+
+	afterEach(() => {
+		fetch.mockRestore();
+		document.body.innerHTML = '';
+	});
+
+	test('needs a name, and shares what its purpose names over the dates given', async () => {
+		const posts = [];
+
+		fetch = spyOn(globalThis, 'fetch').mockImplementation(async (url, { method = 'GET', body } = {}) => {
+			if (method === 'POST') {
+				posts.push(JSON.parse(body));
+
+				return Response.json({ id: 's1', name: 'Bank', token: 'abc', url: '/share/abc' });
+			}
+
+			return Response.json([]);
+		});
+
+		const { renderShareLinksSection } = await import('./ShareLinksSection.js');
+		const container = document.createElement('div');
+		const press = text => [...container.querySelectorAll('button')].find(b => b.textContent.trim() === text).click();
+		const fieldNamed = text =>
+			document.getElementById([...container.querySelectorAll('label')].find(each => each.textContent === text).htmlFor);
+		const typeIn = (input, value) => {
+			input.value = value;
+			input.dispatchEvent(new Event('input'));
+		};
+
+		document.body.append(container);
+		await renderShareLinksSection(container, { onRefresh: () => {} });
+
+		press('Create link');
+		press('Generate link');
+		await settle();
+
+		expect(container.querySelector('.vbc-field-error')?.textContent).toBe('Name who the link is for');
+		expect(posts).toEqual([]);
+
+		typeIn(fieldNamed('Name / Recipient'), 'First National Bank');
+		press('Lender / Loan Application');
+		typeIn(fieldNamed('Records from (optional)'), '2025-01-01');
+		press('Generate link');
+		await settle();
+
+		expect(posts).toEqual([
+			{
+				name: 'First National Bank',
+				purpose: 'loan',
+				collections: ['fields', 'equipment', 'revenue', 'loans', 'budgetItems'],
+				dateRange: { start: '2025-01-01', end: null },
+				expiresAt: null,
+			},
+		]);
 	});
 });

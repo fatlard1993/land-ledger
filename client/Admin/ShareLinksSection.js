@@ -5,13 +5,13 @@ import {
 	copyToClipboard,
 	Dialog,
 	Elem,
-	Input,
+	Form,
 	Notify,
 	SectionLabel,
 	theme,
 } from '@vanilla-bean/components';
 
-import { FormLabel } from '../Layout';
+import { ChoiceChips } from '../utils/formFields';
 import { IconText } from '../statusIcons';
 import { AdminSection, EmptyLine, Hint, ItemRow, Reveal, SecretCode, SectionHead } from './parts';
 
@@ -64,54 +64,42 @@ function openShareForm(container, { onRefresh }) {
 	form.elem.dataset.shareForm = '1';
 	container.append(form.elem);
 
-	new FormLabel({ appendTo: form, textContent: 'Name / Recipient' });
-	const nameInput = new Input({ appendTo: form, placeholder: 'e.g. WSDA Inspector 2026, First National Bank' });
-
-	new FormLabel({ appendTo: form, textContent: 'Purpose' });
-
-	const chipRow = new Elem({
-		tag: 'div',
-		style: { display: 'flex', flexWrap: 'wrap', gap: space.sm, marginBottom: space.sm },
+	const fields = new Form({
 		appendTo: form,
-	});
-
-	let selectedPurpose = 'certification';
-	let selectedCollections = TEMPLATES.certification.collections;
-
-	const noteEl = new Hint({ textContent: TEMPLATES.certification.note, appendTo: form });
-
-	const chips = {};
-	for (const [key, tpl] of Object.entries(TEMPLATES)) {
-		const chip = new Button({
-			icon: tpl.icon,
-			textContent: tpl.label,
-			variant: 'chip',
-			appendTo: chipRow,
-			onPointerPress: () => {
-				selectedPurpose = key;
-				selectedCollections = TEMPLATES[key].collections;
-				noteEl.elem.textContent = TEMPLATES[key].note;
-				for (const [k, c] of Object.entries(chips)) c.options.pressed = k === key;
+		data: { name: '', purpose: 'certification', start: '', end: '', expiresAt: '' },
+		inputs: [
+			{
+				key: 'name',
+				label: 'Name / Recipient',
+				placeholder: 'e.g. WSDA Inspector 2026, First National Bank',
+				validate: value => (String(value ?? '').trim() ? null : 'Name who the link is for'),
 			},
-		});
-		chip.options.pressed = key === selectedPurpose;
-		chips[key] = chip;
-	}
-
-	new FormLabel({ appendTo: form, textContent: 'Records date range (optional)' });
-
-	const dateRangeRow = new Elem({
-		tag: 'div',
-		// minmax(0, …): a plain 1fr won't go below a date input's intrinsic width, which is wider than half a phone
-		style: { display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: space.sm, marginBottom: space.xs },
-		appendTo: form,
+			{
+				key: 'purpose',
+				label: 'Purpose',
+				InputComponent: ChoiceChips,
+				choices: Object.entries(TEMPLATES).map(([value, { label, icon }]) => ({ value, label, icon })),
+				onChange: ({ value }) => (noteEl.elem.textContent = TEMPLATES[value].note),
+			},
+			{
+				type: 'group',
+				// minmax(0, …): a plain 1fr won't go below a date input's intrinsic width, which is wider than half a phone
+				style: { display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: space.sm },
+				inputs: [
+					{ key: 'start', label: 'Records from (optional)', type: 'date' },
+					{ key: 'end', label: 'Records to (optional)', type: 'date' },
+				],
+			},
+			{ key: 'expiresAt', label: 'Link expiry date (optional)', type: 'date' },
+		],
 	});
+	const value = key => fields.inputElements[key].options.value;
 
-	const startInput = new Input({ appendTo: dateRangeRow, type: 'date', attributes: { 'aria-label': 'Records from' } });
-	const endInput = new Input({ appendTo: dateRangeRow, type: 'date', attributes: { 'aria-label': 'Records to' } });
-
-	new FormLabel({ appendTo: form, textContent: 'Link expiry date (optional)' });
-	const expInput = new Input({ appendTo: form, type: 'date' });
+	// What the purpose shares, under its choices
+	const noteEl = new Hint({
+		textContent: TEMPLATES.certification.note,
+		appendTo: fields.inputElements.purpose.elem.parentElement,
+	});
 
 	const buttons = new Elem({
 		tag: 'div',
@@ -130,21 +118,15 @@ function openShareForm(container, { onRefresh }) {
 		textContent: 'Generate link',
 		appendTo: buttons,
 		onPointerPress: async () => {
-			const name = nameInput.options.value.trim();
-			if (!name) {
-				nameInput.elem.focus();
-				return;
-			}
+			if (fields.hasErrors()) return;
 
+			const purpose = value('purpose');
 			const body = {
-				name,
-				purpose: selectedPurpose,
-				collections: selectedCollections,
-				dateRange:
-					startInput.options.value || endInput.options.value
-						? { start: startInput.options.value || null, end: endInput.options.value || null }
-						: null,
-				expiresAt: expInput.options.value || null,
+				name: value('name').trim(),
+				purpose,
+				collections: TEMPLATES[purpose].collections,
+				dateRange: value('start') || value('end') ? { start: value('start') || null, end: value('end') || null } : null,
+				expiresAt: value('expiresAt') || null,
 			};
 
 			const res = await fetch('/auth/shares', {
@@ -167,7 +149,7 @@ function openShareForm(container, { onRefresh }) {
 		},
 	});
 
-	nameInput.elem.focus();
+	fields.inputElements.name.elem.focus();
 }
 
 function showShareLink(container, data, { onRefresh }) {

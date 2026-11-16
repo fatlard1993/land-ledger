@@ -1,4 +1,4 @@
-import { Button, Card, Component, Dialog, Elem, Input, Notify, SectionLabel, theme } from '@vanilla-bean/components';
+import { Button, Card, Component, Dialog, Elem, Form, Notify, SectionLabel, theme } from '@vanilla-bean/components';
 
 import { AdminSection, EmptyLine, ItemRow, Reveal, SecretCode, SectionHead } from './parts';
 
@@ -43,11 +43,19 @@ function openTokenForm(container, { onRefresh }) {
 	form.elem.dataset.tokenForm = '1';
 	container.append(form.elem);
 
-	const input = new Input({
+	const fields = new Form({
 		appendTo: form,
-		placeholder: 'Token name (e.g. JD Operations, Home Automation)',
-		attributes: { 'aria-label': 'Token name' },
+		data: { name: '' },
+		inputs: [
+			{
+				key: 'name',
+				label: 'Token name',
+				placeholder: 'e.g. JD Operations, Home Automation',
+				validate: value => (String(value ?? '').trim() ? null : 'Name the token'),
+			},
+		],
 	});
+	const input = fields.inputElements.name;
 
 	const row = new Elem({
 		tag: 'div',
@@ -66,11 +74,9 @@ function openTokenForm(container, { onRefresh }) {
 		textContent: 'Generate token',
 		appendTo: row,
 		onPointerPress: async () => {
+			if (fields.hasErrors()) return;
+
 			const name = input.options.value.trim();
-			if (!name) {
-				input.elem.focus();
-				return;
-			}
 
 			const res = await fetch('/auth/tokens', {
 				method: 'POST',

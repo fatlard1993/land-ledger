@@ -4,6 +4,7 @@ import {
 	Component,
 	Dialog,
 	Elem,
+	Form,
 	Input,
 	Notify,
 	SectionLabel,
@@ -24,7 +25,7 @@ import {
 import { getAppSettings, updateAppSettings } from '../api';
 import context from '../context';
 import { setQueueOwner } from '../offlineQueue';
-import { FormLabel } from '../Layout';
+import { checkboxField } from '../utils/formFields';
 import { IconText } from '../statusIcons';
 import { renderShareLinksSection } from './ShareLinksSection.js';
 import { renderApiTokensSection } from './ApiTokensSection.js';
@@ -63,27 +64,16 @@ const AuthToggleRow = styled(
 	`,
 );
 
-// A role to grant, as a pill holding its checkbox
-const RoleChip = styled(
+const FailureLine = styled(
 	Component,
-	({ colors, radius, space }) => `
-		display: flex;
-		align-items: center;
-		gap: ${space.sm};
-		padding: ${space.sm} ${space.md};
-		border: 1px solid ${colors.border};
-		border-radius: ${radius.pill};
-		background: ${colors.alpha(colors.white, 0.05)};
-		font-size: 12px;
-		color: ${colors.white};
-		cursor: pointer;
-		user-select: none;
+	({ colors, space }) => `
+		padding-bottom: ${space.sm};
+		color: ${colors.light(colors.danger)};
 
-		&.locked {
-			opacity: 0.5;
+		&:empty {
+			display: none;
 		}
 	`,
-	{ tag: 'label' },
 );
 
 export default class AccountsDialog extends Dialog {
@@ -140,29 +130,33 @@ export default class AccountsDialog extends Dialog {
 				'Anyone who can reach this server can open the app. Set a passkey for the Admin account, then turn sign-in on; this device stays signed in as Admin.',
 		});
 
-		const fields = new Component({
+		const form = new Form({
 			appendTo: sec,
-			style: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: space.md },
-		});
-		const passkeyWrap = new Elem({ tag: 'div', appendTo: fields });
-
-		new FormLabel({ appendTo: passkeyWrap, textContent: 'Admin passkey' });
-
-		const passkeyEl = new Input({
-			appendTo: passkeyWrap,
-			type: 'password',
-			placeholder: 'Choose a passkey',
-			autocomplete: 'new-password',
-		});
-		const confirmWrap = new Elem({ tag: 'div', appendTo: fields });
-
-		new FormLabel({ appendTo: confirmWrap, textContent: 'Passkey again' });
-
-		const confirmEl = new Input({
-			appendTo: confirmWrap,
-			type: 'password',
-			placeholder: 'Type it again',
-			autocomplete: 'new-password',
+			data: { passkey: '', again: '' },
+			inputs: [
+				{
+					type: 'group',
+					style: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: space.md },
+					inputs: [
+						{
+							key: 'passkey',
+							label: 'Admin passkey',
+							type: 'password',
+							placeholder: 'Choose a passkey',
+							autocomplete: 'new-password',
+							validate: value => (value ? null : 'Choose a passkey'),
+						},
+						{
+							key: 'again',
+							label: 'Passkey again',
+							type: 'password',
+							placeholder: 'Type it again',
+							autocomplete: 'new-password',
+							validate: value => (value === form.inputElements.passkey.options.value ? null : 'The passkeys differ'),
+						},
+					],
+				},
+			],
 		});
 
 		const buttons = new Component({
@@ -177,18 +171,9 @@ export default class AccountsDialog extends Dialog {
 		};
 
 		turnOn.onPointerPress(async () => {
-			const passkey = passkeyEl.options.value;
+			if (form.hasErrors()) return;
 
-			if (!passkey) {
-				passkeyEl.elem.focus();
-				return;
-			}
-			if (passkey !== confirmEl.options.value) {
-				new Notify({ intent: 'danger', textContent: 'The passkeys differ' });
-				confirmEl.options.value = '';
-				confirmEl.elem.focus();
-				return;
-			}
+			const passkey = form.inputElements.passkey.options.value;
 
 			// Hashing the passkey takes seconds on a small server
 			Object.assign(turnOn.options, { disabled: true, icon: 'spinner', iconAnimation: 'spin-pulse' });
@@ -451,56 +436,55 @@ export default class AccountsDialog extends Dialog {
 	_renderForm(container, existing) {
 		const isNew = !existing;
 
-		const card = new Card({ appendTo: container, style: { marginBottom: space.sm } });
+		const card = new Card({ appendTo: container });
 
-		// Name + passkey side by side
-		const fields = new Component({
+		const form = new Form({
 			appendTo: card,
-			style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: space.md, marginBottom: space.md },
+			data: {
+				name: existing?.name ?? '',
+				passkey: '',
+				...Object.fromEntries(ROLES.map(({ key }) => [key, existing?.roles?.[key] ?? key === 'farmhand'])),
+			},
+			inputs: [
+				// Name + passkey side by side
+				{
+					type: 'group',
+					style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: space.md },
+					inputs: [
+						{
+							key: 'name',
+							label: 'Name',
+							placeholder: 'e.g. John, Field Team',
+							validate: value => (String(value ?? '').trim() ? null : 'Name the account'),
+						},
+						{
+							key: 'passkey',
+							label: isNew ? 'Passkey' : 'New passkey (blank = keep)',
+							type: 'password',
+							placeholder: isNew ? 'Choose a passkey' : '••••••',
+							validate: value => (!isNew || value ? null : 'Choose a passkey'),
+						},
+					],
+				},
+				{
+					type: 'group',
+					style: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: space.sm },
+					inputs: ROLES.map(({ key, label, sub }) =>
+						checkboxField(key, label, {
+							title: sub,
+							// Admin account always keeps its admin role
+							disabled: existing?.id === 'admin' && key === 'admin',
+						}),
+					),
+				},
+			],
 		});
 
-		const nameWrap = new Elem({ tag: 'div', appendTo: fields });
-		new FormLabel({ appendTo: nameWrap, textContent: 'Name' });
-		const nameEl = new Input({
-			appendTo: nameWrap,
-			placeholder: 'e.g. John, Field Team',
-			value: existing?.name ?? '',
-		});
+		// What each field holds as it's typed, ahead of the change that leaving it makes
+		const value = key => form.inputElements[key].options.value;
 
-		const passkeyWrap = new Elem({ tag: 'div', appendTo: fields });
-		new FormLabel({ appendTo: passkeyWrap, textContent: isNew ? 'Passkey' : 'New passkey (blank = keep)' });
-		const passkeyEl = new Input({
-			appendTo: passkeyWrap,
-			type: 'password',
-			placeholder: isNew ? 'Choose a passkey' : '••••••',
-		});
-
-		// Role chips
-		const rolesWrap = new Component({
-			appendTo: card,
-			style: { display: 'flex', gap: space.sm, flexWrap: 'wrap', marginBottom: space.md },
-		});
-
-		const callbacks = {};
-
-		for (const { key, label, sub } of ROLES) {
-			const chip = new RoleChip({ appendTo: rolesWrap });
-
-			chip.elem.title = sub;
-
-			const cb = new Input({ type: 'checkbox', value: existing?.roles?.[key] ?? key === 'farmhand' });
-
-			// Admin account always keeps its admin role
-			if (existing?.id === 'admin' && key === 'admin') {
-				cb.options.disabled = true;
-				chip.addClass('locked');
-			}
-
-			chip.append(cb);
-			chip.elem.append(document.createTextNode(label));
-
-			callbacks[key] = cb;
-		}
+		// Why a save didn't go through, in the form it was made in
+		const failure = new FailureLine({ appendTo: card, attributes: { role: 'alert' } });
 
 		// Save / Cancel
 		const buttons = new Component({
@@ -522,18 +506,13 @@ export default class AccountsDialog extends Dialog {
 			appendTo: buttons,
 			textContent: isNew ? 'Create' : 'Save',
 			onPointerPress: async () => {
-				const name = nameEl.options.value.trim();
-				const passkey = passkeyEl.options.value;
-				const roles = Object.fromEntries(ROLES.map(r => [r.key, callbacks[r.key].elem.checked]));
+				if (form.hasErrors()) return;
 
-				if (!name) {
-					nameEl.elem.focus();
-					return;
-				}
-				if (isNew && !passkey) {
-					passkeyEl.elem.focus();
-					return;
-				}
+				const name = value('name').trim();
+				const passkey = value('passkey');
+				const roles = Object.fromEntries(ROLES.map(r => [r.key, value(r.key)]));
+
+				failure.elem.textContent = '';
 
 				// A new passkey is hashed, which takes seconds on a small server
 				Object.assign(saveBtn.options, { disabled: true, icon: 'spinner', iconAnimation: 'spin-pulse' });
@@ -557,13 +536,13 @@ export default class AccountsDialog extends Dialog {
 					this._editingId = null;
 					this._draw();
 				} catch (err) {
-					new Notify({ intent: 'danger', textContent: err.message || 'Save failed' });
+					failure.elem.textContent = err.message || 'Save failed';
 					Object.assign(saveBtn.options, { disabled: false, icon: undefined, iconAnimation: undefined });
 				}
 			},
 		});
 
 		// Focus name on open
-		setTimeout(() => nameEl.elem.focus(), 30);
+		setTimeout(() => form.inputElements.name.elem.focus(), 30);
 	}
 }
