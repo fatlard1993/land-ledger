@@ -1,7 +1,6 @@
 import { Button, Component, Input, Select, styled, theme } from '@vanilla-bean/components';
 
-import { FormLabel } from '../Layout';
-import { makePropertiesEditor } from '../utils/PropertiesEditor';
+import { numberField, PropertiesField } from '../utils/formFields';
 import { toNum } from '../utils/format.js';
 
 const { space } = theme;
@@ -72,43 +71,109 @@ const MixRow = styled(
 	`,
 );
 
-export function buildCoverCropSection(container, prev, g) {
-	// Species mix rows
-	new FormLabel({ appendTo: container, textContent: 'Species Mix' });
+const EMPTY_ROW = { name: '', rate: '', unit: 'lbs/ac' };
 
-	const mixContainer = new Component({ appendTo: container });
-	const speciesRows = [];
-	const defaultMixRow = prev.seedMix
-		? [{ name: prev.seedMix, rate: '', unit: 'lbs/ac' }]
-		: [{ name: '', rate: '', unit: 'lbs/ac' }];
-	const prevMix = Array.isArray(prev.species) ? prev.species : defaultMixRow;
+/**
+ * A cover crop's species mix: rows of a species, its seeding rate and the rate's unit, added and removed as the user
+ * likes. Its value is the rows as they're typed, `[{ name, rate, unit }]`.
+ * @param {object} [options] - Component options
+ * @param {Array<object>} [options.value] - The rows shown
+ */
+export class SpeciesMixField extends Component {
+	static schema = {
+		value: {
+			get default() {
+				return [{ ...EMPTY_ROW }];
+			},
+			set(value) {
+				// A value this field announced itself is already what its rows hold
+				if (this._rows && JSON.stringify(value) !== JSON.stringify(this._collect())) this._showRows(value);
+			},
+		},
+	};
 
-	const addSpeciesRow = (rowData = { name: '', rate: '', unit: 'lbs/ac' }) => {
-		const row = new MixRow({ appendTo: mixContainer });
+	build() {
+		// A group, named by the Form's label
+		this.elem.setAttribute('role', 'group');
 
-		const nameEl = new Input({
-			appendTo: row,
-			type: 'text',
-			placeholder: 'Species',
-			value: rowData.name || '',
-			attributes: { 'aria-label': 'Species' },
-			suggestions: COVER_CROP_SPECIES,
+		this._rowsElem = new Component({ appendTo: this });
+		this._showRows(this.options.value);
+
+		new Button({
+			appendTo: this,
+			variant: 'flat',
+			icon: 'plus',
+			textContent: 'Add species',
+			style: { margin: `${space.xs} 0` },
+			onPointerPress: () => this._addRow().nameEl.elem.focus(),
 		});
 
-		const rateEl = new Input({
-			appendTo: row,
-			type: 'number',
-			placeholder: 'Rate',
-			value: rowData.rate || '',
-			attributes: { step: '0.1', 'aria-label': 'Seeding rate' },
-		});
+		// Held as the rows give it (a row saved without a unit shows lbs/ac), so it saves as it was loaded
+		this.options.value = this._collect();
+	}
 
-		const unitEl = new Select({
-			appendTo: row,
-			options: RATE_UNITS,
-			value: rowData.unit || 'lbs/ac',
-			attributes: { 'aria-label': 'Rate unit' },
-		});
+	_collect() {
+		return this._rows.map(({ nameEl, rateEl, unitEl }) => ({
+			name: nameEl.options.value,
+			rate: rateEl.options.value,
+			unit: unitEl.options.value,
+		}));
+	}
+
+	_showRows(value) {
+		this._rowsElem.empty();
+		this._rows = [];
+
+		for (const row of value || []) this._addRow(row);
+	}
+
+	_announce() {
+		this.options.value = this._collect();
+		this.emit('change', { value: this.options.value });
+	}
+
+	_addRow(rowData = EMPTY_ROW) {
+		const row = new MixRow({ appendTo: this._rowsElem });
+		// The row's own change isn't the field's: it's announced as the whole mix
+		const owned = part => {
+			part.elem.addEventListener('change', event => {
+				event.stopPropagation();
+				this._announce();
+			});
+			part.elem.addEventListener('input', () => this._announce());
+
+			return part;
+		};
+
+		const entry = {
+			nameEl: owned(
+				new Input({
+					appendTo: row,
+					type: 'text',
+					placeholder: 'Species',
+					value: rowData.name || '',
+					attributes: { 'aria-label': 'Species' },
+					suggestions: COVER_CROP_SPECIES,
+				}),
+			),
+			rateEl: owned(
+				new Input({
+					appendTo: row,
+					type: 'number',
+					placeholder: 'Rate',
+					value: rowData.rate || '',
+					attributes: { step: '0.1', 'aria-label': 'Seeding rate' },
+				}),
+			),
+			unitEl: owned(
+				new Select({
+					appendTo: row,
+					options: RATE_UNITS,
+					value: rowData.unit || 'lbs/ac',
+					attributes: { 'aria-label': 'Rate unit' },
+				}),
+			),
+		};
 
 		new Button({
 			appendTo: row,
@@ -116,86 +181,89 @@ export function buildCoverCropSection(container, prev, g) {
 			icon: 'xmark',
 			title: 'Remove species',
 			onPointerPress: () => {
-				const idx = speciesRows.findIndex(r => r.row === row);
-
-				if (idx !== -1) speciesRows.splice(idx, 1);
-				mixContainer.elem.removeChild(row.elem);
+				row.destroy();
+				this._rows.splice(this._rows.indexOf(entry), 1);
+				this._announce();
 			},
 		});
 
-		speciesRows.push({ row, nameEl, rateEl, unitEl });
-	};
+		this._rows.push(entry);
 
-	for (const rowData of prevMix) addSpeciesRow(rowData);
-
-	new Button({
-		appendTo: container,
-		variant: 'flat',
-		icon: 'plus',
-		textContent: 'Add species',
-		style: { margin: `${space.xs} 0` },
-		onPointerPress: () => addSpeciesRow(),
-	});
-
-	new FormLabel({ appendTo: container, textContent: 'Seeding Method' });
-	const seedingMethodSelect = new Select({ appendTo: container });
-
-	seedingMethodSelect.options.options = SEEDING_METHODS;
-
-	seedingMethodSelect.options.value = prev.seedingMethod || 'drilled';
-
-	new FormLabel({ appendTo: container, textContent: 'Termination Method' });
-	const terminationSelect = new Select({ appendTo: container });
-
-	terminationSelect.options.options = TERMINATION_METHODS;
-
-	terminationSelect.options.value = prev.terminationMethod || 'roller_crimper';
-
-	const costRow = new Component({
-		appendTo: container,
-		style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: space.sm },
-	});
-
-	new FormLabel({ appendTo: costRow, textContent: 'Seed Cost/Acre ($)' });
-	const ccSeedCostEl = new Input({
-		appendTo: costRow,
-		attributes: { type: 'number', step: '0.01', placeholder: 'Optional' },
-	});
-
-	ccSeedCostEl.options.value = prev.seedCostPerAcre || '';
-
-	new FormLabel({ appendTo: costRow, textContent: 'Application Cost/Acre ($)' });
-	const ccAppCostEl = new Input({
-		appendTo: costRow,
-		attributes: { type: 'number', step: '0.01', placeholder: 'Optional' },
-	});
-
-	ccAppCostEl.options.value = prev.applicationCostPerAcre || '';
-
-	const { collect: collectCCProps } = makePropertiesEditor(container, {
-		estimatedBiomass:
-			prev.estimatedBiomass != null && prev.estimatedBiomass !== '' ? String(prev.estimatedBiomass) : '',
-		nCreditLbs: prev.nCreditLbs != null && prev.nCreditLbs !== '' ? String(prev.nCreditLbs) : '',
-		outcomeNotes: prev.outcomeNotes || '',
-	});
-
-	g.name = () =>
-		speciesRows
-			.filter(r => r.nameEl.options.value)
-			.map(r => r.nameEl.options.value)
-			.join(' + ') || 'Cover Crop';
-	g.details = () => ({
-		species: speciesRows
-			.filter(r => r.nameEl.options.value)
-			.map(r => ({
-				name: r.nameEl.options.value,
-				rate: toNum(r.rateEl.options.value),
-				unit: r.unitEl.options.value,
-			})),
-		seedingMethod: seedingMethodSelect.options.value,
-		terminationMethod: terminationSelect.options.value,
-		seedCostPerAcre: toNum(ccSeedCostEl.options.value),
-		applicationCostPerAcre: toNum(ccAppCostEl.options.value),
-		...collectCCProps(),
-	});
+		return entry;
+	}
 }
+
+const coverCrop = data => data.category === 'cover_crop';
+
+const filled = value => (value != null && value !== '' ? String(value) : '');
+
+// A cover crop's fields as they start, from the details it was saved with
+export const coverCropData = prev => ({
+	ccMix: Array.isArray(prev.species) ? prev.species : [{ ...EMPTY_ROW, name: prev.seedMix || '' }],
+	ccSeedingMethod: prev.seedingMethod || 'drilled',
+	ccTermination: prev.terminationMethod || 'roller_crimper',
+	ccSeedCost: prev.seedCostPerAcre || '',
+	ccAppCost: prev.applicationCostPerAcre || '',
+	ccProps: {
+		estimatedBiomass: filled(prev.estimatedBiomass),
+		nCreditLbs: filled(prev.nCreditLbs),
+		outcomeNotes: prev.outcomeNotes || '',
+	},
+});
+
+// A cover crop's fields, as Form inputs shown while the event is a cover crop
+export const coverCropInputs = () => [
+	{ key: 'ccMix', label: 'Species Mix', condition: coverCrop, InputComponent: SpeciesMixField },
+	{
+		key: 'ccSeedingMethod',
+		label: 'Seeding Method',
+		condition: coverCrop,
+		InputComponent: Select,
+		options: SEEDING_METHODS,
+	},
+	{
+		key: 'ccTermination',
+		label: 'Termination Method',
+		condition: coverCrop,
+		InputComponent: Select,
+		options: TERMINATION_METHODS,
+	},
+	{
+		type: 'group',
+		style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: space.sm },
+		inputs: [
+			{
+				key: 'ccSeedCost',
+				label: 'Seed Cost/Acre ($)',
+				condition: coverCrop,
+				placeholder: 'Optional',
+				...numberField({ step: '0.01' }),
+			},
+			{
+				key: 'ccAppCost',
+				label: 'Application Cost/Acre ($)',
+				condition: coverCrop,
+				placeholder: 'Optional',
+				...numberField({ step: '0.01' }),
+			},
+		],
+	},
+	{ key: 'ccProps', label: 'Properties', condition: coverCrop, InputComponent: PropertiesField },
+];
+
+// A cover crop's name and details, as the event saves them: the species named, each with its rate as a number
+export const coverCropRecord = data => {
+	const species = (data.ccMix || []).filter(row => row.name);
+
+	return {
+		name: species.map(row => row.name).join(' + ') || 'Cover Crop',
+		details: {
+			species: species.map(row => ({ name: row.name, rate: toNum(row.rate), unit: row.unit })),
+			seedingMethod: data.ccSeedingMethod,
+			terminationMethod: data.ccTermination,
+			seedCostPerAcre: toNum(data.ccSeedCost),
+			applicationCostPerAcre: toNum(data.ccAppCost),
+			...data.ccProps,
+		},
+	};
+};

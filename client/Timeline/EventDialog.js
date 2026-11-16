@@ -1,15 +1,14 @@
-import { Component, Elem, FormDialog, Input, parseDate, Select, styled, theme } from '@vanilla-bean/components';
+import { FormDialog, parseDate, Select, theme } from '@vanilla-bean/components';
 
 import { EVENT_CATEGORIES, categoryMeta } from '../eventCategories';
-import { FormLabel } from '../Layout';
 import { getFields } from '../api';
-import { makeCropCombobox } from '../Charts/cropCombobox';
+import { getCropSuggestions } from '../api/cropSuggestions';
 import { stayOpenFor } from '../utils/stayOpenFor';
-import { makePropertiesEditor } from '../utils/PropertiesEditor';
+import { emojiInput, numberField, PropertiesField } from '../utils/formFields';
 import { toDateOnly } from '../utils/dates';
 import { toNum } from '../utils/format.js';
-import { buildHarvestSection } from './HarvestSection.js';
-import { buildCoverCropSection } from './CoverCropSection.js';
+import { harvestData, harvestInputs, harvestRecord } from './HarvestSection.js';
+import { coverCropData, coverCropInputs, coverCropRecord } from './CoverCropSection.js';
 
 // A supply as a Select option: its name, with its cost per unit
 const supplyOption = s => ({
@@ -18,48 +17,6 @@ const supplyOption = s => ({
 });
 
 const { space } = theme;
-
-const EmojiRow = styled(
-	Component,
-	({ colors, space }) => `
-		display: flex;
-		align-items: center;
-		gap: ${space.sm};
-		margin-bottom: ${space.xs};
-
-		& > input {
-			flex-shrink: 0;
-			width: 52px;
-			padding: ${space.xs};
-			font-size: 22px;
-			text-align: center;
-			cursor: text;
-		}
-
-		& > .hint {
-			font-size: 11px;
-			color: ${colors.muted};
-		}
-	`,
-);
-
-const ResultsGrid = styled(
-	Component,
-	({ space }) => `
-		display: grid;
-		grid-template-columns: 1fr 1fr;
-		gap: ${space.sm} ${space.md};
-		margin-top: ${space.xs};
-
-		& label {
-			margin-top: 0;
-		}
-
-		& input {
-			margin-top: ${space.xs};
-		}
-	`,
-);
 
 export const detectEmoji = (category, name = '') => {
 	const n = name.toLowerCase();
@@ -159,22 +116,355 @@ const OBS_TYPES = [
 
 const withoutCallbacks = ({ onSave: _onSave, onDelete: _onDelete, ...options }) => options;
 
+const TIMING_OPTS = [
+	{ value: 'pre-season', label: 'Pre-season' },
+	{ value: 'post-harvest', label: 'Post-harvest' },
+	{ value: 'mid-season', label: 'Mid-season' },
+	{ value: 'fall', label: 'Fall' },
+];
+
+const DEPTH_OPTS = [
+	{ value: '0-6 in', label: '0–6 in' },
+	{ value: '6-12 in', label: '6–12 in' },
+	{ value: '0-12 in', label: '0–12 in' },
+];
+
+// A soil test's results, each a number field of its own
+const SOIL_RESULTS = [
+	{ key: 'organicMatter', label: 'Organic Matter (%)' },
+	{ key: 'soilRespiration', label: 'Respiration (mg CO₂/g)' },
+	{ key: 'pH', label: 'pH' },
+	{ key: 'brayP', label: 'Bray P (ppm)' },
+	{ key: 'potassium', label: 'Potassium (ppm)' },
+	{ key: 'cec', label: 'CEC (meq/100g)' },
+	{ key: 'nitrate', label: 'Nitrate (ppm)' },
+];
+
+// What a soil test keeps as fields of its own; anything else it holds is a property
+const SOIL_KNOWN = new Set(['lab', 'timing', 'sampleDepth', ...SOIL_RESULTS.map(({ key }) => key), 'labCost']);
+
+// The categories with details of their own; any other is an observation
+const DETAILED = ['crop', 'harvest', 'cover_crop', 'livestock', 'input', 'tillage', 'soil_test'];
+
+const is = category => data => data.category === category;
+const isObservation = data => !DETAILED.includes(data.category);
+
+const COMMON_SPECIES = [
+	'Cattle',
+	'Angus cattle',
+	'Hereford cattle',
+	'Sheep',
+	'Dorper sheep',
+	'Hair sheep',
+	'Chickens',
+	'Broiler chickens',
+	'Layer chickens',
+	'Turkeys',
+	'Pigs',
+	'Ducks',
+	'Geese',
+	'Bison',
+	'Goats',
+	'Rabbits',
+];
+
+const MANUAL_SEED = { value: '', label: '— enter cost manually —' };
+const MANUAL_SUPPLY = { value: '', label: '— enter manually —' };
+const INPUT_SUPPLY_CATEGORIES = ['herbicide', 'fertilizer', 'amendment', 'fungicide', 'insecticide', 'other'];
+
+const filled = value => (value != null && value !== '' ? String(value) : '');
+const numVal = value => (value !== '' && value != null ? Number(value) : null);
+
+const parseDetails = raw => {
+	try {
+		return (typeof raw === 'string' ? JSON.parse(raw) : raw) || {};
+	} catch {
+		return {};
+	}
+};
+
+// Every category's fields as they start. Each starts from the details the event was saved with, as the details built
+// for a category did when picking one rebuilt them
+const startingData = (event, fieldId, prev) => {
+	const category = event.category || 'crop';
+
+	return {
+		fieldId,
+		category,
+		emoji: event.emoji || detectEmoji(category, ''),
+		date: event.date || toDateOnly(),
+
+		cropSpecies: prev.species || '',
+		cropSeedSupply: '',
+		cropSeedCost: prev.seedCostPerAcre || '',
+		cropProps: { variety: prev.variety || '', seedingRate: prev.seedingRate || '' },
+
+		...harvestData(prev),
+		...coverCropData(prev),
+
+		lsSpecies: prev.species || '',
+		lsHead: prev.headCount || '',
+		lsEntryWt: prev.entryWeight || '',
+		lsProps: { stockingNotes: prev.stockingNotes || '' },
+
+		inType: prev.inputType || 'herbicide',
+		inProduct: prev.product || '',
+		inRate: prev.rate || '',
+		inCost: prev.costPerAcre || '',
+		inSupply: '',
+
+		tilType: prev.type || 'no_till',
+		tilCost: prev.costPerAcre || '',
+		tilProps: { depth: prev.depth != null ? String(prev.depth) : '', equipment: prev.equipment || '' },
+
+		soilLab: prev.lab || '',
+		soilTiming: prev.timing || 'pre-season',
+		soilDepth: prev.sampleDepth || '0-6 in',
+		...Object.fromEntries(SOIL_RESULTS.map(({ key }) => [`soil_${key}`, filled(prev[key])])),
+		soilLabCost: prev.labCost || '',
+		soilProps: Object.fromEntries(Object.entries(prev).filter(([key]) => !SOIL_KNOWN.has(key))),
+
+		obsType: prev.type || 'weed_pressure',
+		obsProps: { description: prev.description || '', severity: prev.severity || '' },
+
+		notes: event.notes || '',
+	};
+};
+
+// A category's name and details, as the event saves them
+const RECORDS = {
+	crop: data => ({
+		name: `${data.cropSpecies}${data.cropProps.variety ? ` — ${data.cropProps.variety}` : ''}`,
+		details: {
+			...data.cropProps,
+			species: data.cropSpecies,
+			seedCostPerAcre: toNum(data.cropSeedCost),
+			seedSupplyId: data.cropSeedSupply || null,
+		},
+	}),
+	harvest: harvestRecord,
+	cover_crop: coverCropRecord,
+	livestock: data => ({
+		name: `${data.lsSpecies}${data.lsHead !== '' ? ` (${data.lsHead})` : ''}`,
+		details: {
+			species: data.lsSpecies,
+			headCount: toNum(data.lsHead),
+			entryWeight: toNum(data.lsEntryWt),
+			...data.lsProps,
+		},
+	}),
+	input: data => ({
+		name: data.inProduct || data.inType,
+		details: {
+			inputType: data.inType,
+			product: data.inProduct,
+			rate: data.inRate,
+			costPerAcre: toNum(data.inCost),
+			supplyId: data.inSupply || null,
+		},
+	}),
+	tillage: data => ({
+		name: TILLAGE_TYPES.find(t => t.value === data.tilType)?.label || data.tilType,
+		details: { ...data.tilProps, type: data.tilType, costPerAcre: toNum(data.tilCost) },
+	}),
+	soil_test: data => {
+		const timing = TIMING_OPTS.find(o => o.value === data.soilTiming)?.label || data.soilTiming;
+		const lab = data.soilLab.trim();
+
+		return {
+			name: `Soil Test — ${timing}${lab ? ` (${lab})` : ''}`,
+			details: {
+				...data.soilProps,
+				lab: lab || null,
+				timing: data.soilTiming,
+				sampleDepth: data.soilDepth,
+				...Object.fromEntries(SOIL_RESULTS.map(({ key }) => [key, numVal(data[`soil_${key}`])])),
+				labCost: numVal(data.soilLabCost),
+			},
+		};
+	},
+	observation: data => ({
+		name: data.obsProps.description || OBS_TYPES.find(t => t.value === data.obsType)?.label || 'Observation',
+		details: { type: data.obsType, ...data.obsProps },
+	}),
+};
+
+export const eventRecord = data => (RECORDS[data.category] ?? RECORDS.observation)(data);
+
 export default class EventDialog extends FormDialog {
 	constructor(options = {}) {
 		const isEdit = !!options.event?.id;
+		const event = options.event || {};
+		const fieldId = options.fieldId || event.fieldId || '';
+		const prev = parseDetails(event.details);
 
-		// The body is built by hand below, so the form holds no inputs and saving collects from the body; a body missing
-		// its field or date answers with what's missing, which keeps the dialog open and shows on its failure line
+		const form = () => this.form;
+		const field = key => this.form.inputElements[key];
+		const data = () => this.form.options.data;
+		// The emoji guessed from what's typed in the field that names the event, unless one has been typed
+		const refreshEmoji = name => (field('emoji').options.auto = detectEmoji(data().category, name));
+		const half = inputs => ({
+			type: 'group',
+			style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: space.sm },
+			inputs,
+		});
+
 		super({
 			header: isEdit ? 'Edit Event' : 'Log Event',
-			inputs: [],
-			onSave: async () => {
-				const missing = this._missing();
+			data: startingData(event, fieldId, prev),
+			inputs: [
+				{
+					key: 'fieldId',
+					label: 'Field',
+					InputComponent: Select,
+					options: [],
+					validate: value => (value ? null : 'Choose a field'),
+					onChange: ({ value }) => (this._acreage = this._fields?.find(f => f.value === value)?.acreage || 0),
+				},
+				{
+					key: 'category',
+					label: 'Category',
+					InputComponent: Select,
+					options: EVENT_CATEGORIES.map(({ value, label }) => ({ value, label })),
+					onChange: ({ value }) => (field('emoji').options.auto = detectEmoji(value, '')),
+				},
+				emojiInput('emoji', { title: 'Tap to change emoji — auto-detected from event name' }),
+				{ key: 'date', label: 'Date', type: 'date', validate: value => (value ? null : 'Choose a date') },
 
-				if (missing) return missing;
+				// Crop
+				{
+					key: 'cropSpecies',
+					label: 'Crop',
+					condition: is('crop'),
+					placeholder: 'e.g. Corn, Winter Wheat, Grain Sorghum…',
+					onInput: ({ value }) => refreshEmoji(value),
+				},
+				{
+					key: 'cropSeedSupply',
+					label: 'Seed from inventory (optional)',
+					condition: is('crop'),
+					InputComponent: Select,
+					options: [MANUAL_SEED],
+				},
+				{
+					key: 'cropSeedCost',
+					label: 'Seed Cost/Acre ($)',
+					condition: is('crop'),
+					placeholder: 'Optional',
+					...numberField({ step: '0.01' }),
+				},
+				{ key: 'cropProps', label: 'Properties', condition: is('crop'), InputComponent: PropertiesField },
 
-				return stayOpenFor(await options.onSave?.(this._collectData()));
-			},
+				...harvestInputs({ form, onEmojiRefresh: refreshEmoji }),
+				...coverCropInputs(),
+
+				// Stock
+				{
+					key: 'lsSpecies',
+					label: 'Species',
+					condition: is('livestock'),
+					placeholder: 'e.g. Angus cattle, Dorper sheep, Broiler chickens',
+					suggestions: COMMON_SPECIES,
+					onInput: ({ value }) => refreshEmoji(value),
+				},
+				half([
+					{
+						key: 'lsHead',
+						label: 'Head Count',
+						condition: is('livestock'),
+						...numberField({ min: '1' }),
+					},
+					{ key: 'lsEntryWt', label: 'Entry Wt (lbs/head)', condition: is('livestock'), ...numberField() },
+				]),
+				{ key: 'lsProps', label: 'Properties', condition: is('livestock'), InputComponent: PropertiesField },
+
+				// Input
+				{ key: 'inType', label: 'Type', condition: is('input'), InputComponent: Select, options: INPUT_TYPES },
+				{ key: 'inProduct', label: 'Product', condition: is('input'), placeholder: 'e.g. Roundup' },
+				{
+					key: 'inRate',
+					label: 'Rate',
+					condition: is('input'),
+					placeholder: 'e.g. 22 oz/ac',
+					// The cost follows the rate, at the cost per unit of the supply picked
+					onInput: ({ value }) => {
+						const supply = this._supplies?.get(data().inSupply);
+						const rate = String(value).match(/[\d.]+/);
+
+						if (supply?.costPerUnit && rate) data().inCost = (Number(rate[0]) * Number(supply.costPerUnit)).toFixed(2);
+					},
+				},
+				{ key: 'inCost', label: 'Cost/Acre ($)', condition: is('input'), ...numberField({ step: '0.01' }) },
+				{
+					key: 'inSupply',
+					label: 'From inventory (optional)',
+					condition: is('input'),
+					InputComponent: Select,
+					options: [MANUAL_SUPPLY],
+					// The supply picked names the product, and its unit is the rate's
+					onChange: ({ value }) => {
+						const supply = this._supplies?.get(value);
+
+						if (!supply?.name) return;
+
+						data().inProduct = supply.name;
+						if (supply.unit) field('inRate').elem.placeholder = `amount per ac (${supply.unit}/ac)`;
+					},
+				},
+
+				// Tillage
+				{ key: 'tilType', label: 'Type', condition: is('tillage'), InputComponent: Select, options: TILLAGE_TYPES },
+				{
+					key: 'tilCost',
+					label: 'Cost/Acre ($)',
+					condition: is('tillage'),
+					placeholder: 'Optional',
+					...numberField({ step: '0.01' }),
+				},
+				{ key: 'tilProps', label: 'Properties', condition: is('tillage'), InputComponent: PropertiesField },
+
+				// Soil test
+				{ key: 'soilLab', label: 'Lab', condition: is('soil_test'), placeholder: 'e.g. Regen Ag, Ward Labs' },
+				{
+					key: 'soilTiming',
+					label: 'Timing',
+					condition: is('soil_test'),
+					InputComponent: Select,
+					options: TIMING_OPTS,
+				},
+				{
+					key: 'soilDepth',
+					label: 'Sample Depth',
+					condition: is('soil_test'),
+					InputComponent: Select,
+					options: DEPTH_OPTS,
+				},
+				half(
+					SOIL_RESULTS.map(({ key, label }) => ({
+						key: `soil_${key}`,
+						label,
+						condition: is('soil_test'),
+						placeholder: '—',
+						...numberField({ step: 'any' }),
+					})),
+				),
+				{
+					key: 'soilLabCost',
+					label: 'Lab Cost ($)',
+					condition: is('soil_test'),
+					placeholder: 'Total cost for this test',
+					...numberField({ step: '0.01' }),
+				},
+				// Any lab result or custom field not covered above
+				{ key: 'soilProps', label: 'Properties', condition: is('soil_test'), InputComponent: PropertiesField },
+
+				// Observation, and any category without details of its own
+				{ key: 'obsType', label: 'Type', condition: isObservation, InputComponent: Select, options: OBS_TYPES },
+				{ key: 'obsProps', label: 'Properties', condition: isObservation, InputComponent: PropertiesField },
+
+				{ key: 'notes', label: 'Notes', placeholder: 'Optional' },
+			],
+			onSave: async values => stayOpenFor(await options.onSave?.(this._collectData(values))),
 			...(isEdit &&
 				options.onDelete && {
 					onDelete: async () => stayOpenFor(await options.onDelete()),
@@ -183,558 +473,81 @@ export default class EventDialog extends FormDialog {
 			...withoutCallbacks(options),
 		});
 
-		this._event = options.event || {};
-		this._fieldId = options.fieldId || this._event.fieldId || '';
+		this._event = event;
+		this._fieldId = fieldId;
 		this._acreage = options.acreage || 0;
-		this._getters = {};
-		this._detailGetters = {};
 
-		this._buildForm();
+		this._loadChoices(prev);
 	}
 
-	async _buildForm() {
+	// The fields, supplies and suggestions the fields offer, filled in as they arrive
+	async _loadChoices(prev) {
+		const { inputElements } = this.form;
+		const data = this.form.options.data;
+
+		getCropSuggestions()
+			.then(crops => (inputElements.cropSpecies.options.suggestions = crops))
+			.catch(() => {
+				/* suggestions unavailable — static list in use */
+			});
+
+		import('../api/supplies')
+			.then(({ getSupplies }) => getSupplies())
+			.then(result => {
+				const supplies = Object.values(result?.body || {}).sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+				const seeds = supplies.filter(s => s.category === 'seed');
+				const inputs = supplies.filter(s => INPUT_SUPPLY_CATEGORIES.includes(s.category));
+
+				this._supplies = new Map(inputs.map(s => [s.id, s]));
+
+				inputElements.cropSeedSupply.options.options = [MANUAL_SEED, ...seeds.map(supplyOption)];
+				inputElements.inSupply.options.options = [MANUAL_SUPPLY, ...inputs.map(supplyOption)];
+
+				// A supply since used up or deleted isn't listed, and stays unpicked
+				if (seeds.some(seed => seed.id === prev.seedSupplyId)) data.cropSeedSupply = prev.seedSupplyId;
+				if (inputs.some(supply => supply.id === prev.supplyId)) data.inSupply = prev.supplyId;
+			})
+			.catch(() => {
+				/* supply list unavailable */
+			});
+
 		// Livestock species suggestions: the common ones, plus every species already logged
 		const { getEvents } = await import('../api/events');
-		const eventsData = await getEvents();
-		const knownSpecies = new Set([
-			'Cattle',
-			'Angus cattle',
-			'Hereford cattle',
-			'Sheep',
-			'Dorper sheep',
-			'Hair sheep',
-			'Chickens',
-			'Broiler chickens',
-			'Layer chickens',
-			'Turkeys',
-			'Pigs',
-			'Ducks',
-			'Geese',
-			'Bison',
-			'Goats',
-			'Rabbits',
-		]);
+		const [eventsData, fieldsData] = await Promise.all([getEvents(), getFields()]);
+		const knownSpecies = new Set(COMMON_SPECIES);
 
-		for (const event of Object.values(eventsData?.body || {})) {
-			if (event.category === 'livestock' && event.name) {
-				knownSpecies.add(event.name.split(/[—–,(]/)[0].trim());
-			}
+		for (const logged of Object.values(eventsData?.body || {})) {
+			if (logged.category === 'livestock' && logged.name) knownSpecies.add(logged.name.split(/[—–,(]/)[0].trim());
 		}
 
-		this._knownSpecies = [...knownSpecies];
+		inputElements.lsSpecies.options.suggestions = [...knownSpecies];
 
-		const fieldsData = await getFields();
-		const fieldOptions = Object.values(fieldsData?.body || {}).map(f => ({
+		this._fields = Object.values(fieldsData?.body || {}).map(f => ({
 			value: f.id,
 			label: f.name || 'Unnamed Field',
 			acreage: f.acreage,
 		}));
 
-		const form = new Component({ appendTo: this.body, style: { paddingBottom: space.sm } });
-
-		new FormLabel({ appendTo: form, textContent: 'Field' });
-		const fieldSelect = new Select({ appendTo: form });
-
-		fieldSelect.options.options = fieldOptions.map(({ value, label }) => ({ value, label }));
-
-		fieldSelect.options.value = this._fieldId || fieldOptions[0]?.value || '';
-
-		this._getters.fieldId = () => fieldSelect.options.value;
-
-		fieldSelect.elem.addEventListener('change', () => {
-			const opt = fieldOptions.find(f => f.value === fieldSelect.options.value);
-
-			this._acreage = opt?.acreage || 0;
-			this._refreshCalculations?.();
-		});
-
-		// Picking a category rebuilds the details below for that category
-		new FormLabel({ appendTo: form, textContent: 'Category' });
-
-		let _selectedCategory = this._event.category || 'crop';
-
-		new Select({
-			appendTo: form,
-			options: EVENT_CATEGORIES.map(({ value, label }) => ({ value, label })),
-			value: _selectedCategory,
-			onChange: ({ value }) => {
-				_selectedCategory = value;
-				buildDetails();
-				this._onCategoryChange?.();
-			},
-		});
-
-		this._getters.category = () => _selectedCategory;
-
-		// Emoji row: auto-detected with override
-		const emojiRow = new EmojiRow({ appendTo: form });
-
-		const emojiId = `emoji-${Math.random().toString(36).slice(2)}`;
-
-		const emojiPreview = new Input({
-			appendTo: emojiRow,
-			type: 'text',
-			maxLength: 4,
-			title: 'Tap to change emoji — auto-detected from event name',
-			attributes: { id: emojiId },
-		});
-
-		emojiPreview.options.value = this._event.emoji || detectEmoji(_selectedCategory, '');
-
-		// The hint is the field's label, so it names the field as well as saying where the emoji came from
-		const emojiHint = new Elem({
-			tag: 'label',
-			appendTo: emojiRow,
-			addClass: 'hint',
-			attributes: { for: emojiId },
-			textContent: 'Emoji: auto-detected · tap to change',
-		});
-
-		// Update emoji when name is entered (after detail section builds)
-		this._refreshEmoji = name => {
-			if (!emojiPreview.elem.dataset.manual) {
-				const detected = detectEmoji(_selectedCategory, name);
-
-				emojiPreview.options.value = detected;
-				emojiHint.elem.textContent = 'Emoji: auto-detected · tap to change';
-			}
-		};
-
-		emojiPreview.elem.addEventListener('input', () => {
-			emojiPreview.elem.dataset.manual = emojiPreview.options.value ? '1' : '';
-			emojiHint.elem.textContent = emojiPreview.options.value
-				? 'Emoji: custom · clear to auto-detect'
-				: 'Emoji: auto-detected · tap to change';
-		});
-
-		// Hook into category change to refresh auto-detected emoji
-		this._onCategoryChange = () => {
-			if (!emojiPreview.elem.dataset.manual) emojiPreview.options.value = detectEmoji(_selectedCategory, '');
-		};
-
-		this._getters.emoji = () => emojiPreview.options.value || null;
-
-		const today = toDateOnly();
-
-		new FormLabel({ appendTo: form, textContent: 'Date' });
-		const dateIn = new Input({ appendTo: form, attributes: { type: 'date' } });
-
-		dateIn.options.value = this._event.date || today;
-
-		this._getters.date = () => dateIn.options.value;
-		this._getters.season = () => {
-			const d = parseDate(dateIn.options.value);
-
-			return d ? d.getFullYear() : new Date().getFullYear();
-		};
-
-		dateIn.elem.addEventListener('change', () => this._refreshCalculations?.());
-
-		this._detailContainer = new Component({ appendTo: form });
-
-		let prevDetails = {};
-
-		try {
-			const rawDetails = this._event.details;
-			const parsedDetails = typeof rawDetails === 'string' ? JSON.parse(rawDetails) : rawDetails;
-			prevDetails = parsedDetails || {};
-		} catch {
-			prevDetails = {};
-		}
-
-		const buildDetails = () => {
-			this._detailContainer.empty();
-			this._detailGetters = {};
-			this._refreshCalculations = null;
-			this._buildCategory(this._detailContainer, _selectedCategory, prevDetails);
-		};
-
-		buildDetails();
-
-		new FormLabel({ appendTo: form, textContent: 'Notes' });
-		const notesEl = new Input({
-			appendTo: form,
-			attributes: { type: 'text', placeholder: 'Optional' },
-		});
-
-		notesEl.options.value = this._event.notes || '';
-		this._getters.notes = () => notesEl.options.value;
+		inputElements.fieldId.options.options = this._fields.map(({ value, label }) => ({ value, label }));
+		data.fieldId = this._fieldId || this._fields[0]?.value || '';
+		inputElements.fieldId.options.value = data.fieldId;
 	}
 
-	_buildCategory(container, category, prev) {
-		const g = this._detailGetters;
-
-		if (category === 'crop') {
-			const speciesEl = makeCropCombobox(container, {
-				label: 'Crop',
-				value: prev.species || '',
-				placeholder: 'e.g. Corn, Winter Wheat, Grain Sorghum…',
-			});
-
-			speciesEl.elem.addEventListener('input', () => this._refreshEmoji?.(speciesEl.options.value));
-
-			// Seed cost from inventory
-			new FormLabel({ appendTo: container, textContent: 'Seed from inventory (optional)' });
-			const manualSeed = { value: '', label: '— enter cost manually —' };
-			const seedSelect = new Select({ appendTo: container, options: [manualSeed] });
-
-			seedSelect.elem.style.width = '100%';
-
-			new FormLabel({ appendTo: container, textContent: 'Seed Cost/Acre ($)' });
-			const seedCostEl = new Input({
-				appendTo: container,
-				attributes: { type: 'number', step: '0.01', placeholder: 'Optional' },
-			});
-
-			seedCostEl.options.value = prev.seedCostPerAcre || '';
-
-			import('../api/supplies')
-				.then(({ getSupplies }) => getSupplies())
-				.then(data => {
-					const seeds = Object.values(data?.body || {})
-						.filter(s => s.category === 'seed')
-						.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
-
-					seedSelect.options.options = [manualSeed, ...seeds.map(supplyOption)];
-
-					// A supply since used up or deleted isn't listed, and stays unpicked
-					if (seeds.some(seed => seed.id === prev.seedSupplyId)) seedSelect.options.value = prev.seedSupplyId;
-				})
-				.catch(() => {
-					/* supply list unavailable */
-				});
-
-			const { collect: collectCropProps } = makePropertiesEditor(container, {
-				variety: prev.variety || '',
-				seedingRate: prev.seedingRate || '',
-			});
-
-			g.name = () => {
-				const p = collectCropProps();
-				return `${speciesEl.options.value}${p.variety ? ` — ${p.variety}` : ''}`;
-			};
-			g.details = () => ({
-				...collectCropProps(),
-				species: speciesEl.options.value,
-				seedCostPerAcre: toNum(seedCostEl.options.value),
-				seedSupplyId: seedSelect.options.value || null,
-			});
-		} else if (category === 'harvest') {
-			this._buildHarvestSection(container, prev, g);
-		} else if (category === 'cover_crop') {
-			this._buildCoverCropSection(container, prev, g);
-		} else if (category === 'livestock') {
-			this._buildLivestockSection(container, prev, g);
-		} else if (category === 'input') {
-			new FormLabel({ appendTo: container, textContent: 'Type' });
-			const typeSelect = new Select({ appendTo: container });
-
-			typeSelect.options.options = INPUT_TYPES;
-
-			typeSelect.options.value = prev.inputType || 'herbicide';
-
-			new FormLabel({ appendTo: container, textContent: 'Product' });
-			const productEl = new Input({ appendTo: container, attributes: { placeholder: 'e.g. Roundup' } });
-
-			productEl.options.value = prev.product || '';
-
-			new FormLabel({ appendTo: container, textContent: 'Rate' });
-			const rateEl = new Input({ appendTo: container, attributes: { placeholder: 'e.g. 22 oz/ac' } });
-
-			rateEl.options.value = prev.rate || '';
-
-			new FormLabel({ appendTo: container, textContent: 'Cost/Acre ($)' });
-			const costEl = new Input({ appendTo: container, attributes: { type: 'number', step: '0.01' } });
-
-			costEl.options.value = prev.costPerAcre || '';
-
-			// Supply inventory link
-			new FormLabel({ appendTo: container, textContent: 'From inventory (optional)' });
-			const manualSupply = { value: '', label: '— enter manually —' };
-			const supplySelect = new Select({ appendTo: container, options: [manualSupply] });
-			// The listed supplies by id, for the name, unit and cost of the one picked
-			const supplies = new Map();
-
-			supplySelect.elem.style.width = '100%';
-
-			// Load supply options asynchronously
-			import('../api/supplies')
-				.then(({ getSupplies }) => getSupplies())
-				.then(data => {
-					const inputSupplies = Object.values(data?.body || {}).filter(s =>
-						['herbicide', 'fertilizer', 'amendment', 'fungicide', 'insecticide', 'other'].includes(s.category),
-					);
-
-					inputSupplies.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
-
-					for (const s of inputSupplies) supplies.set(s.id, s);
-
-					supplySelect.options.options = [manualSupply, ...inputSupplies.map(supplyOption)];
-
-					// A supply since used up or deleted isn't listed, and stays unpicked
-					if (inputSupplies.some(supply => supply.id === prev.supplyId)) supplySelect.options.value = prev.supplyId;
-				})
-				.catch(() => {
-					/* supply list unavailable */
-				});
-
-			supplySelect.elem.addEventListener('change', () => {
-				const supply = supplies.get(supplySelect.options.value);
-
-				if (supply?.name) {
-					productEl.options.value = supply.name;
-					// Auto-fill rate placeholder with unit
-					if (supply.unit) rateEl.elem.placeholder = `amount per ac (${supply.unit}/ac)`;
-				}
-			});
-
-			// Auto-calculate cost when rate changes
-			const recalculateCost = () => {
-				const supply = supplies.get(supplySelect.options.value);
-
-				if (!supply?.costPerUnit) return;
-
-				const rateMatch = String(rateEl.options.value).match(/[\d.]+/);
-
-				if (rateMatch) {
-					const rate = Number(rateMatch[0]);
-					const cost = rate * Number(supply.costPerUnit);
-
-					costEl.options.value = cost.toFixed(2);
-				}
-			};
-
-			rateEl.elem.addEventListener('input', recalculateCost);
-
-			g.name = () => productEl.options.value || typeSelect.options.value;
-			g.details = () => ({
-				inputType: typeSelect.options.value,
-				product: productEl.options.value,
-				rate: rateEl.options.value,
-				costPerAcre: toNum(costEl.options.value),
-				supplyId: supplySelect.options.value || null,
-			});
-		} else if (category === 'tillage') {
-			new FormLabel({ appendTo: container, textContent: 'Type' });
-			const typeSelect = new Select({ appendTo: container });
-
-			typeSelect.options.options = TILLAGE_TYPES;
-
-			typeSelect.options.value = prev.type || 'no_till';
-
-			new FormLabel({ appendTo: container, textContent: 'Cost/Acre ($)' });
-			const tillageCostEl = new Input({
-				appendTo: container,
-				attributes: { type: 'number', step: '0.01', placeholder: 'Optional' },
-			});
-
-			tillageCostEl.options.value = prev.costPerAcre || '';
-
-			const { collect: collectTillageProps } = makePropertiesEditor(container, {
-				depth: prev.depth != null ? String(prev.depth) : '',
-				equipment: prev.equipment || '',
-			});
-
-			g.name = () => TILLAGE_TYPES.find(t => t.value === typeSelect.options.value)?.label || typeSelect.options.value;
-			g.details = () => ({
-				...collectTillageProps(),
-				type: typeSelect.options.value,
-				costPerAcre: toNum(tillageCostEl.options.value),
-			});
-		} else if (category === 'soil_test') {
-			const TIMING_OPTS = [
-				{ value: 'pre-season', label: 'Pre-season' },
-				{ value: 'post-harvest', label: 'Post-harvest' },
-				{ value: 'mid-season', label: 'Mid-season' },
-				{ value: 'fall', label: 'Fall' },
-			];
-			const DEPTH_OPTS = [
-				{ value: '0-6 in', label: '0–6 in' },
-				{ value: '6-12 in', label: '6–12 in' },
-				{ value: '0-12 in', label: '0–12 in' },
-			];
-
-			new FormLabel({ appendTo: container, textContent: 'Lab' });
-			const labEl = new Input({ appendTo: container, attributes: { placeholder: 'e.g. Regen Ag, Ward Labs' } });
-
-			labEl.options.value = prev.lab || '';
-
-			new FormLabel({ appendTo: container, textContent: 'Timing' });
-			const timingEl = new Select({ appendTo: container });
-
-			timingEl.options.options = TIMING_OPTS;
-
-			timingEl.options.value = prev.timing || 'pre-season';
-
-			new FormLabel({ appendTo: container, textContent: 'Sample Depth' });
-			const depthEl = new Select({ appendTo: container });
-
-			depthEl.options.options = DEPTH_OPTS;
-
-			depthEl.options.value = prev.sampleDepth || '0-6 in';
-
-			new FormLabel({ appendTo: container, textContent: 'Results' });
-
-			const gridEl = new ResultsGrid({ appendTo: container });
-
-			const makeNum = (label, key, unit = '') => {
-				const cell = new Elem({ tag: 'div', appendTo: gridEl });
-				new FormLabel({ appendTo: cell, textContent: unit ? `${label} (${unit})` : label });
-				const el = new Input({
-					appendTo: cell,
-					attributes: { type: 'number', step: 'any', placeholder: '—' },
-				});
-
-				el.options.value = prev[key] != null && prev[key] !== '' ? String(prev[key]) : '';
-				return el;
-			};
-
-			const omEl = makeNum('Organic Matter', 'organicMatter', '%');
-			const respEl = makeNum('Respiration', 'soilRespiration', 'mg CO₂/g');
-			const phEl = makeNum('pH', 'pH');
-			const brayPEl = makeNum('Bray P', 'brayP', 'ppm');
-			const potassiumEl = makeNum('Potassium', 'potassium', 'ppm');
-			const cecEl = makeNum('CEC', 'cec', 'meq/100g');
-			const nitrateEl = makeNum('Nitrate', 'nitrate', 'ppm');
-
-			new FormLabel({ appendTo: container, textContent: 'Lab Cost ($)' });
-			const labCostEl = new Input({
-				appendTo: container,
-				attributes: { type: 'number', step: '0.01', placeholder: 'Total cost for this test' },
-			});
-
-			labCostEl.options.value = prev.labCost || '';
-
-			// Properties bag — any lab result or custom field not covered above
-			const KNOWN = new Set([
-				'lab',
-				'timing',
-				'sampleDepth',
-				'organicMatter',
-				'soilRespiration',
-				'pH',
-				'brayP',
-				'potassium',
-				'cec',
-				'nitrate',
-				'labCost',
-			]);
-			const prevProps = Object.fromEntries(Object.entries(prev).filter(([k]) => !KNOWN.has(k)));
-			const { collect: collectSoilProps } = makePropertiesEditor(container, prevProps);
-
-			const numVal = el => (el.options.value !== '' ? Number(el.options.value) : null);
-
-			g.name = () => {
-				const t = TIMING_OPTS.find(o => o.value === timingEl.options.value)?.label || timingEl.options.value;
-				const lab = labEl.options.value.trim();
-				return `Soil Test — ${t}${lab ? ` (${lab})` : ''}`;
-			};
-			g.details = () => ({
-				...collectSoilProps(),
-				lab: labEl.options.value.trim() || null,
-				timing: timingEl.options.value,
-				sampleDepth: depthEl.options.value,
-				organicMatter: numVal(omEl),
-				soilRespiration: numVal(respEl),
-				pH: numVal(phEl),
-				brayP: numVal(brayPEl),
-				potassium: numVal(potassiumEl),
-				cec: numVal(cecEl),
-				nitrate: numVal(nitrateEl),
-				labCost: numVal(labCostEl),
-			});
-		} else {
-			new FormLabel({ appendTo: container, textContent: 'Type' });
-			const typeEl = new Select({ appendTo: container });
-
-			typeEl.options.options = OBS_TYPES;
-
-			typeEl.options.value = prev.type || 'weed_pressure';
-
-			const { collect: collectObsProps } = makePropertiesEditor(container, {
-				description: prev.description || '',
-				severity: prev.severity || '',
-			});
-
-			g.name = () => {
-				const p = collectObsProps();
-				return p.description || OBS_TYPES.find(t => t.value === typeEl.options.value)?.label || 'Observation';
-			};
-			g.details = () => ({ type: typeEl.options.value, ...collectObsProps() });
-		}
-	}
-
-	_buildHarvestSection(container, prev, g) {
-		buildHarvestSection(container, prev, g, { onEmojiRefresh: v => this._refreshEmoji?.(v) });
-	}
-
-	_buildCoverCropSection(container, prev, g) {
-		buildCoverCropSection(container, prev, g);
-	}
-
-	_buildLivestockSection(container, prev, g) {
-		new FormLabel({ appendTo: container, textContent: 'Species' });
-		const speciesInput = new Input({
-			appendTo: container,
-			attributes: { placeholder: 'e.g. Angus cattle, Dorper sheep, Broiler chickens' },
-			value: prev.species || '',
-			suggestions: this._knownSpecies,
-		});
-
-		speciesInput.elem.addEventListener('input', () => this._refreshEmoji?.(speciesInput.options.value));
-
-		const row1 = new Component({
-			appendTo: container,
-			style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: space.sm },
-		});
-
-		new FormLabel({ appendTo: row1, textContent: 'Head Count' });
-		const headEl = new Input({ appendTo: row1, attributes: { type: 'number', min: '1' } });
-
-		headEl.options.value = prev.headCount || '';
-
-		new FormLabel({ appendTo: row1, textContent: 'Entry Wt (lbs/head)' });
-		const entryWtEl = new Input({ appendTo: row1, attributes: { type: 'number' } });
-
-		entryWtEl.options.value = prev.entryWeight || '';
-
-		const { collect: collectStockProps } = makePropertiesEditor(container, {
-			stockingNotes: prev.stockingNotes || '',
-		});
-
-		g.name = () => `${speciesInput.options.value}${headEl.options.value !== '' ? ` (${headEl.options.value})` : ''}`;
-		g.details = () => ({
-			species: speciesInput.options.value,
-			headCount: toNum(headEl.options.value),
-			entryWeight: toNum(entryWtEl.options.value),
-			...collectStockProps(),
-		});
-	}
-
-	_missing() {
-		if (!this._getters.fieldId?.()) return 'Choose a field';
-		if (!this._getters.date?.()) return 'Choose a date';
-
-		return '';
-	}
-
-	_collectData() {
-		const fieldId = this._getters.fieldId?.();
-		const date = this._getters.date?.();
-		const category = this._getters.category?.();
-		const name = this._detailGetters?.name?.() || '';
-		const emojiOverride = this._getters.emoji?.();
-		const autoEmoji = detectEmoji(category, name);
+	_collectData(values = this.form.options.data) {
+		const { fieldId, date, category, emoji: typed, notes } = values;
+		const { name, details } = eventRecord(values);
+		const emoji = typed || null;
+		const parsed = parseDate(date);
 
 		return {
 			fieldId,
 			date,
-			season: this._getters.season?.(),
+			season: parsed ? parsed.getFullYear() : new Date().getFullYear(),
 			category,
 			name,
-			emoji: emojiOverride !== autoEmoji ? emojiOverride : '',
-			details: this._detailGetters?.details?.() || {},
-			notes: this._getters.notes?.() || '',
+			emoji: emoji !== detectEmoji(category, name) ? emoji : '',
+			details,
+			notes: notes || '',
 		};
 	}
 }

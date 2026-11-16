@@ -1,5 +1,6 @@
 module.exports = {
 	skipWords: [
+		'meq',
 		'localhost',
 		'favicon',
 		'nanoid',
