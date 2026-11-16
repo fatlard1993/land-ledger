@@ -1,6 +1,6 @@
-import { Component, Input, Select, styled, theme } from '@vanilla-bean/components';
+import { Button, Component, Input, Select, styled, theme } from '@vanilla-bean/components';
 
-import { AREA_UNITS } from '../geo';
+import { AREA_UNITS, convertArea } from '../geo';
 import { labelNextField } from '../Layout';
 
 const { space } = theme;
@@ -95,39 +95,86 @@ const AreaFrame = styled(
 );
 
 /**
- * A size input with its unit beside it, in one field's frame
- * @param {Component|HTMLElement} appendTo - Where it goes
- * @param {object} options - Area options
- * @param {number|string} [options.estimate] - The size shown and hinted before the user types one
- * @param {string} options.unit - The unit selected
- * @returns {{ row: Component, input: Input, unitSelect: Select }} The frame (for a recalculate button), the size input and the unit select
+ * An area: its size with the unit beside it, in one field's frame, and a button that measures it from the boundary
+ * when there is one. Its value is `{ size, unit }`; the size is a number once typed. The Form's label names the size.
+ * @param {object} [options] - Component options
+ * @param {{ size: number|string, unit: string }} [options.value] - The size shown, and its unit
+ * @param {number} [options.sqm] - The boundary's area in square metres, measured again in the unit picked
+ * @param {boolean} [options.measurable] - Whether to offer the measure button
  */
-export const areaField = (appendTo, { estimate, unit }) => {
-	new Caption({ appendTo, textContent: 'Area' });
+export class AreaField extends AreaFrame {
+	static schema = {
+		value: {
+			get default() {
+				return { size: '', unit: 'ac' };
+			},
+			set(value) {
+				if (!this._size) return;
 
-	const row = new AreaFrame({ appendTo });
-
-	const input = new Input({
-		appendTo: row,
-		attributes: {
-			type: 'number',
-			step: '0.01',
-			min: '0',
-			placeholder: estimate ? `~${estimate}` : 'Size',
-			'aria-label': 'Area',
+				this._size.options.value = value?.size ?? '';
+				this._unit.options.value = value?.unit;
+			},
 		},
-	});
+		sqm: {},
+		measurable: {},
+	};
 
-	input.options.value = estimate || '';
+	build() {
+		const { size = '', unit } = this.options.value ?? {};
 
-	const unitSelect = new Select({ appendTo: row, attributes: { 'aria-label': 'Area unit' } });
+		// The field's own change isn't the area's: it's announced as the size and unit together
+		const owned = part => {
+			part.elem.addEventListener('change', event => {
+				event.stopPropagation();
+				this._announce();
+			});
+			part.elem.addEventListener('input', () => this._announce());
 
-	unitSelect.options.options = AREA_UNITS;
+			return part;
+		};
 
-	unitSelect.options.value = unit;
+		this._size = owned(
+			new Input({
+				appendTo: this,
+				value: size,
+				attributes: { type: 'number', step: '0.01', min: '0', placeholder: size ? `~${size}` : 'Size', title: 'Area' },
+			}),
+		);
+		this._unit = owned(
+			new Select({ appendTo: this, attributes: { 'aria-label': 'Area unit' }, options: AREA_UNITS, value: unit }),
+		);
 
-	return { row, input, unitSelect };
-};
+		if (this.options.measurable) {
+			new Button({
+				appendTo: this,
+				variant: 'flat',
+				icon: 'rotate-left',
+				title: 'Calculate from boundary',
+				attributes: { type: 'button' },
+				onPointerPress: () => {
+					const { sqm } = this.options;
+
+					if (!sqm) return;
+
+					const meta = AREA_UNITS.find(u => u.value === this._unit.options.value);
+
+					this._size.options.value = convertArea(sqm, this._unit.options.value).toFixed(meta?.decimals ?? 1);
+					this._announce();
+				},
+			});
+		}
+	}
+
+	// The size's own field, which the area's label names
+	get labelTarget() {
+		return this._size;
+	}
+
+	_announce() {
+		this.options.value = { size: this._size.options.value, unit: this._unit.options.value };
+		this.emit('change', { value: this.options.value });
+	}
+}
 
 /**
  * A checkbox with its caption beside it
