@@ -230,3 +230,19 @@ export const emojiInput = (key = 'emoji', options = {}) => ({
 	label: { label: EMOJI_AUTO_HINT, variant: 'inline-after' },
 	...options,
 });
+
+/**
+ * Keeps a Form's groups laid out as they were declared. Form shows a group again by clearing its display, which drops
+ * the grid a group's `style` gives it; this puts the declared display back after each change. Call it once the form is
+ * built, before any field has changed.
+ * @param {Form} form - The form whose groups hold conditional fields
+ */
+export const keepGroupLayout = form => {
+	const groups = [...form.elem.querySelectorAll('div')]
+		.filter(elem => elem.style.display && elem.style.display !== 'none')
+		.map(elem => [elem, elem.style.display]);
+
+	form.options.data.addEventListener('set', () => {
+		for (const [elem, display] of groups) if (elem.style.display !== 'none') elem.style.display = display;
+	});
+};
