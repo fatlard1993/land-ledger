@@ -1,5 +1,5 @@
 import L from 'leaflet';
-import { Elem, FormDialog, Icon, Input, Notify, theme } from '@vanilla-bean/components';
+import { Elem, FormDialog, Icon, Notify, theme } from '@vanilla-bean/components';
 
 const { colors, space } = theme;
 
@@ -203,12 +203,25 @@ export function createMapControls(
 
 			const current = await getAppSettings();
 
-			// The body is built by hand below, so the form holds no inputs and saving reads the URL field
 			const dialog = new FormDialog({
 				header: 'Parcel Data Source',
-				inputs: [],
-				onSave: async () => {
-					const url = input.options.value.trim();
+				intro: new Elem({
+					tag: 'p',
+					style: { fontSize: '13px', color: colors.muted, margin: `0 0 ${space.sm}` },
+					textContent:
+						"Paste your county's ArcGIS FeatureServer layer URL. The property-line search button will query it for parcels in your map view.",
+				}),
+				data: { url: current.parcelServiceUrl || '' },
+				inputs: [
+					{
+						key: 'url',
+						label: 'Parcel service URL',
+						type: 'url',
+						placeholder: 'https://services3.arcgis.com/.../FeatureServer/19',
+					},
+				],
+				onSave: async ({ url: typed }) => {
+					const url = typed.trim();
 
 					if (!(await updateAppSettings({ parcelServiceUrl: url }))) return 'Could not save the parcel service';
 
@@ -222,24 +235,7 @@ export function createMapControls(
 				},
 			});
 
-			new Elem({
-				tag: 'p',
-				appendTo: dialog.body,
-				style: { fontSize: '13px', color: colors.muted, margin: `0 0 ${space.sm}` },
-				textContent:
-					"Paste your county's ArcGIS FeatureServer layer URL. The property-line search button will query it for parcels in your map view.",
-			});
-
-			const input = new Input({
-				appendTo: dialog.body,
-				type: 'url',
-				placeholder: 'https://services3.arcgis.com/.../FeatureServer/19',
-				attributes: { 'aria-label': 'Parcel service URL' },
-				style: { marginBottom: space.sm },
-			});
-
-			input.options.value = current.parcelServiceUrl || '';
-
+			// An example, after the field it's for
 			new Elem({
 				tag: 'p',
 				appendTo: dialog.body,
