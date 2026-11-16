@@ -11,10 +11,9 @@ import {
 } from '@vanilla-bean/components';
 
 import { formatDollar } from '../utils/format';
-import { makePropertiesEditor } from '../utils/PropertiesEditor';
+import { numberField, PropertiesField } from '../utils/formFields';
 import { createRevenue, updateSupply, getSupplies } from '../api';
 import { salePriceForSupply } from '../Supplies/SupplyDialog';
-import { FormLabel } from '../Layout';
 import { toDateOnly } from '../utils/dates';
 import { stayOpenFor } from '../utils/stayOpenFor';
 import { SubLabel } from './panelParts';
@@ -57,31 +56,37 @@ const LineSelect = styled(Select, () => 'padding: 6px 8px; font-size: 13px;');
 export function openSellDialog(entityType, entity, onComplete, hide) {
 	const entityLabel = entity.name || entityType;
 
-	// The body is built by hand below, so the form holds no inputs and saving collects from the body
 	const dialog = new FormDialog({
 		header: `Sell ${entityLabel}`,
-		inputs: [],
 		saveLabel: 'Record sale & remove',
-		onSave: async () => {
-			if (priceEl.options.value === '') {
-				priceEl.elem.style.border = `1px solid ${colors.danger}`;
-
-				return 'Enter the sale price';
-			}
-
+		intro: new DialogNote({
+			textContent: `Records a sale income entry and removes ${entityLabel} from the map. All historical records (events, leases, maintenance, etc.) are retained.`,
+		}),
+		data: { price: '', date: toDateOnly(), buyer: '', notes: '' },
+		inputs: [
+			{
+				key: 'price',
+				label: 'Sale Price ($)',
+				placeholder: '0.00',
+				...numberField({ step: '1', min: '0' }),
+				validate: value => (value === '' ? 'Enter the sale price' : null),
+			},
+			{ key: 'date', label: 'Sale Date', type: 'date' },
+			{ key: 'buyer', label: 'Buyer (optional)', placeholder: 'Buyer name or business' },
+			{ key: 'notes', label: 'Notes (optional)', placeholder: 'Terms, conditions, etc.' },
+		],
+		onSave: async ({ price, date, buyer, notes }) => {
 			const stay = stayOpenFor(
 				await createRevenue({
 					body: {
 						entityType,
 						entityId: entity.id,
 						entityName: entity.name || '',
-						date: dateEl.options.value || toDateOnly(),
-						amount: Number(priceEl.options.value),
+						date: date || toDateOnly(),
+						amount: Number(price),
 						type: 'sale',
 						description: `Sale of ${entityLabel}`,
-						notes: [buyerEl.options.value ? `Buyer: ${buyerEl.options.value}` : null, notesEl.options.value || null]
-							.filter(Boolean)
-							.join('\n'),
+						notes: [buyer ? `Buyer: ${buyer}` : null, notes || null].filter(Boolean).join('\n'),
 					},
 				}),
 			);
@@ -93,48 +98,57 @@ export function openSellDialog(entityType, entity, onComplete, hide) {
 		},
 	});
 
-	new DialogNote({
-		appendTo: dialog.body,
-		textContent: `Records a sale income entry and removes ${entityLabel} from the map. All historical records (events, leases, maintenance, etc.) are retained.`,
-	});
-
-	new FormLabel({ appendTo: dialog.body, textContent: 'Sale Price ($)' });
-	const priceEl = new Input({ appendTo: dialog.body, type: 'number', step: '1', placeholder: '0.00', min: '0' });
-
-	new FormLabel({ appendTo: dialog.body, textContent: 'Sale Date' });
-	const dateEl = new Input({ appendTo: dialog.body, type: 'date' });
-	dateEl.options.value = toDateOnly();
-
-	new FormLabel({ appendTo: dialog.body, textContent: 'Buyer (optional)' });
-	const buyerEl = new Input({ appendTo: dialog.body, placeholder: 'Buyer name or business' });
-
-	new FormLabel({ appendTo: dialog.body, textContent: 'Notes (optional)' });
-	const notesEl = new Input({ appendTo: dialog.body, placeholder: 'Terms, conditions, etc.' });
-
-	priceEl.elem.focus();
+	dialog.form.inputElements.price.elem.focus();
 }
 
 export function openRevenueDialog(entityType, entity, existingRecord, onSave, onDelete, incomeTypes = []) {
 	const rec = existingRecord || {};
 	const INCOME_TYPES = incomeTypes.length ? incomeTypes : ['Rental', 'Event hosting', 'Other'];
 
-	// The body is built by hand below, so the form holds no inputs and saving collects from the body
 	const dialog = new FormDialog({
 		header: existingRecord ? 'Edit Income Record' : `Record Income — ${entity.name || ''}`,
-		inputs: [],
-		onSave: async () => {
-			if (amountEl.options.value === '') return 'Enter an amount';
-
+		data: {
+			type: rec.type || '',
+			amount: rec.amount || '',
+			date: rec.date || toDateOnly(),
+			description: rec.description || '',
+			properties: rec.properties || {},
+		},
+		inputs: [
+			{
+				key: 'type',
+				label: 'Income Type',
+				placeholder: 'e.g. Barn rental, Airbnb, Event hosting',
+				suggestions: INCOME_TYPES,
+			},
+			{
+				type: 'group',
+				style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: space.sm },
+				inputs: [
+					{
+						key: 'amount',
+						label: 'Amount ($)',
+						placeholder: '0.00',
+						...numberField({ step: '0.01' }),
+						validate: value => (value === '' ? 'Enter an amount' : null),
+					},
+					{ key: 'date', label: 'Date', type: 'date' },
+				],
+			},
+			{ key: 'description', label: 'Description', placeholder: 'What was the space used for?' },
+			{ key: 'properties', InputComponent: PropertiesField },
+		],
+		onSave: async ({ type, amount, date, description, properties }) => {
 			const stay = stayOpenFor(
 				await onSave({
 					entityType,
 					entityId: entity.id,
 					entityName: entity.name || '',
-					date: dateEl.options.value,
-					amount: Number(amountEl.options.value),
-					type: typeEl.options.value,
-					description: descEl.options.value,
-					properties: collectProps(),
+					date,
+					amount: Number(amount),
+					type,
+					description,
+					properties,
 				}),
 			);
 
@@ -164,36 +178,10 @@ export function openRevenueDialog(entityType, entity, existingRecord, onSave, on
 			}),
 	});
 
-	// Type
-	new FormLabel({ appendTo: dialog.body, textContent: 'Income Type' });
-	const typeEl = new Input({
-		appendTo: dialog.body,
-		placeholder: 'e.g. Barn rental, Airbnb, Event hosting',
-		suggestions: INCOME_TYPES,
-		value: rec.type || '',
-	});
+	const formData = dialog.form.options.data;
 
-	// Amount + Date
-	const row = new Component({
-		appendTo: dialog.body,
-		style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: space.sm },
-	});
-
-	new FormLabel({ appendTo: row, textContent: 'Amount ($)' });
-	const amountEl = new Input({ appendTo: row, type: 'number', step: '0.01', placeholder: '0.00' });
-	amountEl.options.value = rec.amount || '';
-
-	new FormLabel({ appendTo: row, textContent: 'Date' });
-	const dateEl = new Input({ appendTo: row, type: 'date' });
-	dateEl.options.value = rec.date || toDateOnly();
-
-	new FormLabel({ appendTo: dialog.body, textContent: 'Description' });
-	const descEl = new Input({ appendTo: dialog.body, placeholder: 'What was the space used for?' });
-	descEl.options.value = rec.description || '';
-
-	const { collect: collectProps } = makePropertiesEditor(dialog.body, rec.properties || {});
-
-	// Optional: sell from operation inventory
+	// Optional: sell from operation inventory. The lines aren't the record's: they say what stock the sale used, taken
+	// off once it's saved, and fill in its amount and type
 	if (!existingRecord) {
 		const divider = new Component({
 			appendTo: dialog.body,
@@ -229,7 +217,7 @@ export function openRevenueDialog(entityType, entity, existingRecord, onSave, on
 
 			if (total > 0) {
 				totalPreview.elem.textContent = `= ${formatDollar(total, 2)} — auto-fills Amount`;
-				amountEl.options.value = total.toFixed(2);
+				formData.amount = total.toFixed(2);
 			} else {
 				totalPreview.elem.textContent = '';
 			}
@@ -308,7 +296,7 @@ export function openRevenueDialog(entityType, entity, existingRecord, onSave, on
 				if (salePrice != null) priceI.options.value = salePrice.toFixed(2);
 				lineData.price = priceI.options.value;
 
-				if (!typeEl.options.value || typeEl.options.value === '') typeEl.options.value = 'Inventory sale';
+				if (!formData.type) formData.type = 'Inventory sale';
 				recalculateTotal();
 			});
 
