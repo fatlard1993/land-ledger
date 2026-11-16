@@ -4,7 +4,7 @@ import { EVENT_CATEGORIES, categoryMeta } from '../eventCategories';
 import { getFields } from '../api';
 import { getCropSuggestions } from '../api/cropSuggestions';
 import { stayOpenFor } from '../utils/stayOpenFor';
-import { emojiInput, keepGroupLayout, numberField, PropertiesField } from '../utils/formFields';
+import { emojiInput, numberField, PropertiesField } from '../utils/formFields';
 import { toDateOnly } from '../utils/dates';
 import { toNum } from '../utils/format.js';
 import { harvestData, harvestInputs, harvestRecord } from './HarvestSection.js';
@@ -477,7 +477,6 @@ export default class EventDialog extends FormDialog {
 		this._fieldId = fieldId;
 		this._acreage = options.acreage || 0;
 
-		keepGroupLayout(this.form);
 		this._loadChoices(prev);
 	}
 

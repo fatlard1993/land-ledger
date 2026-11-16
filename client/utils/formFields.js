@@ -5,16 +5,8 @@ const { space } = theme;
 // Form fields of the app's own, for a Form's or FormDialog's `inputs`: each takes `value` and announces `change` with
 // `event.value`, as Form expects of an InputComponent
 
-/**
- * A number field's value as its Input holds it, a number or '' when empty: Form stores the text of the change event
- * otherwise. Given to a number field as its `parse`.
- * @param {string|number} value - What the field announced
- * @returns {number|string} The number, or '' when the field is empty
- */
-export const asNumber = value => (value === '' || value == null ? '' : Number(value));
-
 // A number field's declaration options
-export const numberField = (attributes = {}) => ({ type: 'number', parse: asNumber, attributes });
+export const numberField = (attributes = {}) => ({ type: 'number', attributes });
 
 // A checkbox's declaration, its label after it on the same line (form.checkbox-label-after)
 export const checkboxField = (key, label, options = {}) => ({
@@ -282,19 +274,3 @@ export class ChoiceChips extends ChoiceRow {
 		]);
 	}
 }
-
-/**
- * Keeps a Form's groups laid out as they were declared. Form shows a group again by clearing its display, which drops
- * the grid a group's `style` gives it; this puts the declared display back after each change. Call it once the form is
- * built, before any field has changed.
- * @param {object} form - The Form whose groups hold conditional fields
- */
-export const keepGroupLayout = form => {
-	const groups = [...form.elem.querySelectorAll('div')]
-		.filter(elem => elem.style.display && elem.style.display !== 'none')
-		.map(elem => [elem, elem.style.display]);
-
-	form.options.data.addEventListener('set', () => {
-		for (const [elem, display] of groups) if (elem.style.display !== 'none') elem.style.display = display;
-	});
-};

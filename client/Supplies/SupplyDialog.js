@@ -1,5 +1,5 @@
 import { FormDialog, Select, theme } from '@vanilla-bean/components';
-import { ChoiceChips, emojiInput, keepGroupLayout, numberField, PropertiesField } from '../utils/formFields';
+import { ChoiceChips, emojiInput, numberField, PropertiesField } from '../utils/formFields';
 
 import { getBuildings } from '../api';
 import { watchFormConflicts } from '../utils/watchFormConflicts.js';
@@ -217,7 +217,6 @@ export default class SupplyDialog extends FormDialog {
 			...withoutCallbacks(options),
 		});
 
-		keepGroupLayout(this.form);
 		showCalculated();
 
 		if (!options.buildingId) {

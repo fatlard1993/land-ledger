@@ -1,6 +1,6 @@
 import { Component, FormDialog, parseDate, Select, styled, theme } from '@vanilla-bean/components';
 import { stayOpenFor } from '../utils/stayOpenFor';
-import { checkboxField, ChoiceChips, keepGroupLayout, numberField, PropertiesField } from '../utils/formFields';
+import { checkboxField, ChoiceChips, numberField, PropertiesField } from '../utils/formFields';
 
 import { getFields, getBuildings, getEquipment } from '../api';
 import { toDateOnly } from '../utils/dates';
@@ -376,7 +376,6 @@ export default class LeaseDialog extends FormDialog {
 		this._showRatePlaceholder();
 		this._recalculateLoan();
 		this._showEquity();
-		keepGroupLayout(this.form);
 		this._loadAssets();
 	}
 
