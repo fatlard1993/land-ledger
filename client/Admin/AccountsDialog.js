@@ -179,6 +179,7 @@ export default class AccountsDialog extends Dialog {
 			Object.assign(turnOn.options, { disabled: true, icon: 'spinner', iconAnimation: 'spin-pulse' });
 
 			try {
+				// eslint-disable-next-line vbc/overlay.request-result -- this api call throws when it fails, and the catch below says why
 				await updateAccount('admin', { passkey });
 			} catch (error) {
 				fail(error.message || 'Could not set the admin passkey');
@@ -421,6 +422,7 @@ export default class AccountsDialog extends Dialog {
 						return;
 
 					try {
+						// eslint-disable-next-line vbc/overlay.request-result -- this api call throws when it fails, and the catch below says why
 						await deleteAccount(account.id);
 						this._accounts = this._accounts.filter(a => a.id !== account.id);
 						new Notify({ intent: 'success', textContent: `Deleted "${account.name}"`, timeout: 3000 });

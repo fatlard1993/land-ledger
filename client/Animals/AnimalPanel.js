@@ -132,6 +132,7 @@ export default class AnimalPanel extends Dialog {
 	_watchAnimal() {
 		const { id } = this._animal;
 
+		// eslint-disable-next-line vbc/overlay.request-result -- a presence ping nobody waits on: a lost one only leaves the indicator stale
 		fetch('/presence', {
 			method: 'POST',
 			headers: { 'Content-Type': 'application/json' },
@@ -153,6 +154,7 @@ export default class AnimalPanel extends Dialog {
 			this._presenceHandler = null;
 		}
 
+		// eslint-disable-next-line vbc/overlay.request-result -- a presence ping nobody waits on: a lost one only leaves the indicator stale
 		fetch('/presence', {
 			method: 'POST',
 			headers: { 'Content-Type': 'application/json' },

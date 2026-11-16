@@ -303,6 +303,7 @@ export default class TabularImportDialog extends Dialog {
 						return;
 
 					try {
+						// eslint-disable-next-line vbc/overlay.request-result -- this api call throws when it fails, and the catch below says why
 						await deleteImportTemplate(templateSelect.options.value);
 					} catch (error) {
 						new Notify({ intent: 'danger', content: `Couldn't delete the template: ${error.message}` });
@@ -503,6 +504,7 @@ export default class TabularImportDialog extends Dialog {
 				failure.elem.textContent = '';
 
 				try {
+					// eslint-disable-next-line vbc/overlay.request-result -- this api call throws when it fails, and the catch below says why
 					await saveImportTemplate({ name, collection: this._collection, mapping: this._mapping });
 				} catch (error) {
 					failure.elem.textContent = `Could not save the template${error?.message ? `: ${error.message}` : ''}`;

@@ -486,6 +486,7 @@ export default class FieldPanel extends FieldPanelOuter {
 	_watchEntity(collection, id) {
 		this._clearSyncListener();
 
+		// eslint-disable-next-line vbc/overlay.request-result -- a presence ping nobody waits on: a lost one only leaves the indicator stale
 		fetch('/presence', {
 			method: 'POST',
 			headers: { 'Content-Type': 'application/json' },
@@ -539,6 +540,7 @@ export default class FieldPanel extends FieldPanelOuter {
 		}
 		if (this._watchingPresence) {
 			const { collection, id } = this._watchingPresence;
+			// eslint-disable-next-line vbc/overlay.request-result -- a presence ping nobody waits on: a lost one only leaves the indicator stale
 			fetch('/presence', {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
