@@ -7,6 +7,7 @@ import {
 	SectionLabel,
 	Select,
 	styled,
+	Table,
 	theme,
 	Toolbar,
 } from '@vanilla-bean/components';
@@ -40,7 +41,7 @@ const formatMoney = n => {
 	return n < 0 ? `-${str}` : str;
 };
 
-const { colors, radius, space } = theme;
+const { colors, space } = theme;
 
 // Gains read green, losses red, nothing at all quiet
 const signColor = n => {
@@ -147,21 +148,27 @@ const TableScroll = styled(
 	`,
 );
 
-const GridRow = styled(
-	Component,
+// Figures under column headings, compact inside a card; numbers are right-aligned
+const FigureTable = styled(
+	Table,
 	({ colors, space }) => `
-		display: grid;
-		align-items: center;
-		gap: ${space.sm};
-		padding: ${space.sm} 0;
-		border-bottom: 1px solid ${colors.border};
+		width: 100%;
+		font-size: 12px;
 
-		&.head {
-			padding: ${space.xs} 0 ${space.sm};
+		& th {
+			padding: ${space.xs} ${space.sm};
 			font-size: 10px;
 			letter-spacing: 0.06em;
 			text-transform: uppercase;
 			color: ${colors.muted};
+		}
+
+		& td {
+			padding: ${space.sm};
+		}
+
+		& .number {
+			text-align: right;
 		}
 	`,
 );
@@ -195,6 +202,31 @@ const Bar = ({ appendTo, label, amount, total, color }) => {
 };
 
 const YEAR = new Date().getFullYear();
+
+// A field's name in the fields table, with how its net moved from the season before
+const fieldNameCell = ({ field, net, netPrior }, yr) => {
+	const cell = [new RowName({ textContent: field.name || 'Field' })];
+
+	if (netPrior !== null) {
+		const delta = net - netPrior;
+		const pct = netPrior !== 0 ? ((delta / Math.abs(netPrior)) * 100).toFixed(0) : null;
+		let arrow;
+		if (delta > 0) arrow = '▲';
+		else if (delta < 0) arrow = '▼';
+		else arrow = '→';
+		const label = pct !== null ? `${arrow} ${Math.abs(pct)}%` : arrow;
+
+		cell.push(
+			new Elem({
+				tag: 'div',
+				style: { fontSize: '10px', color: signColor(delta) },
+				textContent: `vs ${yr - 1}: ${label}`,
+			}),
+		);
+	}
+
+	return cell;
+};
 
 export default class Financials extends AsyncView {
 	_buildView() {
@@ -645,74 +677,47 @@ export default class Financials extends AsyncView {
 
 			new CardLabel({ appendTo: fieldCard, textContent: `Fields — ${yr}` });
 
-			const table = new Component({ appendTo: new TableScroll({ appendTo: fieldCard }) });
-			const fieldColumns = { gridTemplateColumns: '1fr 70px 70px 70px 80px 60px' };
+			const moneyCell = value => {
+				let color;
+				if (value < 0) color = colors.light(colors.warning);
+				else color = colors.muted;
 
-			// Column header
-			const header = new GridRow({ appendTo: table, addClass: 'head', style: fieldColumns });
+				return { addClass: 'number', style: { color }, textContent: value ? formatMoney(value) : '—' };
+			};
+			const number = key => ({ key, content: key, addClass: 'number' });
 
-			for (const t of ['Field', 'Revenue', 'Costs', 'Rent', 'Net', '/Acre']) {
-				new Elem({
-					tag: 'div',
-					appendTo: header,
-					style: { textAlign: t === 'Field' ? 'left' : 'right' },
-					textContent: t,
-				});
-			}
-
-			for (const { field, revenue, costs, rent, net, netPrior, perAcre } of fieldRows) {
-				const row = new GridRow({ appendTo: table, style: fieldColumns });
-
-				const nameWrap = new Component({ appendTo: row, style: { minWidth: '0' } });
-				new RowName({ appendTo: nameWrap, textContent: field.name || 'Field' });
-
-				// YoY trend indicator
-				if (netPrior !== null) {
-					const delta = net - netPrior;
-					const pct = netPrior !== 0 ? ((delta / Math.abs(netPrior)) * 100).toFixed(0) : null;
-					let arrow;
-					if (delta > 0) arrow = '▲';
-					else if (delta < 0) arrow = '▼';
-					else arrow = '→';
-					const label = pct !== null ? `${arrow} ${Math.abs(pct)}%` : arrow;
-
-					new Elem({
-						tag: 'div',
-						appendTo: nameWrap,
-						style: { fontSize: '10px', color: signColor(delta) },
-						textContent: `vs ${yr - 1}: ${label}`,
-					});
-				}
-
-				const money = v => {
-					const s = v ? formatMoney(v) : '—';
-					let c;
-					if (v > 0) c = colors.muted;
-					else if (v < 0) c = colors.light(colors.warning);
-					else c = colors.muted;
-					return { textContent: s, style: { fontSize: '12px', color: c, textAlign: 'right' } };
-				};
-
-				new Elem({ tag: 'div', appendTo: row, ...money(revenue) });
-				new Elem({ tag: 'div', appendTo: row, ...money(costs) });
-				new Elem({ tag: 'div', appendTo: row, ...money(rent) });
-
-				const netColor = signColor(net);
-
-				new Elem({
-					tag: 'div',
-					appendTo: row,
-					style: { fontSize: '13px', fontWeight: '700', color: netColor, textAlign: 'right' },
-					textContent: formatMoney(net),
-				});
-
-				new Elem({
-					tag: 'div',
-					appendTo: row,
-					style: { fontSize: '11px', color: netColor, textAlign: 'right' },
-					textContent: perAcre !== null ? formatMoney(perAcre) : '—',
-				});
-			}
+			new FigureTable({
+				appendTo: new TableScroll({ appendTo: fieldCard }),
+				columns: [
+					{
+						key: 'field',
+						content: 'Field',
+						dataColumn: ({ rowData }) => ({ append: fieldNameCell(rowData, yr) }),
+					},
+					{ ...number('revenue'), content: 'Revenue', dataColumn: ({ rowData }) => moneyCell(rowData.revenue) },
+					{ ...number('costs'), content: 'Costs', dataColumn: ({ rowData }) => moneyCell(rowData.costs) },
+					{ ...number('rent'), content: 'Rent', dataColumn: ({ rowData }) => moneyCell(rowData.rent) },
+					{
+						...number('net'),
+						content: 'Net',
+						dataColumn: ({ rowData }) => ({
+							addClass: 'number',
+							style: { fontSize: '13px', fontWeight: '700', color: signColor(rowData.net) },
+							textContent: formatMoney(rowData.net),
+						}),
+					},
+					{
+						...number('perAcre'),
+						content: '/Acre',
+						dataColumn: ({ rowData }) => ({
+							addClass: 'number',
+							style: { fontSize: '11px', color: signColor(rowData.net) },
+							textContent: rowData.perAcre !== null ? formatMoney(rowData.perAcre) : '—',
+						}),
+					},
+				],
+				data: fieldRows,
+			});
 		}
 
 		// ── Season-over-season matrix ─────────────────────────────────────────────
@@ -752,59 +757,58 @@ export default class Financials extends AsyncView {
 
 		new CardLabel({ appendTo: matCard, textContent: 'Season Comparison — Net P/L by Field' });
 
-		const columns = { gridTemplateColumns: `150px ${years.map(() => '1fr').join(' ')}`, gap: space.xs };
-		const table = new Component({ appendTo: new TableScroll({ appendTo: matCard }) });
-		const header = new GridRow({ appendTo: table, addClass: 'head', style: columns });
+		// Each field's net for each season, tinted by whether it made or lost money
+		const netCell = net => {
+			if (net === null) return { addClass: 'number', textContent: '' };
 
-		new Elem({ tag: 'div', appendTo: header }); // empty corner
+			let bg;
+			if (net > 0) bg = colors.alpha(colors.success, 0.1);
+			else if (net < 0) bg = colors.alpha(colors.danger, 0.1);
+			else bg = 'transparent';
 
-		for (const y of years) {
-			new Elem({
-				tag: 'div',
-				appendTo: header,
-				style: { fontSize: '11px', textAlign: 'right', fontWeight: '600' },
-				textContent: String(y),
-			});
-		}
+			return {
+				addClass: 'number',
+				style: { fontWeight: '600', color: signColor(net), background: bg },
+				textContent: formatMoney(net),
+			};
+		};
 
-		for (const field of activeFields.sort((a, b) => (a.name || '').localeCompare(b.name || ''))) {
-			const ac = this._acreageFor(field.id);
-			const rent = rentByField[field.id] || 0;
-			const fData = econByField[field.id] || [];
-			const row = new GridRow({ appendTo: table, style: { ...columns, padding: `${space.sm} 0` } });
+		new FigureTable({
+			appendTo: new TableScroll({ appendTo: matCard }),
+			columns: [
+				{
+					key: 'name',
+					content: 'Field',
+					dataColumn: ({ rowData }) => ({
+						append: new RowName({ style: { fontSize: '12px' }, textContent: rowData.name }),
+					}),
+				},
+				...years.map(y => ({
+					key: String(y),
+					content: String(y),
+					addClass: 'number',
+					dataColumn: ({ rowData }) => netCell(rowData.nets[y]),
+				})),
+			],
+			data: activeFields
+				.sort((a, b) => (a.name || '').localeCompare(b.name || ''))
+				.map(field => {
+					const ac = this._acreageFor(field.id);
+					const rent = rentByField[field.id] || 0;
+					const fData = econByField[field.id] || [];
 
-			new RowName({ appendTo: row, style: { fontSize: '12px' }, textContent: field.name || 'Field' });
+					return {
+						name: field.name || 'Field',
+						nets: Object.fromEntries(
+							years.map(y => {
+								const d = fData.find(r => r.year === y);
 
-			for (const y of years) {
-				const d = fData.find(r => r.year === y);
-				const net = d ? d.revenue - d.inputCost * ac - rent : null;
-
-				if (net === null) {
-					new Elem({ tag: 'div', appendTo: row, style: { textAlign: 'right' } });
-					continue;
-				}
-
-				let bg;
-				if (net > 0) bg = colors.alpha(colors.success, 0.1);
-				else if (net < 0) bg = colors.alpha(colors.danger, 0.1);
-				else bg = 'transparent';
-
-				new Elem({
-					tag: 'div',
-					appendTo: row,
-					style: {
-						textAlign: 'right',
-						fontSize: '12px',
-						fontWeight: '600',
-						color: signColor(net),
-						background: bg,
-						borderRadius: radius.sm,
-						padding: `${space.xs} ${space.xs}`,
-					},
-					textContent: formatMoney(net),
-				});
-			}
-		}
+								return [y, d ? d.revenue - d.inputCost * ac - rent : null];
+							}),
+						),
+					};
+				}),
+		});
 
 		new Note({
 			appendTo: matCard,
