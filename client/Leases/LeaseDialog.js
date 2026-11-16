@@ -1,7 +1,6 @@
-import { Button, Component, Elem, FormDialog, Input, parseDate, Select, styled, theme } from '@vanilla-bean/components';
+import { Component, FormDialog, parseDate, Select, styled, theme } from '@vanilla-bean/components';
 import { stayOpenFor } from '../utils/stayOpenFor';
-import { makePropertiesEditor } from '../utils/PropertiesEditor';
-import { FormLabel } from '../Layout';
+import { checkboxField, ChoiceChips, keepGroupLayout, numberField, PropertiesField } from '../utils/formFields';
 
 import { getFields, getBuildings, getEquipment } from '../api';
 import { toDateOnly } from '../utils/dates';
@@ -92,6 +91,38 @@ export { rateLabel };
 
 const withoutCallbacks = ({ onSave: _onSave, onDelete: _onDelete, ...options }) => options;
 
+const ROLES = [
+	{ value: 'tenant', label: 'I pay rent', icon: 'arrow-trend-down' },
+	{ value: 'lessor', label: 'I receive rent', icon: 'arrow-trend-up' },
+	{ value: 'loan', label: 'Loan / Mortgage', icon: 'building-columns' },
+];
+
+const ASSET_TYPES = [
+	{ value: 'field', label: `${entityIcon('field')} Field` },
+	{ value: 'building', label: `${entityIcon('building')} Building` },
+	{ value: 'equipment', label: `${entityIcon('equipment')} Equipment` },
+];
+
+const TENANT_RATE_TYPES = RATE_TYPES.filter(r => ['cash_per_acre', 'crop_share'].includes(r.value));
+
+const RATE_PLACEHOLDERS = {
+	cash_per_acre: '$/acre',
+	monthly: '$/month',
+	annual: '$/year',
+	hourly: '$/hour',
+	per_use: '$/use',
+	crop_share: '',
+};
+
+// The rate type of the role shown: a lessor picks from every kind, a tenant from cash rent and crop share
+const rateType = data => (data.role === 'lessor' ? data.lessorRateType : data.tenantRateType);
+
+const isLease = data => data.role !== 'loan';
+const isLoan = data => data.role === 'loan';
+
+const asDollars = (value, options) =>
+	Number(value).toLocaleString('en-US', { style: 'currency', currency: 'USD', ...options });
+
 export default class LeaseDialog extends FormDialog {
 	constructor(options = {}) {
 		const isEdit = !!options.lease?.id;
@@ -106,12 +137,223 @@ export default class LeaseDialog extends FormDialog {
 		}
 		const preRole = options.role || lease.role || inferredRole;
 		const headerLabels = { tenant: 'Add Lease', lessor: 'Lease Out Asset', loan: 'Add Loan / Mortgage' };
+		// Opened from an asset's panel, the asset is named and the role isn't asked
+		const preEntity = options.entity || null;
+		const preEntityType = options.entityType || null;
+		const pickEntity = !preEntity;
 
-		// The body is built by hand below, so the form holds no inputs and saving collects from the body
+		const field = key => this.form.inputElements[key];
+		const data = () => this.form.options.data;
+		const grid = (columns, inputs) => ({
+			type: 'group',
+			style: { display: 'grid', gridTemplateColumns: columns, gap: space.sm },
+			inputs,
+		});
+		const entityPicker = (key, label, condition) => ({
+			key,
+			label,
+			InputComponent: Select,
+			options: [],
+			condition: values => pickEntity && condition(values),
+		});
+
 		super({
 			header: isEdit ? 'Edit' : headerLabels[preRole] || 'Add Lease',
-			inputs: [],
-			onSave: async () => stayOpenFor(await options.onSave?.(this._collect())),
+			intro: preEntity
+				? new PresetEntity({ textContent: `${entityIcon(preEntityType)} ${preEntity.name || 'Selected asset'}` })
+				: undefined,
+			data: {
+				role: preRole,
+				assetType: preEntityType || lease.entityType || 'field',
+				tenantField: lease.entityId || '',
+				lessorField: lease.entityId || '',
+				lessorBuilding: lease.entityId || '',
+				lessorEquipment: lease.entityId || '',
+				tenantName: lease.tenantName || '',
+				landlordName: lease.landlordName || '',
+				tenantRateType: lease.type || 'cash_per_acre',
+				lessorRateType: lease.type || 'monthly',
+				rateAmount: lease.rateAmount || '',
+				cropSharePercent: lease.cropSharePercent || '',
+				leaseStart: lease.startDate || '',
+				endDate: lease.endDate || '',
+				renewalDate: lease.renewalDate || '',
+				paymentTerms: lease.paymentTerms || lease.paymentDates || '',
+				leaseProps: lease.properties || {},
+
+				lender: lease.lender || '',
+				loanNumber: lease.loanNumber || '',
+				loanAmount: lease.loanAmount || '',
+				interestRate: lease.interestRate || '',
+				termYears: lease.termYears || '',
+				monthlyPayment: lease.monthlyPayment || '',
+				currentBalance: lease.currentBalance || '',
+				escrow: !!lease.escrow,
+				loanStart: lease.startDate || '',
+				maturityDate: lease.maturityDate || '',
+				assetAppraisalValue: lease.assetAppraisalValue || '',
+				loanProps: lease.properties || {},
+			},
+			inputs: [
+				{
+					key: 'role',
+					label: 'Kind',
+					InputComponent: ChoiceChips,
+					choices: ROLES,
+					condition: () => pickEntity,
+				},
+
+				// A lease: the asset, the other party and the rate
+				entityPicker('tenantField', 'Field', values => values.role === 'tenant'),
+				{
+					key: 'assetType',
+					label: 'Asset Type',
+					InputComponent: Select,
+					options: ASSET_TYPES,
+					condition: values => pickEntity && values.role === 'lessor',
+				},
+				entityPicker('lessorField', 'Field', values => values.role === 'lessor' && values.assetType === 'field'),
+				entityPicker(
+					'lessorBuilding',
+					'Building',
+					values => values.role === 'lessor' && values.assetType === 'building',
+				),
+				entityPicker(
+					'lessorEquipment',
+					'Equipment',
+					values => values.role === 'lessor' && values.assetType === 'equipment',
+				),
+				{
+					key: 'tenantName',
+					label: 'Tenant Name',
+					placeholder: 'Full name',
+					condition: values => values.role === 'lessor',
+				},
+				{
+					key: 'landlordName',
+					label: 'Landlord Name',
+					placeholder: 'Full name',
+					condition: values => values.role === 'tenant',
+				},
+				grid('1fr 1fr', [
+					{
+						key: 'tenantRateType',
+						label: 'Rate Type',
+						InputComponent: Select,
+						options: TENANT_RATE_TYPES,
+						condition: values => values.role === 'tenant',
+						onChange: () => this._showRatePlaceholder(),
+					},
+					{
+						key: 'lessorRateType',
+						label: 'Rate Type',
+						InputComponent: Select,
+						options: RATE_TYPES,
+						condition: values => values.role === 'lessor',
+						onChange: () => this._showRatePlaceholder(),
+					},
+					{
+						key: 'rateAmount',
+						label: 'Amount',
+						placeholder: '0.00',
+						...numberField({ step: '0.01' }),
+						condition: values => isLease(values) && rateType(values) !== 'crop_share',
+					},
+				]),
+				{
+					key: 'cropSharePercent',
+					label: 'Crop Share (%)',
+					placeholder: 'e.g. 50',
+					...numberField(),
+					condition: values => isLease(values) && rateType(values) === 'crop_share',
+				},
+				grid('1fr 1fr 1fr', [
+					{ key: 'leaseStart', label: 'Start Date', type: 'date', condition: isLease },
+					{ key: 'endDate', label: 'End Date', type: 'date', condition: isLease },
+					{ key: 'renewalDate', label: 'Renewal Date', type: 'date', condition: isLease },
+				]),
+				{
+					key: 'paymentTerms',
+					label: 'Payment Terms',
+					placeholder: 'e.g. March 1 & Sept 1, First of month',
+					condition: isLease,
+				},
+				{ key: 'leaseProps', label: 'Properties', InputComponent: PropertiesField, condition: isLease },
+
+				// A loan: the lender, the terms and the asset's value
+				grid('1fr 1fr', [
+					{ key: 'lender', label: 'Lender / Bank', placeholder: 'e.g. Farm Credit, USDA FSA', condition: isLoan },
+					{ key: 'loanNumber', label: 'Loan / Account #', placeholder: 'Optional', condition: isLoan },
+				]),
+				grid('1fr 1fr 1fr', [
+					{
+						key: 'loanAmount',
+						label: 'Original Loan Amount ($)',
+						placeholder: '0.00',
+						...numberField({ step: '1000' }),
+						condition: isLoan,
+						onInput: () => this._recalculateLoan(),
+					},
+					{
+						key: 'interestRate',
+						label: 'Interest Rate (%)',
+						placeholder: 'e.g. 4.75',
+						...numberField({ step: '0.01' }),
+						condition: isLoan,
+						onInput: () => this._recalculateLoan(),
+					},
+					{
+						key: 'termYears',
+						label: 'Term (years)',
+						placeholder: 'e.g. 20',
+						...numberField({ step: '1' }),
+						condition: isLoan,
+						onInput: () => {
+							this._recalculateLoan();
+							this._fillMaturity();
+						},
+					},
+				]),
+				grid('1fr 1fr', [
+					{
+						key: 'monthlyPayment',
+						label: 'Monthly Payment ($)',
+						placeholder: 'Auto-calc or enter',
+						...numberField({ step: '0.01' }),
+						condition: isLoan,
+					},
+					{
+						key: 'currentBalance',
+						label: 'Current Balance ($)',
+						placeholder: 'Optional',
+						...numberField({ step: '1' }),
+						condition: isLoan,
+						onInput: () => this._showEquity(),
+					},
+				]),
+				checkboxField('escrow', 'Escrow includes taxes and/or insurance', { condition: isLoan }),
+				grid('1fr 1fr', [
+					{
+						key: 'loanStart',
+						label: 'Origination Date',
+						type: 'date',
+						condition: isLoan,
+						onChange: () => this._fillMaturity(),
+					},
+					{ key: 'maturityDate', label: 'Maturity Date', type: 'date', condition: isLoan },
+				]),
+				// Tracked apart from the loan amount
+				{
+					key: 'assetAppraisalValue',
+					label: 'Asset Appraisal Value ($)',
+					placeholder: 'Market / appraised value',
+					...numberField({ step: '1' }),
+					condition: isLoan,
+					onInput: () => this._showEquity(),
+				},
+				{ key: 'loanProps', label: 'Properties', InputComponent: PropertiesField, condition: isLoan },
+			],
+			onSave: async values => stayOpenFor(await options.onSave?.(this._collect(values))),
 			...(isEdit &&
 				options.onDelete && {
 					onDelete: async () => stayOpenFor(await options.onDelete()),
@@ -121,459 +363,155 @@ export default class LeaseDialog extends FormDialog {
 		});
 
 		this._lease = lease;
-		this._preRole = preRole;
-		this._preEntity = options.entity || null;
-		this._preEntityType = options.entityType || null;
-		this._collect = () => ({});
+		this._preEntity = preEntity;
+		this._preEntityType = preEntityType;
+		this._field = field;
+		this._data = data;
+		this._items = { field: [], building: [], equipment: [] };
 
-		this._buildForm();
+		// Live readouts beside the loan's fields, not fields themselves: the payment its terms make, and the equity left
+		this._calcHint = new Hint({ appendTo: field('monthlyPayment').elem.parentElement });
+		this._equityHint = new Hint({ appendTo: field('assetAppraisalValue').elem.parentElement });
+
+		this._showRatePlaceholder();
+		this._recalculateLoan();
+		this._showEquity();
+		keepGroupLayout(this.form);
+		this._loadAssets();
 	}
 
-	async _buildForm() {
-		const lease = this._lease;
+	// The assets a lease can be for, picked from the lists as they arrive
+	async _loadAssets() {
+		const [fields, buildings, equipment] = await Promise.all([getFields(), getBuildings(), getEquipment()]);
 
-		// Role toggle — hidden if pre-set from a specific entity panel
-		const showRoleToggle = !this._preEntity;
-		let role = this._preRole;
-
-		const rebuildBody = async () => {
-			formArea.empty();
-			await this._buildBody(formArea, lease, role, this._preEntity, this._preEntityType);
+		this._items = {
+			field: Object.values(fields?.body || {}),
+			building: Object.values(buildings?.body || {}),
+			equipment: Object.values(equipment?.body || {}),
 		};
 
-		if (showRoleToggle) {
-			const toggleRow = new Component({
-				appendTo: this.body,
-				style: { display: 'flex', gap: space.sm, marginBottom: space.xs },
-			});
+		const fill = (key, type, unnamed) => {
+			const items = this._items[type];
+			const select = this._field(key);
 
-			const toggleButtons = [];
+			select.options.options = items.map(i => ({ value: i.id, label: i.name || unnamed }));
 
-			const makeToggle = (icon, label, value) => {
-				const btn = new Button({
-					appendTo: toggleRow,
-					variant: 'chip',
-					icon,
-					textContent: label,
-					style: { flex: '1' },
-					onPointerPress: async () => {
-						role = value;
-						for (const [b, v] of toggleButtons) b.options.pressed = role === v;
+			// The lease's own asset when it's listed, else the first
+			const value = items.some(i => i.id === this._lease.entityId) ? this._lease.entityId : items[0]?.id || '';
 
-						await rebuildBody();
-					},
-				});
+			this._data()[key] = value;
+			select.options.value = value;
+		};
 
-				btn.options.pressed = role === value;
-				toggleButtons.push([btn, value]);
-
-				return btn;
-			};
-
-			makeToggle('arrow-trend-down', 'I pay rent', 'tenant');
-			makeToggle('arrow-trend-up', 'I receive rent', 'lessor');
-			makeToggle('building-columns', 'Loan / Mortgage', 'loan');
-		}
-
-		const formArea = new Component({ appendTo: this.body });
-
-		await this._buildBody(formArea, lease, role, this._preEntity, this._preEntityType);
+		fill('tenantField', 'field', 'Unnamed');
+		fill('lessorField', 'field', 'Unnamed field');
+		fill('lessorBuilding', 'building', 'Unnamed building');
+		fill('lessorEquipment', 'equipment', 'Unnamed equipment');
 	}
 
-	async _buildBody(container, lease, role, preEntity, preEntityType) {
-		if (role === 'loan') {
-			await this._buildLoanBody(container, lease, preEntity, preEntityType);
-			return;
-		}
+	_showRatePlaceholder() {
+		this._field('rateAmount').elem.placeholder = RATE_PLACEHOLDERS[rateType(this._data())] || '0.00';
+	}
 
-		const isLessor = role === 'lessor';
+	// The payment the terms make, filled in while the payment is empty
+	_recalculateLoan() {
+		const P = Number(this._field('loanAmount').options.value);
+		const r = Number(this._field('interestRate').options.value);
+		const t = Number(this._field('termYears').options.value);
 
-		// Entity section
-		if (preEntity) {
-			// Pre-set — just show a label
-			new PresetEntity({
-				appendTo: container,
-				textContent: `${entityIcon(preEntityType)} ${preEntity.name || 'Selected asset'}`,
-			});
+		if (P && t) {
+			const mp = calcMonthlyPayment(P, r, t);
 
-			this._entityId = preEntity.id;
-			this._entityType = preEntityType;
-			this._entityName = preEntity.name || '';
+			this._calcHint.elem.textContent = `Calculated payment: ${asDollars(mp)}/mo`;
+
+			if (this._field('monthlyPayment').options.value === '') this._data().monthlyPayment = mp.toFixed(2);
 		} else {
-			// Entity type picker (lessor only — tenant is always field)
-			let entityType = preEntityType || lease.entityType || 'field';
-
-			if (isLessor) {
-				new FormLabel({ appendTo: container, textContent: 'Asset Type' });
-				const typeSelect = new Select({ appendTo: container });
-				typeSelect.options.options = [
-					{ value: 'field', label: `${entityIcon('field')} Field` },
-					{ value: 'building', label: `${entityIcon('building')} Building` },
-					{ value: 'equipment', label: `${entityIcon('equipment')} Equipment` },
-				];
-				typeSelect.options.value = entityType;
-
-				const entityPickerWrap = new Component({ appendTo: container });
-
-				const buildEntityPicker = async type => {
-					entityPickerWrap.empty();
-					let entityTypeLabel;
-					if (type === 'field') {
-						entityTypeLabel = 'Field';
-					} else if (type === 'building') {
-						entityTypeLabel = 'Building';
-					} else {
-						entityTypeLabel = 'Equipment';
-					}
-					new FormLabel({
-						appendTo: entityPickerWrap,
-						textContent: entityTypeLabel,
-					});
-
-					let items = [];
-
-					if (type === 'field') {
-						const d = await getFields();
-						items = Object.values(d?.body || {});
-					} else if (type === 'building') {
-						const d = await getBuildings();
-						items = Object.values(d?.body || {});
-					} else {
-						const d = await getEquipment();
-						items = Object.values(d?.body || {});
-					}
-
-					const select = new Select({ appendTo: entityPickerWrap });
-					select.options.options = items.map(i => ({ value: i.id, label: i.name || `Unnamed ${type}` }));
-					select.options.value = lease.entityId || items[0]?.id || '';
-					this._entityId = select.options.value;
-					this._entityType = type;
-					this._entityName = items.find(i => i.id === select.options.value)?.name || '';
-					select.elem.addEventListener('change', () => {
-						this._entityId = select.options.value;
-						this._entityName = items.find(i => i.id === select.options.value)?.name || '';
-					});
-				};
-
-				await buildEntityPicker(entityType);
-
-				typeSelect.elem.addEventListener('change', async () => {
-					entityType = typeSelect.options.value;
-					await buildEntityPicker(entityType);
-				});
-			} else {
-				// Tenant: field only
-				new FormLabel({ appendTo: container, textContent: 'Field' });
-				const fieldsData = await getFields();
-				const fields = Object.values(fieldsData?.body || {});
-				const fieldSelect = new Select({ appendTo: container });
-				fieldSelect.options.options = fields.map(f => ({ value: f.id, label: f.name || 'Unnamed' }));
-				fieldSelect.options.value = lease.entityId || fields[0]?.id || '';
-				this._entityId = fieldSelect.options.value;
-				this._entityType = 'field';
-				this._entityName = fields.find(f => f.id === fieldSelect.options.value)?.name || '';
-				fieldSelect.elem.addEventListener('change', () => {
-					this._entityId = fieldSelect.options.value;
-					this._entityName = fields.find(f => f.id === fieldSelect.options.value)?.name || '';
-				});
-			}
+			this._calcHint.elem.textContent = '';
 		}
-
-		// Counterparty — each column is a stacked label+input pair
-		const nameKey = isLessor ? 'tenantName' : 'landlordName';
-
-		const makeCol = (parent, label, inputOpts) => {
-			const col = new Component({ appendTo: parent });
-
-			new FormLabel({ appendTo: col, textContent: label });
-			const el = new Input({ appendTo: col, ...inputOpts });
-			if (inputOpts?.value !== undefined) el.options.value = inputOpts.value;
-
-			return el;
-		};
-
-		new FormLabel({ appendTo: container, textContent: isLessor ? 'Tenant Name' : 'Landlord Name' });
-		const nameEl = new Input({ appendTo: container, placeholder: 'Full name' });
-		nameEl.options.value = lease[nameKey] || '';
-
-		// Rate
-		const rateTypeRow = new Component({
-			appendTo: container,
-			style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: space.sm, marginTop: space.xs },
-		});
-
-		const rateTypeCol = new Component({ appendTo: rateTypeRow });
-
-		new FormLabel({ appendTo: rateTypeCol, textContent: 'Rate Type' });
-
-		const rateOpts = isLessor ? RATE_TYPES : RATE_TYPES.filter(r => ['cash_per_acre', 'crop_share'].includes(r.value));
-		const typeSelect = new Select({ appendTo: rateTypeCol });
-		typeSelect.options.options = rateOpts;
-		typeSelect.options.value = lease.type || (isLessor ? 'monthly' : 'cash_per_acre');
-
-		const rateAmtCol = new Component({ appendTo: rateTypeRow });
-
-		new FormLabel({ appendTo: rateAmtCol, textContent: 'Amount' });
-		const rateEl = new Input({ appendTo: rateAmtCol, type: 'number', step: '0.01', placeholder: '0.00' });
-		rateEl.options.value = lease.rateAmount || '';
-
-		// Crop share — shown only when type is crop_share
-		const shareWrap = new Component({ appendTo: container });
-
-		new FormLabel({ appendTo: shareWrap, textContent: 'Crop Share (%)' });
-		const shareEl = new Input({ appendTo: shareWrap, type: 'number', placeholder: 'e.g. 50' });
-		shareEl.options.value = lease.cropSharePercent || '';
-
-		const updateRateUI = () => {
-			const isCropShare = typeSelect.options.value === 'crop_share';
-
-			shareWrap.elem.style.display = isCropShare ? '' : 'none';
-			rateAmtCol.elem.style.display = isCropShare ? 'none' : '';
-			rateEl.elem.placeholder =
-				{
-					cash_per_acre: '$/acre',
-					monthly: '$/month',
-					annual: '$/year',
-					hourly: '$/hour',
-					per_use: '$/use',
-					crop_share: '',
-				}[typeSelect.options.value] || '0.00';
-		};
-
-		typeSelect.elem.addEventListener('change', updateRateUI);
-		updateRateUI();
-
-		// Dates — each column stacked
-		const dateRow = new Component({
-			appendTo: container,
-			style: { display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: space.sm, marginTop: space.xs },
-		});
-		const startEl = makeCol(dateRow, 'Start Date', { type: 'date', value: lease.startDate || '' });
-		const endEl = makeCol(dateRow, 'End Date', { type: 'date', value: lease.endDate || '' });
-		const renewEl = makeCol(dateRow, 'Renewal Date', { type: 'date', value: lease.renewalDate || '' });
-
-		new FormLabel({ appendTo: container, textContent: 'Payment Terms' });
-		const payEl = new Input({ appendTo: container, placeholder: 'e.g. March 1 & Sept 1, First of month' });
-		payEl.options.value = lease.paymentTerms || lease.paymentDates || '';
-
-		const { collect: collectProps } = makePropertiesEditor(container, lease.properties || {});
-
-		this._collect = () => ({
-			role,
-			entityType: this._entityType,
-			entityId: this._entityId,
-			entityName: this._entityName,
-			[nameKey]: nameEl.options.value,
-			type: typeSelect.options.value,
-			rateAmount: toNum(rateEl.options.value),
-			cropSharePercent: toNum(shareEl.options.value),
-			startDate: startEl.options.value,
-			endDate: endEl.options.value,
-			renewalDate: renewEl.options.value,
-			paymentTerms: payEl.options.value,
-			properties: collectProps(),
-		});
 	}
 
-	async _buildLoanBody(container, lease, preEntity, preEntityType) {
-		// Entity label
-		if (preEntity) {
-			new PresetEntity({
-				appendTo: container,
-				textContent: `${entityIcon(preEntityType)} ${preEntity.name || 'Selected asset'}`,
-			});
+	// The maturity, from the origination and the term, while it's empty
+	_fillMaturity() {
+		const start = this._field('loanStart').options.value;
+		const term = this._field('termYears').options.value;
 
-			this._entityId = preEntity.id;
-			this._entityType = preEntityType;
-			this._entityName = preEntity.name || '';
+		if (start && term !== '' && !this._field('maturityDate').options.value) {
+			const d = parseDate(start);
+
+			d.setFullYear(d.getFullYear() + Number(term));
+			this._data().maturityDate = toDateOnly(d);
+		}
+	}
+
+	_showEquity() {
+		const av = Number(this._field('assetAppraisalValue').options.value);
+		const balance =
+			Number(this._field('currentBalance').options.value) || Number(this._field('loanAmount').options.value) || 0;
+
+		if (av && balance) {
+			const equity = av - balance;
+			const ltv = ((balance / av) * 100).toFixed(1);
+
+			this._equityHint.elem.style.color = colors.light(equity >= 0 ? colors.success : colors.danger);
+			this._equityHint.elem.textContent = `Equity: ${asDollars(equity, { maximumFractionDigits: 0 })} · LTV ${ltv}%`;
+		} else {
+			this._equityHint.elem.textContent = '';
+		}
+	}
+
+	// The asset the lease is for: the one it was opened from, else the one picked
+	_entity(values) {
+		if (this._preEntity) {
+			return {
+				entityType: this._preEntityType,
+				entityId: this._preEntity.id,
+				entityName: this._preEntity.name || '',
+			};
 		}
 
-		const makeCol = (parent, label, inputOpts) => {
-			const col = new Component({ appendTo: parent });
+		const type = values.role === 'lessor' ? values.assetType : 'field';
+		const key = values.role === 'lessor' ? `lessor${type[0].toUpperCase()}${type.slice(1)}` : 'tenantField';
+		const id = values[key];
 
-			new FormLabel({ appendTo: col, textContent: label });
-			const el = new Input({ appendTo: col, ...inputOpts });
-			if (inputOpts?.value !== undefined) el.options.value = inputOpts.value;
+		return { entityType: type, entityId: id, entityName: this._items[type].find(i => i.id === id)?.name || '' };
+	}
 
-			return el;
+	_collect(values) {
+		if (values.role === 'loan') {
+			return {
+				role: 'loan',
+				entityType: this._preEntityType || '',
+				entityId: this._preEntity?.id || '',
+				entityName: this._preEntity?.name || '',
+				lender: values.lender,
+				loanNumber: values.loanNumber,
+				loanAmount: toNum(values.loanAmount),
+				interestRate: toNum(values.interestRate),
+				termYears: toNum(values.termYears),
+				monthlyPayment: toNum(values.monthlyPayment),
+				currentBalance: toNum(values.currentBalance),
+				escrow: values.escrow,
+				assetAppraisalValue: toNum(values.assetAppraisalValue),
+				startDate: values.loanStart,
+				maturityDate: values.maturityDate,
+				properties: values.loanProps,
+			};
+		}
+
+		const nameKey = values.role === 'lessor' ? 'tenantName' : 'landlordName';
+
+		return {
+			role: values.role,
+			...this._entity(values),
+			[nameKey]: values[nameKey],
+			type: rateType(values),
+			rateAmount: toNum(values.rateAmount),
+			cropSharePercent: toNum(values.cropSharePercent),
+			startDate: values.leaseStart,
+			endDate: values.endDate,
+			renewalDate: values.renewalDate,
+			paymentTerms: values.paymentTerms,
+			properties: values.leaseProps,
 		};
-
-		// Lender
-		const lenderRow = new Component({
-			appendTo: container,
-			style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: space.sm, marginTop: space.xs },
-		});
-		const lenderEl = makeCol(lenderRow, 'Lender / Bank', {
-			placeholder: 'e.g. Farm Credit, USDA FSA',
-			value: lease.lender || '',
-		});
-		const loanNumEl = makeCol(lenderRow, 'Loan / Account #', {
-			placeholder: 'Optional',
-			value: lease.loanNumber || '',
-		});
-
-		// Loan terms
-		const termsRow = new Component({
-			appendTo: container,
-			style: { display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: space.sm, marginTop: space.xs },
-		});
-		const principalEl = makeCol(termsRow, 'Original Loan Amount ($)', {
-			type: 'number',
-			step: '1000',
-			placeholder: '0.00',
-			value: lease.loanAmount || '',
-		});
-		const rateEl = makeCol(termsRow, 'Interest Rate (%)', {
-			type: 'number',
-			step: '0.01',
-			placeholder: 'e.g. 4.75',
-			value: lease.interestRate || '',
-		});
-		const termEl = makeCol(termsRow, 'Term (years)', {
-			type: 'number',
-			step: '1',
-			placeholder: 'e.g. 20',
-			value: lease.termYears || '',
-		});
-
-		// Monthly payment — auto-calc
-		const paymentRow = new Component({
-			appendTo: container,
-			style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: space.sm },
-		});
-		const paymentEl = makeCol(paymentRow, 'Monthly Payment ($)', {
-			type: 'number',
-			step: '0.01',
-			placeholder: 'Auto-calc or enter',
-			value: lease.monthlyPayment || '',
-		});
-		const balanceEl = makeCol(paymentRow, 'Current Balance ($)', {
-			type: 'number',
-			step: '1',
-			placeholder: 'Optional',
-			value: lease.currentBalance || '',
-		});
-
-		// Auto-calc payment hint
-		const calcHint = new Hint({ appendTo: container });
-
-		const recalculatePayment = () => {
-			const P = Number(principalEl.options.value);
-			const r = Number(rateEl.options.value);
-			const t = Number(termEl.options.value);
-
-			if (P && t) {
-				const mp = calcMonthlyPayment(P, r, t);
-
-				calcHint.elem.textContent = `Calculated payment: ${Number(mp).toLocaleString('en-US', { style: 'currency', currency: 'USD' })}/mo`;
-
-				if (paymentEl.options.value === '') paymentEl.options.value = mp.toFixed(2);
-			} else {
-				calcHint.elem.textContent = '';
-			}
-		};
-
-		principalEl.elem.addEventListener('input', recalculatePayment);
-		rateEl.elem.addEventListener('input', recalculatePayment);
-		termEl.elem.addEventListener('input', recalculatePayment);
-
-		// Escrow
-		const escrowRow = new Component({
-			appendTo: container,
-			style: { display: 'flex', alignItems: 'center', gap: space.sm, marginTop: space.md },
-		});
-		const escrowCb = new Input({
-			appendTo: escrowRow,
-			type: 'checkbox',
-			id: 'loan-escrow-cb',
-		});
-
-		escrowCb.elem.checked = !!lease.escrow;
-
-		new Elem({
-			tag: 'label',
-			appendTo: escrowRow,
-			textContent: 'Escrow includes taxes and/or insurance',
-			style: { fontSize: '13px', color: colors.muted, cursor: 'pointer' },
-			attributes: { for: 'loan-escrow-cb' },
-		});
-
-		// Dates
-		const dateRow = new Component({
-			appendTo: container,
-			style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: space.sm, marginTop: space.xs },
-		});
-		const startEl = makeCol(dateRow, 'Origination Date', { type: 'date', value: lease.startDate || '' });
-		const maturityEl = makeCol(dateRow, 'Maturity Date', { type: 'date', value: lease.maturityDate || '' });
-
-		// Auto-fill maturity from start + term
-		const recalculateMaturity = () => {
-			if (startEl.options.value && termEl.options.value !== '' && !maturityEl.options.value) {
-				const d = parseDate(startEl.options.value);
-
-				d.setFullYear(d.getFullYear() + Number(termEl.options.value));
-				maturityEl.options.value = toDateOnly(d);
-			}
-		};
-
-		startEl.elem.addEventListener('change', recalculateMaturity);
-		termEl.elem.addEventListener('input', recalculateMaturity);
-
-		// Asset appraisal — tracked separately from loan amount
-		new FormLabel({ appendTo: container, textContent: 'Asset Appraisal Value ($)' });
-		const appraisalEl = new Input({
-			appendTo: container,
-			type: 'number',
-			step: '1',
-			placeholder: 'Market / appraised value',
-		});
-		appraisalEl.options.value = lease.assetAppraisalValue || '';
-
-		// Live equity preview
-		const equityHint = new Hint({ appendTo: container });
-
-		const updateEquity = () => {
-			const av = Number(appraisalEl.options.value);
-			const balance = Number(balanceEl.options.value) || Number(principalEl.options.value) || 0;
-
-			if (av && balance) {
-				const equity = av - balance;
-				const ltv = ((balance / av) * 100).toFixed(1);
-				const color = equity >= 0 ? colors.success : colors.danger;
-
-				equityHint.elem.style.color = `${colors.light(color)}`;
-				equityHint.elem.textContent = `Equity: ${Number(equity).toLocaleString('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 })} · LTV ${ltv}%`;
-			} else {
-				equityHint.elem.textContent = '';
-			}
-		};
-
-		appraisalEl.elem.addEventListener('input', updateEquity);
-		balanceEl.elem.addEventListener('input', updateEquity);
-
-		recalculatePayment();
-		updateEquity();
-
-		const { collect: collectProps } = makePropertiesEditor(container, lease.properties || {});
-
-		this._collect = () => ({
-			role: 'loan',
-			// Prefer the closure-captured preEntity/preEntityType — they can't be mutated by other code paths
-			entityType: preEntityType || this._entityType || '',
-			entityId: preEntity?.id || this._entityId || '',
-			entityName: preEntity?.name || this._entityName || '',
-			lender: lenderEl.options.value,
-			loanNumber: loanNumEl.options.value,
-			loanAmount: toNum(principalEl.options.value),
-			interestRate: toNum(rateEl.options.value),
-			termYears: toNum(termEl.options.value),
-			monthlyPayment: toNum(paymentEl.options.value),
-			currentBalance: toNum(balanceEl.options.value),
-			escrow: escrowCb.elem.checked,
-			assetAppraisalValue: toNum(appraisalEl.options.value),
-			startDate: startEl.options.value,
-			maturityDate: maturityEl.options.value,
-			properties: collectProps(),
-		});
 	}
 }

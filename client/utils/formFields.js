@@ -231,6 +231,58 @@ export const emojiInput = (key = 'emoji', options = {}) => ({
 	...options,
 });
 
+const ChoiceRow = styled(
+	Component,
+	({ space }) => `
+		display: flex;
+		gap: ${space.sm};
+
+		& > button {
+			flex: 1;
+		}
+	`,
+);
+
+/**
+ * One of a few choices, all shown as a row of pressed chips (form.single-choice allows it for two to five). Its value is
+ * the chosen one's `value`.
+ * @param {object} [options] - Component options
+ * @param {Array<{ value: string, label: string, icon?: string }>} options.choices - The choices
+ * @param {string} [options.value] - The one chosen
+ */
+export class ChoiceChips extends ChoiceRow {
+	static schema = {
+		choices: {},
+		value: {
+			set(value) {
+				for (const [button, choice] of this._buttons ?? []) button.options.pressed = choice === value;
+			},
+		},
+	};
+
+	build() {
+		// A group, named by the Form's label
+		this.elem.setAttribute('role', 'group');
+
+		this._buttons = (this.options.choices ?? []).map(({ value, label, icon }) => [
+			new Button({
+				appendTo: this,
+				variant: 'chip',
+				icon,
+				textContent: label,
+				pressed: this.options.value === value,
+				onPointerPress: () => {
+					if (this.options.value === value) return;
+
+					this.options.value = value;
+					this.emit('change', { value });
+				},
+			}),
+			value,
+		]);
+	}
+}
+
 /**
  * Keeps a Form's groups laid out as they were declared. Form shows a group again by clearing its display, which drops
  * the grid a group's `style` gives it; this puts the declared display back after each change. Call it once the form is
