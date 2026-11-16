@@ -97,35 +97,3 @@ export const HeaderButton = styled(
 		font-size: 12px;
 	`,
 );
-
-// A small table of figures inside a dialog
-export const FigureTable = styled(
-	Component,
-	({ colors, space }) => `
-		width: 100%;
-		border-collapse: collapse;
-		font-size: 12px;
-
-		& th {
-			padding: ${space.xs} ${space.sm};
-			border-bottom: 1px solid ${colors.border};
-			font-size: 10px;
-			font-weight: normal;
-			letter-spacing: 0.05em;
-			text-align: left;
-			text-transform: uppercase;
-			color: ${colors.muted};
-		}
-
-		& td {
-			padding: ${space.xs} ${space.sm};
-			border-bottom: 1px solid ${colors.border};
-			color: ${colors.muted};
-		}
-
-		& .number {
-			text-align: right;
-		}
-	`,
-	{ tag: 'table' },
-);

@@ -1,12 +1,15 @@
-import { Card, Component, Dialog, Elem, EmptyState, Icon, styled, theme } from '@vanilla-bean/components';
+import { Card, Component, Dialog, EmptyState, Icon, styled, Table, theme } from '@vanilla-bean/components';
 import Chart from 'chart.js/auto';
 import { analyzePrecisionLayers } from '../api/precisionLayers';
-import { FigureTable, SubLabel } from './panelParts';
+import { SubLabel } from './panelParts';
 
 const { colors, space } = theme;
 
 // Chart.js reads its colors as CSS text
 const css = color => color.toRgbString();
+
+// The zones' figures, right-aligned under their headings
+const ZoneTable = styled(Table, () => '& .number { text-align: right; }');
 
 const Footnote = styled(
 	Component,
@@ -191,49 +194,44 @@ export default class PrecisionAnalysisDialog extends Dialog {
 		// ── Zone breakdown ───────────────────────────────────────────────────────
 		new SubLabel({ appendTo: body, textContent: 'Zones by applied rate' });
 
-		const table = new FigureTable({ appendTo: body });
-
-		const thead = new Elem({ tag: 'thead', appendTo: table });
-		const hRow = new Elem({ tag: 'tr', appendTo: thead });
-		for (const [text, align] of [
-			['Zone', 'left'],
-			['Rate range', 'right'],
-			['Avg rate', 'right'],
-			['Avg yield', 'right'],
-			['Points', 'right'],
-		]) {
-			new Elem({ tag: 'th', appendTo: hRow, ...(align === 'right' && { addClass: 'number' }), textContent: text });
-		}
-
-		const tbody = new Elem({ tag: 'tbody', appendTo: table });
 		const bestYield = Math.max(...r.zones.map(z => z.yieldMean));
+		const number = { addClass: 'number' };
 
-		for (const zone of r.zones) {
-			const tr = new Elem({ tag: 'tr', appendTo: tbody });
-			const isBest = zone.yieldMean === bestYield;
-			const cells = [
-				zone.zoneIndex,
-				`${formatN(zone.appliedMin, 0)}–${formatN(zone.appliedMax, 0)} ${appliedLayer.valueUnit ?? ''}`,
-				`${formatN(zone.appliedMean, 0)} ${appliedLayer.valueUnit ?? ''}`,
-				`${formatN(zone.yieldMean)} ${yieldLayer.valueUnit ?? ''}`,
-				zone.count.toLocaleString(),
-			];
-
-			cells.forEach((text, i) => {
-				const best = isBest && i === 3;
-
-				const td = new Elem({
-					tag: 'td',
-					appendTo: tr,
-					...(i !== 0 && { addClass: 'number' }),
-					style: best ? { color: colors.light(colors.success), fontWeight: '700' } : {},
-					textContent: String(text),
-				});
-
-				if (best)
-					new Icon({ tag: 'span', appendTo: td, icon: 'star', 'aria-label': 'Best', style: { marginLeft: space.xs } });
-			});
-		}
+		new ZoneTable({
+			appendTo: body,
+			style: { fontSize: '12px' },
+			columns: [
+				{ key: 'zone', content: 'Zone' },
+				{ key: 'range', content: 'Rate range', ...number, dataColumn: number },
+				{ key: 'rate', content: 'Avg rate', ...number, dataColumn: number },
+				{
+					key: 'yield',
+					content: 'Avg yield',
+					...number,
+					// The zone that yielded best is marked, in words for a screen reader as well as by the star
+					dataColumn: ({ rowData }) =>
+						rowData.best
+							? {
+									...number,
+									style: { color: colors.light(colors.success), fontWeight: '700' },
+									append: [
+										rowData.yield,
+										new Icon({ tag: 'span', icon: 'star', 'aria-label': 'Best', style: { marginLeft: space.xs } }),
+									],
+								}
+							: number,
+				},
+				{ key: 'points', content: 'Points', ...number, dataColumn: number },
+			],
+			data: r.zones.map(zone => ({
+				zone: String(zone.zoneIndex),
+				range: `${formatN(zone.appliedMin, 0)}–${formatN(zone.appliedMax, 0)} ${appliedLayer.valueUnit ?? ''}`,
+				rate: `${formatN(zone.appliedMean, 0)} ${appliedLayer.valueUnit ?? ''}`,
+				yield: `${formatN(zone.yieldMean)} ${yieldLayer.valueUnit ?? ''}`,
+				points: zone.count.toLocaleString(),
+				best: zone.yieldMean === bestYield,
+			})),
+		});
 
 		// Regression footnote
 		const { slope, intercept } = r.regression;
