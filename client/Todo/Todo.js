@@ -36,9 +36,8 @@ import { frequencyInterval, frequencyLabel } from '../Livestock/FeedingScheduleD
 import { incidentEmoji, severityMeta } from '../Incidents/IncidentDialog';
 import { eventEmoji } from '../Timeline/EventDialog';
 import { categoryMeta } from '../eventCategories';
-import context from '../context';
 import { toDateOnly } from '../utils/dates';
-import { ROUTES } from '../routes';
+import { ROUTES, timelineHref } from '../routes';
 
 const { colors } = theme;
 
@@ -451,10 +450,7 @@ export default class Todo extends AsyncView {
 				title: event.name || meta.label,
 				entity: field?.name || '',
 				detail: dateLabel,
-				onPress: () => {
-					context.timelineFieldFilter = event.fieldId || null;
-					window.location.hash = ROUTES.timeline;
-				},
+				href: timelineHref(event.fieldId),
 			});
 		}
 
@@ -480,9 +476,7 @@ export default class Todo extends AsyncView {
 				title: 'Withdrawal period active',
 				entity: animal ? animal.name || `#${animal.tagId}` : 'Animal',
 				detail: `${r.drug} — clears ${r.withdrawalDate} (${daysLeft}d)`,
-				onPress: () => {
-					window.location.hash = ROUTES.animals;
-				},
+				href: `#${ROUTES.animals}`,
 			});
 		}
 
@@ -518,9 +512,7 @@ export default class Todo extends AsyncView {
 				title: 'Birth expected',
 				entity: dam ? dam.name || `#${dam.tagId}` : 'Animal',
 				detail: dateLabel,
-				onPress: () => {
-					window.location.hash = ROUTES.animals;
-				},
+				href: `#${ROUTES.animals}`,
 			});
 		}
 
@@ -535,13 +527,9 @@ export default class Todo extends AsyncView {
 	}
 
 	_renderItem(item, tier) {
-		const navigate =
-			item.navigate &&
-			(() => {
-				window.location.hash = item.navigate === '/' ? '' : item.navigate;
-			});
-
-		const card = new TodoCard({ appendTo: this.content, accent: tier.color, onPointerPress: item.onPress || navigate });
+		// A card that goes somewhere is a link to it; one with an action of its own (Mark fed) goes nowhere
+		const href = item.href ?? (item.navigate && `#${item.navigate}`);
+		const card = new TodoCard({ appendTo: this.content, accent: tier.color, ...(href && { tag: 'a', href }) });
 
 		new Elem({ tag: 'span', appendTo: card, addClass: 'marker', textContent: item.icon });
 
