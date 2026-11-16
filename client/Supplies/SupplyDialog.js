@@ -1,12 +1,11 @@
-import { FormDialog, Elem, Button, Input, SectionLabel, Select, theme } from '@vanilla-bean/components';
-import { makePropertiesEditor } from '../utils/PropertiesEditor';
+import { FormDialog, Select, theme } from '@vanilla-bean/components';
+import { ChoiceChips, emojiInput, keepGroupLayout, numberField, PropertiesField } from '../utils/formFields';
 
 import { getBuildings } from '../api';
 import { watchFormConflicts } from '../utils/watchFormConflicts.js';
 import { stayOpenFor } from '../utils/stayOpenFor';
-import { FormLabel } from '../Layout';
 
-const { colors, space } = theme;
+const { space } = theme;
 
 export const SUPPLY_CATEGORY_SUGGESTIONS = [
 	'Seed',
@@ -70,22 +69,61 @@ export const detectSupplyEmoji = (category, stored) => {
 
 const withoutCallbacks = ({ onSave: _onSave, onDelete: _onDelete, ...options }) => options;
 
+const NOT_ASSIGNED = { value: '', label: '— not assigned to a building —' };
+
+const PRICE_MODES = [
+	{ value: 'markup', label: '% Markup' },
+	{ value: 'fixed', label: 'Fixed price' },
+];
+
+const markup = data => data.pricing === 'markup';
+
 export default class SupplyDialog extends FormDialog {
 	constructor(options = {}) {
 		const isEdit = !!options.supply?.id;
 		const supply = options.supply || {};
 		const preBuildingId = options.buildingId || supply.buildingId || '';
+		const field = key => this.form.inputElements[key];
+		// The price at the markup typed, on the cost typed
+		const showCalculated = () => {
+			const cost = Number(field('costPerUnit').options.value) || 0;
+			const pct = Number(field('markup').options.value) || 0;
 
+			this.form.options.data.calculatedPrice = cost > 0 ? `$${(cost * (1 + pct / 100)).toFixed(2)}` : '—';
+		};
+
+		// Fields that aren't the record's own keys as it holds them are named apart, so a change made on another device
+		// is compared only with the fields that hold it as it's saved
 		super({
 			header: isEdit ? `Edit Supply — ${supply.name}` : 'Add Supply Item',
 			data: {
+				emojiShown: supply.emoji || detectSupplyEmoji(supply.category || ''),
+				buildingId: preBuildingId,
 				name: supply.name || '',
 				category: supply.category || '',
 				unit: supply.unit || '',
 				costPerUnit: supply.costPerUnit || '',
 				currentStock: supply.currentStock || '',
+				props: supply.properties || {},
+				pricing: supply.priceMode || 'markup',
+				markup: supply.markupPercent || '50',
+				calculatedPrice: '',
+				fixedPrice: supply.pricePerUnit || '',
 			},
 			inputs: [
+				emojiInput('emojiShown', { title: 'Tap to change emoji — auto-detected from category' }),
+				// Opened from a building, the supply is stored there; otherwise it's picked
+				...(options.buildingId
+					? []
+					: [
+							{
+								key: 'buildingId',
+								label: 'Stored in building (optional)',
+								InputComponent: Select,
+								// The supply's own building until the list arrives, so it isn't lost meanwhile
+								options: [NOT_ASSIGNED, ...(preBuildingId ? [{ value: preBuildingId, label: '…' }] : [])],
+							},
+						]),
 				{
 					key: 'name',
 					label: 'Name',
@@ -98,9 +136,7 @@ export default class SupplyDialog extends FormDialog {
 					label: 'Category',
 					placeholder: 'e.g. Seed, Herbicide, Lime',
 					suggestions: SUPPLY_CATEGORY_SUGGESTIONS,
-					onChange: ({ value }) => {
-						if (!emojiInput.elem.dataset.manual) emojiInput.options.value = detectSupplyEmoji(value);
-					},
+					onChange: ({ value }) => (field('emojiShown').options.auto = detectSupplyEmoji(value)),
 				},
 				{
 					key: 'unit',
@@ -114,6 +150,7 @@ export default class SupplyDialog extends FormDialog {
 					type: 'number',
 					step: '0.01',
 					placeholder: 'e.g. 4.25 per lb',
+					onChange: showCalculated,
 				},
 				{
 					key: 'currentStock',
@@ -122,17 +159,54 @@ export default class SupplyDialog extends FormDialog {
 					step: '0.01',
 					placeholder: 'How much on hand',
 				},
+				{ key: 'props', label: 'Properties', InputComponent: PropertiesField },
+
+				// The price it sells at: a markup on its cost, or a fixed price
+				{ key: 'pricing', label: 'Sale Price', InputComponent: ChoiceChips, choices: PRICE_MODES },
+				{
+					type: 'group',
+					style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: space.sm },
+					inputs: [
+						{
+							key: 'markup',
+							label: 'Markup (%)',
+							placeholder: '50',
+							...numberField({ step: '1', min: '0' }),
+							condition: markup,
+							onInput: showCalculated,
+						},
+						{
+							key: 'calculatedPrice',
+							label: 'Calculated price',
+							placeholder: '—',
+							attributes: { readonly: '' },
+							style: { opacity: '0.6' },
+							condition: markup,
+						},
+					],
+				},
+				{
+					key: 'fixedPrice',
+					label: 'Fixed sale price ($)',
+					placeholder: '0.00',
+					...numberField({ step: '0.01' }),
+					condition: data => !markup(data),
+				},
 			],
 			onSave: async d => {
 				return stayOpenFor(
 					await options.onSave?.({
-						...d,
-						emoji: this._getEmoji?.() || '',
-						buildingId: this._buildingId ?? preBuildingId,
-						priceMode: this._priceMode ?? 'markup',
-						markupPercent: this._markupPct ?? '50',
-						pricePerUnit: this._fixedPrice ?? '',
-						properties: this._collectProps?.() ?? {},
+						name: d.name,
+						category: d.category,
+						unit: d.unit,
+						costPerUnit: d.costPerUnit,
+						currentStock: d.currentStock,
+						emoji: d.emojiShown !== detectSupplyEmoji(d.category || '') ? d.emojiShown : '',
+						buildingId: d.buildingId,
+						priceMode: d.pricing,
+						markupPercent: d.markup,
+						pricePerUnit: d.fixedPrice,
+						properties: d.props,
 					}),
 				);
 			},
@@ -143,215 +217,29 @@ export default class SupplyDialog extends FormDialog {
 			...withoutCallbacks(options),
 		});
 
-		// Emoji row
-		const emojiRow = new Elem({
-			tag: 'div',
-			appendTo: this.intro,
-			style: { display: 'flex', alignItems: 'center', gap: space.sm, margin: `${space.sm} 0` },
-		});
+		keepGroupLayout(this.form);
+		showCalculated();
 
-		const emojiInput = new Input({
-			appendTo: emojiRow,
-			type: 'text',
-			attributes: {
-				maxlength: '4',
-				title: 'Tap to change emoji — auto-detected from category',
-			},
-			style: { fontSize: '22px', padding: space.xs, width: '52px', textAlign: 'center', flexShrink: '0' },
-		});
-
-		emojiInput.options.value = supply.emoji || detectSupplyEmoji(supply.category || '');
-
-		const emojiHint = new Elem({
-			tag: 'span',
-			appendTo: emojiRow,
-			style: { fontSize: '11px', color: colors.muted },
-			textContent: supply.emoji ? 'Custom · clear to auto-detect' : 'Auto-detected · tap to change',
-		});
-
-		emojiInput.elem.addEventListener('input', () => {
-			emojiInput.elem.dataset.manual = emojiInput.options.value ? '1' : '';
-			emojiHint.elem.textContent = emojiInput.options.value
-				? 'Custom · clear to auto-detect'
-				: 'Auto-detected · tap to change';
-		});
-
-		this._buildingId = preBuildingId;
-
-		// If no pre-set building, show a building selector
 		if (!options.buildingId) {
-			const bldgRow = new Elem({ tag: 'div', appendTo: this.intro, style: { marginBottom: space.xs } });
-
-			new FormLabel({ appendTo: bldgRow, textContent: 'Stored in building (optional)', style: { marginTop: '0' } });
-
-			const notAssigned = { value: '', label: '— not assigned to a building —' };
-			const buildingSelect = new Select({ appendTo: bldgRow, options: [notAssigned] });
-
 			getBuildings()
 				.then(data => {
-					buildingSelect.options.options = [
-						notAssigned,
+					field('buildingId').options.options = [
+						NOT_ASSIGNED,
 						...Object.values(data?.body || {})
 							.sort((a, z) => (a.name || '').localeCompare(z.name || ''))
 							.map(b => ({ value: b.id, label: b.name || 'Unnamed building' })),
 					];
 
-					if (preBuildingId) buildingSelect.options.value = preBuildingId;
+					if (preBuildingId) this.form.options.data.buildingId = field('buildingId').options.value = preBuildingId;
 				})
 				.catch(() => {
 					/* building list unavailable */
 				});
-
-			buildingSelect.elem.addEventListener('change', () => {
-				this._buildingId = buildingSelect.options.value;
-			});
 		}
 
 		if (isEdit) {
 			this.form.addCleanup('conflictWatch', watchFormConflicts(this.form, 'supplies', supply.id));
 		}
-
-		const { collect: collectProps } = makePropertiesEditor(this.body, supply.properties || {});
-		this._collectProps = collectProps;
-
-		this._getEmoji = () => {
-			const auto = detectSupplyEmoji(this.form.options.data.category || '');
-
-			return emojiInput.options.value !== auto ? emojiInput.options.value : '';
-		};
-
-		// Pricing section — cost vs sale price
-		const pricingDiv = new Elem({
-			tag: 'div',
-			appendTo: this.body,
-			style: { marginTop: space.md, borderTop: `1px solid ${colors.border}`, paddingTop: space.md },
-		});
-
-		new SectionLabel({ appendTo: pricingDiv, textContent: 'Sale Price' });
-
-		// Mode toggle
-		const modeRow = new Elem({
-			tag: 'div',
-			appendTo: pricingDiv,
-			style: { display: 'flex', gap: space.sm, marginBottom: space.sm },
-		});
-
-		this._priceMode = supply.priceMode || 'markup';
-		this._markupPct = supply.markupPercent || '50';
-		this._fixedPrice = supply.pricePerUnit || '';
-
-		const makeModeBtn = (label, value, onPress) =>
-			new Button({
-				appendTo: modeRow,
-				variant: 'chip',
-				textContent: label,
-				attributes: { type: 'button', 'data-mode': value },
-				style: { flex: '1' },
-				onPointerPress: onPress,
-			});
-
-		// Markup fields
-		const markupWrap = new Elem({
-			tag: 'div',
-			appendTo: pricingDiv,
-			style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: space.sm },
-		});
-
-		const markupLabelStyle = { marginTop: '0' };
-		// Both captions sit above both fields in the grid, so each names its field outright
-		const markupId = `${this.uniqueId}-markup`;
-		const calcId = `${this.uniqueId}-calc`;
-
-		new FormLabel({
-			appendTo: markupWrap,
-			textContent: 'Markup (%)',
-			style: markupLabelStyle,
-			attributes: { for: markupId },
-		});
-		new FormLabel({
-			appendTo: markupWrap,
-			textContent: 'Calculated price',
-			style: markupLabelStyle,
-			attributes: { for: calcId },
-		});
-
-		const markupInput = new Input({ appendTo: markupWrap, attributes: { id: markupId } });
-
-		Object.assign(markupInput.elem, { type: 'number', step: '1', min: '0', placeholder: '50' });
-		markupInput.options.value = this._markupPct;
-
-		const calcDisplay = new Input({ appendTo: markupWrap, style: { opacity: '0.6' }, attributes: { id: calcId } });
-
-		Object.assign(calcDisplay.elem, { type: 'text', readOnly: true, placeholder: '—' });
-
-		// Fixed price field
-		const fixedWrap = new Elem({
-			tag: 'div',
-			appendTo: pricingDiv,
-			style: { display: 'none' },
-		});
-
-		new FormLabel({ appendTo: fixedWrap, textContent: 'Fixed sale price ($)', style: markupLabelStyle });
-
-		const fixedInput = new Input({ appendTo: fixedWrap });
-
-		Object.assign(fixedInput.elem, { type: 'number', step: '0.01', placeholder: '0.00' });
-		fixedInput.options.value = this._fixedPrice;
-
-		const updateCalc = () => {
-			const cost = Number(this.form.options.data.costPerUnit) || 0;
-			const pct = Number(markupInput.options.value) || 0;
-
-			calcDisplay.options.value = cost > 0 ? `$${(cost * (1 + pct / 100)).toFixed(2)}` : '—';
-		};
-
-		const applyMode = () => {
-			const isMarkup = this._priceMode === 'markup';
-
-			markupWrap.setStyle({ display: isMarkup ? 'grid' : 'none' });
-			fixedWrap.setStyle({ display: isMarkup ? 'none' : 'block' });
-
-			for (const btn of modeRow.elem.querySelectorAll('button')) {
-				btn.classList.toggle('active', btn.dataset.mode === this._priceMode);
-			}
-
-			updateCalc();
-		};
-
-		makeModeBtn('% Markup', 'markup', () => {
-			this._priceMode = 'markup';
-			applyMode();
-		});
-		makeModeBtn('Fixed price', 'fixed', () => {
-			this._priceMode = 'fixed';
-			applyMode();
-		});
-
-		markupInput.elem.addEventListener('input', () => {
-			this._markupPct = markupInput.options.value;
-			updateCalc();
-		});
-		fixedInput.elem.addEventListener('input', () => {
-			this._fixedPrice = fixedInput.options.value;
-		});
-
-		// Sync when cost changes via the Form
-		const costKey = 'costPerUnit';
-
-		if (this.form.options.inputs) {
-			const costInput = this.form.options.inputs.find(i => i.key === costKey);
-
-			if (costInput) {
-				const prev = costInput.onChange;
-
-				costInput.onChange = args => {
-					prev?.(args);
-					updateCalc();
-				};
-			}
-		}
-
-		applyMode();
 	}
 }
 
