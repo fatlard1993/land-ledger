@@ -2,6 +2,7 @@ import {
 	Button,
 	capitalize,
 	Card,
+	Content,
 	Component,
 	Dialog,
 	Elem,
@@ -203,9 +204,10 @@ export function showConflictDialog(conflicts, { header = OFFLINE.header, intro =
 			onPointerPress: () => applyAll('theirs'),
 		});
 
-		const cardsWrap = new Component({
+		// The conflicts, which the dialog's body scrolls with the rest
+		const cardsWrap = new Content({
 			appendTo: dialog.body,
-			style: { display: 'flex', flexDirection: 'column', gap: space.sm, maxHeight: '420px', overflowY: 'auto' },
+			style: { display: 'flex', flexDirection: 'column', gap: space.sm },
 		});
 
 		for (const { entry, current, conflictingFields } of conflicts) {

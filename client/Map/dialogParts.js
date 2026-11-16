@@ -1,4 +1,4 @@
-import { Button, Component, Input, Select, styled } from '@vanilla-bean/components';
+import { Button, Component, Content, Input, Select, styled } from '@vanilla-bean/components';
 
 import { AREA_UNITS, convertArea } from '../geo';
 
@@ -167,12 +167,10 @@ export const DropZone = styled(
 	`,
 );
 
-// The features a file holds, listed before they're imported
+// The features a file holds, listed before they're imported; the dialog's body scrolls a long list with the rest
 export const PreviewList = styled(
-	Component,
+	Content,
 	({ colors, radius, space }) => `
-		max-height: 200px;
-		overflow-y: auto;
 		margin-bottom: ${space.md};
 		border: 1px solid ${colors.border};
 		border-radius: ${radius.md};

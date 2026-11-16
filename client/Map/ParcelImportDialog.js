@@ -107,7 +107,7 @@ export default class ParcelImportDialog extends Dialog {
 			textContent: `Found ${features.length} polygon${features.length !== 1 ? 's' : ''} — they will be saved as property lines:`,
 		});
 
-		const list = new PreviewList({ appendTo: this._preview, style: { maxHeight: '160px' } });
+		const list = new PreviewList({ appendTo: this._preview });
 
 		for (const [i, f] of features.slice(0, 20).entries()) {
 			const p = f.properties || {};
