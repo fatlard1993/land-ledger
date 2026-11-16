@@ -4,6 +4,7 @@ import {
 	Dialog,
 	Elem,
 	formatDate,
+	Link,
 	parseDate,
 	SectionLabel,
 	styled,
@@ -18,12 +19,11 @@ import { getEvents, updateEvent, getMaintenance, getMaintenanceSchedules, update
 import { eventEmoji } from '../Timeline/EventDialog';
 import { categoryMeta } from '../eventCategories';
 import { ActionHeader, FieldPanel as StyledPanel, DetailRow, TenureBadge } from '../Layout';
-import context from '../context';
 import EventDialog from '../Timeline/EventDialog';
 import SeasonCharts from '../Charts/SeasonCharts';
 import { scheduleStatus } from '../utils/maintenanceUtils';
 import { IconText, STATUS_ICONS } from '../statusIcons';
-import { ROUTES } from '../routes';
+import { timelineHref } from '../routes';
 import BuildingDialog, { buildingEmoji } from './BuildingDialog';
 import EquipmentDialog, { equipmentEmoji } from './EquipmentDialog';
 import FieldDialog from './FieldDialog';
@@ -837,17 +837,14 @@ export default class FieldPanel extends FieldPanelOuter {
 		});
 
 		if (events.length) {
-			new Button({
+			new Link({
 				appendTo: actButtons,
 				variant: 'flat',
-				size: 'small',
 				icon: 'calendar-days',
+				tooltip: false,
 				textContent: 'Open in Timeline',
-				onPointerPress: () => {
-					context.timelineFieldFilter = building.id;
-					window.location.hash = ROUTES.timeline;
-					this.hide();
-				},
+				href: timelineHref(building.id),
+				onPointerPress: () => this.hide(),
 			});
 		}
 
@@ -1169,17 +1166,14 @@ export default class FieldPanel extends FieldPanelOuter {
 				}),
 		});
 
-		new Button({
+		new Link({
 			appendTo: useActions,
 			variant: 'flat',
-			size: 'small',
 			icon: 'calendar-days',
+			tooltip: false,
 			textContent: 'Open in Timeline',
-			onPointerPress: () => {
-				context.timelineFieldFilter = field.id;
-				window.location.hash = ROUTES.timeline;
-				this.hide();
-			},
+			href: timelineHref(field.id),
+			onPointerPress: () => this.hide(),
 		});
 
 		if (!currentEvents.length) {

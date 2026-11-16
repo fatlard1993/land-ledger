@@ -18,7 +18,7 @@ import AsyncView from '../AsyncView';
 import { getEvents, getFields, createEvent, updateEvent, deleteEvent, getWeather, getCountyYield } from '../api';
 import { centroidFromGeometry } from '../geo';
 import { PageView } from '../Layout';
-import context from '../context';
+import { ROUTES, timelineFieldFrom, timelineHref } from '../routes';
 import SeasonCharts from '../Charts/SeasonCharts';
 
 import TabularImportDialog from '../Import/TabularImportDialog';
@@ -288,16 +288,35 @@ export default class Timeline extends AsyncView {
 		this.fields = fields;
 		this._dataReady = true;
 
-		// Check if navigated here with a field filter (e.g. from FieldPanel)
-		if (context.timelineFieldFilter) {
-			this._fieldFilter = context.timelineFieldFilter;
-			context.timelineFieldFilter = null;
-			const filterField = this.fields?.body?.[this._fieldFilter];
+		// The field filter is in the address (from a field's Open in Timeline, a To Do card or a bookmark), and follows it
+		// when the address changes with Timeline open
+		this._filterFromAddress();
+		window.addEventListener(
+			'hashchange',
+			() => {
+				if (!window.location.hash.startsWith(`#${ROUTES.timeline}`)) return;
+				if (timelineFieldFrom(window.location.hash) === this._fieldFilter) return;
 
-			if (filterField) this.toolbar.options.heading = filterField.name;
-		}
+				this._filterFromAddress();
+				this._renderCurrent();
+			},
+			{ signal: this.signal },
+		);
 
 		this._switchView('timeline');
+	}
+
+	_filterFromAddress() {
+		this._fieldFilter = timelineFieldFrom(window.location.hash);
+		this.toolbar.options.heading = this.fields?.body?.[this._fieldFilter]?.name || 'Timeline';
+	}
+
+	// Filters to a field, or to none, and writes it into the address so the view can be linked as it stands
+	_setFieldFilter(fieldId) {
+		this._fieldFilter = fieldId || null;
+		this.toolbar.options.heading = this.fields?.body?.[this._fieldFilter]?.name || 'Timeline';
+		window.history.replaceState(null, '', timelineHref(this._fieldFilter));
+		this._renderTimeline();
 	}
 
 	_switchView(view) {
@@ -329,13 +348,7 @@ export default class Timeline extends AsyncView {
 
 		filterSelect.options.value = this._fieldFilter || '';
 
-		filterSelect.elem.addEventListener('change', () => {
-			this._fieldFilter = filterSelect.options.value || null;
-			const selectedField = this.fields?.body?.[this._fieldFilter];
-
-			this.toolbar.options.heading = selectedField ? selectedField.name : 'Timeline';
-			this._renderTimeline();
-		});
+		filterSelect.elem.addEventListener('change', () => this._setFieldFilter(filterSelect.options.value));
 
 		if (this._fieldFilter) {
 			new Button({
@@ -343,11 +356,7 @@ export default class Timeline extends AsyncView {
 				variant: 'flat',
 				icon: 'xmark',
 				textContent: 'Clear',
-				onPointerPress: () => {
-					this._fieldFilter = null;
-					this.toolbar.options.heading = 'Timeline';
-					this._renderTimeline();
-				},
+				onPointerPress: () => this._setFieldFilter(null),
 			});
 		}
 	}

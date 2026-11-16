@@ -1,7 +1,6 @@
 import { Oxject } from '@vanilla-bean/components';
 
 const context = new Oxject({
-	timelineFieldFilter: null,
 	hasLeases: false,
 	hasSupplies: false,
 	hasIncidents: false,

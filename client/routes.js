@@ -15,6 +15,21 @@ export const ROUTES = Object.freeze({
 });
 
 /**
+ * Where Timeline opens filtered to one field (or building): the filter is in the address, so the link can be opened in
+ * a new tab, bookmarked or shared
+ * @param {string} [fieldId] - The field whose events it shows; none shows every field's
+ * @returns {string} The hash
+ */
+export const timelineHref = fieldId => `#${ROUTES.timeline}${fieldId ? `?field=${encodeURIComponent(fieldId)}` : ''}`;
+
+/**
+ * The field a Timeline address is filtered to
+ * @param {string} hash - A location hash
+ * @returns {string|null} The field's id, or null for every field
+ */
+export const timelineFieldFrom = hash => new URLSearchParams(hash.split('?')[1] ?? '').get('field') || null;
+
+/**
  * The hash a bookmark from before the paths were lowercase (#/Fields) now opens, or null when it isn't one.
  * @param {string} hash - A location hash
  * @returns {string|null} The hash of the view it names

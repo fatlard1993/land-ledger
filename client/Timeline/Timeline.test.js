@@ -39,3 +39,36 @@ describe('Timeline with a field filter', () => {
 		expect(text).toContain('No events logged yet');
 	});
 });
+
+describe("Timeline's field filter", () => {
+	let fetch;
+
+	afterEach(() => {
+		fetch.mockRestore();
+		document.body.innerHTML = '';
+		window.history.replaceState(null, '', '#/');
+	});
+
+	test('is read from the address, and picking another writes it there', async () => {
+		fetch = spyOn(globalThis, 'fetch').mockImplementation(async () => Response.json({}));
+		window.history.replaceState(null, '', '#/timeline?field=f1');
+
+		const view = new Timeline({ appendTo: document.body });
+
+		view.fields = { body: { f1: { id: 'f1', name: 'Creek Bottom' }, f2: { id: 'f2', name: 'Home Forty' } } };
+		view.events = { body: {} };
+		view._filterFromAddress();
+
+		expect(view._fieldFilter).toBe('f1');
+		expect(view.toolbar.options.heading).toBe('Creek Bottom');
+
+		view._setFieldFilter('f2');
+
+		expect(window.location.hash).toBe('#/timeline?field=f2');
+		expect(view.toolbar.options.heading).toBe('Home Forty');
+
+		view._setFieldFilter(null);
+
+		expect(window.location.hash).toBe('#/timeline');
+	});
+});
