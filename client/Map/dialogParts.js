@@ -1,47 +1,8 @@
-import { Button, Component, Input, Select, styled, theme } from '@vanilla-bean/components';
+import { Button, Component, Input, Select, styled } from '@vanilla-bean/components';
 
 import { AREA_UNITS, convertArea } from '../geo';
-import { labelNextField } from '../Layout';
 
-const { space } = theme;
-
-// The pieces the map's hand-built entity dialogs share
-
-// A caption over a field, naming the field after it
-export class Caption extends styled(
-	Component,
-	({ colors, space }) => `
-		display: block;
-		margin: ${space.md} 0 ${space.xs};
-		font-size: 13px;
-		color: ${colors.muted};
-	`,
-	{ tag: 'label' },
-) {
-	constructor(options, ...children) {
-		super(options, ...children);
-
-		labelNextField(this);
-	}
-}
-
-const Hint = styled(
-	Component,
-	({ colors }) => `
-		font-size: 11px;
-		color: ${colors.muted};
-	`,
-	{ tag: 'span' },
-);
-
-const Row = styled(
-	Component,
-	({ space }) => `
-		display: flex;
-		align-items: center;
-		gap: ${space.sm};
-	`,
-);
+// The pieces the map's entity dialogs share
 
 // One field's frame around the size, its unit and the recalculate button
 const AreaFrame = styled(
@@ -175,68 +136,6 @@ export class AreaField extends AreaFrame {
 		this.emit('change', { value: this.options.value });
 	}
 }
-
-/**
- * A checkbox with its caption beside it
- * @param {Component|HTMLElement} appendTo - Where it goes
- * @param {object} options - Toggle options
- * @param {string} options.label - The caption
- * @param {boolean} options.checked - Whether it starts checked
- * @param {object} [options.style] - Extra inline style for the row
- * @returns {Input} The checkbox
- */
-export const checkboxRow = (appendTo, { label, checked, style }) => {
-	const id = `lbl-${Math.random().toString(36).slice(2)}`;
-	const row = new Row({ appendTo, style: { marginTop: space.md, ...style } });
-	const checkbox = new Input({ appendTo: row, attributes: { type: 'checkbox', id } });
-
-	checkbox.elem.checked = checked;
-
-	new Caption({
-		appendTo: row,
-		textContent: label,
-		attributes: { for: id },
-		style: { margin: '0', cursor: 'pointer', userSelect: 'none' },
-	});
-
-	return checkbox;
-};
-
-/**
- * The emoji that marks an entity on the map, guessed from its type until the user picks one
- * @param {Component|HTMLElement} appendTo - Where it goes
- * @param {string} value - The emoji shown
- * @returns {Input} The emoji input; its dataset.manual is set once the user types in it
- */
-export const emojiField = (appendTo, value) => {
-	const row = new Row({ appendTo, style: { margin: `${space.sm} 0` } });
-	const id = `emoji-${Math.random().toString(36).slice(2)}`;
-
-	const input = new Input({
-		appendTo: row,
-		type: 'text',
-		value,
-		attributes: { id, maxlength: '4', title: 'Tap to change emoji — auto-detected from type' },
-		style: { width: '52px', padding: space.xs, flexShrink: '0', fontSize: '22px', textAlign: 'center' },
-	});
-
-	// The hint is the field's label, so it names the field as well as saying where the emoji came from
-	const hint = new Hint({
-		appendTo: row,
-		tag: 'label',
-		attributes: { for: id },
-		textContent: 'Emoji: auto-detected · tap to change',
-	});
-
-	input.elem.addEventListener('input', () => {
-		input.elem.dataset.manual = input.options.value ? '1' : '';
-		hint.elem.textContent = input.options.value
-			? 'Emoji: custom · clear to auto-detect'
-			: 'Emoji: auto-detected · tap to change';
-	});
-
-	return input;
-};
 
 // Where a file is dropped or tapped to browse
 export const DropZone = styled(
