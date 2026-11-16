@@ -151,7 +151,7 @@ const AlertContainer = styled(
 `,
 );
 
-// Floats over the map, so it's opaque where a Card on the page is translucent
+// Floats over the map, so it sits on the theme's surface, where a Card on the page is translucent
 const AlertCard = styled(
 	Card,
 	({ colors, space }) => `
@@ -159,7 +159,7 @@ const AlertCard = styled(
 		display: flex;
 		align-items: center;
 		gap: ${space.sm};
-		background-color: ${colors.alpha(colors.black, 0.95)};
+		background-color: ${colors.surface};
 		padding: ${space.sm} ${space.md};
 		font-size: 12px;
 		color: ${colors.white};
