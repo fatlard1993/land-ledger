@@ -1028,9 +1028,12 @@ export default class FieldPanel extends FieldPanelOuter {
 				s => (scheduleStatus(s, currentUsage, item.usageUnit, today) ?? { status: 'ok' }).status === 'overdue',
 			);
 
+			// The map's equipment list is fetched again after the update, and redraws its markers itself.
+			// A refused flag leaves the status as it stands: it's tried again the next time this opens
 			if (anyOverdue) {
-				await updateEquipment(item.id, { body: { status: 'needs_maintenance', _v: item._v } });
-				this._rescaleEquipmentMarkers();
+				const flagged = await updateEquipment(item.id, { body: { status: 'needs_maintenance', _v: item._v } });
+
+				if (flagged.status === 'success') Object.assign(item, flagged.body);
 			}
 		}
 
