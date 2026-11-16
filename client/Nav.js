@@ -1,4 +1,4 @@
-import { Elem, Icon } from '@vanilla-bean/components';
+import { Elem, Icon, Notify } from '@vanilla-bean/components';
 
 import { BottomNav, NavItem, NavLink } from './Layout';
 import context from './context';
@@ -117,7 +117,8 @@ export default class Nav extends BottomNav {
 				appendTo: this,
 				title: `Signed in as ${user.name} — tap to sign out`,
 				onPointerPress: async () => {
-					await logout();
+					if (!(await logout())) return new Notify({ intent: 'danger', content: "Couldn't sign out: try again" });
+
 					window.location.reload();
 				},
 			});

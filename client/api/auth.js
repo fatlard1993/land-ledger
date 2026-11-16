@@ -18,8 +18,11 @@ export const login = async passkey => {
 	return res.ok;
 };
 
+/** Whether the server signed the session out */
 export const logout = async () => {
-	await fetch('/auth/logout', { method: 'POST' });
+	const res = await fetch('/auth/logout', { method: 'POST' });
+
+	return res.ok;
 };
 
 export const getAuthSettings = async () => {
