@@ -1,7 +1,6 @@
 import { Elem, FormDialog, Select, theme } from '@vanilla-bean/components';
 
-import { FormLabel } from '../Layout';
-import { makePropertiesEditor } from '../utils/PropertiesEditor';
+import { PropertiesField } from '../utils/formFields';
 import { toNum } from '../utils/format.js';
 import { watchFormConflicts } from '../utils/watchFormConflicts.js';
 import { stayOpenFor } from '../utils/stayOpenFor';
@@ -63,8 +62,22 @@ export default class MaintenanceScheduleDialog extends FormDialog {
 				lastDoneDate: schedule.lastDoneDate || '',
 				lastDoneUsage: schedule.lastDoneUsage || '',
 				procedure: schedule.procedure || '',
+				template: '',
+				props: schedule.properties || {},
 			},
 			inputs: [
+				// A new schedule can start from a common one, which fills in its fields
+				...(isEdit
+					? []
+					: [
+							{
+								key: 'template',
+								label: 'Start from template (optional)',
+								InputComponent: Select,
+								options: [{ value: '', label: '— blank —' }, ...COMMON_SCHEDULES.map(t => t.name)],
+								onChange: ({ value }) => this._applyTemplate(value),
+							},
+						]),
 				{
 					key: 'name',
 					label: 'Schedule Name',
@@ -113,6 +126,7 @@ export default class MaintenanceScheduleDialog extends FormDialog {
 					rows: 3,
 					placeholder: 'Step-by-step procedure, specs, torque values…',
 				},
+				{ key: 'props', label: 'Properties', InputComponent: PropertiesField },
 			],
 			onSave: async d => {
 				return stayOpenFor(
@@ -124,7 +138,7 @@ export default class MaintenanceScheduleDialog extends FormDialog {
 						intervalDays: toNum(d.intervalDays),
 						lastDoneDate: d.lastDoneDate || null,
 						lastDoneUsage: toNum(d.lastDoneUsage),
-						properties: collectProps(),
+						properties: d.props,
 					}),
 				);
 			},
@@ -135,19 +149,6 @@ export default class MaintenanceScheduleDialog extends FormDialog {
 			...withoutCallbacks(options),
 		});
 
-		// Template picker
-		let tplSelect;
-
-		if (!isEdit) {
-			new FormLabel({ appendTo: this.intro, textContent: 'Start from template (optional)' });
-			// A bare select takes the theme's field look
-			tplSelect = new Select({
-				appendTo: this.intro,
-				style: { cursor: 'pointer' },
-				options: [{ value: '', label: '— blank —' }, ...COMMON_SCHEDULES.map(t => t.name)],
-			});
-		}
-
 		new Elem({
 			tag: 'div',
 			appendTo: this.intro,
@@ -157,28 +158,18 @@ export default class MaintenanceScheduleDialog extends FormDialog {
 
 		if (isEdit)
 			this.form.addCleanup('conflictWatch', watchFormConflicts(this.form, 'maintenance-schedules', schedule.id));
+	}
 
-		// Wire template picker to fill Form fields
-		if (!isEdit && tplSelect) {
-			tplSelect.elem.addEventListener('change', () => {
-				const tpl = COMMON_SCHEDULES.find(t => t.name === tplSelect.options.value);
+	// Fills the fields from the common schedule picked
+	_applyTemplate(name) {
+		const tpl = COMMON_SCHEDULES.find(t => t.name === name);
+		const data = this.form.options.data;
 
-				if (!tpl) return;
-				['name', 'procedure'].forEach(k => {
-					this.form.inputElements[k].options.value = tpl[k] || '';
-					this.form.options.data[k] = tpl[k] || '';
-				});
-				if (tpl.intervalHours) {
-					this.form.inputElements.intervalUsage.options.value = tpl.intervalHours;
-					this.form.options.data.intervalUsage = tpl.intervalHours;
-				}
-				if (tpl.intervalDays) {
-					this.form.inputElements.intervalDays.options.value = tpl.intervalDays;
-					this.form.options.data.intervalDays = tpl.intervalDays;
-				}
-			});
-		}
+		if (!tpl) return;
 
-		const { collect: collectProps } = makePropertiesEditor(this.body, schedule.properties || {});
+		data.name = tpl.name || '';
+		data.procedure = tpl.procedure || '';
+		if (tpl.intervalHours) data.intervalUsage = tpl.intervalHours;
+		if (tpl.intervalDays) data.intervalDays = tpl.intervalDays;
 	}
 }
