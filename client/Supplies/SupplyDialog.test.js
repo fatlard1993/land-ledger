@@ -47,7 +47,7 @@ describe('the supply dialog', () => {
 			name: 'Ag Lime',
 			category: 'Lime',
 			unit: '',
-			costPerUnit: '40',
+			costPerUnit: 40,
 			currentStock: '',
 			emoji: '',
 			buildingId: 'b1',
