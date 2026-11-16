@@ -1,17 +1,6 @@
-import {
-	Component,
-	conditionalList,
-	Elem,
-	FormDialog,
-	Input,
-	SectionLabel,
-	Select,
-	styled,
-	theme,
-} from '@vanilla-bean/components';
+import { conditionalList, FormDialog, Select, theme } from '@vanilla-bean/components';
 
-import { FormLabel } from '../Layout';
-import { makePropertiesEditor } from '../utils/PropertiesEditor';
+import { checkboxField, numberField, PropertiesField } from '../utils/formFields';
 import { toNum } from '../utils/format.js';
 import { watchFormConflicts } from '../utils/watchFormConflicts.js';
 import { stayOpenFor } from '../utils/stayOpenFor';
@@ -54,35 +43,6 @@ export const SEVERITY_LEVELS = [
 	{ value: 'total_loss', label: 'Total Loss', color: colors.danger.toHexString() },
 ];
 
-const Divider = styled(
-	Component,
-	({ colors, space }) => `
-		margin-top: ${space.md};
-		padding-top: ${space.md};
-		border-top: 1px solid ${colors.border};
-	`,
-);
-
-// The stock loss table: a species, then head lost and injured
-const LossGrid = styled(
-	Component,
-	({ colors, space }) => `
-		display: grid;
-		grid-template-columns: 1fr 80px 80px;
-		gap: ${space.sm};
-		align-items: center;
-		margin-bottom: ${space.sm};
-
-		&.header {
-			margin-bottom: ${space.xs};
-			font-size: 10px;
-			letter-spacing: 0.04em;
-			text-transform: uppercase;
-			color: ${colors.muted};
-		}
-	`,
-);
-
 export const severityMeta = v => SEVERITY_LEVELS.find(s => s.value === v) || SEVERITY_LEVELS[0];
 
 export const incidentEmoji = type => {
@@ -102,6 +62,52 @@ export const incidentEmoji = type => {
 	return '⚠️';
 };
 
+const STATUS_IMPACTS = [
+	{ value: '', label: '— no change —' },
+	{ value: 'needs_maintenance', label: 'Needs maintenance' },
+	{ value: 'needs_service', label: 'Needs service / attention' },
+	{ value: 'out_of_service', label: 'Out of service' },
+	{ value: 'destroyed', label: 'Destroyed / total loss' },
+];
+
+const LOSS_FIELD = { placeholder: '0', ...numberField({ step: '1', min: '0' }) };
+
+const parsed = value => {
+	try {
+		return (typeof value === 'string' ? JSON.parse(value) : value) || {};
+	} catch {
+		return {};
+	}
+};
+
+/**
+ * Each herd on the field, as a row of head lost and injured, filled in from the losses an edited report saved
+ * @param {Array<object>} events - The field's livestock events
+ * @param {string|Array} savedLosses - The report's livestockLosses
+ * @returns {Array<object>} A row per herd: its event, species, label, field keys and saved counts
+ */
+const lossRowsFor = (events, savedLosses) => {
+	const list = parsed(savedLosses);
+	const saved = Object.fromEntries((Array.isArray(list) ? list : []).map(l => [l.eventId, l]));
+
+	return events.map(event => {
+		const details = parsed(event.details);
+		const species = details.species || event.name || 'Stock';
+		const headCount = Number(details.headCount) || 0;
+		const existing = saved[event.id] || {};
+
+		return {
+			eventId: event.id,
+			species,
+			name: `${species}${headCount ? ` (${headCount} hd)` : ''}`,
+			lostKey: `lost_${event.id}`,
+			injuredKey: `injured_${event.id}`,
+			lost: existing.lost || '',
+			injured: existing.injured || '',
+		};
+	});
+};
+
 const withoutCallbacks = ({ onSave: _onSave, onDelete: _onDelete, ...options }) => options;
 
 export default class IncidentDialog extends FormDialog {
@@ -109,6 +115,13 @@ export default class IncidentDialog extends FormDialog {
 		const isEdit = !!options.incident?.id;
 		const incident = options.incident || {};
 		const entityLabel = options.entityName || options.entity?.name || '';
+		const entityType = options.entityType || incident.entityType || '';
+		// The entity's status after the incident is asked of a new report; an open one offers to restore it
+		const asksStatus = (entityType === 'equipment' || entityType === 'building') && !isEdit;
+		const offersRestore = (entityType === 'equipment' || entityType === 'building') && isEdit && !incident.resolved;
+
+		// Head lost and injured, for each herd on the field: only shown when the field has active livestock
+		const lossRows = lossRowsFor(options.livestockEvents || [], incident.livestockLosses);
 
 		// Save and Mark Resolved send the same record; Mark Resolved marks it resolved and may restore the entity
 		const payloadFor = (d, button) => {
@@ -127,21 +140,21 @@ export default class IncidentDialog extends FormDialog {
 				livestockLosses: lossRows.length
 					? JSON.stringify(
 							lossRows
-								.filter(r => toNum(r.lostEl.options.value) != null || toNum(r.injuredEl.options.value) != null)
+								.filter(r => toNum(d[r.lostKey]) != null || toNum(d[r.injuredKey]) != null)
 								.map(r => ({
 									eventId: r.eventId,
 									species: r.species,
-									lost: toNum(r.lostEl.options.value) ?? 0,
-									injured: toNum(r.injuredEl.options.value) ?? 0,
+									lost: toNum(d[r.lostKey]) ?? 0,
+									injured: toNum(d[r.injuredKey]) ?? 0,
 								})),
 						)
 					: null,
 				resolved,
-				properties: collectProps(),
+				properties: d.props,
 				// entity status changes — only for equipment/buildings
 				entityStatusUpdate: (() => {
-					if (button === 'Mark Resolved') return restoreEl?.elem.checked ? 'active' : null;
-					return statusImpactSelect?.options.value || null;
+					if (button === 'Mark Resolved') return offersRestore && d.restore ? 'active' : null;
+					return (asksStatus && d.statusImpact) || null;
 				})(),
 			};
 		};
@@ -164,6 +177,15 @@ export default class IncidentDialog extends FormDialog {
 				estimatedLoss: incident.estimatedLoss != null ? incident.estimatedLoss : '',
 				insuranceClaim: incident.insuranceClaim || '',
 				resolved: !!incident.resolved,
+				...Object.fromEntries(
+					lossRows.flatMap(r => [
+						[r.lostKey, r.lost],
+						[r.injuredKey, r.injured],
+					]),
+				),
+				props: { ...(incident.properties || {}), 'resolution notes': incident.resolutionNotes || '' },
+				statusImpact: '',
+				restore: false,
 			},
 			inputs: [
 				{
@@ -207,6 +229,26 @@ export default class IncidentDialog extends FormDialog {
 					],
 				},
 				{ key: 'resolved', label: 'Incident resolved / closed', type: 'checkbox' },
+				...lossRows.map(r => ({
+					type: 'group',
+					style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: space.sm },
+					inputs: [
+						{ key: r.lostKey, label: `${r.name}: lost`, title: 'Head lost / killed', ...LOSS_FIELD },
+						{ key: r.injuredKey, label: `${r.name}: injured`, title: 'Head injured / sick', ...LOSS_FIELD },
+					],
+				})),
+				{ key: 'props', label: 'Properties', InputComponent: PropertiesField },
+				...(asksStatus
+					? [
+							{
+								key: 'statusImpact',
+								label: 'Entity Status After This Incident',
+								InputComponent: Select,
+								options: STATUS_IMPACTS,
+							},
+						]
+					: []),
+				...(offersRestore ? [checkboxField('restore', `Restore ${entityType} to active service`)] : []),
 			],
 			onSave: async d => {
 				return stayOpenFor(await options.onSave?.(payloadFor(d, 'Save')));
@@ -225,134 +267,6 @@ export default class IncidentDialog extends FormDialog {
 			...withoutCallbacks(options),
 		});
 
-		// Main form fields
-
 		if (isEdit) this.form.addCleanup('conflictWatch', watchFormConflicts(this.form, 'incidents', incident.id));
-
-		// Livestock loss — only shown when the field has active livestock
-		const liveEvents = options.livestockEvents || [];
-		const lossRows = []; // { eventId, species, lostEl, injuredEl }
-
-		if (liveEvents.length > 0) {
-			const lossDiv = new Divider({ appendTo: this.body });
-
-			new SectionLabel({ appendTo: lossDiv, textContent: 'Stock Loss' });
-
-			// Parse existing losses keyed by eventId for pre-fill on edit
-			const existingLosses = {};
-
-			try {
-				let parsed;
-				if (!incident.livestockLosses) {
-					parsed = [];
-				} else if (typeof incident.livestockLosses === 'string') {
-					parsed = JSON.parse(incident.livestockLosses);
-				} else {
-					parsed = incident.livestockLosses;
-				}
-
-				for (const l of Array.isArray(parsed) ? parsed : []) existingLosses[l.eventId] = l;
-			} catch {}
-
-			for (const event of liveEvents) {
-				let details = {};
-
-				try {
-					details =
-						event.details && typeof event.details === 'string' ? JSON.parse(event.details) : event.details || {};
-				} catch {}
-
-				const species = details.species || event.name || 'Stock';
-				const headCount = Number(details.headCount) || 0;
-				const existing = existingLosses[event.id] || {};
-
-				const eventRow = new LossGrid({ appendTo: lossDiv });
-
-				new Elem({
-					tag: 'div',
-					appendTo: eventRow,
-					textContent: `${species}${headCount ? ` (${headCount} hd)` : ''}`,
-					style: { fontSize: '13px' },
-				});
-
-				const lostInput = new Input({
-					appendTo: eventRow,
-					type: 'number',
-					step: '1',
-					min: '0',
-					placeholder: 'Lost',
-					value: existing.lost || '',
-					title: 'Head lost / killed',
-					style: { textAlign: 'center', fontSize: '13px' },
-				});
-				const injuredInput = new Input({
-					appendTo: eventRow,
-					type: 'number',
-					step: '1',
-					min: '0',
-					placeholder: 'Injured',
-					value: existing.injured || '',
-					title: 'Head injured / sick',
-					style: { textAlign: 'center', fontSize: '13px' },
-				});
-
-				lossRows.push({ eventId: event.id, species, lostEl: lostInput, injuredEl: injuredInput });
-			}
-
-			// Column headers — inserted before the first eventRow (index 1, after lossHeader)
-			const colHeader = new LossGrid({ addClass: 'header' });
-
-			colHeader.elem.innerHTML =
-				'<span></span><span style="text-align:center">Lost</span><span style="text-align:center">Injured</span>';
-			lossDiv.elem.insertBefore(colHeader.elem, lossDiv.elem.children[1]);
-		}
-
-		// Properties editor
-		const { collect: collectProps } = makePropertiesEditor(this.body, {
-			...(incident.properties || {}),
-			'resolution notes': incident.resolutionNotes || '',
-		});
-
-		// Entity status impact — only relevant for equipment and buildings
-		const entityType = options.entityType || incident.entityType || '';
-		let statusImpactSelect = null;
-		let restoreEl = null;
-
-		if (entityType === 'equipment' || entityType === 'building') {
-			const divider = new Divider({ appendTo: this.body });
-
-			if (!isEdit) {
-				new FormLabel({ appendTo: divider, textContent: 'Entity Status After This Incident', style: { marginTop: 0 } });
-				statusImpactSelect = new Select({ appendTo: divider });
-				statusImpactSelect.options.options = [
-					{ value: '', label: '— no change —' },
-					{ value: 'needs_maintenance', label: 'Needs maintenance' },
-					{ value: 'needs_service', label: 'Needs service / attention' },
-					{ value: 'out_of_service', label: 'Out of service' },
-					{ value: 'destroyed', label: 'Destroyed / total loss' },
-				];
-			} else if (isEdit && !incident.resolved) {
-				// On "Mark Resolved" — offer to restore to service
-				const restoreRow = new Elem({
-					tag: 'div',
-					appendTo: divider,
-					style: { display: 'flex', alignItems: 'center', gap: space.sm },
-				});
-
-				restoreEl = new Input({ appendTo: restoreRow });
-				restoreEl.elem.type = 'checkbox';
-				restoreEl.elem.id = 'inc-restore-cb';
-				restoreEl.elem.checked = false;
-				restoreEl.elem.style.accentColor = `${colors.success}`;
-
-				new Elem({
-					tag: 'label',
-					appendTo: restoreRow,
-					textContent: `Restore ${entityType} to active service`,
-					style: { fontSize: '13px', color: colors.muted, cursor: 'pointer' },
-					attributes: { for: 'inc-restore-cb' },
-				});
-			}
-		}
 	}
 }

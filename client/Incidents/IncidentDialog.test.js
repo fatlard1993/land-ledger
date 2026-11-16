@@ -91,3 +91,49 @@ describe("an incident report's buttons", () => {
 		expect(dialog.elem.isConnected).toBe(false);
 	});
 });
+
+describe("an incident report's own fields", () => {
+	afterEach(() => {
+		document.body.innerHTML = '';
+	});
+
+	const type = (input, value) => {
+		input.elem.value = value;
+		input.elem.dispatchEvent(new Event('input', { bubbles: true }));
+		input.elem.dispatchEvent(new Event('change', { bubbles: true }));
+	};
+
+	test('are declared: the head lost per herd, the properties and the status the equipment is left in', async () => {
+		const onSave = mock(() => ({ status: 'success', body: {} }));
+		const livestockEvents = [{ id: 'ev1', name: 'Cattle (12)', details: { species: 'Cattle', headCount: 12 } }];
+		const dialog = new IncidentDialog({
+			appendTo: document.body,
+			entityType: 'equipment',
+			entity: { id: 'e1', name: 'Baler' },
+			livestockEvents,
+			onSave,
+		});
+		const { inputElements } = dialog.form;
+
+		await settle();
+
+		expect(dialog.elem.querySelector(`label[for="${inputElements.lost_ev1.elem.id}"]`).textContent).toBe(
+			'Cattle (12 hd): lost',
+		);
+
+		type(inputElements.type, 'Livestock Injury');
+		type(inputElements.lost_ev1, '2');
+		inputElements.statusImpact.elem.value = 'out_of_service';
+		inputElements.statusImpact.elem.dispatchEvent(new Event('change', { bubbles: true }));
+		press(dialog, 'Save');
+		await settle();
+
+		expect(onSave.mock.calls[0][0]).toMatchObject({
+			entityType: 'equipment',
+			entityId: 'e1',
+			livestockLosses: JSON.stringify([{ eventId: 'ev1', species: 'Cattle', lost: 2, injured: 0 }]),
+			properties: { 'resolution notes': '' },
+			entityStatusUpdate: 'out_of_service',
+		});
+	});
+});
