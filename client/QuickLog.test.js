@@ -137,4 +137,20 @@ describe("the quick log's categories", () => {
 		await waitFor(() => expect(posts).toHaveLength(1));
 		expect(posts[0].body).toMatchObject({ category: 'fungicide', product: 'Headline' });
 	});
+
+	test('an application without a product says so under the product, and logs nothing', async () => {
+		openQuickLog();
+		await waitFor(() => expect(sheetInPage()?.open).toBe(true));
+
+		buttonNamed('Application').click();
+		buttonNamed('Log it').click();
+
+		const label = [...sheetInPage().querySelectorAll('label')].find(each => each.textContent === 'Product *');
+
+		await waitFor(() =>
+			expect(label.parentElement.querySelector('.vbc-field-error')?.textContent).toBe('Name the product'),
+		);
+		expect(document.getElementById(label.htmlFor).placeholder).toBe('e.g. Roundup PowerMAX');
+		expect(posts).toHaveLength(0);
+	});
 });

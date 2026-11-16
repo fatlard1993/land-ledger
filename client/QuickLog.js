@@ -5,8 +5,8 @@ import {
 	Elem,
 	failureReason,
 	formatDate,
+	Form,
 	Icon,
-	Input,
 	Notify,
 	Select,
 	styled,
@@ -16,7 +16,7 @@ import { pointInPolygon } from './geo';
 import { getFields, getBuildings, createEvent } from './api';
 import { createApplicationLog } from './api/applicationLogs';
 import { CATEGORIES as APP_CATEGORIES } from './ApplicationLog/ApplicationLogDialog';
-import { FormLabel } from './Layout';
+import { numberField } from './utils/formFields';
 import { toDateOnly } from './utils/dates';
 import { EVENT_CATEGORIES } from './eventCategories';
 import { toNum } from './utils/format.js';
@@ -285,12 +285,122 @@ export function openQuickLog() {
 			},
 		});
 
+		// Each type's fields after the location: what it starts as, its inputs, and what it logs
+		const today = toDateOnly();
+		const location = values => values.location || null;
+		const TYPE_FORMS = {
+			note: {
+				data: { note: '' },
+				inputs: [
+					{
+						key: 'note',
+						label: 'Note',
+						tag: 'textarea',
+						rows: 4,
+						placeholder: 'What are you observing?',
+						style: { resize: 'vertical' },
+					},
+				],
+				payload: values => ({
+					fieldId: location(values),
+					date: today,
+					category: 'observation',
+					name: 'Observation',
+					notes: values.note.trim(),
+				}),
+			},
+			event: {
+				data: { category: 'crop', name: '', notes: '' },
+				inputs: [
+					{
+						key: 'category',
+						label: 'Type',
+						InputComponent: Select,
+						options: EVENT_CATEGORIES.map(({ value, label }) => ({ value, label })),
+					},
+					{ key: 'name', label: 'Name (optional)', placeholder: 'e.g. Planted corn, 32,000 seeds/ac' },
+					{ key: 'notes', label: 'Notes (optional)', placeholder: 'Anything else worth capturing' },
+				],
+				payload: values => ({
+					fieldId: location(values),
+					date: today,
+					season: new Date().getFullYear(),
+					category: values.category,
+					name: values.name.trim(),
+					notes: values.notes.trim(),
+				}),
+			},
+			application: {
+				data: { category: 'herbicide', product: '', rate: '', rateUnit: 'oz/ac', epaRegNumber: '' },
+				inputs: [
+					{
+						key: 'category',
+						label: 'Category',
+						InputComponent: Select,
+						options: APP_CATEGORIES.map(({ value, label }) => ({ value, label })),
+						onChange: ({ value }) => tintCategory(value),
+					},
+					{
+						key: 'product',
+						label: 'Product *',
+						placeholder: 'e.g. Roundup PowerMAX',
+						validate: value => (String(value ?? '').trim() ? null : 'Name the product'),
+					},
+					{
+						type: 'group',
+						style: { display: 'grid', gridTemplateColumns: '1fr 150px', gap: space.sm },
+						inputs: [
+							{ key: 'rate', label: 'Rate', placeholder: '22', ...numberField({ step: '0.1' }) },
+							{
+								key: 'rateUnit',
+								label: 'Unit',
+								InputComponent: Select,
+								options: ['oz/ac', 'fl oz/ac', 'lbs/ac', 'gal/ac', 'pts/ac'],
+							},
+						],
+					},
+					{ key: 'epaRegNumber', label: 'EPA Reg. # (optional)', placeholder: '12345-67890' },
+				],
+				payload: values => ({
+					fieldId: location(values),
+					date: today,
+					category: values.category,
+					product: values.product.trim(),
+					rate: toNum(values.rate),
+					rateUnit: values.rateUnit,
+					epaRegNumber: values.epaRegNumber.trim() || null,
+					acresTreated: currentField?.acreage ? Number(currentField.acreage) : null,
+				}),
+			},
+		};
+		const typeForm = TYPE_FORMS[logType];
+
 		// Location selector — fields + buildings grouped, GPS-detected pre-selected
-		new FormLabel({ appendTo: formArea, textContent: 'Location' });
-		locationSelect = new Select({ appendTo: formArea });
-		locationSelect.elem.addEventListener('change', () => {
-			locationUserPicked = true;
+		const form = new Form({
+			appendTo: formArea,
+			data: { location: '', ...typeForm.data },
+			inputs: [
+				{
+					key: 'location',
+					label: 'Location',
+					InputComponent: Select,
+					options: [{ value: '', label: '— select —' }],
+					onChange: () => (locationUserPicked = true),
+				},
+				...typeForm.inputs,
+			],
 		});
+
+		locationSelect = form.inputElements.location;
+
+		// The chosen category's own color down the field's edge, as its chip once took it
+		const tintCategory = value => {
+			const color = APP_CATEGORIES.find(category => category.value === value)?.color;
+
+			form.inputElements.category.elem.style.boxShadow = color ? `inset 4px 0 ${color}` : '';
+		};
+
+		if (logType === 'application') tintCategory(form.options.data.category);
 
 		const populateLocationSelect = (fields, buildings) => {
 			const byName = (a, b) => (a.name || '').localeCompare(b.name || '');
@@ -312,7 +422,7 @@ export function openQuickLog() {
 					: []),
 			];
 
-			locationSelect.options.value = currentBuilding?.id || currentField?.id || '';
+			form.options.data.location = locationSelect.options.value = currentBuilding?.id || currentField?.id || '';
 		};
 
 		if (Object.keys(allFields).length || Object.keys(allBuildings).length) {
@@ -323,115 +433,18 @@ export function openQuickLog() {
 			);
 		}
 
-		// ── Type-specific fields ───────────────────────────────────────────────
-		let getPayload;
-		let focusOnError = null;
-
-		if (logType === 'note') {
-			new FormLabel({ appendTo: formArea, textContent: 'Note' });
-			const noteText = new Input({
-				tag: 'textarea',
-				appendTo: formArea,
-				rows: 4,
-				placeholder: 'What are you observing?',
-				style: { resize: 'vertical' },
-			});
-
-			getPayload = () => ({
-				fieldId: locationSelect.options.value || null,
-				date: toDateOnly(),
-				category: 'observation',
-				name: 'Observation',
-				notes: noteText.options.value.trim(),
-			});
-		} else if (logType === 'event') {
-			new FormLabel({ appendTo: formArea, textContent: 'Type' });
-			const catSelect = new Select({
-				appendTo: formArea,
-				options: EVENT_CATEGORIES.map(({ value, label }) => ({ value, label })),
-				value: 'crop',
-			});
-
-			new FormLabel({ appendTo: formArea, textContent: 'Name (optional)' });
-			const nameInput = new Input({ appendTo: formArea, placeholder: 'e.g. Planted corn, 32,000 seeds/ac' });
-
-			new FormLabel({ appendTo: formArea, textContent: 'Notes (optional)' });
-			const noteInput = new Input({ appendTo: formArea, placeholder: 'Anything else worth capturing' });
-
-			getPayload = () => ({
-				fieldId: locationSelect.options.value || null,
-				date: toDateOnly(),
-				season: new Date().getFullYear(),
-				category: catSelect.options.value,
-				name: nameInput.options.value.trim(),
-				notes: noteInput.options.value.trim(),
-			});
-		} else if (logType === 'application') {
-			new FormLabel({ appendTo: formArea, textContent: 'Category' });
-			const catSelect = new Select({
-				appendTo: formArea,
-				options: APP_CATEGORIES.map(({ value, label }) => ({ value, label })),
-				value: 'herbicide',
-			});
-			// The chosen category's own color down the field's edge, as its chip once took it
-			const tintCategory = () => {
-				const color = APP_CATEGORIES.find(category => category.value === catSelect.options.value)?.color;
-
-				catSelect.elem.style.boxShadow = color ? `inset 4px 0 ${color}` : '';
-			};
-
-			catSelect.elem.addEventListener('change', tintCategory);
-			tintCategory();
-
-			new FormLabel({ appendTo: formArea, textContent: 'Product *' });
-			const productInput = new Input({ appendTo: formArea, placeholder: 'e.g. Roundup PowerMAX' });
-			focusOnError = productInput;
-
-			const rateRow = new Component({
-				appendTo: formArea,
-				style: { display: 'grid', gridTemplateColumns: '1fr 120px', gap: space.sm },
-			});
-			const rateCol1 = new Component({ appendTo: rateRow });
-			const rateCol2 = new Component({ appendTo: rateRow });
-
-			new FormLabel({ appendTo: rateCol1, textContent: 'Rate' });
-			const rateInput = new Input({ appendTo: rateCol1, type: 'number', step: '0.1', placeholder: '22' });
-
-			new FormLabel({ appendTo: rateCol2, textContent: 'Unit' });
-			const unitSelect = new Select({
-				appendTo: rateCol2,
-				options: ['oz/ac', 'fl oz/ac', 'lbs/ac', 'gal/ac', 'pts/ac'],
-				value: 'oz/ac',
-			});
-
-			new FormLabel({ appendTo: formArea, textContent: 'EPA Reg. # (optional)' });
-			const epaInput = new Input({ appendTo: formArea, placeholder: '12345-67890' });
-
-			getPayload = () => ({
-				fieldId: locationSelect.options.value || null,
-				date: toDateOnly(),
-				category: catSelect.options.value,
-				product: productInput.options.value.trim(),
-				rate: toNum(rateInput.options.value),
-				rateUnit: unitSelect.options.value,
-				epaRegNumber: epaInput.options.value.trim() || null,
-				acresTreated: currentField?.acreage ? Number(currentField.acreage) : null,
-			});
-		}
+		// What each field holds as it's typed, ahead of the change that leaving it makes
+		const values = () =>
+			Object.fromEntries(Object.entries(form.inputElements).map(([key, input]) => [key, input.options.value ?? '']));
 
 		// ── Submit button ──────────────────────────────────────────────────────
 		const submitBtn = new SubmitButton({
 			appendTo: formArea,
 			textContent: 'Log it',
 			onPointerPress: async () => {
-				if (!getPayload) return;
+				if (form.hasErrors()) return;
 
-				const payload = getPayload();
-
-				if (logType === 'application' && !payload.product) {
-					focusOnError?.elem.focus();
-					return;
-				}
+				const payload = typeForm.payload(values());
 
 				submitBtn.options.disabled = true;
 				submitBtn.elem.textContent = 'Saving…';
