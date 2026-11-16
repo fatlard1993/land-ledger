@@ -1,124 +1,176 @@
 import L from 'leaflet';
-import { Button, Icon, Input, Notify, debounce, theme } from '@vanilla-bean/components';
+import { Button, Component, Icon, Input, Notify, debounce, styled } from '@vanilla-bean/components';
 
 import { searchLocation } from '../api';
 
-const { colors, radius, space } = theme;
+// The search sits centered along the map's top edge; only the box itself takes the pointer
+const TopCenter = styled(
+	Component,
+	() => `
+		position: absolute;
+		top: 0;
+		left: 0;
+		right: 0;
+		z-index: 800;
+		display: flex;
+		justify-content: center;
+		pointer-events: none;
+	`,
+);
+
+// Floats over the map, so the box and its results sit on the theme's surface
+const SearchBox = styled(
+	Component,
+	({ colors, radius, space }) => `
+		width: min(380px, calc(100vw - 150px));
+		margin-top: ${space.md};
+		pointer-events: auto;
+		font-family: inherit;
+
+		& > .bar {
+			display: flex;
+			align-items: center;
+			overflow: hidden;
+			background-color: ${colors.surface};
+			border: 1px solid ${colors.border};
+			border-radius: ${radius.md};
+			box-shadow: 0 2px 8px ${colors.alpha(colors.vantablack, 0.4)};
+		}
+
+		& > .bar > .glass {
+			flex-shrink: 0;
+			padding: 0 ${space.xs} 0 ${space.md};
+			color: ${colors.gray};
+		}
+
+		& > .bar > input {
+			flex: 1;
+			min-width: 0;
+			padding: ${space.sm} ${space.xs};
+			background: transparent;
+			border: none;
+			outline: none;
+			color: ${colors.white};
+			font-size: 14px;
+		}
+
+		& > .bar > button {
+			flex-shrink: 0;
+		}
+
+		& > .bar > .clear {
+			color: ${colors.gray};
+		}
+
+		& > .bar > .clear.hidden {
+			display: none;
+		}
+
+		& > .bar > .locate {
+			width: 38px;
+			border-radius: 0;
+			border-left: 1px solid ${colors.border};
+		}
+
+		& > .results {
+			max-height: 240px;
+			overflow-y: auto;
+			background-color: ${colors.surface};
+			border: 1px solid ${colors.border};
+			border-top: none;
+			border-radius: 0 0 ${radius.md} ${radius.md};
+		}
+
+		& > .results:empty {
+			display: none;
+		}
+
+		& .result {
+			padding: ${space.sm} ${space.md};
+			border-bottom: 1px solid ${colors.border};
+			cursor: pointer;
+		}
+
+		& .result.selected {
+			background-color: ${colors.alpha(colors.white, 0.1)};
+		}
+
+		& .result > .primary {
+			font-size: 13px;
+			color: ${colors.white};
+		}
+
+		& .result > .secondary {
+			margin-top: 1px;
+			font-size: 11px;
+			color: ${colors.muted};
+		}
+
+		& .none {
+			padding: ${space.md};
+			font-size: 13px;
+			color: ${colors.muted};
+		}
+	`,
+);
 
 // Builds the search input + results dropdown and appends it to `container`
 // (should be the MapWrap element, a sibling of the Leaflet container).
 // `map` is the Leaflet map instance — used to pan/zoom to results and location.
 export function buildSearchOverlay(container, map) {
-	const topCenter = document.createElement('div');
+	const topCenter = new TopCenter({ appendTo: container });
+	const box = new SearchBox({ appendTo: topCenter });
+	const bar = new Component({ appendTo: box, addClass: 'bar' });
 
-	Object.assign(topCenter.style, {
-		position: 'absolute',
-		top: '0',
-		left: '0',
-		right: '0',
-		display: 'flex',
-		justifyContent: 'center',
-		pointerEvents: 'none',
-		zIndex: '800',
-	});
-
-	container.append(topCenter);
-
-	const wrap = document.createElement('div');
-
-	Object.assign(wrap.style, {
-		marginTop: space.md,
-		width: 'min(380px, calc(100vw - 150px))',
-		pointerEvents: 'auto',
-		fontFamily: 'inherit',
-	});
-
-	const inputWrap = document.createElement('div');
-
-	Object.assign(inputWrap.style, {
-		display: 'flex',
-		alignItems: 'center',
-		background: `${colors.alpha(colors.black, 0.95)}`,
-		borderRadius: radius.md,
-		border: `1px solid ${colors.border}`,
-		boxShadow: `0 2px 8px ${colors.alpha(colors.vantablack, 0.4)}`,
-		overflow: 'hidden',
-	});
-
-	const icon = new Icon({
-		icon: 'magnifying-glass',
-		style: { padding: `0 ${space.xs} 0 ${space.md}`, color: colors.gray, flexShrink: '0' },
-	}).elem;
+	new Icon({ appendTo: bar, addClass: 'glass', icon: 'magnifying-glass' });
 
 	const input = new Input({
+		appendTo: bar,
 		type: 'text',
 		placeholder: 'Search location…',
 		attributes: { 'aria-label': 'Search location' },
-		style: {
-			flex: '1',
-			background: 'transparent',
-			border: 'none',
-			outline: 'none',
-			color: `${colors.white}`,
-			fontSize: '14px',
-			padding: `${space.sm} ${space.xs}`,
-			minWidth: '0',
-		},
-	}).elem;
-
-	const clearBtn = new Button({ variant: 'flat', icon: 'xmark', title: 'Clear search' }).elem;
-
-	Object.assign(clearBtn.style, { display: 'none', flexShrink: '0', color: `${colors.gray}` });
-
-	const locate = new Button({ variant: 'flat', icon: 'location-crosshairs', title: 'Go to my location' });
-	const locateBtn = locate.elem;
-
-	Object.assign(locateBtn.style, {
-		flexShrink: '0',
-		width: '38px',
-		borderRadius: '0',
-		borderLeft: `1px solid ${colors.border}`,
 	});
 
-	locateBtn.addEventListener('click', () => locateMe(map, locate));
-
-	inputWrap.append(icon, input, clearBtn, locateBtn);
-
-	const dropdown = document.createElement('div');
-
-	Object.assign(dropdown.style, {
-		background: `${colors.alpha(colors.black, 0.95)}`,
-		borderRadius: `0 0 ${radius.md} ${radius.md}`,
-		border: `1px solid ${colors.border}`,
-		borderTop: 'none',
-		display: 'none',
-		maxHeight: '240px',
-		overflowY: 'auto',
+	const clearBtn = new Button({
+		appendTo: bar,
+		addClass: ['clear', 'hidden'],
+		variant: 'flat',
+		icon: 'xmark',
+		title: 'Clear search',
 	});
 
-	wrap.append(inputWrap, dropdown);
-	topCenter.append(wrap);
+	const locate = new Button({
+		appendTo: bar,
+		addClass: 'locate',
+		variant: 'flat',
+		icon: 'location-crosshairs',
+		title: 'Go to my location',
+		onPointerPress: () => locateMe(map, locate),
+	});
+
+	// Shown while it holds anything: the results, or that there are none
+	const dropdown = new Component({ appendTo: box, addClass: 'results' });
 
 	let selectedIndex = -1;
-
-	const getItems = () => Array.from(dropdown.querySelectorAll('[data-idx]'));
+	let items = [];
 
 	const setSelected = idx => {
-		getItems().forEach((el, i) => {
-			el.style.background = i === idx ? `${colors.alpha(colors.white, 0.1)}` : '';
-		});
+		items.forEach((item, i) => item.toggleClass('selected', i === idx));
 		selectedIndex = idx;
 	};
 
 	const closeDropdown = () => {
-		dropdown.style.display = 'none';
+		dropdown.empty();
+		items = [];
 		selectedIndex = -1;
 	};
 
+	const showClear = shown => clearBtn.toggleClass('hidden', !shown);
+
 	const showResult = result => {
 		closeDropdown();
-		input.value = result.label.split(',').slice(0, 2).join(',').trim();
-		clearBtn.style.display = '';
+		input.options.value = result.label.split(',').slice(0, 2).join(',').trim();
+		showClear(true);
 
 		if (result.bbox?.length === 4) {
 			map.fitBounds([
@@ -134,60 +186,41 @@ export function buildSearchOverlay(container, map) {
 		try {
 			const results = await searchLocation(q);
 
-			dropdown.innerHTML = '';
-			selectedIndex = -1;
+			closeDropdown();
 
 			if (!results.length) {
-				const empty = document.createElement('div');
-
-				empty.textContent = 'No results';
-				Object.assign(empty.style, { padding: space.md, color: `${colors.muted}`, fontSize: '13px' });
-				dropdown.append(empty);
-			} else {
-				results.forEach((r, i) => {
-					const item = document.createElement('div');
-
-					item.dataset.idx = i;
-
-					const parts = r.label.split(',');
-					const primary = parts.slice(0, 2).join(',').trim();
-					const secondary = parts.slice(2, 4).join(',').trim();
-
-					// Use textContent — place names from OSM can contain HTML characters.
-					const primaryDiv = document.createElement('div');
-					primaryDiv.style.cssText = `font-size:13px;color:${colors.white}`;
-					primaryDiv.textContent = primary;
-					item.append(primaryDiv);
-
-					if (secondary) {
-						const secondaryDiv = document.createElement('div');
-						secondaryDiv.style.cssText = `font-size:11px;color:${colors.muted};margin-top:1px`;
-						secondaryDiv.textContent = secondary;
-						item.append(secondaryDiv);
-					}
-
-					Object.assign(item.style, {
-						padding: `${space.sm} ${space.md}`,
-						cursor: 'pointer',
-						borderBottom: `1px solid ${colors.border}`,
-					});
-
-					item.addEventListener('mouseenter', () => setSelected(i));
-					item.addEventListener('click', () => showResult(r));
-					dropdown.append(item);
-				});
+				new Component({ appendTo: dropdown, addClass: 'none', textContent: 'No results' });
+				return;
 			}
 
-			dropdown.style.display = '';
+			items = results.map((r, i) => {
+				const parts = r.label.split(',');
+				const secondary = parts.slice(2, 4).join(',').trim();
+				const item = new Component({
+					appendTo: dropdown,
+					addClass: 'result',
+					onPointerPress: () => showResult(r),
+				});
+
+				item.elem.addEventListener('pointerenter', () => setSelected(i));
+
+				// Place names from OSM can hold HTML characters, so they're text, never markup
+				new Component({ appendTo: item, addClass: 'primary', textContent: parts.slice(0, 2).join(',').trim() });
+				if (secondary) new Component({ appendTo: item, addClass: 'secondary', textContent: secondary });
+
+				item.result = r;
+
+				return item;
+			});
 		} catch {
 			closeDropdown();
 		}
 	}, 350);
 
-	input.addEventListener('input', () => {
-		const q = input.value.trim();
+	input.elem.addEventListener('input', () => {
+		const q = String(input.options.value ?? '').trim();
 
-		clearBtn.style.display = q ? '' : 'none';
+		showClear(!!q);
 
 		if (q.length < 3) {
 			closeDropdown();
@@ -197,9 +230,7 @@ export function buildSearchOverlay(container, map) {
 		runSearch(q);
 	});
 
-	input.addEventListener('keydown', e => {
-		const items = getItems();
-
+	input.elem.addEventListener('keydown', e => {
 		if (e.key === 'ArrowDown') {
 			e.preventDefault();
 			setSelected(Math.min(selectedIndex + 1, items.length - 1));
@@ -207,34 +238,36 @@ export function buildSearchOverlay(container, map) {
 			e.preventDefault();
 			setSelected(Math.max(selectedIndex - 1, 0));
 		} else if (e.key === 'Enter') {
-			if (selectedIndex >= 0 && items[selectedIndex]) items[selectedIndex].click();
-			else if (items[0]) items[0].click();
+			const item = items[selectedIndex] ?? items[0];
+
+			if (item) showResult(item.result);
 		} else if (e.key === 'Escape') {
 			closeDropdown();
-			input.blur();
+			input.elem.blur();
 		}
 	});
 
-	clearBtn.addEventListener('click', () => {
-		input.value = '';
-		clearBtn.style.display = 'none';
+	clearBtn.onPointerPress(() => {
+		input.options.value = '';
+		showClear(false);
 		closeDropdown();
-		input.focus();
+		input.elem.focus();
 	});
 
-	// Self-removing: if wrap leaves the DOM (map rebuilt), the listener cleans itself up.
+	// A press anywhere off the search closes its results; the listener goes with the box when the map is rebuilt
 	const handleOutsideClick = e => {
-		if (!wrap.isConnected) {
+		if (!box.elem.isConnected) {
 			document.removeEventListener('click', handleOutsideClick);
 			return;
 		}
-		if (!wrap.contains(e.target)) closeDropdown();
+		if (!box.elem.contains(e.target)) closeDropdown();
 	};
 
 	document.addEventListener('click', handleOutsideClick);
+	box.addCleanup('outsideClick', () => document.removeEventListener('click', handleOutsideClick));
 
-	L.DomEvent.disableClickPropagation(wrap);
-	L.DomEvent.disableScrollPropagation(wrap);
+	L.DomEvent.disableClickPropagation(box.elem);
+	L.DomEvent.disableScrollPropagation(box.elem);
 }
 
 function locateMe(map, button) {
