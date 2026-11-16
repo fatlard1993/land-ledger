@@ -121,4 +121,22 @@ describe('the lease dialog', () => {
 			properties: {},
 		});
 	});
+
+	test('an edited loan keeps the asset it is for', async () => {
+		const onSave = mock(() => ({ status: 'success', body: {} }));
+		const lease = {
+			id: 'l1',
+			role: 'loan',
+			lender: 'Farm Credit',
+			entityType: 'building',
+			entityId: 'b1',
+			entityName: 'Hay barn',
+		};
+		const dialog = new LeaseDialog({ appendTo: document.body, lease, onSave });
+
+		press(dialog, 'Save');
+		await waitFor(() => expect(onSave).toHaveBeenCalled());
+
+		expect(onSave.mock.calls[0][0]).toMatchObject({ entityType: 'building', entityId: 'b1', entityName: 'Hay barn' });
+	});
 });

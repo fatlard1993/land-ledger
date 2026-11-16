@@ -480,9 +480,10 @@ export default class LeaseDialog extends FormDialog {
 		if (values.role === 'loan') {
 			return {
 				role: 'loan',
-				entityType: this._preEntityType || '',
-				entityId: this._preEntity?.id || '',
-				entityName: this._preEntity?.name || '',
+				// A loan has no picker: the asset it was opened from, else the one it's already for
+				entityType: this._preEntityType || this._lease.entityType || '',
+				entityId: this._preEntity?.id || this._lease.entityId || '',
+				entityName: this._preEntity?.name || this._lease.entityName || '',
 				lender: values.lender,
 				loanNumber: values.loanNumber,
 				loanAmount: toNum(values.loanAmount),
