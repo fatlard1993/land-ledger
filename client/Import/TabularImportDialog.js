@@ -1,9 +1,11 @@
 import {
 	Button,
 	Component,
+	Content,
 	Dialog,
 	Elem,
 	EmptyState,
+	Form,
 	Icon,
 	Input,
 	Notify,
@@ -19,7 +21,6 @@ import {
 	saveImportTemplate,
 	deleteImportTemplate,
 } from '../api/tabularImport';
-import { FormLabel } from '../Layout';
 
 const { colors, space } = theme;
 
@@ -97,8 +98,6 @@ const Intro = styled(
 	`,
 	{ tag: 'p' },
 );
-
-const CAPTION_STYLE = { marginTop: '0' };
 
 const COLLECTIONS = {
 	events: {
@@ -250,17 +249,23 @@ export default class TabularImportDialog extends Dialog {
 
 		// Template picker (only if any templates saved)
 		if (templates.length) {
-			new FormLabel({ appendTo: this.body, style: CAPTION_STYLE, textContent: 'Load saved template' });
+			const templateForm = new Form({
+				appendTo: this.body,
+				data: { template: '' },
+				inputs: [
+					{
+						key: 'template',
+						label: 'Load saved template',
+						InputComponent: Select,
+						options: [{ value: '', label: '— select template —' }, ...templates.map(t => t.name)],
+					},
+				],
+			});
+			const templateSelect = templateForm.inputElements.template;
 
 			const tplRow = new Component({
 				appendTo: this.body,
-				style: { display: 'flex', gap: space.sm, marginBottom: space.md },
-			});
-
-			const templateSelect = new Select({
-				appendTo: tplRow,
-				style: { flex: '1' },
-				options: [{ value: '', label: '— select template —' }, ...templates.map(t => t.name)],
+				style: { display: 'flex', justifyContent: 'flex-end', gap: space.sm, marginBottom: space.md },
 			});
 
 			new Button({
@@ -310,15 +315,27 @@ export default class TabularImportDialog extends Dialog {
 		}
 
 		// Collection picker
-		new FormLabel({ appendTo: this.body, style: CAPTION_STYLE, textContent: 'Import into' });
-
-		const collectionSelect = new Select({
+		new Form({
 			appendTo: this.body,
 			style: { marginBottom: space.md },
-			options: Object.entries(COLLECTIONS).map(([key, { label }]) => ({ value: key, label })),
+			data: { collection: this._collection },
+			inputs: [
+				{
+					key: 'collection',
+					label: 'Import into',
+					InputComponent: Select,
+					options: Object.entries(COLLECTIONS).map(([key, { label }]) => ({ value: key, label })),
+					// Another collection maps the columns to its own fields
+					onChange: ({ value }) => {
+						this._collection = value;
+						this._buildMapping();
+						mapList.empty();
+						this._renderMapRows(mapList);
+						this._updateImportBtn();
+					},
+				},
+			],
 		});
-
-		collectionSelect.options.value = this._collection;
 
 		// Column mapper header
 		const mapHeader = new MapHeader({ appendTo: this.body });
@@ -327,23 +344,11 @@ export default class TabularImportDialog extends Dialog {
 		new Elem({ tag: 'div', appendTo: mapHeader });
 		new Elem({ tag: 'div', appendTo: mapHeader, textContent: 'Maps To' });
 
-		// Scrollable mapper list
-		const mapList = new Component({
-			appendTo: this.body,
-			style: { maxHeight: '280px', overflowY: 'auto', marginBottom: space.md },
-		});
+		// The mapper list, which the dialog's body scrolls with the rest
+		const mapList = new Content({ appendTo: this.body, style: { marginBottom: space.md } });
 
 		this._selectRefs = {};
 		this._renderMapRows(mapList);
-
-		// Collection change rebuilds the dropdowns
-		collectionSelect.elem.addEventListener('change', () => {
-			this._collection = collectionSelect.options.value;
-			this._buildMapping();
-			mapList.empty();
-			this._renderMapRows(mapList);
-			this._updateImportBtn();
-		});
 
 		// Import button
 		this._importBtn = new Button({
@@ -463,12 +468,25 @@ export default class TabularImportDialog extends Dialog {
 			textContent: 'Save this column mapping as a template to reuse it next time you import from the same source.',
 		});
 
-		const nameInput = new Input({
+		const form = new Form({
 			appendTo: this.body,
-			type: 'text',
-			placeholder: 'e.g. Waypoint Analytical Soil Test',
-			attributes: { 'aria-label': 'Template name' },
 			style: { marginBottom: space.md },
+			data: { name: '' },
+			inputs: [
+				{
+					key: 'name',
+					label: 'Template name',
+					placeholder: 'e.g. Waypoint Analytical Soil Test',
+					validate: value => (String(value ?? '').trim() ? null : 'Name the template'),
+				},
+			],
+		});
+
+		// Why the template didn't save, in the form it was saved from
+		const failure = new Elem({
+			appendTo: this.body,
+			attributes: { role: 'alert' },
+			style: { marginBottom: space.md, color: colors.light(colors.danger) },
 		});
 
 		const buttons = new Component({ appendTo: this.body, style: { display: 'flex', gap: space.sm } });
@@ -478,20 +496,21 @@ export default class TabularImportDialog extends Dialog {
 			textContent: 'Save template',
 			style: { flex: '1' },
 			onPointerPress: async () => {
-				const name = nameInput.options.value.trim();
+				if (form.hasErrors()) return;
 
-				if (!name) {
-					nameInput.elem.focus();
-					return;
-				}
+				const name = form.inputElements.name.options.value.trim();
+
+				failure.elem.textContent = '';
 
 				try {
 					await saveImportTemplate({ name, collection: this._collection, mapping: this._mapping });
-					new Notify({ intent: 'success', textContent: `Template "${name}" saved`, timeout: 3000 });
-				} catch {
-					new Notify({ intent: 'danger', textContent: 'Could not save template' });
+				} catch (error) {
+					failure.elem.textContent = `Could not save the template${error?.message ? `: ${error.message}` : ''}`;
+
+					return;
 				}
 
+				new Notify({ intent: 'success', textContent: `Template "${name}" saved`, timeout: 3000 });
 				this._finishAndRefresh();
 			},
 		});
