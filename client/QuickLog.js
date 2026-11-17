@@ -224,13 +224,16 @@ export function openQuickLog() {
 	};
 
 	// ── Start GPS and data fetch in parallel ───────────────────────────────────
-	Promise.all([
-		getFields().catch(() => ({ body: {} })),
-		getBuildings().catch(() => ({ body: {} })),
-		getPosition().catch(() => null),
-	]).then(([fieldsData, buildingsData, position]) => {
-		allFields = fieldsData?.body || {};
-		allBuildings = buildingsData?.body || {};
+	const loads = [getFields(), getBuildings(), getPosition().catch(() => null)];
+
+	Promise.all(loads).then(([fieldsData, buildingsData, position]) => {
+		const refused = [fieldsData, buildingsData].find(result => result.status === 'error');
+
+		if (refused)
+			new Notify({ intent: 'danger', content: `Couldn't load fields and buildings: ${failureReason(refused)}` });
+
+		allFields = fieldsData.status === 'success' ? fieldsData.body || {} : {};
+		allBuildings = buildingsData.status === 'success' ? buildingsData.body || {} : {};
 
 		if (position) {
 			const { latitude: lat, longitude } = position.coords;

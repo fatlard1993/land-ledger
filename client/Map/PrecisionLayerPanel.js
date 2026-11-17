@@ -49,8 +49,12 @@ export function renderPrecisionLayer(layer, L, layerGroup) {
 // ── Panel section ──────────────────────────────────────────────────────────────
 
 export async function renderPrecisionLayersSection(field, container, callbacks = {}) {
-	const data = await getPrecisionLayers().catch(() => ({ body: {} }));
-	const all = Object.values(data?.body || {});
+	const data = await getPrecisionLayers();
+
+	if (data.status === 'error')
+		new Notify({ intent: 'danger', content: `Couldn't load data layers: ${failureReason(data)}` });
+
+	const all = Object.values(data.status === 'success' ? data.body || {} : {});
 	const layers = field ? all.filter(l => l.fieldId === field.id) : all;
 
 	// Section header
@@ -71,7 +75,11 @@ export async function renderPrecisionLayersSection(field, container, callbacks =
 	});
 
 	if (!layers.length) {
-		new EmptyNote({ appendTo: container, textContent: 'No layers — import a yield map or as-applied file' });
+		new EmptyNote({
+			appendTo: container,
+			textContent:
+				data.status === 'error' ? "Couldn't load data layers" : 'No layers — import a yield map or as-applied file',
+		});
 		return;
 	}
 

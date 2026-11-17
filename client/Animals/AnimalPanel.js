@@ -1,4 +1,16 @@
-import { Button, Card, Component, Dialog, Elem, formatDate, parseDate, styled, theme } from '@vanilla-bean/components';
+import {
+	Button,
+	Card,
+	Component,
+	Dialog,
+	Elem,
+	failureReason,
+	formatDate,
+	Notify,
+	parseDate,
+	styled,
+	theme,
+} from '@vanilla-bean/components';
 
 import { ActionHeader } from '../Layout';
 import { IconText } from '../statusIcons';
@@ -183,16 +195,17 @@ export default class AnimalPanel extends Dialog {
 
 		this._updatePresenceBar();
 
-		const [healthData, breedingData] = await Promise.all([
-			getHealthRecords().catch(() => ({ body: {} })),
-			getBreedingRecords().catch(() => ({ body: {} })),
-		]);
+		const [healthData, breedingData] = await Promise.all([getHealthRecords(), getBreedingRecords()]);
+		const refused = [healthData, breedingData].find(result => result.status === 'error');
+
+		if (refused)
+			new Notify({ intent: 'danger', content: `Couldn't load this animal's records: ${failureReason(refused)}` });
 
 		const a = this._animal;
-		const health = Object.values(healthData?.body || {})
+		const health = Object.values(healthData.status === 'success' ? healthData.body || {} : {})
 			.filter(r => r.animalId === a.id)
 			.sort((x, y) => new Date(y.date) - new Date(x.date));
-		const breeding = Object.values(breedingData?.body || {})
+		const breeding = Object.values(breedingData.status === 'success' ? breedingData.body || {} : {})
 			.filter(r => r.damId === a.id)
 			.sort((x, y) => new Date(y.breedingDate) - new Date(x.breedingDate));
 		const isFemale = a.sex === 'female' || !a.sex;
@@ -262,7 +275,10 @@ export default class AnimalPanel extends Dialog {
 		});
 
 		if (!health.length) {
-			new Empty({ appendTo: this.body, textContent: 'No records yet' });
+			new Empty({
+				appendTo: this.body,
+				textContent: healthData.status === 'error' ? "Couldn't load health records" : 'No records yet',
+			});
 		} else {
 			const healthList = new Component({ appendTo: this.body, style: { marginBottom: space.md } });
 
@@ -316,7 +332,10 @@ export default class AnimalPanel extends Dialog {
 			});
 
 			if (!breeding.length) {
-				new Empty({ appendTo: this.body, textContent: 'No breeding records' });
+				new Empty({
+					appendTo: this.body,
+					textContent: breedingData.status === 'error' ? "Couldn't load breeding records" : 'No breeding records',
+				});
 			} else {
 				for (const r of breeding) {
 					const upcoming =

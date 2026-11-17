@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, spyOn, test } from 'bun:test';
 
 import { Component } from '@vanilla-bean/components';
 
+import { getPrecisionLayers } from '../api/precisionLayers';
 import { renderPrecisionLayersSection } from './PrecisionLayerPanel.js';
 
 // Retries an assertion until it holds, or fails with its last error once the time is up
@@ -81,5 +82,30 @@ describe('deleting a precision layer', () => {
 		confirmButton('Delete').click();
 
 		await waitFor(() => expect(deletes()).toEqual(['DELETE /precision-layers/l1']));
+	});
+});
+
+describe('the data layers section', () => {
+	let fetch;
+
+	afterEach(() => {
+		fetch.mockRestore();
+		document.body.innerHTML = '';
+	});
+
+	test('says why when the layers fail to load, and lists none of the error as a layer', async () => {
+		fetch = spyOn(globalThis, 'fetch').mockImplementation(async () =>
+			Response.json({ error: 'database locked' }, { status: 500 }),
+		);
+		// A list another test read is kept; read afresh, it's this test's
+		(await getPrecisionLayers()).invalidateCache?.();
+
+		const container = new Component({ appendTo: document.body });
+
+		await renderPrecisionLayersSection(null, container);
+
+		await waitFor(() => expect(document.body.textContent).toContain("Couldn't load data layers"));
+		expect(container.elem.querySelector('button[title="Delete layer"]')).toBeNull();
+		expect(container.elem.textContent).not.toContain('No layers');
 	});
 });

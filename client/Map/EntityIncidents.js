@@ -213,11 +213,14 @@ export async function applyLivestockLosses(newLossesJson, livestockEvents = [], 
 
 		const result = await updateEvent(event.id, {
 			body: { details: JSON.stringify({ ...d, headCount: updated }), _v: event._v },
-		}).catch(() => null);
+		});
+
+		if (result.status === 'error') {
+			new Notify({ intent: 'danger', content: `Couldn't update the head count: ${failureReason(result)}` });
+			continue;
+		}
 
 		// Keep local copy in sync so the panel re-render shows the new count
-		if (result?.status === 'success' && result.body && event) {
-			event.details = { ...d, headCount: updated };
-		}
+		if (result.body) event.details = { ...d, headCount: updated };
 	}
 }
