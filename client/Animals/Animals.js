@@ -1,4 +1,4 @@
-import { Button, Component, Elem, EmptyState, styled, theme, Toolbar } from '@vanilla-bean/components';
+import { Button, Component, Elem, EmptyState, styled, Table, theme, Toolbar } from '@vanilla-bean/components';
 
 import AsyncView from '../AsyncView';
 import { getAnimals, getFields } from '../api';
@@ -11,24 +11,38 @@ import AnimalPanel from './AnimalPanel';
 
 const { colors, space } = theme;
 
-// One animal per row; a phone keeps the tag, name, species and status
-const AnimalRow = styled(
-	Component,
+// One animal per row, which opens its panel; a phone keeps the tag, name, species and status
+const AnimalTable = styled(
+	Table,
 	({ colors, fonts, media, space }) => `
-		display: grid;
-		grid-template-columns: 80px 1fr 90px 100px 80px 70px;
-		gap: ${space.sm};
-		align-items: center;
-		padding: ${space.sm} 0;
-		border-bottom: 1px solid ${colors.border};
-		font-size: 12px;
-		color: ${colors.muted};
-		cursor: pointer;
+		width: 100%;
+		border-collapse: collapse;
+		/* The name takes what the fixed columns leave, as the old grid's 1fr did */
+		table-layout: fixed;
 
-		&:hover { background: ${colors.alpha(colors.white, 0.03)}; }
+		th {
+			padding: ${space.xs} ${space.sm} ${space.sm} 0;
+			border-bottom: 1px solid ${colors.border};
+			font-size: 10px;
+			font-weight: 500;
+			letter-spacing: 0.06em;
+			text-align: left;
+			text-transform: uppercase;
+			color: ${colors.muted};
+		}
 
-		& .tag { font-family: ${fonts.family.code}; }
-		& .name { min-width: 0; }
+		td {
+			padding: ${space.sm} ${space.sm} ${space.sm} 0;
+			border-bottom: 1px solid ${colors.border};
+			vertical-align: middle;
+			font-size: 12px;
+			color: ${colors.muted};
+			cursor: pointer;
+		}
+
+		tr:hover td { background: ${colors.alpha(colors.white, 0.03)}; }
+
+		& .tag { width: 80px; font-family: ${fonts.family.code}; }
 		& .name-text {
 			overflow: hidden;
 			font-size: 13px;
@@ -38,23 +52,17 @@ const AnimalRow = styled(
 			white-space: nowrap;
 		}
 		& .breed { font-size: 11px; color: ${colors.muted}; }
-		& .field { overflow: hidden; color: ${colors.muted}; text-overflow: ellipsis; white-space: nowrap; }
-		& .status { font-size: 11px; font-weight: 600; }
-
-		&.header {
-			padding: ${space.xs} 0 ${space.sm};
-			font-size: 10px;
-			letter-spacing: 0.06em;
-			text-transform: uppercase;
-			color: ${colors.muted};
-			cursor: default;
-
-			&:hover { background: none; }
-		}
+		& .species { width: 90px; }
+		& .field { width: 100px; }
+		& td.field { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+		& .age { width: 80px; }
+		& .status { width: 70px; }
+		& td.status { font-size: 11px; font-weight: 600; }
 
 		@media ${media.phone} {
-			grid-template-columns: 64px 1fr 84px 64px;
-
+			& .tag { width: 64px; }
+			& .species { width: 84px; }
+			& .status { width: 64px; }
 			& .field, & .age { display: none; }
 		}
 	`,
@@ -161,80 +169,81 @@ export default class Animals extends AsyncView {
 			.filter(a => !this._speciesFilter || a.species === this._speciesFilter)
 			.sort((a, b) => (a.tagId || '').localeCompare(b.tagId || ''));
 
-		// Column header
-		const header = new AnimalRow({ appendTo: this.content, addClass: 'header' });
-		const columns = {
-			tag: 'Tag',
-			name: 'Name / Breed',
-			species: 'Species',
-			field: 'Field',
-			age: 'Age',
-			status: 'Status',
-		};
+		// Pressing anywhere in a row opens the animal; from the keyboard, its tag is the row's one stop
+		const opens = animal => ({ onPointerPress: () => this._openPanel(animal) });
 
-		for (const [cell, t] of Object.entries(columns)) {
-			new Elem({ tag: 'div', appendTo: header, addClass: cell, textContent: t });
-		}
+		new AnimalTable({
+			appendTo: this.content,
+			data: filtered,
+			columns: [
+				{
+					key: 'tagId',
+					content: 'Tag',
+					addClass: 'tag',
+					dataColumn: ({ rowData }) => ({
+						...opens(rowData),
+						addClass: 'tag',
+						pressable: true,
+						attributes: { 'aria-label': `Open ${rowData.name || (rowData.tagId ? `#${rowData.tagId}` : 'animal')}` },
+						textContent: rowData.tagId ? `#${rowData.tagId}` : '—',
+					}),
+				},
+				{
+					key: 'name',
+					content: 'Name / Breed',
+					addClass: 'name',
+					dataColumn: ({ rowData }) => ({
+						...opens(rowData),
+						addClass: 'name',
+						append: [
+							rowData.name && new Elem({ addClass: 'name-text', textContent: rowData.name }),
+							rowData.breed && new Elem({ addClass: 'breed', textContent: rowData.breed }),
+						].filter(Boolean),
+					}),
+				},
+				{
+					key: 'species',
+					content: 'Species',
+					addClass: 'species',
+					dataColumn: ({ rowData }) => {
+						const meta = speciesMeta(rowData.species);
 
-		for (const a of filtered) {
-			const statusColor = STATUS_COLORS[a.status] || STATUS_COLORS.active;
-			const field = fieldMap[a.fieldId];
-
-			const row = new AnimalRow({
-				appendTo: this.content,
-				onPointerPress: () => this._openPanel(a),
-			});
-
-			new Elem({
-				tag: 'div',
-				appendTo: row,
-				addClass: 'tag',
-				textContent: a.tagId ? `#${a.tagId}` : '—',
-			});
-
-			const nameWrap = new Component({ appendTo: row, addClass: 'name' });
-			if (a.name)
-				new Elem({
-					tag: 'div',
-					appendTo: nameWrap,
-					addClass: 'name-text',
-					textContent: a.name,
-				});
-			if (a.breed)
-				new Elem({
-					tag: 'div',
-					appendTo: nameWrap,
-					addClass: 'breed',
-					textContent: a.breed,
-				});
-
-			const meta = speciesMeta(a.species);
-			new Elem({
-				tag: 'div',
-				appendTo: row,
-				addClass: 'species',
-				textContent: `${meta.icon} ${meta.label}`,
-			});
-			new Elem({
-				tag: 'div',
-				appendTo: row,
-				addClass: 'field',
-				textContent: field?.name || '—',
-			});
-			new Elem({
-				tag: 'div',
-				appendTo: row,
-				addClass: 'age',
-				textContent: ageLabel(a.birthDate) || '—',
-			});
-			new Elem({
-				tag: 'div',
-				appendTo: row,
-				addClass: 'status',
-				style: { color: statusColor },
-				textContent: a.status || 'active',
-			});
-		}
+						return { ...opens(rowData), addClass: 'species', textContent: `${meta.icon} ${meta.label}` };
+					},
+				},
+				{
+					key: 'fieldId',
+					content: 'Field',
+					addClass: 'field',
+					dataColumn: ({ rowData }) => ({
+						...opens(rowData),
+						addClass: 'field',
+						textContent: fieldMap[rowData.fieldId]?.name || '—',
+					}),
+				},
+				{
+					key: 'birthDate',
+					content: 'Age',
+					addClass: 'age',
+					dataColumn: ({ rowData }) => ({
+						...opens(rowData),
+						addClass: 'age',
+						textContent: ageLabel(rowData.birthDate) || '—',
+					}),
+				},
+				{
+					key: 'status',
+					content: 'Status',
+					addClass: 'status',
+					dataColumn: ({ rowData }) => ({
+						...opens(rowData),
+						addClass: 'status',
+						style: { color: STATUS_COLORS[rowData.status] || STATUS_COLORS.active },
+						textContent: rowData.status || 'active',
+					}),
+				},
+			],
+		});
 	}
 
 	_openPanel(animal) {
